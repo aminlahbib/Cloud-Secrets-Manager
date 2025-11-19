@@ -8,8 +8,6 @@ on:
 
 env:
   REGISTRY: docker.io
-  SECRET_SERVICE_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/secret-service
-  AUDIT_SERVICE_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/audit-service
 
 jobs:
   build-test:
@@ -65,7 +63,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Check Docker Hub credentials
+        id: docker-creds
+        run: |
+          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+            echo "username=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_OUTPUT
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "username=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Log in to Docker Hub
+        if: steps.docker-creds.outputs.has_creds == 'true'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -75,7 +85,7 @@ jobs:
         id: meta-secret
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.SECRET_SERVICE_IMAGE }}
+          images: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('{0}/secret-service', secrets.DOCKERHUB_USERNAME) || 'secret-service' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -88,7 +98,7 @@ jobs:
         id: meta-audit
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.AUDIT_SERVICE_IMAGE }}
+          images: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('{0}/audit-service', secrets.DOCKERHUB_USERNAME) || 'audit-service' }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -101,21 +111,21 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./secret-service
-          push: true
+          push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
           tags: ${{ steps.meta-secret.outputs.tags }}
           labels: ${{ steps.meta-secret.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.SECRET_SERVICE_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.SECRET_SERVICE_IMAGE }}:buildcache,mode=max
+          cache-from: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/secret-service:buildcache', secrets.DOCKERHUB_USERNAME) || '' }}
+          cache-to: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/secret-service:buildcache,mode=max', secrets.DOCKERHUB_USERNAME) || '' }}
 
       - name: Build and push Audit Service
         uses: docker/build-push-action@v5
         with:
           context: ./audit-service
-          push: true
+          push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
           tags: ${{ steps.meta-audit.outputs.tags }}
           labels: ${{ steps.meta-audit.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.AUDIT_SERVICE_IMAGE }}:buildcache
-          cache-to: type=registry,ref=${{ env.AUDIT_SERVICE_IMAGE }}:buildcache,mode=max
+          cache-from: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/audit-service:buildcache', secrets.DOCKERHUB_USERNAME) || '' }}
+          cache-to: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/audit-service:buildcache,mode=max', secrets.DOCKERHUB_USERNAME) || '' }}
 
       - name: Trigger deployment hook (optional)
         if: env.DEPLOY_HOOK_URL != ''
