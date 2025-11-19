@@ -1,0 +1,7 @@
+apiVersion: v2
+name: cloud-secrets-manager
+description: Cloud Secrets Manager (secret-service + audit-service + Postgres DBs)
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+

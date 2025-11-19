@@ -1,0 +1,147 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+env:
+  REGISTRY: docker.io
+  SECRET_SERVICE_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/secret-service
+  AUDIT_SERVICE_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/audit-service
+
+jobs:
+  build-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Build Secret Service
+        run: |
+          cd secret-service
+          mvn clean verify -DskipTests=false
+
+      - name: Build Audit Service
+        run: |
+          cd audit-service
+          mvn clean verify -DskipTests=false
+
+      - name: Run Unit Tests
+        run: |
+          cd secret-service
+          mvn test
+          cd ../audit-service
+          mvn test
+
+      - name: Generate Test Reports
+        if: always()
+        run: |
+          cd secret-service
+          mvn surefire-report:report
+          cd ../audit-service
+          mvn surefire-report:report
+
+  docker-build-push:
+    name: Build and Push Docker Images
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata for Secret Service
+        id: meta-secret
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.SECRET_SERVICE_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract metadata for Audit Service
+        id: meta-audit
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.AUDIT_SERVICE_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Secret Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./secret-service
+          push: true
+          tags: ${{ steps.meta-secret.outputs.tags }}
+          labels: ${{ steps.meta-secret.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.SECRET_SERVICE_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.SECRET_SERVICE_IMAGE }}:buildcache,mode=max
+
+      - name: Build and push Audit Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./audit-service
+          push: true
+          tags: ${{ steps.meta-audit.outputs.tags }}
+          labels: ${{ steps.meta-audit.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.AUDIT_SERVICE_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.AUDIT_SERVICE_IMAGE }}:buildcache,mode=max
+
+      - name: Trigger deployment hook (optional)
+        if: env.DEPLOY_HOOK_URL != ''
+        run: |
+          curl -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    needs: docker-build-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
