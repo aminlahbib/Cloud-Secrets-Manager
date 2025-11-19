@@ -517,13 +517,25 @@ Developer Push
 
 ### Local Development Setup
 
+**Important:** This project requires **Java 21**. If you have Java 24 installed, set JAVA_HOME:
+
+```bash
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home
+export PATH=$JAVA_HOME/bin:$PATH
+```
+
+Or use the provided build script:
+```bash
+./build.sh
+```
+
 1. **Build the services**:
    ```bash
    cd secret-service
-   mvn clean install
+   ./mvnw clean install
    
    cd ../audit-service
-   mvn clean install
+   ./mvnw clean install
    ```
 
 2. **Configure environment variables**:
@@ -545,11 +557,11 @@ Developer Push
    ```bash
    # Terminal 1: Secret Service
    cd secret-service
-   mvn spring-boot:run
+   ./mvnw spring-boot:run
    
    # Terminal 2: Audit Service
    cd audit-service
-   mvn spring-boot:run
+   ./mvnw spring-boot:run
    ```
 
 ---
