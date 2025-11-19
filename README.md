@@ -576,8 +576,21 @@ See the [Kubernetes & Helm Guide](./docs/kubernetes-helm-guide.md) for detailed 
 ```bash
 # Install Helm chart
 helm install secrets-manager ./helm/cloud-secrets-manager
+```
 
-# Check deployment
+### CI/CD Setup (Optional)
+
+The GitHub Actions pipeline will build and test your code automatically. To enable Docker image pushing to Docker Hub, configure the following secrets in your GitHub repository:
+
+1. Go to your repository **Settings** → **Secrets and variables** → **Actions**
+2. Add the following secrets:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Your Docker Hub access token (create one at [Docker Hub Account Settings](https://hub.docker.com/settings/security))
+
+**Note**: If these secrets are not configured, the pipeline will still run successfully but will only build images locally without pushing them to Docker Hub. This is useful for forks and pull requests.
+
+**Check deployment**:
+```bash
 kubectl get pods
 kubectl get svc
 kubectl get ingress
