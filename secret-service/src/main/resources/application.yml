@@ -62,7 +62,7 @@ security:
     refresh-expiration-ms: 604800000  # 7 days
 
 encryption:
-  key: ${ENCRYPTION_KEY:MySecure32ByteKeyForAES256Encryption!}
+  key: ${ENCRYPTION_KEY:MySecure32ByteKeyForAES256Enc!@#}
   algorithm: AES
   transformation: AES/GCM/NoPadding
 

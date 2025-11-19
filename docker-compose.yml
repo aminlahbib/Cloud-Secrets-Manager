@@ -18,7 +18,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: mySuperStrongSecretKeyForJWTTokenGeneration123456
-      ENCRYPTION_KEY: MySecure32ByteKeyForAES256Encryption!
+      ENCRYPTION_KEY: MySecure32ByteKeyForAES256Enc!@#
       AUDIT_SERVICE_URL: http://audit-service:8081
       SPRING_PROFILES_ACTIVE: docker
     ports:
