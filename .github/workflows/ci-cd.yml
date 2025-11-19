@@ -30,27 +30,27 @@ jobs:
       - name: Build Secret Service
         run: |
           cd secret-service
-          mvn clean verify -DskipTests=false
+          ./mvnw clean verify -DskipTests=false
 
       - name: Build Audit Service
         run: |
           cd audit-service
-          mvn clean verify -DskipTests=false
+          ./mvnw clean verify -DskipTests=false
 
       - name: Run Unit Tests
         run: |
           cd secret-service
-          mvn test
+          ./mvnw test
           cd ../audit-service
-          mvn test
+          ./mvnw test
 
       - name: Generate Test Reports
         if: always()
         run: |
           cd secret-service
-          mvn surefire-report:report
+          ./mvnw surefire-report:report
           cd ../audit-service
-          mvn surefire-report:report
+          ./mvnw surefire-report:report
 
   docker-build-push:
     name: Build and Push Docker Images
