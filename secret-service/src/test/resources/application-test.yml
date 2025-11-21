@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: secret-service-test
+  
+  datasource:
+    url: jdbc:tc:postgresql:16:///secrets_test
+    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
+    username: test
+    password: test
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# Disable Google Identity Platform for unit tests (unless testing auth)
+google:
+  cloud:
+    identity:
+      enabled: false
+
+# Test JWT secret
+security:
+  jwt:
+    secret: test-jwt-secret-key-for-testing-only-12345678901234567890
+    expiration-ms: 900000
+
+# Test encryption key (must be exactly 32 bytes)
+encryption:
+  key: TestEncryptionKey32BytesForAES!!
+  algorithm: AES
+  transformation: AES/GCM/NoPadding
+
+# Mock audit service URL
+audit:
+  service:
+    url: http://localhost:9999
+    timeout: 1000
+
+# Disable setup endpoint in tests
+setup:
+  enabled: false
+
+logging:
+  level:
+    root: WARN
+    com.secrets: DEBUG
+    org.springframework.security: DEBUG
+    org.testcontainers: INFO
+

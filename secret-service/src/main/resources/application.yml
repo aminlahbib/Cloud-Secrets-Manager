@@ -76,10 +76,14 @@ google:
   cloud:
     identity:
       enabled: ${GOOGLE_IDENTITY_ENABLED:true}
-      project-id: ${GOOGLE_PROJECT_ID:}
+      project-id: ${GOOGLE_PROJECT_ID:cloud-secrets-manager}
       api-key: ${GOOGLE_API_KEY:}
-      service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:}
+      service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:classpath:service-account.json}
       custom-claims-namespace: ${GOOGLE_CUSTOM_CLAIMS_NAMESPACE:https://secrets-manager.com/claims}
+
+# Setup endpoint (disable after creating first admin user)
+setup:
+  enabled: ${SETUP_ENABLED:true}  # Set to false after initial setup
 
 logging:
   level:
