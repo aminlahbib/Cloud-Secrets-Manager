@@ -1,12 +1,12 @@
 #!/bin/bash
-
 # Script to stop the application running on port 8080
+# Usage: ./scripts/dev/stop-app.sh
 
 echo "🛑 Stopping application on port 8080..."
 echo ""
 
 # Find process on port 8080
-PID=$(lsof -ti:8080)
+PID=$(lsof -ti:8080 2>/dev/null)
 
 if [ -z "$PID" ]; then
     echo "✅ No process found on port 8080"

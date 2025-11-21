@@ -25,7 +25,11 @@ Complete Postman collection with full test suite for the Cloud Secrets Manager A
 ### **2. Start the Application**
 
 ```bash
-source set-java-21.sh
+# Option 1: Using Docker Compose (recommended)
+docker-compose up
+
+# Option 2: Local development
+source scripts/dev/set-java-21.sh
 cd secret-service
 ./mvnw spring-boot:run
 ```
