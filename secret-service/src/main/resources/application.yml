@@ -71,6 +71,20 @@ audit:
     url: ${AUDIT_SERVICE_URL:http://localhost:8081}
     timeout: 5000
 
+# Google Cloud Identity Platform Configuration
+google:
+  cloud:
+    identity:
+      enabled: ${GOOGLE_IDENTITY_ENABLED:true}
+      project-id: ${GOOGLE_PROJECT_ID:cloud-secrets-manager}
+      api-key: ${GOOGLE_API_KEY:}
+      service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:classpath:service-account.json}
+      custom-claims-namespace: ${GOOGLE_CUSTOM_CLAIMS_NAMESPACE:https://secrets-manager.com/claims}
+
+# Setup endpoint (disable after creating first admin user)
+setup:
+  enabled: ${SETUP_ENABLED:true}  # Set to false after initial setup
+
 logging:
   level:
     root: INFO
