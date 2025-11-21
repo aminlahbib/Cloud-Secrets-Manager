@@ -14,6 +14,8 @@ scripts/
 ├── testing/          # Testing scripts
 │   ├── test-auth.sh
 │   └── test-google-cloud-setup.sh
+├── deployment/       # Deployment setup scripts
+│   └── setup-kubernetes-secrets.sh
 └── README.md         # This file
 ```
 
@@ -50,6 +52,38 @@ Stops the application running on port 8080.
 - Finds process running on port 8080
 - Kills the process
 - Verifies the port is free
+
+---
+
+## 🚀 Deployment Scripts (`deployment/`)
+
+### `setup-kubernetes-secrets.sh`
+
+Automated setup of Kubernetes secrets for Google Identity Platform deployment.
+
+**Usage:**
+```bash
+./scripts/deployment/setup-kubernetes-secrets.sh
+```
+
+**What it does:**
+- ✅ Checks if kubectl is installed
+- ✅ Verifies service account JSON file exists
+- ✅ Creates `google-service-account` secret
+- ✅ Generates secure JWT_SECRET and AES_KEY
+- ✅ Creates `cloud-secrets-config` secret
+- ✅ Verifies all secrets are created correctly
+
+**Requirements:**
+- kubectl installed and configured
+- Service account JSON file at `secret-service/src/main/resources/service-account.json`
+- Access to Kubernetes cluster
+
+**Example:**
+```bash
+cd "/Users/amine/Developer/Cloud Secrets Manager project"
+./scripts/deployment/setup-kubernetes-secrets.sh
+```
 
 ---
 
@@ -126,7 +160,7 @@ docker-compose up
 ## 📚 Related Documentation
 
 - **[Google Identity Setup](docs/current/GOOGLE_IDENTITY_SETUP.md)** - Complete setup guide
-- **[Testing Guide](docs/current/GOOGLE_CLOUD_TESTING_GUIDE.md)** - Testing instructions
+- **[Deployment Setup](docs/deployment/GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Kubernetes/Helm deployment guide
 - **[Postman Collection](postman/README.md)** - API testing with Postman
 
 ---
