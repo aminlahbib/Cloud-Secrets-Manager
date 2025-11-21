@@ -21,6 +21,14 @@ services:
       ENCRYPTION_KEY: MySecure32ByteKeyForAES256Enc!@#
       AUDIT_SERVICE_URL: http://audit-service:8081
       SPRING_PROFILES_ACTIVE: docker
+      # Google Cloud Identity Platform Configuration
+      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-false}
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GOOGLE_SERVICE_ACCOUNT_PATH: ${GOOGLE_SERVICE_ACCOUNT_PATH:-/app/service-account.json}
+    volumes:
+      # Mount service account JSON file if provided
+      - ${GOOGLE_SERVICE_ACCOUNT_PATH:-./service-account.json}:/app/service-account.json:ro
     ports:
       - "8080:8080"
     networks:
