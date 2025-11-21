@@ -1,7 +1,7 @@
 #!/bin/bash
-
 # Google Cloud Identity Platform Setup Test Script
 # This script helps you verify your Google Cloud setup
+# Usage: ./scripts/testing/test-google-cloud-setup.sh
 
 echo "🔍 Testing Google Cloud Identity Platform Setup"
 echo "================================================"
@@ -75,7 +75,8 @@ if curl -s http://localhost:8080/actuator/health > /dev/null 2>&1; then
     fi
 else
     echo -e "${YELLOW}⚠️  Application is not running${NC}"
-    echo "   Start it with: cd secret-service && ./mvnw spring-boot:run"
+    echo "   Start it with: docker-compose up"
+    echo "   Or: cd secret-service && ./mvnw spring-boot:run"
 fi
 
 echo ""
@@ -92,7 +93,11 @@ echo ""
 # Summary
 echo "📋 Next Steps:"
 echo "   1. Open Google Cloud Console: https://console.cloud.google.com"
-echo "   2. Select your project: $PROJECT_ID"
+if [ ! -z "$PROJECT_ID" ]; then
+    echo "   2. Select your project: $PROJECT_ID"
+else
+    echo "   2. Select your project"
+fi
 echo "   3. Go to Identity Platform → Users"
 echo "   4. Create a test user or use your API to create one"
 echo "   5. Get ID token using: postman/get-id-token.html"
