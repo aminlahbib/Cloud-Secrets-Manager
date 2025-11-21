@@ -132,3 +132,6 @@ yarn-error.log*
 apps/frontend/dist/
 apps/frontend/build/
 *.local
+
+# Google Cloud SDK
+google-cloud-sdk/
