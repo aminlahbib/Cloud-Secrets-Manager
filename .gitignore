@@ -102,10 +102,19 @@ secrets/
 service-account.json
 **/service-account.json
 secret-service/src/main/resources/service-account.json
+
+# Files with sensitive credentials (if they contain real keys)
+# Note: These files are in postman/ but should not contain real credentials
+postman/get-token.js
+postman/get-id-token.html
+test-auth.sh
+
+# JSON files (but allow specific ones)
 *.json
 !pom.json
 !package.json
 !tsconfig.json
+!postman/*.json
 
 # Logs
 logs/
