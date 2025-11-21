@@ -1,0 +1,19 @@
+{
+  "name": "cloud-secrets-manager-frontend",
+  "version": "1.0.0",
+  "description": "Frontend interface for Cloud Secrets Manager",
+  "private": true,
+  "scripts": {
+    "dev": "echo 'Frontend development server - Coming soon'",
+    "build": "echo 'Frontend build - Coming soon'",
+    "test": "echo 'Frontend tests - Coming soon'"
+  },
+  "keywords": [
+    "secrets-manager",
+    "frontend",
+    "placeholder"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

@@ -76,7 +76,7 @@ Automated setup of Kubernetes secrets for Google Identity Platform deployment.
 
 **Requirements:**
 - kubectl installed and configured
-- Service account JSON file at `secret-service/src/main/resources/service-account.json`
+- Service account JSON file at `apps/backend/secret-service/src/main/resources/service-account.json`
 - Access to Kubernetes cluster
 
 **Example:**
@@ -161,7 +161,7 @@ docker-compose up
 
 - **[Google Identity Setup](docs/current/GOOGLE_IDENTITY_SETUP.md)** - Complete setup guide
 - **[Deployment Setup](docs/deployment/GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Kubernetes/Helm deployment guide
-- **[Postman Collection](postman/README.md)** - API testing with Postman
+- **[Postman Collection](../testing/postman/README.md)** - API testing with Postman
 
 ---
 
