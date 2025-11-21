@@ -12,6 +12,8 @@ spec:
       labels:
         app: audit-service
     spec:
+      imagePullSecrets:
+        - name: artifact-registry-secret
       containers:
         - name: audit-service
           image: "{{ .Values.image.repositoryAuditService }}:{{ .Values.image.tag }}"

@@ -1,6 +1,6 @@
 image:
-  repositorySecretService: "<YOUR_DOCKER_USERNAME>/secret-service"
-  repositoryAuditService: "<YOUR_DOCKER_USERNAME>/audit-service"
+  repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
+  repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -40,6 +40,18 @@ postgres:
 
 jwtSecret: "mySuperStrongSecretKeyForJWTTokenGeneration123456"
 aesKey: "MySecure32ByteKeyForAES256Encryption!"
+
+# Google Cloud Identity Platform Configuration
+googleIdentity:
+  enabled: true
+  projectId: "cloud-secrets-manager"
+  apiKey: ""  # Optional, set if needed
+  serviceAccount:
+    # Service account JSON should be provided as a Kubernetes secret
+    # Create secret: kubectl create secret generic google-service-account --from-file=service-account.json=/path/to/service-account.json
+    secretName: "google-service-account"
+    key: "service-account.json"
+  setupEnabled: false  # Disable setup endpoint in production
 
 ingress:
   enabled: true
