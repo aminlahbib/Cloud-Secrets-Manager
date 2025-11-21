@@ -121,12 +121,12 @@
 
         <div class="form-group">
             <label for="email">Email:</label>
-            <input type="email" id="email" value="amine.lhb@gmail.com" readonly>
+            <input type="email" id="email" placeholder="Enter your email" required>
         </div>
 
         <div class="form-group">
             <label for="password">Password:</label>
-            <input type="password" id="password" placeholder="Enter your password" value="11432184">
+            <input type="password" id="password" placeholder="Enter your password" required>
         </div>
 
         <button id="loginBtn" onclick="getToken()">Get ID Token</button>
@@ -147,8 +147,10 @@
 
     <script>
         // Firebase configuration
+        // ⚠️ SECURITY: Replace with your API key from Google Cloud Console
+        // Get it from: Identity Platform → Settings → Web API Key
         const firebaseConfig = {
-            apiKey: "AIzaSyBGjCJ8qOiucpMQr9lTwyccKpLnjyD_YDA",
+            apiKey: "AIzaSyDxggetGsbDA9zFHp0iGa5Zb4Y97qb7qLg",
             authDomain: "cloud-secrets-manager.firebaseapp.com",
             projectId: "cloud-secrets-manager"
         };

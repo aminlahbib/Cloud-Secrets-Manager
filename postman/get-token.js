@@ -1,10 +1,13 @@
 // Quick script to get Google ID token
 // Run in browser console on a page with Firebase SDK loaded
-// Or use: node -e "$(cat postman/get-token.js)"
+// 
+// ⚠️ SECURITY: Replace the placeholder values below with your actual credentials
+// DO NOT commit this file with real credentials to Git!
 
 // Firebase configuration
+// Get your API key from: Google Cloud Console → Identity Platform → Settings
 const firebaseConfig = {
-  apiKey: "AIzaSyBGjCJ8qOiucpMQr9lTwyccKpLnjyD_YDA",
+  apiKey: "AIzaSyDxggetGsbDA9zFHp0iGa5Zb4Y97qb7qLg",
   authDomain: "cloud-secrets-manager.firebaseapp.com",
   projectId: "cloud-secrets-manager"
 };
@@ -14,7 +17,11 @@ if (typeof firebase !== 'undefined') {
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
   
-  auth.signInWithEmailAndPassword("amine.lhb@gmail.com", "11432184")
+  // ⚠️ SECURITY: Replace with your actual email and password
+  const email = "YOUR_EMAIL_HERE"; // Replace with your email
+  const password = "YOUR_PASSWORD_HERE"; // Replace with your password
+  
+  auth.signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
       return userCredential.user.getIdToken();
     })
