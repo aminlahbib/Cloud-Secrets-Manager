@@ -98,41 +98,110 @@
             </dependency>
             
             <!-- Security Fixes: Override vulnerable dependencies -->
-            <!-- Fix Netty HTTP/2 DDoS vulnerability (CVE-2025-55163) -->
+            
+            <!-- Fix Apache Tomcat vulnerabilities (CVE-2025-55754, CVE-2024-50379, CVE-2024-50380) -->
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-core</artifactId>
+                <version>10.1.45</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat.embed</groupId>
+                <artifactId>tomcat-embed-websocket</artifactId>
+                <version>10.1.45</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat</groupId>
+                <artifactId>tomcat-annotations-api</artifactId>
+                <version>10.1.45</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat</groupId>
+                <artifactId>tomcat-juli</artifactId>
+                <version>10.1.45</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tomcat</groupId>
+                <artifactId>tomcat-catalina</artifactId>
+                <version>10.1.45</version>
+            </dependency>
+            
+            <!-- Note: Spring Framework and Spring Security fixes may require Spring Boot upgrade -->
+            <!-- CVE-2025-41249 (Spring Framework annotation detection) and Spring Security -->
+            <!-- BCryptPasswordEncoder fixes are not yet available as standalone versions -->
+            <!-- Consider upgrading Spring Boot to 3.3.6+ when available -->
+            
+            <!-- Fix Logback arbitrary code execution vulnerabilities (CVE-2024-4323, CVE-2024-12801) -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>1.5.13</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>1.5.13</version>
+            </dependency>
+            
+            <!-- Fix Commons Lang3 uncontrolled recursion vulnerability (CVE-2024-47551) -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>3.17.0</version>
+            </dependency>
+            
+            <!-- Fix Netty HTTP/2 DDoS vulnerability (MadeYouReset) -->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http2</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-handler</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-codec-http</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-common</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-buffer</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-transport</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-resolver</artifactId>
-                <version>4.1.124.Final</version>
+                <version>4.1.125.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-compression</artifactId>
+                <version>4.1.125.Final</version>
+            </dependency>
+            
+            <!-- Fix Reactor Netty credential leak vulnerability -->
+            <dependency>
+                <groupId>io.projectreactor.netty</groupId>
+                <artifactId>reactor-netty-http</artifactId>
+                <version>1.2.9</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor.netty</groupId>
+                <artifactId>reactor-netty-core</artifactId>
+                <version>1.2.9</version>
             </dependency>
             
             <!-- Fix Protobuf StackOverflow vulnerability -->
@@ -208,7 +277,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <argLine>${argLine} -Djdk.attach.allowAttachSelf=true -XX:+EnableDynamicAgentLoading</argLine>
+                    <argLine>${argLine} -Djdk.attach.allowAttachSelf=true -XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
                     <includes>
                         <include>**/*Test.java</include>
                         <include>**/*Tests.java</include>
