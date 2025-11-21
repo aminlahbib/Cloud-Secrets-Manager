@@ -51,36 +51,67 @@ Modern applications require numerous secrets (API keys, database passwords, cert
 
 ### Core Capabilities
 
-1. **Secret Management**
-   - Store secrets with encryption at rest
+1. **Secret Management** ✅
+   - Store secrets with AES-256 encryption at rest
    - Retrieve secrets securely via REST API
    - Update secrets with automatic versioning
-   - Delete secrets (soft delete with audit trail)
+   - Delete secrets with complete audit trail
+   - Version history tracking
+   - Rollback to previous versions
 
-2. **Authentication & Authorization**
-   - JWT-based authentication
-   - Role-based access control (RBAC)
+2. **Authentication & Authorization** ✅
+   - Google Cloud Identity Platform integration
+   - JWT-based authentication with access and refresh tokens
+   - Role-based access control (RBAC) with USER and ADMIN roles
    - Fine-grained permissions (READ, WRITE, DELETE, SHARE, ROTATE)
-   - Token refresh mechanism
+   - Token refresh mechanism with automatic rotation
+   - Permission-based access control
 
-3. **Security Features**
-   - AES-256 encryption (MVP) → Vault/KMS integration (Production)
+3. **Security Features** ✅
+   - AES-256 encryption (GCM mode)
    - Secrets never stored in plaintext
    - Secure key management
-   - Token blacklisting for revocation
+   - Google Identity Platform for user management
+   - JWT token security
+   - Input validation and sanitization
 
-4. **Audit & Compliance**
+4. **Audit & Compliance** ✅
    - Complete audit log of all operations
    - Track who accessed what and when
-   - Compliance reporting
+   - Separate audit service for isolation
+   - Query audit logs by user, secret, or date range
    - Security event monitoring
 
-5. **Advanced Features** (Production)
-   - Secret versioning and rollback
-   - Automatic expiration and rotation
+5. **User Management** ✅
+   - Create users via Google Identity Platform
+   - Admin endpoints for user management
+   - Role and permission assignment
+   - User lookup and information retrieval
+
+6. **Versioning & History** ✅
+   - Automatic version creation on create/update
+   - Complete version history
+   - View all versions of a secret
+   - Retrieve specific versions
+   - Rollback to any previous version
+
+7. **Infrastructure** ✅
+   - Docker containerization
+   - Kubernetes deployment ready
+   - Helm charts for easy deployment
+   - CI/CD pipeline with GitHub Actions
+   - Health checks and monitoring endpoints
+   - Security scanning in CI/CD
+
+8. **Planned Features** ⏳
+   - Secret expiration and automatic cleanup
+   - Scheduled secret rotation
    - Secret sharing between users/teams
    - Tag-based organization
    - Search and filtering
+   - Token blacklisting (Redis-based)
+   - Rate limiting
+   - Vault/KMS integration
 
 ---
 
@@ -129,14 +160,31 @@ The system is built as **two microservices** that work together:
 The primary service that handles all secret operations:
 
 - **REST API Endpoints**:
-  - `POST /api/auth/login` - Authenticate and get JWT token
-  - `POST /api/auth/refresh` - Refresh access token
+  
+  **Authentication:**
+  - `POST /api/auth/login` - Authenticate with Google ID token and get JWT tokens
+  - `POST /api/auth/refresh` - Refresh access token using refresh token
+  
+  **Secret Management:**
   - `POST /api/secrets` - Create a new secret
   - `GET /api/secrets/{key}` - Retrieve a secret
   - `PUT /api/secrets/{key}` - Update a secret
   - `DELETE /api/secrets/{key}` - Delete a secret
-  - `GET /api/secrets/{key}/versions` - Get version history
-  - `POST /api/secrets/{key}/rollback/{version}` - Rollback to version
+  
+  **Secret Versioning:**
+  - `GET /api/secrets/{key}/versions` - Get all versions of a secret
+  - `GET /api/secrets/{key}/versions/{versionNumber}` - Get specific version
+  - `POST /api/secrets/{key}/rollback/{versionNumber}` - Rollback to specific version
+  
+  **Admin Operations:**
+  - `POST /api/admin/users` - Create a new user
+  - `GET /api/admin/users/{email}` - Get user by email
+  - `POST /api/admin/users/{uid}/roles` - Set user roles
+  - `POST /api/admin/users/{uid}/permissions` - Set user permissions
+  
+  **Setup (Temporary):**
+  - `POST /api/setup/create-admin` - Create initial admin user
+  - `POST /api/setup/create-user` - Create test user
 
 - **Responsibilities**:
   - JWT token generation and validation
@@ -269,30 +317,166 @@ The system follows **microservices architecture** principles:
 
 ## 🚀 Key Features
 
-### MVP Features ✅
+### ✅ **Authentication & Authorization**
+
+- ✅ **Google Cloud Identity Platform Integration** - Enterprise-grade user authentication
+  - Firebase Admin SDK integration
+  - Google ID token validation
+  - User management via Google Identity Platform
+  - No local user database (all users in Google Cloud)
 
 - ✅ **JWT Authentication** - Secure token-based authentication
-- ✅ **Secret CRUD Operations** - Create, Read, Update, Delete secrets
-- ✅ **AES Encryption** - Encryption at rest for all secrets
-- ✅ **Audit Logging** - Complete audit trail of all operations
-- ✅ **Docker Support** - Fully containerized with Docker Compose
-- ✅ **RESTful API** - Clean, RESTful API design
+  - Access tokens (15-minute expiration)
+  - Refresh tokens (7-day expiration)
+  - Token rotation on refresh
+  - Stateless authentication
+
+- ✅ **JWT Refresh Tokens** - Long-lived token refresh mechanism
+  - `POST /api/auth/refresh` endpoint
+  - Automatic token rotation
+  - Secure token storage
+  - Expiration management
+
+- ✅ **Enhanced RBAC** - Role-based access control with fine-grained permissions
+  - **Roles**: USER, ADMIN
+  - **Permissions**: READ, WRITE, DELETE, SHARE, ROTATE
+  - Permission-based access control
+  - Admin bypass for all operations
+  - Custom claims in Google Identity Platform
+
+### ✅ **Secret Management**
+
+- ✅ **Secret CRUD Operations** - Complete secret lifecycle management
+  - `POST /api/secrets` - Create a new secret
+  - `GET /api/secrets/{key}` - Retrieve a secret
+  - `PUT /api/secrets/{key}` - Update a secret
+  - `DELETE /api/secrets/{key}` - Delete a secret
+
+- ✅ **Secret Versioning** - Track all changes with complete version history
+  - Automatic version creation on create/update
+  - `GET /api/secrets/{key}/versions` - Get all versions
+  - `GET /api/secrets/{key}/versions/{versionNumber}` - Get specific version
+  - Version metadata (version number, created date, created by)
+
+- ✅ **Secret Rollback** - Revert to previous secret versions
+  - `POST /api/secrets/{key}/rollback/{versionNumber}` - Rollback to specific version
+  - Creates new version for rollback (maintains history)
+  - Full audit trail of rollback operations
+
+- ✅ **AES-256 Encryption** - Encryption at rest for all secrets
+  - AES/GCM/NoPadding mode
+  - Secrets never stored in plaintext
+  - Secure key management
+  - Automatic encryption/decryption
+
+### ✅ **User & Admin Management**
+
+- ✅ **Admin Endpoints** - Complete user management API
+  - `POST /api/admin/users` - Create new users
+  - `GET /api/admin/users/{email}` - Get user by email
+  - `POST /api/admin/users/{uid}/roles` - Set user roles
+  - `POST /api/admin/users/{uid}/permissions` - Set user permissions
+
+- ✅ **Setup Endpoints** - Initial setup and testing
+  - `POST /api/setup/create-admin` - Create initial admin user
+  - `POST /api/setup/create-user` - Create test users
+  - Configurable enable/disable for security
+
+### ✅ **Audit & Compliance**
+
+- ✅ **Complete Audit Logging** - Full audit trail of all operations
+  - All secret operations logged (CREATE, READ, UPDATE, DELETE)
+  - User tracking (who did what)
+  - Timestamp tracking (when it happened)
+  - Secret key tracking (what was accessed)
+  - IP address tracking
+
+- ✅ **Audit Service** - Dedicated microservice for audit logs
+  - `POST /api/audit/log` - Receive audit events (internal)
+  - `GET /api/audit` - Query all audit logs (admin)
+  - `GET /api/audit/{username}` - Get user-specific logs
+  - `GET /api/audit/{secretKey}` - Get secret-specific logs
+  - Separate audit database for isolation
+
+### ✅ **Infrastructure & DevOps**
+
+- ✅ **Docker Support** - Fully containerized application
+  - Multi-stage Docker builds
+  - Docker Compose for local development
+  - Optimized image sizes
+
+- ✅ **Kubernetes Deployment** - Production-ready K8s manifests
+  - Deployments for both services
+  - Services and Ingress configuration
+  - Health probes (liveness & readiness)
+  - Resource limits and requests
+
+- ✅ **Helm Charts** - Package manager for Kubernetes
+  - Complete Helm chart with templates
+  - Configurable values
+  - Easy deployment and updates
+
+- ✅ **CI/CD Pipeline** - GitHub Actions automation
+  - Automated builds and tests
+  - Docker image building
+  - Security scanning (Trivy)
+  - Automated deployments
+
 - ✅ **Health Checks** - Kubernetes liveness and readiness probes
+  - Spring Boot Actuator integration
+  - `/actuator/health` endpoints
+  - Database connectivity checks
 
-### Production Features 🎯
+### ✅ **API & Documentation**
 
-- 🎯 **Secret Versioning** - Track all changes with version history
-- 🎯 **Rollback Capability** - Revert to previous secret versions
-- 🎯 **RBAC** - Role-based access control with fine-grained permissions
-- 🎯 **Secret Expiration** - Automatic expiration and cleanup
-- 🎯 **Automatic Rotation** - Scheduled secret rotation policies
-- 🎯 **Secret Sharing** - Share secrets between users/teams
-- 🎯 **Vault/KMS Integration** - Enterprise-grade key management
-- 🎯 **Token Refresh** - Long-lived refresh tokens
-- 🎯 **Token Blacklisting** - Revoke tokens instantly
-- 🎯 **Tagging & Search** - Organize and find secrets easily
-- 🎯 **Monitoring & Metrics** - Prometheus, Grafana, OpenTelemetry
-- 🎯 **Comprehensive Testing** - 80%+ test coverage
+- ✅ **RESTful API** - Clean, RESTful API design
+  - RESTful endpoints
+  - JSON request/response format
+  - Proper HTTP status codes
+  - Error handling
+
+- ✅ **OpenAPI/Swagger Documentation** - Interactive API documentation
+  - Swagger UI at `/swagger-ui.html`
+  - OpenAPI 3.0 specification
+  - Endpoint documentation
+  - Request/response schemas
+
+- ✅ **Postman Collection** - Complete API testing collection
+  - All endpoints documented
+  - Environment variables
+  - Pre-request scripts
+  - Test scripts
+
+### ✅ **Testing**
+
+- ✅ **Comprehensive Test Suite** - 48 tests passing
+  - **Unit Tests** (33 tests):
+    - Encryption service tests
+    - Secret service tests
+    - JWT token provider tests
+    - Refresh token service tests
+    - Secret version service tests
+    - Permission evaluator tests
+  - **Integration Tests** (15 tests):
+    - Controller integration tests
+    - Full CRUD lifecycle tests
+    - Versioning tests
+    - Authentication tests
+  - **Test Coverage**: ~60% (target: 80%+)
+  - Testcontainers for integration testing
+  - JaCoCo for coverage reporting
+
+### 🎯 **Planned Features** (Not Yet Implemented)
+
+- ⏳ **Secret Expiration** - Automatic expiration and cleanup
+- ⏳ **Automatic Rotation** - Scheduled secret rotation policies
+- ⏳ **Secret Sharing** - Share secrets between users/teams
+- ⏳ **Tagging & Search** - Organize and find secrets easily
+- ⏳ **Vault/KMS Integration** - Enterprise-grade key management (alternative to AES)
+- ⏳ **Token Blacklisting** - Revoke tokens instantly (Redis-based)
+- ⏳ **Rate Limiting** - Prevent brute force attacks
+- ⏳ **Advanced Monitoring** - Prometheus, Grafana, OpenTelemetry dashboards
+- ⏳ **Bulk Operations** - Batch create/update/delete secrets
 
 ---
 
