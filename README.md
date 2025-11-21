@@ -609,7 +609,11 @@ See [Deployment Guide](./docs/secrets-manager-setup.md) for cloud-specific instr
 
 ## 📚 Documentation
 
-Comprehensive documentation is available in the `docs/` directory:
+Comprehensive documentation is available in the [`docs/`](docs/README.md) directory:
+
+See [docs/README.md](docs/README.md) for complete documentation index.
+
+**Quick Links:**
 
 - **[Setup Guide](./docs/secrets-manager-setup.md)** - Complete setup instructions
 - **[Dockerization Guide](./docs/dockerization-guide.md)** - Docker and Docker Compose setup

@@ -93,10 +93,29 @@ docker-compose.override.yml
 # Kubernetes
 *.kubeconfig
 
-# Secrets (never commit!)
+# Secrets
 secrets/
 *.secret
 *.token
+
+# Service Account JSON (NEVER commit!)
+service-account.json
+**/service-account.json
+secret-service/src/main/resources/service-account.json
+
+# Files with sensitive credentials (generated from environment variables)
+postman/firebase-config.js
+test-auth.sh
+.env
+.env.local
+.env.*.local
+
+# JSON files (but allow specific ones)
+*.json
+!pom.json
+!package.json
+!tsconfig.json
+!postman/*.json
 
 # Logs
 logs/
@@ -106,4 +125,5 @@ logs/
 tmp/
 temp/
 
+# Documentation
 docs/
