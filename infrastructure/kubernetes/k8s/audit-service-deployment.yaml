@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: csm-audit-service
+  namespace: cloud-secrets-manager
+  labels:
+    app.kubernetes.io/name: audit-service
+    app.kubernetes.io/component: audit-api
+    app.kubernetes.io/part-of: cloud-secrets-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: audit-service
+      app.kubernetes.io/component: audit-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: audit-service
+        app.kubernetes.io/component: audit-api
+        app.kubernetes.io/part-of: cloud-secrets-manager
+    spec:
+      imagePullSecrets:
+        - name: artifact-registry-secret
+      containers:
+        - name: audit-service
+          image: europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service:latest
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://csm-audit-db:5432/audit
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: csm-db-secrets
+                  key: audit-db-user
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: csm-db-secrets
+                  key: audit-db-password
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+          ports:
+            - containerPort: 8081
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: csm-audit-service
+  namespace: cloud-secrets-manager
+  labels:
+    app.kubernetes.io/name: audit-service
+    app.kubernetes.io/component: audit-api
+    app.kubernetes.io/part-of: cloud-secrets-manager
+spec:
+  selector:
+    app.kubernetes.io/name: audit-service
+    app.kubernetes.io/component: audit-api
+  ports:
+    - port: 8081
+      targetPort: 8081
+  type: ClusterIP
+
