@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: csm-api-ingress
+  namespace: cloud-secrets-manager
+  labels:
+    app.kubernetes.io/name: ingress
+    app.kubernetes.io/part-of: cloud-secrets-manager
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: secrets.local
+      http:
+        paths:
+          - path: /(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: csm-secret-service
+                port:
+                  number: 8080
+

@@ -27,17 +27,17 @@ jobs:
 
       - name: Build Secret Service
         run: |
-          cd secret-service
+          cd apps/backend/secret-service
           ./mvnw clean verify -DskipTests=false
 
       - name: Build Audit Service
         run: |
-          cd audit-service
+          cd apps/backend/audit-service
           ./mvnw clean verify -DskipTests=false
 
       - name: Run Unit Tests
         run: |
-          cd secret-service
+          cd apps/backend/secret-service
           ./mvnw test
           cd ../audit-service
           ./mvnw test
@@ -45,7 +45,7 @@ jobs:
       - name: Generate Test Reports
         if: always()
         run: |
-          cd secret-service
+          cd apps/backend/secret-service
           ./mvnw surefire-report:report
           cd ../audit-service
           ./mvnw surefire-report:report
@@ -110,7 +110,7 @@ jobs:
       - name: Build and push Secret Service
         uses: docker/build-push-action@v5
         with:
-          context: ./secret-service
+          context: ./apps/backend/secret-service
           push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
           tags: ${{ steps.meta-secret.outputs.tags }}
           labels: ${{ steps.meta-secret.outputs.labels }}
@@ -120,7 +120,7 @@ jobs:
       - name: Build and push Audit Service
         uses: docker/build-push-action@v5
         with:
-          context: ./audit-service
+          context: ./apps/backend/audit-service
           push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
           tags: ${{ steps.meta-audit.outputs.tags }}
           labels: ${{ steps.meta-audit.outputs.labels }}

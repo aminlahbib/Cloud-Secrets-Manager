@@ -21,7 +21,6 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 dependency-reduced-pom.xml
-buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 
@@ -37,11 +36,13 @@ build/
 *.iws
 *.iml
 *.ipr
-.vscode/
 .settings/
 .classpath
 .project
 .factorypath
+.metadata
+bin/
+.vscode/
 
 # Eclipse
 .metadata
@@ -58,12 +59,8 @@ local.properties
 # NetBeans
 /nbproject/private/
 /nbbuild/
-/dist/
 /nbdist/
 /.nb-gradle/
-
-# VS Code
-.vscode/
 
 # macOS
 .DS_Store
@@ -101,10 +98,10 @@ secrets/
 # Service Account JSON (NEVER commit!)
 service-account.json
 **/service-account.json
-secret-service/src/main/resources/service-account.json
+apps/backend/secret-service/src/main/resources/service-account.json
 
 # Files with sensitive credentials (generated from environment variables)
-postman/firebase-config.js
+testing/postman/firebase-config.js
 test-auth.sh
 .env
 .env.local
@@ -115,7 +112,7 @@ test-auth.sh
 !pom.json
 !package.json
 !tsconfig.json
-!postman/*.json
+!testing/postman/*.json
 
 # Logs
 logs/
@@ -125,5 +122,13 @@ logs/
 tmp/
 temp/
 
-# Documentation
-docs/
+# Node modules (for future frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build outputs
+apps/frontend/dist/
+apps/frontend/build/
+*.local
