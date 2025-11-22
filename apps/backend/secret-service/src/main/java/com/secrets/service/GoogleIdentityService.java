@@ -3,7 +3,8 @@ package com.secrets.service;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -13,8 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@Slf4j
 public class GoogleIdentityService {
+
+    private static final Logger log = LoggerFactory.getLogger(GoogleIdentityService.class);
 
     @Autowired(required = false)
     private FirebaseAuth firebaseAuth;

@@ -4,8 +4,8 @@ import com.secrets.entity.RefreshToken;
 import com.secrets.exception.TokenRefreshException;
 import com.secrets.repository.RefreshTokenRepository;
 import com.secrets.security.JwtTokenProvider;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
@@ -15,15 +15,20 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class RefreshTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(RefreshTokenService.class);
 
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${security.jwt.refresh-expiration-ms:604800000}") // 7 days default
     private long refreshTokenExpirationMs;
+
+    public RefreshTokenService(RefreshTokenRepository refreshTokenRepository, JwtTokenProvider jwtTokenProvider) {
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
 
     /**
      * Create a new refresh token for a user

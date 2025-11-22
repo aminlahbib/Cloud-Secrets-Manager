@@ -1,13 +1,7 @@
 package com.secrets.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class LoginRequest {
     
     /**
@@ -16,5 +10,19 @@ public class LoginRequest {
      */
     @NotBlank(message = "idToken is required")
     private String idToken;
-}
 
+    public LoginRequest() {
+    }
+
+    public LoginRequest(String idToken) {
+        this.idToken = idToken;
+    }
+
+    public String getIdToken() {
+        return idToken;
+    }
+
+    public void setIdToken(String idToken) {
+        this.idToken = idToken;
+    }
+}

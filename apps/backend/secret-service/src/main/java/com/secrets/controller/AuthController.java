@@ -11,8 +11,8 @@ import com.secrets.service.GoogleIdentityService;
 import com.secrets.service.RefreshTokenService;
 import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,14 +31,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
-@Slf4j
 public class AuthController {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthController.class);
 
     private final GoogleIdentityTokenValidator googleTokenValidator;
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenService refreshTokenService;
+
     private final GoogleIdentityService googleIdentityService;
+
+    public AuthController(GoogleIdentityTokenValidator googleTokenValidator, JwtTokenProvider tokenProvider,
+                         RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService) {
+        this.googleTokenValidator = googleTokenValidator;
+        this.tokenProvider = tokenProvider;
+        this.refreshTokenService = refreshTokenService;
+        this.googleIdentityService = googleIdentityService;
+    }
 
     @Value("${security.jwt.expiration-ms:900000}")
     private long expirationMs;

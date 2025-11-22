@@ -2,13 +2,7 @@ package com.secrets.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class SecretRequest {
     
     @NotBlank(message = "Secret key is required")
@@ -18,5 +12,28 @@ public class SecretRequest {
     @NotBlank(message = "Secret value is required")
     @Size(max = 5000, message = "Secret value must not exceed 5000 characters")
     private String value;
-}
 
+    public SecretRequest() {
+    }
+
+    public SecretRequest(String key, String value) {
+        this.key = key;
+        this.value = value;
+    }
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+}

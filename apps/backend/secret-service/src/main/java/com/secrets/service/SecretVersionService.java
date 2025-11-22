@@ -5,20 +5,25 @@ import com.secrets.entity.SecretVersion;
 import com.secrets.exception.SecretNotFoundException;
 import com.secrets.repository.SecretRepository;
 import com.secrets.repository.SecretVersionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class SecretVersionService {
+
+    private static final Logger log = LoggerFactory.getLogger(SecretVersionService.class);
 
     private final SecretVersionRepository secretVersionRepository;
     private final SecretRepository secretRepository;
+
+    public SecretVersionService(SecretVersionRepository secretVersionRepository, SecretRepository secretRepository) {
+        this.secretVersionRepository = secretVersionRepository;
+        this.secretRepository = secretRepository;
+    }
 
     /**
      * Create a new version of a secret

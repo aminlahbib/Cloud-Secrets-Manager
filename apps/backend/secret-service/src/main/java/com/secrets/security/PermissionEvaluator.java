@@ -1,6 +1,7 @@
 package com.secrets.security;
 
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -13,8 +14,9 @@ import java.util.stream.Collectors;
  * Evaluates if a user has a specific permission
  */
 @Component
-@Slf4j
 public class PermissionEvaluator {
+
+    private static final Logger log = LoggerFactory.getLogger(PermissionEvaluator.class);
 
     /**
      * Check if the authenticated user has the required permission
