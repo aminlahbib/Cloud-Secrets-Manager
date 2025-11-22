@@ -837,7 +837,7 @@ After successful deployment, consider these enhancements organized by priority. 
    - **Secrets Encryption**: Ensure secrets are encrypted at rest and in transit
 
    **Quick Deploy**:
-   ```bash
+```bash
    ./scripts/deploy-security-policies.sh
    # Or manually:
    kubectl apply -f infrastructure/kubernetes/k8s/network-policies.yaml
@@ -855,7 +855,7 @@ After successful deployment, consider these enhancements organized by priority. 
    ./scripts/deploy-monitoring.sh
    # Or manually:
    kubectl apply -f infrastructure/kubernetes/k8s/monitoring/prometheus-config.yaml
-   ```
+```
 
 ### Short-Term (Medium Priority) ✅
 
@@ -866,7 +866,7 @@ After successful deployment, consider these enhancements organized by priority. 
    - **DDoS Protection**: ✅ Configured
 
    **Deployment**:
-   ```bash
+```bash
    helm upgrade cloud-secrets-manager \
      ./infrastructure/helm/cloud-secrets-manager \
      --namespace=cloud-secrets-manager \
