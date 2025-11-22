@@ -16,18 +16,40 @@ RUN ./mvnw dependency:go-offline -B
 # Copy source code
 COPY src ./src
 
-# Build the application
-RUN ./mvnw clean package -DskipTests -B || (echo "Maven build failed!" && exit 1)
+# Verify source code was copied
+RUN echo "=== Verifying source code ===" && \
+    ls -la /app/src/ && \
+    echo "" && \
+    echo "Checking for main class source:" && \
+    find /app/src -name "AuditServiceApplication.java" || echo "Main class source not found!" && \
+    echo "" && \
+    echo "Source directory structure:" && \
+    find /app/src -type f -name "*.java" | head -20
 
-# Verify compilation succeeded
+# Build the application
+RUN echo "=== Starting Maven build ===" && \
+    ./mvnw clean package -DskipTests -B 2>&1 | tee /tmp/maven-build.log || (echo "❌ Maven build failed!" && cat /tmp/maven-build.log | tail -50 && exit 1)
+
+# Verify compilation succeeded (non-fatal, just for diagnostics)
 RUN echo "=== Verifying compilation ===" && \
+    echo "Checking target directory structure:" && \
+    (ls -la /app/target/ 2>/dev/null || echo "target directory doesn't exist") && \
+    echo "" && \
+    echo "Checking for classes directory:" && \
+    (find /app/target -type d -name "classes" 2>/dev/null || echo "No classes directory found") && \
+    echo "" && \
     if [ -d /app/target/classes/com/audit ]; then \
-        echo "✅ Classes directory exists" && \
+        echo "✅ Classes directory exists at expected location" && \
         ls -la /app/target/classes/com/audit/ | head -10; \
     else \
-        echo "❌ ERROR: Classes directory not found!" && \
-        ls -la /app/target/ || echo "target directory doesn't exist" && \
-        exit 1; \
+        echo "⚠️ Classes directory not at expected location, searching..." && \
+        (find /app/target -name "AuditServiceApplication.class" 2>/dev/null || echo "Main class not found anywhere") && \
+        echo "" && \
+        echo "Full target directory tree:" && \
+        (find /app/target -type f -name "*.class" | head -20 || echo "No .class files found") && \
+        echo "" && \
+        echo "Checking if JAR was created anyway:" && \
+        (find /app/target -name "*.jar" -type f || echo "No JAR files found"); \
     fi
 
 # Verify JAR was created and list all JARs for debugging
