@@ -17,7 +17,16 @@ COPY src ./src
 RUN ./mvnw clean package -DskipTests -B
 
 # Prepare the executable JAR for copying (exclude .original JAR)
-RUN find /app/target -name "audit-service-*.jar" ! -name "*.original" -exec cp {} /app/target/app.jar \;
+# Spring Boot Maven plugin creates the executable JAR with the same name as the artifact
+RUN JAR_FILE=$(find /app/target -name "audit-service-*.jar" ! -name "*.original" | head -1) && \
+    if [ -z "$JAR_FILE" ]; then \
+        echo "Error: JAR file not found!" && \
+        ls -la /app/target/ && \
+        exit 1; \
+    fi && \
+    echo "Found JAR: $JAR_FILE" && \
+    cp "$JAR_FILE" /app/target/app.jar && \
+    ls -lh /app/target/app.jar
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
