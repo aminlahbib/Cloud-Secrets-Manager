@@ -51,6 +51,11 @@ This directory contains all deployment-related documentation for the Cloud Secre
   - Common Terraform workflows
   - State management
 
+- **[CI/CD Pipeline Status](./CI_CD_PIPELINE_STATUS.md)**
+  - Current pipeline implementation
+  - Enhancement recommendations
+  - GCP integration guide
+
 ### Configuration
 
 - **[Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)**
