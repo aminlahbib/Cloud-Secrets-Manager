@@ -1,4 +1,4 @@
-# Current Status: Phase 2 Complete (External Secrets)
+# Current Status: Phase 3 Complete (Cloud SQL Migration)
 
 ## Completed Phases
 
@@ -6,7 +6,7 @@
 - **Status**: Complete
 - **Details**: 
   - GKE Cluster running (`cloud-secrets-cluster-dev`).
-  - Cloud SQL (Postgres) running.
+  - Cloud SQL (Postgres) running with databases: `secrets`, `audit`.
   - IAM Roles & Workload Identity configured.
   - Artifact Registry configured.
 
@@ -19,20 +19,46 @@
   - `ExternalSecret` resources created for DB credentials, App config, and Service Accounts.
   - **Sealed Secrets** deprecated and removed.
 
-### ✅ Phase 3: Application Deployment (Helm)
-- **Status**: In Progress / Next
+### ✅ Phase 3: Application Deployment & Cloud SQL Migration
+- **Status**: Complete
 - **Details**: 
-  - Helm charts are ready (`infrastructure/helm/cloud-secrets-manager`).
-  - Need to update Helm values to use the new External Secrets (remove old secret generation).
-  - Deploy the application to GKE.
+  - Helm charts updated and deployed.
+  - **Cloud SQL migration complete** - Local PostgreSQL containers removed.
+  - Applications deployed and running with Cloud SQL Proxy sidecar.
+  - Database names standardized: `secrets`, `audit`.
+  - Database users standardized: `secrets_user`, `audit_user`.
+  - All legacy local DB configurations removed.
+  - Service accounts configured correctly (`secret-service`, `audit-service`).
 
 ---
 
-## Next Steps (Phase 3)
+## Current Deployment Status
 
-1.  **Update Helm Chart**: Ensure it doesn't try to create the secrets that ESO now manages.
-2.  **Deploy Application**: `helm install ...`
-3.  **Verify End-to-End**: Test the application accessing the DB using the synced secrets.
+### Infrastructure
+- ✅ GKE Cluster: Running
+- ✅ Cloud SQL: Running (databases: `secrets`, `audit`)
+- ✅ External Secrets Operator: Installed and syncing
+- ✅ Service Accounts: Configured with Workload Identity
+
+### Applications
+- ✅ Secret Service: Deployed (can be scaled up)
+- ✅ Audit Service: Deployed (can be scaled up)
+- ✅ Cloud SQL Proxy: Running as sidecar
+- ✅ Secrets: Syncing from Google Secret Manager
+
+### Known Issues
+- ⚠️ GCP Quota: IP address quota limit (8 addresses) - may affect scaling
+- ℹ️ Build: Lombok/Java 21 compatibility issue (local only, doesn't affect Docker builds)
+
+---
+
+## Next Steps
+
+1. **Scale Up Applications**: Scale deployments to desired replica count
+2. **Configure Ingress**: Set up external access if needed
+3. **Monitoring**: Set up Prometheus/Grafana dashboards
+4. **CI/CD**: Configure automated deployment pipeline
+5. **Backup Strategy**: Configure Cloud SQL automated backups
 
 ---
 

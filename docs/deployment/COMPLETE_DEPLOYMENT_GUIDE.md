@@ -676,6 +676,230 @@ kubectl rollout status deployment/csm-secret-service -n cloud-secrets-manager
 
 ---
 
+## Startup, Usage, and Management
+
+### Starting the Application
+
+After deployment, start the services:
+
+```bash
+# Scale up deployments
+kubectl scale deployment secret-service audit-service --replicas=1 -n cloud-secrets-manager
+
+# Monitor startup
+kubectl get pods -n cloud-secrets-manager -w
+
+# Wait for pods to be ready (2/2 containers)
+kubectl wait --for=condition=ready pod -l app=secret-service -n cloud-secrets-manager --timeout=300s
+kubectl wait --for=condition=ready pod -l app=audit-service -n cloud-secrets-manager --timeout=300s
+```
+
+### Accessing the Application
+
+#### Port Forwarding (Local Access)
+
+```bash
+# Port forward secret-service
+kubectl port-forward -n cloud-secrets-manager svc/secret-service 8080:8080
+
+# Port forward audit-service (in another terminal)
+kubectl port-forward -n cloud-secrets-manager svc/audit-service 8081:8081
+```
+
+#### Using the API
+
+**1. Get Google ID Token:**
+```bash
+# See docs/current/GET_ID_TOKEN.md for detailed instructions
+# Or use the provided script:
+# testing/postman/get-token.js
+```
+
+**2. Authenticate:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"idToken": "YOUR_GOOGLE_ID_TOKEN"}'
+
+# Response contains accessToken and refreshToken
+```
+
+**3. Create a Secret:**
+```bash
+curl -X POST http://localhost:8080/api/secrets \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "database.password",
+    "value": "mySecretPassword123",
+    "description": "Database password for production"
+  }'
+```
+
+**4. Retrieve a Secret:**
+```bash
+curl -X GET http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**5. List All Secrets:**
+```bash
+curl -X GET http://localhost:8080/api/secrets \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**6. Update a Secret:**
+```bash
+curl -X PUT http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "value": "newPassword456",
+    "description": "Updated database password"
+  }'
+```
+
+**7. Delete a Secret:**
+```bash
+curl -X DELETE http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**8. View Audit Logs:**
+```bash
+# Get all audit logs
+curl -X GET http://localhost:8081/api/audit \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by username
+curl -X GET http://localhost:8081/api/audit/username/john.doe@example.com \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by secret key
+curl -X GET http://localhost:8081/api/audit/secret/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by date range
+curl -X GET "http://localhost:8081/api/audit/date-range?start=2025-11-01T00:00:00Z&end=2025-11-22T23:59:59Z" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**9. Health Checks:**
+```bash
+# Secret Service health
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/health/liveness
+curl http://localhost:8080/actuator/health/readiness
+
+# Audit Service health
+curl http://localhost:8081/actuator/health
+
+# Metrics
+curl http://localhost:8080/actuator/metrics
+curl http://localhost:8080/actuator/prometheus
+```
+
+### Managing the Deployment
+
+#### Scaling
+
+```bash
+# Scale up secret-service to 3 replicas
+kubectl scale deployment secret-service --replicas=3 -n cloud-secrets-manager
+
+# Scale down
+kubectl scale deployment secret-service --replicas=1 -n cloud-secrets-manager
+
+# Check current replica count
+kubectl get deployment secret-service -n cloud-secrets-manager
+```
+
+#### Updating Application
+
+```bash
+# Build and push new image
+cd apps/backend/secret-service
+docker build --platform linux/amd64 \
+  -t europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service:latest .
+docker push europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service:latest
+
+# Restart deployment to pull new image
+kubectl rollout restart deployment/secret-service -n cloud-secrets-manager
+
+# Monitor rollout
+kubectl rollout status deployment/secret-service -n cloud-secrets-manager
+
+# View rollout history
+kubectl rollout history deployment/secret-service -n cloud-secrets-manager
+
+# Rollback if needed
+kubectl rollout undo deployment/secret-service -n cloud-secrets-manager
+```
+
+#### Viewing Logs
+
+```bash
+# Secret Service logs
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c secret-service -f
+
+# Audit Service logs
+kubectl logs -l app=audit-service -n cloud-secrets-manager -c audit-service -f
+
+# Cloud SQL Proxy logs
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c cloud-sql-proxy -f
+
+# Last 100 lines
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c secret-service --tail=100
+```
+
+#### Resource Monitoring
+
+```bash
+# Pod resource usage
+kubectl top pods -n cloud-secrets-manager
+
+# Node resource usage
+kubectl top nodes
+
+# Detailed pod information
+kubectl describe pod <pod-name> -n cloud-secrets-manager
+```
+
+### Shutting Down
+
+#### Graceful Shutdown (Recommended)
+
+```bash
+# Scale down to 0 replicas (allows pods to finish current requests)
+kubectl scale deployment secret-service audit-service --replicas=0 -n cloud-secrets-manager
+
+# Wait for pods to terminate
+kubectl get pods -n cloud-secrets-manager -w
+
+# Verify all pods are terminated
+kubectl get pods -n cloud-secrets-manager
+```
+
+#### Complete Shutdown (Removes Resources)
+
+```bash
+# Delete deployments
+kubectl delete deployment secret-service audit-service -n cloud-secrets-manager
+
+# Delete services
+kubectl delete svc secret-service audit-service -n cloud-secrets-manager
+
+# Delete secrets (if not using ESO)
+# kubectl delete secret csm-db-secrets csm-app-config -n cloud-secrets-manager
+
+# Delete namespace (removes everything in namespace)
+# kubectl delete namespace cloud-secrets-manager
+```
+
+**Warning:** Complete shutdown removes all resources. You'll need to recreate secrets and redeploy if you want to start again.
+
+---
+
 ## Next Steps
 
 After successful deployment:
