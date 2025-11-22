@@ -89,7 +89,7 @@ variable "deletion_protection" {
 variable "databases" {
   description = "List of databases to create"
   type        = list(string)
-  default     = ["secrets_db", "audit_db"]
+  default     = ["secrets", "audit"]
 }
 
 variable "network_id" {

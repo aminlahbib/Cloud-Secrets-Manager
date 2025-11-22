@@ -8,7 +8,20 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 ### [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md) ⭐ **START HERE**
 **Status:** Active  
-**Description:** Comprehensive step-by-step guide for deploying the Cloud Secrets Manager to GKE after Terraform infrastructure is provisioned.
+**Description:** Comprehensive step-by-step guide for deploying the Cloud Secrets Manager to GKE after Terraform infrastructure is provisioned. Uses Cloud SQL and External Secrets Operator.
+
+### [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md) ⭐ **FOR LOCAL DEV**
+**Status:** Active  
+**Description:** Guide for running the application locally using Docker Compose for development and testing.
+
+**Key Topics:**
+- Docker Compose setup
+- Local PostgreSQL databases
+- Development workflow
+- Testing and debugging
+- Differences from production
+
+**Use this guide for:** Local development, testing, and debugging without needing GCP resources.
 
 **Key Topics:**
 - Prerequisites and authentication
@@ -90,15 +103,29 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 ---
 
-### [Secrets Manager Setup](./secrets-manager-setup.md)
+### [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
 **Status:** Active  
-**Description:** General setup guide for the secrets manager.
+**Description:** Guide for setting up External Secrets Operator with Google Secret Manager.
 
 **Key Topics:**
-- Basic configuration
-- Initial setup steps
+- Creating secrets in Google Secret Manager
+- External Secrets Operator configuration
+- Secret synchronization
+- Troubleshooting
 
-**Use this guide for:** Initial project setup and configuration.
+**Use this guide for:** Setting up secret management with ESO and Google Secret Manager.
+
+### [Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)
+**Status:** Active  
+**Description:** Guide for deploying the application using Helm charts.
+
+**Key Topics:**
+- Helm chart structure
+- Configuration values
+- Deployment commands
+- Upgrading deployments
+
+**Use this guide for:** Deploying and managing the application with Helm.
 
 ---
 
@@ -112,15 +139,26 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 ## Deployment Workflow
 
+### Production Deployment
 ```
 1. Infrastructure Setup (Terraform)
    └─> [Terraform Guide](./TERRAFORM_GUIDE.md)
    
-2. Application Deployment (Kubernetes)
-   └─> [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
+2. Secrets Setup
+   └─> [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
    
-3. Identity & Authentication
+3. Application Deployment
+   └─> [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
+   └─> OR [Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)
+   
+4. Identity & Authentication
    └─> [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
+```
+
+### Local Development
+```
+1. Local Setup
+   └─> [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
 ```
 
 ---

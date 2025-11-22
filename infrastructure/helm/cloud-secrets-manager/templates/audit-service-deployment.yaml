@@ -12,6 +12,7 @@ spec:
       labels:
         app: audit-service
     spec:
+      serviceAccountName: audit-service
       imagePullSecrets:
         - name: artifact-registry-secret
       containers:
@@ -20,16 +21,16 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://audit-db:5432/{{ .Values.postgres.auditDb.db }}
+              value: jdbc:postgresql://127.0.0.1:5432/{{ .Values.postgres.auditDb.db }}?sslmode=disable
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
+                  name: csm-db-secrets
                   key: audit-db-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
+                  name: csm-db-secrets
                   key: audit-db-password
             - name: SPRING_PROFILES_ACTIVE
               value: prod
@@ -51,6 +52,18 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.auditService.resources | nindent 12 }}
+        {{- if .Values.cloudSql.enabled }}
+        - name: cloud-sql-proxy
+          image: "{{ .Values.cloudSql.image }}"
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "{{ .Values.cloudSql.connectionName }}"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            {{- toYaml .Values.cloudSql.resources | nindent 12 }}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service

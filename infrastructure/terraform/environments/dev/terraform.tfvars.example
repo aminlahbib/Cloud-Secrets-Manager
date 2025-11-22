@@ -2,3 +2,7 @@
 project_id = "YOUR_PROJECT_ID"
 region     = "europe-west10"
 environment = "dev"
+
+# Billing configuration
+billing_account_id = "YOUR_BILLING_ACCOUNT_ID" # Format: XXXXXX-XXXXXX-XXXXXX
+budget_amount      = 50
