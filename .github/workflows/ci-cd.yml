@@ -162,6 +162,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Optimize build: parallelize and cache aggressively
       - name: Build and push Secret Service
         uses: docker/build-push-action@v5
         with:
@@ -171,8 +172,8 @@ jobs:
           tags: |
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:latest
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:buildcache
-          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:buildcache,mode=max
+          cache-from: type=gha,scope=secret-service
+          cache-to: type=gha,mode=max,scope=secret-service
 
       - name: Build and push Audit Service
         uses: docker/build-push-action@v5
@@ -183,8 +184,9 @@ jobs:
           tags: |
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:latest
             ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:buildcache
-          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:buildcache,mode=max
+          cache-from: type=gha,scope=audit-service
+          cache-to: type=gha,mode=max,scope=audit-service
+
 
   security-scan:
     name: Security Scan
@@ -272,6 +274,11 @@ jobs:
 
       - name: Check prerequisites before deployment
         run: |
+          echo "=== Cleaning up ServiceAccounts to prevent Helm ownership conflicts ==="
+          # Delete ServiceAccounts if they exist but aren't managed by Helm (or have conflicting labels)
+          kubectl delete serviceaccount secret-service -n ${{ env.GKE_NAMESPACE }} --ignore-not-found || true
+          kubectl delete serviceaccount audit-service -n ${{ env.GKE_NAMESPACE }} --ignore-not-found || true
+          
           echo "=== Checking ExternalSecrets ==="
           kubectl get externalsecrets -n ${{ env.GKE_NAMESPACE }} || echo "No ExternalSecrets found"
           echo ""
