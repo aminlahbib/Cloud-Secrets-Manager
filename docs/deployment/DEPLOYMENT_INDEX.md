@@ -57,7 +57,7 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 ---
 
-### [Terraform Guide](./TERRAFORM_GUIDE.md)
+### [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
 **Status:** Active  
 **Description:** Complete guide to managing Cloud Secrets Manager infrastructure with Terraform.
 
@@ -73,7 +73,7 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 ---
 
-### [Terraform Operations](./TERRAFORM_OPERATIONS.md)
+### [Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md)
 **Status:** Active  
 **Description:** Common Terraform operations and workflows.
 
@@ -115,7 +115,7 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 **Use this guide for:** Setting up secret management with ESO and Google Secret Manager.
 
-### [Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)
+### [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)
 **Status:** Active  
 **Description:** Guide for deploying the application using Helm charts.
 
@@ -127,7 +127,7 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 **Use this guide for:** Deploying and managing the application with Helm.
 
-### [CI/CD Pipeline Status](./CI_CD_PIPELINE_STATUS.md)
+### [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md)
 **Status:** Active  
 **Description:** Current CI/CD pipeline status and enhancement recommendations.
 
@@ -139,7 +139,7 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 **Use this guide for:** Understanding CI/CD status and planning enhancements.
 
-### [CI/CD Setup Guide](./CI_CD_SETUP.md) ⭐ **FOR CI/CD SETUP**
+### [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md) ⭐ **FOR CI/CD SETUP**
 **Status:** Active  
 **Description:** Complete guide for setting up and using the CI/CD pipeline with Google Cloud integration.
 
@@ -167,14 +167,14 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 ### Production Deployment
 ```
 1. Infrastructure Setup (Terraform)
-   └─> [Terraform Guide](./TERRAFORM_GUIDE.md)
+   └─> [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
    
 2. Secrets Setup
    └─> [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
    
 3. Application Deployment
    └─> [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
-   └─> OR [Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)
+   └─> OR [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)
    
 4. Identity & Authentication
    └─> [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
@@ -185,6 +185,18 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 1. Local Setup
    └─> [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
 ```
+
+---
+
+## Documentation Organization
+
+Documentation is organized by technology:
+
+- **Terraform** - Infrastructure provisioning guides in [`terraform/`](./terraform/)
+- **Kubernetes** - Container orchestration guides in [`kubernetes/`](./kubernetes/)
+- **Helm** - Package management guides in [`helm/`](./helm/)
+- **CI/CD** - Pipeline guides in [`ci-cd/`](./ci-cd/)
+- **Operations** - Day-2 operations guides in [`operations/`](./operations/)
 
 ---
 

@@ -8,8 +8,9 @@ Welcome to the Cloud Secrets Manager documentation. This directory contains all 
 
 **New to the project?** Start here:
 
-1. **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** - Step-by-step guide to deploy the application
-2. **[Terraform Guide](./deployment/TERRAFORM_GUIDE.md)** - Infrastructure setup and management
+1. **[Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md)** ⭐ - Complete project analysis and local dev setup
+2. **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** - Step-by-step guide to deploy the application
+3. **[Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)** - Infrastructure setup and management
 
 ---
 
@@ -20,11 +21,11 @@ Complete guides for deploying and managing the Cloud Secrets Manager.
 
 **Production Deployment:**
 - **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Main production deployment guide (Cloud SQL, ESO)
-- **[Helm Deployment Guide](./deployment/HELM_DEPLOYMENT_GUIDE.md)** - Deploy using Helm charts
+- **[Helm Deployment Guide](./deployment/helm/HELM_DEPLOYMENT_GUIDE.md)** - Deploy using Helm charts
 - **[External Secrets Setup](./deployment/EXTERNAL_SECRETS_SETUP.md)** - Google Secret Manager integration
 - **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** ⭐ - Live deployment management and commands
-- **[Terraform Guide](./deployment/TERRAFORM_GUIDE.md)** - Infrastructure as Code
-- **[Terraform Operations](./deployment/TERRAFORM_OPERATIONS.md)** - Terraform workflows
+- **[Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)** - Infrastructure as Code
+- **[Terraform Operations](./deployment/terraform/TERRAFORM_OPERATIONS.md)** - Terraform workflows
 - **[Google Identity Deployment](./deployment/GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Authentication setup
 
 **Local Development:**
@@ -80,15 +81,16 @@ Implementation details for specific features.
 
 ### For Developers
 
-1. **Local Development**: Start with [Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)
-2. **Production Deployment**: Read the [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
-3. **Infrastructure**: Review [Terraform Guide](./deployment/TERRAFORM_GUIDE.md)
-4. **Project Status**: Check [Current Status](./status/STATUS.md) for project state
+1. **Project Analysis & Local Dev Plan**: Start with [Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md) ⭐ **NEW**
+2. **Local Development**: See [Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)
+3. **Production Deployment**: Read the [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
+4. **Infrastructure**: Review [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
+5. **Project Status**: Check [Current Status](./status/STATUS.md) for project state
 
 ### For DevOps/Infrastructure
 
-1. Start with [Terraform Guide](./deployment/TERRAFORM_GUIDE.md)
-2. Review [Terraform Operations](./deployment/TERRAFORM_OPERATIONS.md)
+1. Start with [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
+2. Review [Terraform Operations](./deployment/terraform/TERRAFORM_OPERATIONS.md)
 3. Follow [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md) for application deployment
 4. Use [Operations Guide](./deployment/OPERATIONS_GUIDE.md) for day-to-day management
 
@@ -102,9 +104,10 @@ Implementation details for specific features.
 
 ## Key Resources
 
+- **Project Analysis & Local Dev**: [Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md) ⭐ **NEW**
 - **Main Deployment Guide**: [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
 - **Operations & Management**: [Operations Guide](./deployment/OPERATIONS_GUIDE.md)
-- **Infrastructure**: [Terraform Guide](./deployment/TERRAFORM_GUIDE.md)
+- **Infrastructure**: [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
 - **Project Status**: [Status](./status/STATUS.md)
 - **Architecture**: [Planning](./planning/a-plus-production-plan.md)
 
@@ -133,3 +136,4 @@ When adding new documentation:
 - ✅ Added **Operations Guide** with comprehensive management commands
 - ✅ Enhanced **Deployment Guide** with Cloud SQL and External Secrets Operator
 - ✅ Organized and archived historical planning documents
+- ✅ **Comprehensive Project Status & Local Development Plan** - Complete analysis and local dev guide
