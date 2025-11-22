@@ -193,45 +193,29 @@ echo "Audit DB password length: ${#AUDIT_DB_PASSWORD}"
 
 ---
 
-### Step 6: Create Kubernetes Secrets
+### Step 6: Create Kubernetes Secrets (Replaced by External Secrets Operator)
 
-**Purpose:** Stores sensitive configuration (database credentials, encryption keys) as Kubernetes secrets that pods can access.
+**Note:** This step is now automated by the **External Secrets Operator (ESO)**. You no longer need to manually create these secrets with `kubectl create secret` or use Sealed Secrets.
+
+Instead, ensure you have:
+
+1.  Created the secrets in **Google Secret Manager** (see [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)).
+2.  Installed ESO via Terraform (`infrastructure/terraform/environments/dev`).
+3.  Applied the `ExternalSecret` manifests:
 
 ```bash
-# Database connection details
-DB_CONNECTION="cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
-
-# Create database credentials secret
-kubectl create secret generic db-credentials \
-  -n cloud-secrets-manager \
-  --from-literal=connection-name="$DB_CONNECTION" \
-  --from-literal=secrets-db-password="$SECRETS_DB_PASSWORD" \
-  --from-literal=audit-db-password="$AUDIT_DB_PASSWORD"
-
-# Generate secure application keys
-JWT_SECRET=$(openssl rand -hex 32)
-# AES key must be exactly 32 bytes (plain string, not base64/hex encoded)
-AES_KEY=$(openssl rand -base64 24 | tr -d '\n' | head -c 32)
-
-# Create application configuration secret
-kubectl create secret generic csm-app-config \
-  -n cloud-secrets-manager \
-  --from-literal=JWT_SECRET="$JWT_SECRET" \
-  --from-literal=AES_KEY="$AES_KEY" \
-  --from-literal=GOOGLE_PROJECT_ID="cloud-secrets-manager"
+kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 ```
 
-**What this does:**
-- Creates `db-credentials` secret with database connection information
-- Creates `csm-app-config` secret with application encryption keys
-- Generates cryptographically secure random keys for JWT and AES encryption
-
-**Important:** The AES key must be exactly 32 bytes (256 bits) as a plain string. The application reads it directly from the environment variable and expects 32 characters. Do not use base64 or hex encoding.
+This will automatically create the following secrets in the `cloud-secrets-manager` namespace:
+- `db-credentials` (or `csm-db-secrets`)
+- `csm-app-config`
+- `csm-google-service-account`
 
 **Verify:**
 ```bash
+kubectl get externalsecrets -n cloud-secrets-manager
 kubectl get secrets -n cloud-secrets-manager
-kubectl describe secret db-credentials -n cloud-secrets-manager
 ```
 
 ---

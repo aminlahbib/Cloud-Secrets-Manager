@@ -24,12 +24,12 @@ spec:
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
+                  name: csm-db-secrets
                   key: audit-db-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secrets
+                  name: csm-db-secrets
                   key: audit-db-password
             - name: SPRING_PROFILES_ACTIVE
               value: prod
