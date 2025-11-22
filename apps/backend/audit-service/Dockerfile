@@ -14,6 +14,7 @@ RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 COPY src ./src
 
 # Build the application
+RUN chmod +x mvnw
 RUN ./mvnw clean package -DskipTests -B
 
 # Runtime stage
