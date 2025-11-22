@@ -25,18 +25,14 @@ This guide provides a complete workflow to deploy the Cloud Secrets Manager appl
      - [3.1 Verify External Secrets Operator](#31-verify-external-secrets-operator)
      - [3.2 Apply External Secret Manifests](#32-apply-external-secret-manifests)
      - [3.3 Verify Secrets Are Synced](#33-verify-secrets-are-synced)
-   - [Phase 4: Deploy Applications](#phase-4-deploy-applications)
-     - [4.1 Deploy with Helm](#41-deploy-with-helm)
-     - [4.2 Verify Helm Deployment](#42-verify-helm-deployment)
-   - [Phase 5: Verify Deployment](#phase-5-verify-deployment)
+   - [Phase 4: Deploy Stack](#phase-4-deploy-stack)
+     - [4.1 Deploy Applications with Helm](#41-deploy-applications-with-helm)
+     - [4.2 Deploy Monitoring Resources](#42-deploy-monitoring-resources)
+   - [Phase 5: System Verification](#phase-5-system-verification)
      - [5.1 Check Pod Status](#51-check-pod-status)
-     - [5.2 Verify All Resources](#52-verify-all-resources)
-     - [5.3 Check Application Logs](#53-check-application-logs)
-     - [5.4 Test Health Endpoints](#54-test-health-endpoints)
-   - [Phase 6: Monitoring & Observability](#phase-6-monitoring--observability)
-     - [6.1 Deploy Monitoring Stack](#61-deploy-monitoring-stack)
-     - [6.2 Verify Prometheus & Grafana](#62-verify-prometheus--grafana)
-     - [6.3 Verify Async Auditing](#63-verify-async-auditing)
+     - [5.2 Verify Application Logs](#52-verify-application-logs)
+     - [5.3 Verify Observability](#53-verify-observability)
+     - [5.4 Test Async Flows](#54-test-async-flows)
 3. [Operations](#operations)
    - [Starting Services](#starting-services)
    - [Stopping Services](#stopping-services)
@@ -247,11 +243,13 @@ kubectl get secrets -n cloud-secrets-manager
 
 ---
 
-### Phase 4: Deploy Applications
+### Phase 4: Deploy Stack
 
-**Goal:** Deploy applications to Kubernetes using Helm.
+**Goal:** Deploy the application via Helm and the associated observability configurations.
 
-#### 4.1 Deploy with Helm
+#### 4.1 Deploy Applications with Helm
+
+Deploy the core services (`secret-service`, `audit-service`) using the Helm chart.
 
 ```bash
 helm upgrade --install cloud-secrets-manager \
@@ -264,25 +262,32 @@ helm upgrade --install cloud-secrets-manager \
 - Kubernetes Deployments (`secret-service`, `audit-service`)
 - Kubernetes Services (for internal communication)
 - Service Accounts with Workload Identity annotations
-- Cloud SQL Proxy sidecars (configured for Workload Identity)
+- Cloud SQL Proxy sidecars
 - Environment variables and secret references
-- Optional Ingress (if enabled in `values.yaml`)
 
-#### 4.2 Verify Helm Deployment
-
+Verify the release status:
 ```bash
 helm status cloud-secrets-manager -n cloud-secrets-manager
 ```
 
-**Expected output:** Status should show `deployed` with all resources listed.
+#### 4.2 Deploy Monitoring Resources
 
-**✅ Checkpoint:** Helm release is deployed successfully.
+Apply the Prometheus alerting rules and Grafana dashboard configurations. These enable observability immediately upon application startup.
+
+```bash
+kubectl apply -f monitoring/alerts/prometheus-rules.yaml
+kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
+```
+
+**Note:** Ensure you have the Prometheus Operator and Grafana installed in your cluster (usually via `kube-prometheus-stack`).
+
+**✅ Checkpoint:** Helm release is deployed, and monitoring manifests are applied.
 
 ---
 
-### Phase 5: Verify Deployment
+### Phase 5: System Verification
 
-**Goal:** Confirm all pods are running and applications are healthy.
+**Goal:** Validate that all components (Apps, Database, Monitoring) are healthy and interacting correctly.
 
 #### 5.0 Quick Verification (Recommended)
 
@@ -292,144 +297,70 @@ Run the comprehensive verification script:
 ./scripts/verify-deployment.sh
 ```
 
-This script automatically checks all aspects of the deployment including:
-- Pod status and readiness
-- Security context compliance
-- Network policies
-- Workload Identity configuration
-- Monitoring setup
-- Ingress configuration
-- And more...
-
-For detailed manual verification steps, see [VERIFICATION_GUIDE.md](./operations/VERIFICATION_GUIDE.md).
+This script checks pod status, security contexts, network policies, and more.
 
 #### 5.1 Check Pod Status
+
+Wait for all pods to become ready (2/2 containers per pod).
 
 ```bash
 # Watch pod status (Ctrl+C to exit)
 kubectl get pods -n cloud-secrets-manager -w
 ```
 
-**Expected:** After 1-2 minutes, all pods should show `2/2 Ready` (application + Cloud SQL Proxy sidecar).
+**Expected:** Status `Running`, Ready `2/2`.
 
-#### 5.2 Verify All Resources
+#### 5.2 Verify Application Logs
 
-```bash
-# Check pods
-kubectl get pods -n cloud-secrets-manager
-
-# Check services
-kubectl get svc -n cloud-secrets-manager
-
-# Check deployments
-kubectl get deployments -n cloud-secrets-manager
-
-# Check service accounts
-kubectl get serviceaccounts -n cloud-secrets-manager
-```
-
-**Success criteria:**
-- ✅ All pods show `2/2 Ready`
-- ✅ No pods in `CrashLoopBackOff` or `Error` state
-- ✅ Services have ClusterIP assigned
-- ✅ Deployments show `1/1` available
-
-#### 5.3 Check Application Logs
+Check for successful startup and database connectivity.
 
 ```bash
 # Secret Service logs
-kubectl logs -n cloud-secrets-manager \
-  -l app=secret-service \
-  -c secret-service \
-  --tail=50
+kubectl logs -n cloud-secrets-manager -l app=secret-service -c secret-service --tail=50
 
 # Audit Service logs
-kubectl logs -n cloud-secrets-manager \
-  -l app=audit-service \
-  -c audit-service \
-  --tail=50
-
-# Cloud SQL Proxy logs (should show successful connection)
-kubectl logs -n cloud-secrets-manager \
-  -l app=secret-service \
-  -c cloud-sql-proxy \
-  --tail=20
+kubectl logs -n cloud-secrets-manager -l app=audit-service -c audit-service --tail=50
 ```
 
-**Expected logs:**
-- **Application:** Spring Boot startup messages, "Started ...Application in X seconds"
-- **Cloud SQL Proxy:** "The proxy has started successfully and is ready for new connections!"
+**Expected:** Spring Boot startup banners and no connection errors.
 
-#### 5.4 Test Health Endpoints
+#### 5.3 Verify Observability
 
-```bash
-# Port-forward to secret-service
-kubectl port-forward -n cloud-secrets-manager \
-  svc/secret-service 8080:8080
+Confirm that metrics are being scraped.
 
-# In another terminal, test health
-curl http://localhost:8080/actuator/health
-curl http://localhost:8080/actuator/health/liveness
-curl http://localhost:8080/actuator/health/readiness
-```
-
-**Expected response:** `{"status":"UP"}`
-
-**✅ Checkpoint:** All applications are running and healthy.
-
----
-
-### Phase 6: Monitoring & Observability
-
-**Goal:** Deploy and verify the observability stack (Prometheus, Grafana, OpenTelemetry).
-
-#### 6.1 Deploy Monitoring Stack
-
-Apply the Prometheus alerting rules and Grafana dashboard configurations:
-
-```bash
-kubectl apply -f monitoring/alerts/prometheus-rules.yaml
-kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
-```
-
-**Note:** Ensure you have the Prometheus Operator and Grafana installed in your cluster (usually via `kube-prometheus-stack`).
-
-#### 6.2 Verify Prometheus & Grafana
-
-**Access Prometheus:**
+**1. Access Prometheus:**
 ```bash
 kubectl port-forward svc/prometheus-operated 9090:9090 -n monitoring
 ```
-Open [http://localhost:9090/targets](http://localhost:9090/targets) and verify `secret-service` and `audit-service` are UP.
+Open [http://localhost:9090/targets](http://localhost:9090/targets) and ensure `secret-service` and `audit-service` are **UP**.
 
-**Access Grafana:**
+**2. Access Grafana:**
 ```bash
 kubectl port-forward svc/grafana 3000:3000 -n monitoring
 ```
-Open [http://localhost:3000](http://localhost:3000) (Default creds: `admin`/`prom-operator`) and view the "Cloud Secrets Manager Overview" dashboard.
+Open [http://localhost:3000](http://localhost:3000) and view the **"Cloud Secrets Manager Overview"** dashboard.
 
-#### 6.3 Verify Async Auditing
+#### 5.4 Test Async Flows
 
-To verify that auditing is working asynchronously:
+Verify that the asynchronous auditing architecture is functioning.
 
-1.  **Create a Secret:**
+1.  **Trigger an Action:**
     ```bash
-    curl -X POST http://localhost:8080/api/secrets ...
+    # Create a test secret
+    # (Assuming port-forward to secret-service on 8080)
+    curl -X POST http://localhost:8080/api/secrets \
+      -H "Content-Type: application/json" \
+      -d '{"key":"test-key", "value":"test-value"}'
     ```
-2.  **Check Secret Service Logs:**
+2.  **Verify Non-Blocking Response:** The API should respond immediately.
+3.  **Verify Audit Log:**
     ```bash
-    kubectl logs -l app=secret-service -n cloud-secrets-manager --tail=20
+    kubectl logs -n cloud-secrets-manager -l app=audit-service --tail=20
     ```
-    You should see "Secret created successfully" immediately.
-3.  **Check Audit Service Logs:**
-    ```bash
-    kubectl logs -l app=audit-service -n cloud-secrets-manager --tail=20
-    ```
-    You should see the audit event being processed shortly after.
-4.  **Check Metrics:**
-    In Grafana, check the "Secret Operations" panel to see the counter increment.
+    You should see the audit event processed shortly after the API response.
+4.  **Verify Metrics:** Check the "Secret Operations" panel in Grafana; the counter should increment.
 
-**✅ Checkpoint:** Monitoring stack is active and metrics are flowing.
+**✅ Checkpoint:** The system is fully operational, observable, and reliable.
 
 ---
 
@@ -864,21 +795,20 @@ kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 kubectl wait --for=condition=ready externalsecret/csm-db-secrets \
   -n cloud-secrets-manager --timeout=60s || true
 
-# Phase 4: Deploy
+# Phase 4: Deploy Stack
 cd ../../..
 helm upgrade --install cloud-secrets-manager \
   ./infrastructure/helm/cloud-secrets-manager \
   --namespace=cloud-secrets-manager --create-namespace
+
+kubectl apply -f monitoring/alerts/prometheus-rules.yaml
+kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
 
 # Phase 5: Verify
 kubectl wait --for=condition=ready pod \
   -l app=secret-service -n cloud-secrets-manager --timeout=300s
 kubectl wait --for=condition=ready pod \
   -l app=audit-service -n cloud-secrets-manager --timeout=300s
-
-# Phase 6: Monitoring
-kubectl apply -f monitoring/alerts/prometheus-rules.yaml
-kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
 
 echo "✅ Deployment complete!"
 kubectl get pods -n cloud-secrets-manager
