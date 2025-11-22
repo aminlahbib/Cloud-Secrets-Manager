@@ -28,8 +28,16 @@ auditService:
 
 serviceAccount:
   create: true
-  annotations: {}
-    # iam.gke.io/gcp-service-account: "service-account-name@project-id.iam.gserviceaccount.com"
+  annotations:
+    # Workload Identity binding for secret-service
+    iam.gke.io/gcp-service-account: "secret-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
+  
+# Separate service account configuration for audit-service
+auditServiceAccount:
+  create: true
+  annotations:
+    # Workload Identity binding for audit-service
+    iam.gke.io/gcp-service-account: "audit-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
 
 # Secrets Configuration
 # Set to false if using External Secrets Operator (recommended for production)
