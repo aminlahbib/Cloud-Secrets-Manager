@@ -29,8 +29,20 @@ RUN if [ -f /app/target/audit-service-1.0.0.jar ]; then \
         echo "Found executable JAR: audit-service-1.0.0.jar" && \
         cp /app/target/audit-service-1.0.0.jar /app/target/app.jar && \
         ls -lh /app/target/app.jar && \
-        echo "Verifying JAR contents..." && \
-        jar tf /app/target/app.jar | head -20; \
+        echo "=== Verifying JAR structure ===" && \
+        echo "JAR manifest:" && \
+        unzip -p /app/target/app.jar META-INF/MANIFEST.MF | head -10 && \
+        echo "" && \
+        echo "Checking for main class in JAR..." && \
+        if unzip -l /app/target/app.jar | grep -q "BOOT-INF/classes/com/audit/AuditServiceApplication.class"; then \
+            echo "✓ Found AuditServiceApplication.class in BOOT-INF/classes/" && \
+            unzip -l /app/target/app.jar | grep "AuditServiceApplication.class"; \
+        else \
+            echo "✗ ERROR: AuditServiceApplication.class not found in JAR!" && \
+            echo "Listing BOOT-INF/classes/com/audit/:" && \
+            unzip -l /app/target/app.jar | grep "BOOT-INF/classes/com/audit/" | head -10 && \
+            exit 1; \
+        fi; \
     else \
         echo "ERROR: audit-service-1.0.0.jar not found!" && \
         echo "Available files:" && \
