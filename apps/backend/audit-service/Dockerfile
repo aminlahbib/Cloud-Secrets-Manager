@@ -65,15 +65,33 @@ RUN if [ -f /app/target/audit-service-1.0.0.jar ]; then \
         echo "Found executable JAR: audit-service-1.0.0.jar" && \
         cp /app/target/audit-service-1.0.0.jar /app/target/app.jar && \
         ls -lh /app/target/app.jar && \
-        echo "Verifying JAR contents..." && \
-        jar tf /app/target/app.jar | head -30 && \
+        echo "=== JAR Contents (first 50 entries) ===" && \
+        jar tf /app/target/app.jar | head -50 && \
+        echo "" && \
+        echo "=== Searching for main class in JAR ===" && \
+        echo "Searching in BOOT-INF/classes/com/audit/:" && \
+        jar tf /app/target/app.jar | grep -i "BOOT-INF/classes/com/audit/AuditServiceApplication" || echo "Not found in BOOT-INF" && \
+        echo "" && \
+        echo "Searching in com/audit/:" && \
+        jar tf /app/target/app.jar | grep -i "com/audit/AuditServiceApplication" || echo "Not found in com/audit" && \
+        echo "" && \
+        echo "Searching anywhere for AuditServiceApplication:" && \
+        jar tf /app/target/app.jar | grep -i "AuditServiceApplication" || echo "Not found anywhere" && \
+        echo "" && \
+        echo "=== Checking JAR structure ===" && \
+        echo "Top-level directories:" && \
+        jar tf /app/target/app.jar | grep -E "^[^/]+/$" | head -20 && \
+        echo "" && \
+        echo "Checking if this is a Spring Boot JAR (looking for BOOT-INF):" && \
+        jar tf /app/target/app.jar | grep -E "^BOOT-INF" | head -10 || echo "No BOOT-INF found - this might not be a Spring Boot executable JAR!" && \
+        echo "" && \
         echo "=== Verifying main class exists ===" && \
-        if jar tf /app/target/app.jar | grep -q "BOOT-INF/classes/com/secrets/AuditServiceApplication.class"; then \
+        if jar tf /app/target/app.jar | grep -qE "(BOOT-INF/classes/)?com/audit/AuditServiceApplication.class"; then \
             echo "✅ Main class found in JAR"; \
         else \
             echo "❌ ERROR: Main class NOT found in JAR!" && \
-            echo "Searching for any AuditServiceApplication files:" && \
-            jar tf /app/target/app.jar | grep -i audit || echo "No matches found" && \
+            echo "Full JAR contents:" && \
+            jar tf /app/target/app.jar && \
             exit 1; \
         fi; \
     else \
