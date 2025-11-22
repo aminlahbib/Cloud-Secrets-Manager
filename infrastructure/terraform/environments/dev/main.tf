@@ -76,6 +76,11 @@ module "gke" {
   machine_type   = "e2-medium"
   disk_size_gb   = 30
 
+  # Release channel: REGULAR for dev (balanced updates)
+  release_channel = "REGULAR"
+
+  # Deletion protection: disabled for dev (easier cleanup)
+  deletion_protection = false
   # Networking
   enable_private_nodes     = false # Public for easier development
   enable_private_endpoint  = false

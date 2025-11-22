@@ -113,16 +113,20 @@ variable "enable_binary_authorization" {
   default     = false
 }
 
-variable "maintenance_start_time" {
-  description = "Start time for maintenance window (RFC3339 format)"
+variable "release_channel" {
+  description = "Release channel for GKE upgrades (RAPID, REGULAR, STABLE)"
   type        = string
-  default     = "2024-01-01T00:00:00Z"
+  default     = "REGULAR"
+  validation {
+    condition     = contains(["RAPID", "REGULAR", "STABLE", "UNSPECIFIED"], var.release_channel)
+    error_message = "Release channel must be one of: RAPID, REGULAR, STABLE, UNSPECIFIED."
+  }
 }
 
-variable "maintenance_duration" {
-  description = "Duration of maintenance window"
-  type        = string
-  default     = "4h"
+variable "deletion_protection" {
+  description = "Whether to enable deletion protection for the cluster"
+  type        = bool
+  default     = false
 }
 
 variable "labels" {

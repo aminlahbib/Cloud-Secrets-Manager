@@ -49,7 +49,7 @@ resource "google_sql_database_instance" "main" {
     ip_configuration {
       ipv4_enabled    = var.network_id == null ? true : false
       private_network = var.network_id
-      require_ssl     = true
+      ssl_mode        = "ENCRYPTED_ONLY"
 
       # Allow connections from Cloud Shell for initial setup
       dynamic "authorized_networks" {
