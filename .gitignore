@@ -99,6 +99,7 @@ secrets/
 service-account.json
 **/service-account.json
 apps/backend/secret-service/src/main/resources/service-account.json
+github-actions-key.json
 
 # Files with sensitive credentials (generated from environment variables)
 testing/postman/firebase-config.js
