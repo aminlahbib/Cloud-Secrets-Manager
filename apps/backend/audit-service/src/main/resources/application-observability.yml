@@ -1,0 +1,80 @@
+# Observability Configuration
+# This file contains settings for metrics, tracing, and monitoring
+
+spring:
+  application:
+    name: audit-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,env,loggers,httptrace
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:dev}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 100ms,200ms,500ms,1s,2s,5s
+  tracing:
+    enabled: true
+    sampling:
+      probability: 1.0  # Sample 100% in staging, reduce in production
+  otlp:
+    tracing:
+      endpoint: http://tempo.tracing.svc.cluster.local:4318/v1/traces
+      protocol: http/protobuf
+      compression: gzip
+    metrics:
+      endpoint: http://tempo.tracing.svc.cluster.local:4318/v1/metrics
+      protocol: http/protobuf
+
+# OpenTelemetry Resource Attributes
+otel:
+  resource:
+    attributes:
+      service.name: ${spring.application.name}
+      service.namespace: cloud-secrets-manager
+      service.version: ${APP_VERSION:1.0.0}
+      deployment.environment: ${ENVIRONMENT:dev}
+  instrumentation:
+    logback:
+      enabled: true
+    spring-webmvc:
+      enabled: true
+    jdbc:
+      enabled: true
+    hikaricp:
+      enabled: true
+
+# Logging for observability
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    io.opentelemetry: INFO
+    io.micrometer: INFO
+
+# Custom metrics configuration
+app:
+  metrics:
+    custom:
+      enabled: true
+      audit-events: true
+      queue-tracking: true
+      storage-tracking: true
+

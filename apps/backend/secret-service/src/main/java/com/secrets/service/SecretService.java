@@ -18,6 +18,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.secrets.service.rotation.SecretRotationStrategy;
+import java.util.List;
+
 @Service
 public class SecretService {
 
@@ -30,11 +33,13 @@ public class SecretService {
     private final SecretVersionRepository secretVersionRepository;
     private final PermissionEvaluator permissionEvaluator;
     private final SharedSecretRepository sharedSecretRepository;
+    private final List<SecretRotationStrategy> rotationStrategies;
 
     public SecretService(SecretRepository secretRepository, EncryptionService encryptionService,
                         AuditClient auditClient, SecretVersionService secretVersionService,
                         SecretVersionRepository secretVersionRepository, PermissionEvaluator permissionEvaluator,
-                        SharedSecretRepository sharedSecretRepository) {
+                        SharedSecretRepository sharedSecretRepository,
+                        List<SecretRotationStrategy> rotationStrategies) {
         this.secretRepository = secretRepository;
         this.encryptionService = encryptionService;
         this.auditClient = auditClient;
@@ -42,6 +47,7 @@ public class SecretService {
         this.secretVersionRepository = secretVersionRepository;
         this.permissionEvaluator = permissionEvaluator;
         this.sharedSecretRepository = sharedSecretRepository;
+        this.rotationStrategies = rotationStrategies;
     }
 
     @Transactional
@@ -260,11 +266,12 @@ public class SecretService {
         Secret secret = secretRepository.findBySecretKey(key)
             .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + key + "' not found"));
         
-        // Generate a new random value (in a real scenario, this might call an external service)
-        // For now, we'll re-encrypt the current value as a placeholder
-        // In production, you might want to integrate with a secret generation service
+        // Generate a new random value using the appropriate strategy
+        // For now, we default to "DEFAULT" strategy
         String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
-        String newValue = generateNewSecretValue(currentValue);
+        
+        SecretRotationStrategy strategy = getRotationStrategy("DEFAULT");
+        String newValue = strategy.rotate(currentValue);
         
         String encryptedValue = encryptionService.encrypt(newValue);
         secret.setEncryptedValue(encryptedValue);
@@ -272,7 +279,7 @@ public class SecretService {
         Secret rotatedSecret = secretRepository.save(secret);
         
         // Create new version for rotation
-        secretVersionService.createVersion(rotatedSecret, rotatedBy, "Secret rotated");
+        secretVersionService.createVersion(rotatedSecret, rotatedBy, "Secret rotated using strategy: " + strategy.getStrategyType());
         
         // Async audit logging
         auditClient.logEvent("ROTATE", key, rotatedBy);
@@ -281,14 +288,11 @@ public class SecretService {
         return rotatedSecret;
     }
     
-    /**
-     * Generate a new secret value
-     * In production, this should integrate with a proper secret generation service
-     */
-    private String generateNewSecretValue(String currentValue) {
-        // Simple implementation: append timestamp to make it unique
-        // In production, use a proper secret generation library or service
-        return currentValue + "-rotated-" + System.currentTimeMillis();
+    private SecretRotationStrategy getRotationStrategy(String strategyType) {
+        return rotationStrategies.stream()
+            .filter(s -> s.getStrategyType().equalsIgnoreCase(strategyType))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Unknown rotation strategy: " + strategyType));
     }
 
     /**

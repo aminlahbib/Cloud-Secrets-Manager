@@ -1,0 +1,67 @@
+# Code Owners for Cloud Secrets Manager
+#
+# These owners will be requested for review when someone opens a pull request
+# that modifies code in a specified location.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+# Unless a later match takes precedence, these users will be requested for review
+* @your-github-username
+
+# Infrastructure and DevOps
+/infrastructure/ @devops-team @infrastructure-team
+/deployment/ @devops-team
+/.github/workflows/ @devops-team
+/scripts/ @devops-team
+/monitoring/ @devops-team
+
+# Terraform Configuration
+/infrastructure/terraform/ @devops-team @platform-team
+
+# Kubernetes and Helm
+/infrastructure/kubernetes/ @devops-team @platform-team
+/infrastructure/helm/ @devops-team @platform-team
+
+# Backend Services
+/apps/backend/ @backend-team @security-team
+
+# Secret Service (requires security review)
+/apps/backend/secret-service/ @backend-team @security-team
+
+# Audit Service (requires security review)
+/apps/backend/audit-service/ @backend-team @security-team
+
+# Frontend Application
+/apps/frontend/ @frontend-team
+
+# Security
+/security/ @security-team
+/security/policies/ @security-team @compliance-team
+
+# Database Changes
+/infrastructure/database/ @backend-team @dba-team
+
+# Documentation
+/docs/ @documentation-team
+/README.md @documentation-team
+
+# CI/CD Configuration (requires DevOps approval)
+/.github/workflows/ci-cd.yml @devops-team @platform-team
+
+# Docker Configuration
+Dockerfile @devops-team
+docker-compose.yml @devops-team
+
+# Configuration Files
+*.yaml @devops-team
+*.yml @devops-team
+*.json @devops-team
+
+# Critical files require multiple reviewers
+/infrastructure/terraform/modules/ @devops-team @platform-team @security-team
+/infrastructure/database/migrations/ @backend-team @dba-team
+
+# Test Configuration
+/testing/ @qa-team @backend-team
+

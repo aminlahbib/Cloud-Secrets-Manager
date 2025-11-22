@@ -3,6 +3,7 @@ package com.secrets.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -24,6 +25,7 @@ public class AuditClient {
         this.webClientBuilder = webClientBuilder;
     }
 
+    @Async
     public void logEvent(String action, String secretKey, String username) {
         try {
             WebClient webClient = webClientBuilder
@@ -36,6 +38,12 @@ public class AuditClient {
                 "username", username
             );
 
+            // Since we are in an @Async method, we can block or subscribe. 
+            // Using block() here to ensure execution within this async thread context,
+            // or we can just use subscribe() as before.
+            // However, since the goal is to decouple the calling thread, the @Async handles the decoupling.
+            // We'll use subscribe() to keep it non-blocking IO even within the async thread.
+            
             webClient.post()
                 .uri("/api/audit/log")
                 .bodyValue(auditEvent)
@@ -45,6 +53,7 @@ public class AuditClient {
                 .doOnError(error -> log.error("Failed to send audit event: {}", error.getMessage()))
                 .onErrorResume(error -> Mono.empty())
                 .subscribe();
+                
         } catch (Exception e) {
             log.error("Error sending audit event: {}", e.getMessage());
         }

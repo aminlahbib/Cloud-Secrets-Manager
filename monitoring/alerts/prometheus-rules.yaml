@@ -1,0 +1,316 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cloud-secrets-manager-alerts
+  namespace: monitoring
+  labels:
+    release: prometheus
+    app: cloud-secrets-manager
+spec:
+  groups:
+  # ============================================================================
+  # Service Availability Alerts
+  # ============================================================================
+  - name: service-availability
+    interval: 30s
+    rules:
+    - alert: ServiceDown
+      expr: up{job=~"secret-service|audit-service"} == 0
+      for: 1m
+      labels:
+        severity: critical
+        component: "{{ $labels.job }}"
+        slo: availability
+      annotations:
+        summary: "Service {{ $labels.job }} is down"
+        description: "Service {{ $labels.job }} in namespace {{ $labels.namespace }} has been down for more than 1 minute."
+        runbook_url: "https://docs.yourdomain.com/runbooks/service-down"
+
+    - alert: HighPodRestartRate
+      expr: rate(kube_pod_container_status_restarts_total{namespace="cloud-secrets-manager"}[15m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+        component: kubernetes
+      annotations:
+        summary: "High pod restart rate detected"
+        description: "Pod {{ $labels.pod }} is restarting frequently ({{ $value }} restarts/sec)"
+        runbook_url: "https://docs.yourdomain.com/runbooks/pod-restarts"
+
+  # ============================================================================
+  # SLO-Based Alerts - Error Rate
+  # SLO: 99% success rate for all operations
+  # Error budget: 1% (43.2 minutes of errors per month)
+  # ============================================================================
+  - name: slo-error-rate
+    interval: 30s
+    rules:
+    - alert: HighErrorRate
+      expr: |
+        (
+          sum(rate(http_server_requests_seconds_count{status=~"5..",job=~"secret-service|audit-service"}[5m]))
+          /
+          sum(rate(http_server_requests_seconds_count{job=~"secret-service|audit-service"}[5m]))
+        ) > 0.01
+      for: 5m
+      labels:
+        severity: critical
+        slo: error_rate
+        burn_rate: fast
+      annotations:
+        summary: "High error rate - SLO violation"
+        description: "Error rate is {{ $value | humanizePercentage }}, exceeding 1% SLO threshold (99% success rate SLO)"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-error-rate"
+
+    - alert: ErrorBudgetBurn
+      expr: |
+        (
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[1h]))
+          /
+          sum(rate(http_server_requests_seconds_count[1h]))
+        ) > 0.005
+      for: 15m
+      labels:
+        severity: warning
+        slo: error_rate
+        burn_rate: slow
+      annotations:
+        summary: "Error budget burning faster than expected"
+        description: "Error rate is {{ $value | humanizePercentage }} over 1h, burning through error budget"
+        runbook_url: "https://docs.yourdomain.com/runbooks/error-budget"
+
+  # ============================================================================
+  # SLO-Based Alerts - Latency
+  # SLO: 95% of requests under 500ms, 99% under 1s
+  # ============================================================================
+  - name: slo-latency
+    interval: 30s
+    rules:
+    - alert: HighLatencyP95
+      expr: |
+        histogram_quantile(0.95,
+          sum(rate(http_server_requests_seconds_bucket{job=~"secret-service|audit-service"}[5m])) by (le, job)
+        ) > 0.5
+      for: 10m
+      labels:
+        severity: warning
+        slo: latency_p95
+      annotations:
+        summary: "High P95 latency - SLO violation"
+        description: "P95 latency for {{ $labels.job }} is {{ $value }}s, exceeding 500ms SLO"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-latency"
+
+    - alert: HighLatencyP99
+      expr: |
+        histogram_quantile(0.99,
+          sum(rate(http_server_requests_seconds_bucket{job=~"secret-service|audit-service"}[5m])) by (le, job)
+        ) > 1.0
+      for: 10m
+      labels:
+        severity: critical
+        slo: latency_p99
+      annotations:
+        summary: "High P99 latency - Critical SLO violation"
+        description: "P99 latency for {{ $labels.job }} is {{ $value }}s, exceeding 1s SLO"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-latency"
+
+  # ============================================================================
+  # Secret-Specific Alerts
+  # ============================================================================
+  - name: secret-operations
+    interval: 30s
+    rules:
+    - alert: SecretRotationFailed
+      expr: increase(secret_rotation_failed_total[10m]) > 0
+      for: 1m
+      labels:
+        severity: warning
+        component: secret-service
+      annotations:
+        summary: "Secret rotation failures detected"
+        description: "{{ $value }} secret rotation failures in the last 10 minutes"
+        runbook_url: "https://docs.yourdomain.com/runbooks/rotation-failure"
+
+    - alert: SecretEncryptionFailure
+      expr: increase(secret_encryption_errors_total[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: secret-service
+      annotations:
+        summary: "Secret encryption failures detected"
+        description: "{{ $value }} encryption failures detected - immediate investigation required"
+        runbook_url: "https://docs.yourdomain.com/runbooks/encryption-failure"
+
+    - alert: HighSecretAccessRate
+      expr: rate(secret_access_total[5m]) > 100
+      for: 10m
+      labels:
+        severity: info
+        component: secret-service
+      annotations:
+        summary: "Unusually high secret access rate"
+        description: "Secret access rate is {{ $value }}/sec, investigate for potential issues or attacks"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-access-rate"
+
+  # ============================================================================
+  # Database Alerts
+  # ============================================================================
+  - name: database
+    interval: 30s
+    rules:
+    - alert: HighDatabaseConnectionUsage
+      expr: |
+        (
+          hikaricp_connections_active{job=~"secret-service|audit-service"}
+          /
+          hikaricp_connections_max{job=~"secret-service|audit-service"}
+        ) > 0.8
+      for: 5m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "High database connection pool usage"
+        description: "Database connection pool for {{ $labels.job }} is {{ $value | humanizePercentage }} full"
+        runbook_url: "https://docs.yourdomain.com/runbooks/db-connections"
+
+    - alert: DatabaseConnectionPoolExhausted
+      expr: hikaricp_connections_pending{job=~"secret-service|audit-service"} > 0
+      for: 2m
+      labels:
+        severity: critical
+        component: database
+      annotations:
+        summary: "Database connection pool exhausted"
+        description: "{{ $labels.job }} has {{ $value }} pending connection requests"
+        runbook_url: "https://docs.yourdomain.com/runbooks/db-pool-exhausted"
+
+    - alert: SlowDatabaseQueries
+      expr: |
+        histogram_quantile(0.95,
+          sum(rate(hikaricp_connections_usage_seconds_bucket[5m])) by (le, job)
+        ) > 1.0
+      for: 10m
+      labels:
+        severity: warning
+        component: database
+      annotations:
+        summary: "Slow database queries detected"
+        description: "P95 database query time for {{ $labels.job }} is {{ $value }}s"
+        runbook_url: "https://docs.yourdomain.com/runbooks/slow-queries"
+
+  # ============================================================================
+  # Resource Utilization Alerts
+  # ============================================================================
+  - name: resource-utilization
+    interval: 30s
+    rules:
+    - alert: HighMemoryUsage
+      expr: |
+        (
+          container_memory_working_set_bytes{namespace="cloud-secrets-manager", container=~"secret-service|audit-service"}
+          /
+          container_spec_memory_limit_bytes{namespace="cloud-secrets-manager", container=~"secret-service|audit-service"}
+        ) > 0.85
+      for: 10m
+      labels:
+        severity: warning
+        component: "{{ $labels.container }}"
+      annotations:
+        summary: "High memory usage"
+        description: "{{ $labels.container }} memory usage is {{ $value | humanizePercentage }}"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-memory"
+
+    - alert: HighCPUUsage
+      expr: |
+        (
+          rate(container_cpu_usage_seconds_total{namespace="cloud-secrets-manager", container=~"secret-service|audit-service"}[5m])
+          /
+          container_spec_cpu_quota{namespace="cloud-secrets-manager", container=~"secret-service|audit-service"}
+        ) * 100000 > 85
+      for: 15m
+      labels:
+        severity: warning
+        component: "{{ $labels.container }}"
+      annotations:
+        summary: "High CPU usage"
+        description: "{{ $labels.container }} CPU usage is {{ $value }}%"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-cpu"
+
+    - alert: PodNearOOMKilled
+      expr: |
+        (
+          container_memory_working_set_bytes{namespace="cloud-secrets-manager"}
+          /
+          container_spec_memory_limit_bytes{namespace="cloud-secrets-manager"}
+        ) > 0.95
+      for: 5m
+      labels:
+        severity: critical
+        component: kubernetes
+      annotations:
+        summary: "Pod near OOM kill threshold"
+        description: "Pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+        runbook_url: "https://docs.yourdomain.com/runbooks/oom-risk"
+
+  # ============================================================================
+  # Audit Service Specific Alerts
+  # ============================================================================
+  - name: audit-service
+    interval: 30s
+    rules:
+    - alert: AuditEventProcessingLag
+      expr: audit_event_queue_size{job="audit-service"} > 1000
+      for: 5m
+      labels:
+        severity: warning
+        component: audit-service
+      annotations:
+        summary: "Audit event processing lag detected"
+        description: "Audit event queue has {{ $value }} pending events"
+        runbook_url: "https://docs.yourdomain.com/runbooks/audit-lag"
+
+    - alert: AuditStorageFailure
+      expr: increase(audit_storage_errors_total[5m]) > 0
+      for: 1m
+      labels:
+        severity: critical
+        component: audit-service
+      annotations:
+        summary: "Audit storage failures detected"
+        description: "{{ $value }} audit storage failures in last 5 minutes - compliance risk!"
+        runbook_url: "https://docs.yourdomain.com/runbooks/audit-storage-failure"
+
+  # ============================================================================
+  # JVM and Application Health
+  # ============================================================================
+  - name: jvm-health
+    interval: 30s
+    rules:
+    - alert: HighGCTime
+      expr: |
+        (
+          rate(jvm_gc_pause_seconds_sum[5m])
+          /
+          rate(jvm_gc_pause_seconds_count[5m])
+        ) > 0.1
+      for: 10m
+      labels:
+        severity: warning
+        component: jvm
+      annotations:
+        summary: "High GC time detected"
+        description: "Average GC pause for {{ $labels.job }} is {{ $value }}s"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-gc"
+
+    - alert: HighThreadCount
+      expr: jvm_threads_live{job=~"secret-service|audit-service"} > 200
+      for: 10m
+      labels:
+        severity: warning
+        component: jvm
+      annotations:
+        summary: "High thread count"
+        description: "{{ $labels.job }} has {{ $value }} live threads"
+        runbook_url: "https://docs.yourdomain.com/runbooks/high-threads"

@@ -289,7 +289,7 @@ docker-compose -f infrastructure/docker/docker-compose.yml down -v --rmi all
 ## Next Steps
 
 - **Production Deployment**: See [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
-- **Infrastructure Setup**: See [Terraform Guide](./TERRAFORM_GUIDE.md)
+- **Infrastructure Setup**: See [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
 - **Operations**: See [Operations Guide](./OPERATIONS_GUIDE.md)
 
 ---
