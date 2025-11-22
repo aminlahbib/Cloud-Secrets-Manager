@@ -104,6 +104,13 @@ ingress:
     # Security headers
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
     # CORS (if needed)
     # nginx.ingress.kubernetes.io/enable-cors: "true"
     # nginx.ingress.kubernetes.io/cors-allow-origin: "https://yourdomain.com"

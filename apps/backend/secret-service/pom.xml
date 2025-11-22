@@ -154,6 +154,12 @@
             <scope>test</scope>
         </dependency>
         
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        
         <!-- H2 database for simple tests that don't require Docker -->
         <dependency>
             <groupId>com.h2database</groupId>
