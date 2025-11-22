@@ -13,6 +13,7 @@ resource "google_project_service" "required_apis" {
     "sqladmin.googleapis.com",
     "secretmanager.googleapis.com",
     "iam.googleapis.com",
+    "billingbudgets.googleapis.com",
   ])
 
   project            = var.project_id
@@ -55,7 +56,7 @@ module "postgresql" {
   backup_enabled                 = true
   point_in_time_recovery_enabled = false
 
-  databases = ["secrets_db", "audit_db"]
+  databases = ["secrets", "audit"]
 
   depends_on = [google_project_service.required_apis]
 }
@@ -105,6 +106,7 @@ module "iam" {
         "roles/cloudsql.client",
         "roles/secretmanager.secretAccessor",
         "roles/artifactregistry.reader",
+        "roles/cloudsql.instanceUser", # Needed for IAM DB authentication if enabled
       ]
     }
     "audit-service-dev" = {
@@ -113,6 +115,7 @@ module "iam" {
       roles = [
         "roles/cloudsql.client",
         "roles/logging.logWriter",
+        "roles/cloudsql.instanceUser", # Needed for IAM DB authentication if enabled
       ]
     }
     "external-secrets-sa" = {
@@ -194,4 +197,17 @@ resource "kubernetes_manifest" "cluster_secret_store" {
   }
 
   depends_on = [helm_release.external_secrets]
+}
+
+# Billing Budget
+module "billing_budget" {
+  source = "../../modules/billing-budget"
+
+  billing_account_id = var.billing_account_id
+  project_id         = var.project_id
+  display_name       = "budget-${local.environment}"
+  amount             = var.budget_amount
+  
+  # Optional: Add notification channels here if needed
+  # notification_channels = []
 }

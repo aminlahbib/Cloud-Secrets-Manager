@@ -1,3 +1,4 @@
+{{- if .Values.postgres.enabled -}}
 # Secrets DB
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -75,7 +76,7 @@ spec:
     app: secrets-db
   ports:
     - port: 5432
-      targetPort: 5432
+    targetPort: 5432
   type: ClusterIP
 ---
 # Audit DB
@@ -155,6 +156,6 @@ spec:
     app: audit-db
   ports:
     - port: 5432
-      targetPort: 5432
+    targetPort: 5432
   type: ClusterIP
-
+{{- end -}}

@@ -5,26 +5,26 @@ image:
   pullPolicy: IfNotPresent
 
 secretService:
-  replicaCount: 2
+  replicaCount: 1
   port: 8080
   resources:
     requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
       memory: "512Mi"
       cpu: "500m"
-    limits:
-      memory: "1Gi"
-      cpu: "1000m"
 
 auditService:
-  replicaCount: 2
+  replicaCount: 1
   port: 8081
   resources:
     requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
       memory: "256Mi"
       cpu: "250m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
 
 # Secrets Configuration
 # Set to false if using External Secrets Operator (recommended for production)
@@ -36,16 +36,30 @@ jwtSecret: "ignored-if-create-secrets-is-false"
 aesKey: "ignored-if-create-secrets-is-false"
 
 postgres:
+  enabled: false # Disable local databases (using Cloud SQL)
   secretsDb:
-    user: secret_user
-    # password: ignored-if-create-secrets-is-false
-    db: secrets
+    user: secrets_user  # Matches Terraform: ${db_name}_user
+    # password: ignored-if-create-secrets-is-false (managed by ESO from GCP Secret Manager)
+    db: secrets  # Database name in Cloud SQL
     storage: 10Gi
   auditDb:
-    user: audit_user
-    # password: ignored-if-create-secrets-is-false
-    db: audit
+    user: audit_user  # Matches Terraform: ${db_name}_user
+    # password: ignored-if-create-secrets-is-false (managed by ESO from GCP Secret Manager)
+    db: audit  # Database name in Cloud SQL
     storage: 10Gi
+
+# Cloud SQL Configuration
+cloudSql:
+  enabled: true
+  connectionName: "cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
+  image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
 
 # Google Cloud Identity Platform Configuration
 googleIdentity:

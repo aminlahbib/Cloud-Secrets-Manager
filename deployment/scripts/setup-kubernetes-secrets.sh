@@ -1,11 +1,20 @@
 #!/bin/bash
 # Setup script for Kubernetes secrets
-# This script helps you set up all required secrets for deployment
+# 
+# DEPRECATED: This script creates static Kubernetes secrets.
+# For production deployments, use External Secrets Operator (ESO) instead.
+# ESO automatically syncs secrets from Google Secret Manager.
+# See: docs/deployment/EXTERNAL_SECRETS_SETUP.md
+#
+# This script is kept for local development or legacy deployments only.
 
 set -e
 
-echo "🔐 Kubernetes Secrets Setup Script"
-echo "==================================="
+echo "🔐 Kubernetes Secrets Setup Script (DEPRECATED - Use ESO for production)"
+echo "========================================================================="
+echo ""
+echo "⚠️  WARNING: This script creates static secrets."
+echo "   For production, use External Secrets Operator instead."
 echo ""
 
 # Colors
