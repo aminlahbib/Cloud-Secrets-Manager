@@ -3,7 +3,8 @@ package com.secrets.security;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,8 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Slf4j
 public class GoogleIdentityTokenValidator {
+
+    private static final Logger log = LoggerFactory.getLogger(GoogleIdentityTokenValidator.class);
 
     @Autowired(required = false)
     private FirebaseAuth firebaseAuth;

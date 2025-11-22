@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -34,16 +34,25 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/secrets")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Secrets", description = "Secret management operations")
 @SecurityRequirement(name = "bearerAuth")
 public class SecretController {
+
+    private static final Logger log = LoggerFactory.getLogger(SecretController.class);
 
     private final SecretService secretService;
     private final SecretVersionService secretVersionService;
     private final com.secrets.service.SecretExpirationService secretExpirationService;
     private final com.secrets.security.PermissionEvaluator permissionEvaluator;
+
+    public SecretController(SecretService secretService, SecretVersionService secretVersionService,
+                           com.secrets.service.SecretExpirationService secretExpirationService,
+                           com.secrets.security.PermissionEvaluator permissionEvaluator) {
+        this.secretService = secretService;
+        this.secretVersionService = secretVersionService;
+        this.secretExpirationService = secretExpirationService;
+        this.permissionEvaluator = permissionEvaluator;
+    }
 
     @PostMapping
     @Operation(summary = "Create a new secret", description = "Creates a new encrypted secret")

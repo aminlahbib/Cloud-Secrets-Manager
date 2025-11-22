@@ -1,7 +1,7 @@
 package com.secrets.client;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -11,14 +11,18 @@ import java.time.Duration;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class AuditClient {
+
+    private static final Logger log = LoggerFactory.getLogger(AuditClient.class);
 
     private final WebClient.Builder webClientBuilder;
 
     @Value("${audit.service.url}")
     private String auditServiceUrl;
+
+    public AuditClient(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
 
     public void logEvent(String action, String secretKey, String username) {
         try {

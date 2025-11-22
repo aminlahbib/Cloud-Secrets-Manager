@@ -1,6 +1,7 @@
 package com.secrets.service;
 
 import com.secrets.client.AuditClient;
+import com.secrets.dto.BulkSecretResponse;
 import com.secrets.entity.Secret;
 import com.secrets.entity.SharedSecret;
 import com.secrets.exception.SecretAlreadyExistsException;
@@ -10,17 +11,17 @@ import com.secrets.repository.SecretVersionRepository;
 import com.secrets.repository.SharedSecretRepository;
 import com.secrets.security.Permission;
 import com.secrets.security.PermissionEvaluator;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
-@Slf4j
 public class SecretService {
+
+    private static final Logger log = LoggerFactory.getLogger(SecretService.class);
 
     private final SecretRepository secretRepository;
     private final EncryptionService encryptionService;
@@ -29,6 +30,19 @@ public class SecretService {
     private final SecretVersionRepository secretVersionRepository;
     private final PermissionEvaluator permissionEvaluator;
     private final SharedSecretRepository sharedSecretRepository;
+
+    public SecretService(SecretRepository secretRepository, EncryptionService encryptionService,
+                        AuditClient auditClient, SecretVersionService secretVersionService,
+                        SecretVersionRepository secretVersionRepository, PermissionEvaluator permissionEvaluator,
+                        SharedSecretRepository sharedSecretRepository) {
+        this.secretRepository = secretRepository;
+        this.encryptionService = encryptionService;
+        this.auditClient = auditClient;
+        this.secretVersionService = secretVersionService;
+        this.secretVersionRepository = secretVersionRepository;
+        this.permissionEvaluator = permissionEvaluator;
+        this.sharedSecretRepository = sharedSecretRepository;
+    }
 
     @Transactional
     public Secret createSecret(String key, String value, String createdBy, Authentication authentication) {
@@ -427,16 +441,16 @@ public class SecretService {
                 );
                 
                 String decryptedValue = decryptSecretValue(secret);
-                responseBuilder.created.add(com.secrets.dto.SecretResponse.from(secret, decryptedValue));
-                responseBuilder.successful++;
+                responseBuilder.getCreated().add(com.secrets.dto.SecretResponse.from(secret, decryptedValue));
+                responseBuilder.incrementSuccessful();
             } catch (Exception e) {
                 log.warn("Failed to create secret '{}': {}", request.getKey(), e.getMessage());
-                responseBuilder.errors.add(BulkSecretResponse.BulkError.builder()
+                responseBuilder.getErrors().add(BulkSecretResponse.BulkError.builder()
                     .secretKey(request.getKey())
                     .error(e.getClass().getSimpleName())
                     .message(e.getMessage())
                     .build());
-                responseBuilder.failed++;
+                responseBuilder.incrementFailed();
             }
         }
         
@@ -475,16 +489,16 @@ public class SecretService {
                 );
                 
                 String decryptedValue = decryptSecretValue(secret);
-                responseBuilder.created.add(com.secrets.dto.SecretResponse.from(secret, decryptedValue));
-                responseBuilder.successful++;
+                responseBuilder.getCreated().add(com.secrets.dto.SecretResponse.from(secret, decryptedValue));
+                responseBuilder.incrementSuccessful();
             } catch (Exception e) {
                 log.warn("Failed to update secret '{}': {}", request.getKey(), e.getMessage());
-                responseBuilder.errors.add(BulkSecretResponse.BulkError.builder()
+                responseBuilder.getErrors().add(BulkSecretResponse.BulkError.builder()
                     .secretKey(request.getKey())
                     .error(e.getClass().getSimpleName())
                     .message(e.getMessage())
                     .build());
-                responseBuilder.failed++;
+                responseBuilder.incrementFailed();
             }
         }
         
@@ -516,15 +530,15 @@ public class SecretService {
         for (String key : keys) {
             try {
                 deleteSecret(key, deletedBy, authentication);
-                responseBuilder.successful++;
+                responseBuilder.incrementSuccessful();
             } catch (Exception e) {
                 log.warn("Failed to delete secret '{}': {}", key, e.getMessage());
-                responseBuilder.errors.add(BulkSecretResponse.BulkError.builder()
+                responseBuilder.getErrors().add(BulkSecretResponse.BulkError.builder()
                     .secretKey(key)
                     .error(e.getClass().getSimpleName())
                     .message(e.getMessage())
                     .build());
-                responseBuilder.failed++;
+                responseBuilder.incrementFailed();
             }
         }
         
