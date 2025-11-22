@@ -115,6 +115,7 @@ module "iam" {
       roles = [
         "roles/cloudsql.client",
         "roles/logging.logWriter",
+        "roles/artifactregistry.reader", # Needed to pull images from Artifact Registry
         "roles/cloudsql.instanceUser", # Needed for IAM DB authentication if enabled
       ]
     }
