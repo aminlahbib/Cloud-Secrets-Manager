@@ -199,9 +199,10 @@ resource "kubernetes_manifest" "cluster_secret_store" {
   depends_on = [helm_release.external_secrets]
 }
 
-# Billing Budget
+# Billing Budget (optional - only create if billing_account_id is provided)
 module "billing_budget" {
   source = "../../modules/billing-budget"
+  count  = var.billing_account_id != "" ? 1 : 0
 
   billing_account_id = var.billing_account_id
   project_id         = var.project_id
