@@ -28,28 +28,42 @@ RUN echo "=== Verifying source code ===" && \
 
 # Build the application
 RUN echo "=== Starting Maven build ===" && \
-    ./mvnw clean package -DskipTests -B 2>&1 | tee /tmp/maven-build.log || (echo "❌ Maven build failed!" && cat /tmp/maven-build.log | tail -50 && exit 1)
+    ./mvnw clean package -DskipTests -B 2>&1 | tee /tmp/maven-build.log || (echo "❌ Maven build failed!" && echo "=== Last 100 lines of build log ===" && tail -100 /tmp/maven-build.log && exit 1)
 
-# Verify compilation succeeded (non-fatal, just for diagnostics)
+# Check Maven build log for errors
+RUN echo "=== Checking Maven build log for errors ===" && \
+    if grep -i "error\|failed\|exception" /tmp/maven-build.log | tail -20; then \
+        echo "⚠️ Warnings/errors found in build log (shown above)"; \
+    else \
+        echo "✅ No obvious errors in build log"; \
+    fi && \
+    echo "" && \
+    echo "=== Build summary ===" && \
+    tail -30 /tmp/maven-build.log
+
+# Verify compilation succeeded
 RUN echo "=== Verifying compilation ===" && \
     echo "Checking target directory structure:" && \
-    (ls -la /app/target/ 2>/dev/null || echo "target directory doesn't exist") && \
+    ls -la /app/target/ 2>/dev/null || (echo "❌ target directory doesn't exist!" && exit 1) && \
     echo "" && \
     echo "Checking for classes directory:" && \
-    (find /app/target -type d -name "classes" 2>/dev/null || echo "No classes directory found") && \
-    echo "" && \
-    if [ -d /app/target/classes/com/secrets ]; then \
-        echo "✅ Classes directory exists at expected location" && \
-        ls -la /app/target/classes/com/secrets/ | head -10; \
+    if [ -d /app/target/classes ]; then \
+        echo "✅ Classes directory exists" && \
+        echo "Checking for main class:" && \
+        if [ -f /app/target/classes/com/secrets/SecretServiceApplication.class ]; then \
+            echo "✅ Main class compiled successfully" && \
+            ls -lh /app/target/classes/com/secrets/SecretServiceApplication.class; \
+        else \
+            echo "❌ Main class NOT found in classes directory!" && \
+            echo "Files in com/secrets:" && \
+            find /app/target/classes/com/secrets -type f 2>/dev/null | head -20 || echo "com/secrets directory doesn't exist" && \
+            exit 1; \
+        fi; \
     else \
-        echo "⚠️ Classes directory not at expected location, searching..." && \
-        (find /app/target -name "SecretServiceApplication.class" 2>/dev/null || echo "Main class not found anywhere") && \
-        echo "" && \
-        echo "Full target directory tree:" && \
-        (find /app/target -type f -name "*.class" | head -20 || echo "No .class files found") && \
-        echo "" && \
-        echo "Checking if JAR was created anyway:" && \
-        (find /app/target -name "*.jar" -type f || echo "No JAR files found"); \
+        echo "❌ Classes directory not found!" && \
+        echo "Target directory contents:" && \
+        find /app/target -type f | head -20 && \
+        exit 1; \
     fi
 
 # Verify JAR was created and list all JARs for debugging
@@ -90,8 +104,11 @@ RUN if [ -f /app/target/secret-service-1.0.0.jar ]; then \
             echo "✅ Main class found in JAR"; \
         else \
             echo "❌ ERROR: Main class NOT found in JAR!" && \
-            echo "Full JAR contents:" && \
-            jar tf /app/target/app.jar && \
+            echo "Showing all entries in JAR (may be truncated):" && \
+            jar tf /app/target/app.jar | head -200 && \
+            echo "" && \
+            echo "Total entries in JAR:" && \
+            jar tf /app/target/app.jar | wc -l && \
             exit 1; \
         fi; \
     else \
