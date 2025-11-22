@@ -26,8 +26,8 @@ resource "google_container_cluster" "primary" {
 
   # IP allocation for VPC-native cluster
   ip_allocation_policy {
-    cluster_ipv4_cidr_block  = ""  # GKE will auto-allocate
-    services_ipv4_cidr_block = ""  # GKE will auto-allocate
+    cluster_ipv4_cidr_block  = "" # GKE will auto-allocate
+    services_ipv4_cidr_block = "" # GKE will auto-allocate
   }
 
   # Private cluster configuration
@@ -119,7 +119,7 @@ resource "google_container_cluster" "primary" {
 
   lifecycle {
     ignore_changes = [
-      node_pool,  # Managed separately
+      node_pool, # Managed separately
     ]
   }
 }

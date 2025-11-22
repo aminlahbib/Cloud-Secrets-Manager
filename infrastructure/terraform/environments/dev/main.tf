@@ -29,8 +29,8 @@ module "artifact_registry" {
   repository_id = "docker-images"
   environment   = local.environment
 
-  cleanup_keep_count      = 5
-  cleanup_policy_dry_run  = false
+  cleanup_keep_count     = 5
+  cleanup_policy_dry_run = false
 
   depends_on = [google_project_service.required_apis]
 }
@@ -45,14 +45,14 @@ module "postgresql" {
   instance_name = "secrets-manager-db-dev"
 
   # Dev sizing (small and cost-effective)
-  tier                      = "db-g1-small"
-  disk_size                 = 20
-  disk_autoresize_limit     = 50
+  tier                  = "db-g1-small"
+  disk_size             = 20
+  disk_autoresize_limit = 50
 
   # Dev settings
-  high_availability         = false
-  deletion_protection       = false
-  backup_enabled            = true
+  high_availability              = false
+  deletion_protection            = false
+  backup_enabled                 = true
   point_in_time_recovery_enabled = false
 
   databases = ["secrets_db", "audit_db"]
@@ -70,16 +70,16 @@ module "gke" {
   cluster_name = "cloud-secrets-cluster-dev"
 
   # Dev sizing (minimal resources)
-  node_count      = 1
-  min_node_count  = 1
-  max_node_count  = 3
-  machine_type    = "e2-medium"
-  disk_size_gb    = 30
+  node_count     = 1
+  min_node_count = 1
+  max_node_count = 3
+  machine_type   = "e2-medium"
+  disk_size_gb   = 30
 
   # Networking
-  enable_private_nodes    = false  # Public for easier development
-  enable_private_endpoint = false
-  enable_network_policy   = true
+  enable_private_nodes     = false # Public for easier development
+  enable_private_endpoint  = false
+  enable_network_policy    = true
   enable_workload_identity = true
 
   depends_on = [google_project_service.required_apis]

@@ -25,14 +25,14 @@ output "database_names" {
 
 output "database_users" {
   description = "Database usernames (passwords stored in Secret Manager)"
-  value       = {
+  value = {
     for db_name, user in google_sql_user.db_users : db_name => user.name
   }
 }
 
 output "password_secret_ids" {
   description = "Secret Manager secret IDs containing database passwords"
-  value       = {
+  value = {
     for db_name, secret in google_secret_manager_secret.db_passwords : db_name => secret.id
   }
   sensitive = true
@@ -41,7 +41,7 @@ output "password_secret_ids" {
 output "connection_strings" {
   description = "JDBC connection strings for each database"
   value = {
-    for db_name in var.databases : db_name => 
-      "jdbc:postgresql://${google_sql_database_instance.main.ip_address[0].ip_address}:5432/${db_name}"
+    for db_name in var.databases : db_name =>
+    "jdbc:postgresql://${google_sql_database_instance.main.ip_address[0].ip_address}:5432/${db_name}"
   }
 }
