@@ -159,3 +159,28 @@ resource "google_secret_manager_secret_version" "db_passwords" {
   secret      = google_secret_manager_secret.db_passwords[each.value].id
   secret_data = random_password.db_passwords[each.value].result
 }
+
+# Store usernames in Secret Manager (for External Secrets Operator)
+resource "google_secret_manager_secret" "db_users" {
+  for_each = toset(var.databases)
+
+  project   = var.project_id
+  secret_id = "${var.instance_name}-${each.value}-user"
+
+  replication {
+    auto {}
+  }
+
+  labels = {
+    database    = each.value
+    managed_by  = "terraform"
+    environment = var.environment
+  }
+}
+
+resource "google_secret_manager_secret_version" "db_users" {
+  for_each = toset(var.databases)
+
+  secret      = google_secret_manager_secret.db_users[each.value].id
+  secret_data = "${each.value}_user"  # Username format: ${db_name}_user
+}

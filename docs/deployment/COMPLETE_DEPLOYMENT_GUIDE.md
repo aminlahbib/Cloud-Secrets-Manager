@@ -193,45 +193,29 @@ echo "Audit DB password length: ${#AUDIT_DB_PASSWORD}"
 
 ---
 
-### Step 6: Create Kubernetes Secrets
+### Step 6: Create Kubernetes Secrets (Replaced by External Secrets Operator)
 
-**Purpose:** Stores sensitive configuration (database credentials, encryption keys) as Kubernetes secrets that pods can access.
+**Note:** This step is now automated by the **External Secrets Operator (ESO)**. You no longer need to manually create these secrets with `kubectl create secret` or use Sealed Secrets.
+
+Instead, ensure you have:
+
+1.  Created the secrets in **Google Secret Manager** (see [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)).
+2.  Installed ESO via Terraform (`infrastructure/terraform/environments/dev`).
+3.  Applied the `ExternalSecret` manifests:
 
 ```bash
-# Database connection details
-DB_CONNECTION="cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
-
-# Create database credentials secret
-kubectl create secret generic db-credentials \
-  -n cloud-secrets-manager \
-  --from-literal=connection-name="$DB_CONNECTION" \
-  --from-literal=secrets-db-password="$SECRETS_DB_PASSWORD" \
-  --from-literal=audit-db-password="$AUDIT_DB_PASSWORD"
-
-# Generate secure application keys
-JWT_SECRET=$(openssl rand -hex 32)
-# AES key must be exactly 32 bytes (plain string, not base64/hex encoded)
-AES_KEY=$(openssl rand -base64 24 | tr -d '\n' | head -c 32)
-
-# Create application configuration secret
-kubectl create secret generic csm-app-config \
-  -n cloud-secrets-manager \
-  --from-literal=JWT_SECRET="$JWT_SECRET" \
-  --from-literal=AES_KEY="$AES_KEY" \
-  --from-literal=GOOGLE_PROJECT_ID="cloud-secrets-manager"
+kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 ```
 
-**What this does:**
-- Creates `db-credentials` secret with database connection information
-- Creates `csm-app-config` secret with application encryption keys
-- Generates cryptographically secure random keys for JWT and AES encryption
-
-**Important:** The AES key must be exactly 32 bytes (256 bits) as a plain string. The application reads it directly from the environment variable and expects 32 characters. Do not use base64 or hex encoding.
+This will automatically create the following secrets in the `cloud-secrets-manager` namespace:
+- `csm-db-secrets` (contains: secrets-db-user, secrets-db-password, audit-db-user, audit-db-password)
+- `csm-app-config` (contains: JWT_SECRET, AES_KEY, GOOGLE_PROJECT_ID, GOOGLE_API_KEY)
+- `csm-google-service-account` (contains: service-account.json)
 
 **Verify:**
 ```bash
+kubectl get externalsecrets -n cloud-secrets-manager
 kubectl get secrets -n cloud-secrets-manager
-kubectl describe secret db-credentials -n cloud-secrets-manager
 ```
 
 ---
@@ -258,12 +242,14 @@ kubectl apply -f infrastructure/kubernetes/k8s/audit-service-deployment.yaml
 
 **Deployment Configuration:**
 - **Replicas**: 1 per service (can be scaled)
-- **Cloud SQL Proxy**: Sidecar container connecting to Cloud SQL via public IP
-- **Database Connection**: Applications connect to `localhost:5432` (proxied by Cloud SQL Proxy)
+- **Cloud SQL Proxy**: Sidecar container connecting to Cloud SQL via Workload Identity
+- **Database Connection**: Applications connect to `127.0.0.1:5432` (proxied by Cloud SQL Proxy)
+- **Databases**: `secrets` and `audit` (Cloud SQL managed PostgreSQL)
+- **Users**: `secrets_user` and `audit_user`
 - **Resource Requests**: 
-  - Secret Service: 300m CPU, 512Mi memory
-  - Audit Service: 200m CPU, 256Mi memory
-  - Cloud SQL Proxy: 30m CPU, 64Mi memory
+  - Secret Service: 200m CPU, 256Mi memory
+  - Audit Service: 100m CPU, 128Mi memory
+  - Cloud SQL Proxy: 50m CPU, 64Mi memory
 
 ---
 
@@ -656,26 +642,13 @@ docker build --platform linux/amd64 \
   -t europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service:latest .
 docker push europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service:latest
 
-# 6. Create secrets
-SECRETS_DB_PASSWORD=$(gcloud secrets versions access latest \
-  --secret="secrets-manager-db-dev-secrets_db-password")
-AUDIT_DB_PASSWORD=$(gcloud secrets versions access latest \
-  --secret="secrets-manager-db-dev-audit_db-password")
-DB_CONNECTION="cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
+# 6. Setup External Secrets (secrets are managed by ESO from Google Secret Manager)
+# See: docs/deployment/EXTERNAL_SECRETS_SETUP.md for creating secrets in Google Secret Manager
+kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 
-kubectl create secret generic db-credentials \
-  -n cloud-secrets-manager \
-  --from-literal=connection-name="$DB_CONNECTION" \
-  --from-literal=secrets-db-password="$SECRETS_DB_PASSWORD" \
-  --from-literal=audit-db-password="$AUDIT_DB_PASSWORD"
-
-JWT_SECRET=$(openssl rand -hex 32)
-AES_KEY=$(openssl rand -base64 24 | tr -d '\n' | head -c 32)
-kubectl create secret generic csm-app-config \
-  -n cloud-secrets-manager \
-  --from-literal=JWT_SECRET="$JWT_SECRET" \
-  --from-literal=AES_KEY="$AES_KEY" \
-  --from-literal=GOOGLE_PROJECT_ID="cloud-secrets-manager"
+# Verify secrets are synced
+kubectl get externalsecrets -n cloud-secrets-manager
+kubectl get secrets -n cloud-secrets-manager
 
 # 7. Deploy applications
 kubectl apply -f infrastructure/kubernetes/k8s/secret-service-deployment.yaml
@@ -703,6 +676,230 @@ kubectl rollout status deployment/csm-secret-service -n cloud-secrets-manager
 
 ---
 
+## Startup, Usage, and Management
+
+### Starting the Application
+
+After deployment, start the services:
+
+```bash
+# Scale up deployments
+kubectl scale deployment secret-service audit-service --replicas=1 -n cloud-secrets-manager
+
+# Monitor startup
+kubectl get pods -n cloud-secrets-manager -w
+
+# Wait for pods to be ready (2/2 containers)
+kubectl wait --for=condition=ready pod -l app=secret-service -n cloud-secrets-manager --timeout=300s
+kubectl wait --for=condition=ready pod -l app=audit-service -n cloud-secrets-manager --timeout=300s
+```
+
+### Accessing the Application
+
+#### Port Forwarding (Local Access)
+
+```bash
+# Port forward secret-service
+kubectl port-forward -n cloud-secrets-manager svc/secret-service 8080:8080
+
+# Port forward audit-service (in another terminal)
+kubectl port-forward -n cloud-secrets-manager svc/audit-service 8081:8081
+```
+
+#### Using the API
+
+**1. Get Google ID Token:**
+```bash
+# See docs/current/GET_ID_TOKEN.md for detailed instructions
+# Or use the provided script:
+# testing/postman/get-token.js
+```
+
+**2. Authenticate:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"idToken": "YOUR_GOOGLE_ID_TOKEN"}'
+
+# Response contains accessToken and refreshToken
+```
+
+**3. Create a Secret:**
+```bash
+curl -X POST http://localhost:8080/api/secrets \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "key": "database.password",
+    "value": "mySecretPassword123",
+    "description": "Database password for production"
+  }'
+```
+
+**4. Retrieve a Secret:**
+```bash
+curl -X GET http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**5. List All Secrets:**
+```bash
+curl -X GET http://localhost:8080/api/secrets \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**6. Update a Secret:**
+```bash
+curl -X PUT http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "value": "newPassword456",
+    "description": "Updated database password"
+  }'
+```
+
+**7. Delete a Secret:**
+```bash
+curl -X DELETE http://localhost:8080/api/secrets/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**8. View Audit Logs:**
+```bash
+# Get all audit logs
+curl -X GET http://localhost:8081/api/audit \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by username
+curl -X GET http://localhost:8081/api/audit/username/john.doe@example.com \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by secret key
+curl -X GET http://localhost:8081/api/audit/secret/database.password \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Get logs by date range
+curl -X GET "http://localhost:8081/api/audit/date-range?start=2025-11-01T00:00:00Z&end=2025-11-22T23:59:59Z" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+**9. Health Checks:**
+```bash
+# Secret Service health
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/health/liveness
+curl http://localhost:8080/actuator/health/readiness
+
+# Audit Service health
+curl http://localhost:8081/actuator/health
+
+# Metrics
+curl http://localhost:8080/actuator/metrics
+curl http://localhost:8080/actuator/prometheus
+```
+
+### Managing the Deployment
+
+#### Scaling
+
+```bash
+# Scale up secret-service to 3 replicas
+kubectl scale deployment secret-service --replicas=3 -n cloud-secrets-manager
+
+# Scale down
+kubectl scale deployment secret-service --replicas=1 -n cloud-secrets-manager
+
+# Check current replica count
+kubectl get deployment secret-service -n cloud-secrets-manager
+```
+
+#### Updating Application
+
+```bash
+# Build and push new image
+cd apps/backend/secret-service
+docker build --platform linux/amd64 \
+  -t europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service:latest .
+docker push europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service:latest
+
+# Restart deployment to pull new image
+kubectl rollout restart deployment/secret-service -n cloud-secrets-manager
+
+# Monitor rollout
+kubectl rollout status deployment/secret-service -n cloud-secrets-manager
+
+# View rollout history
+kubectl rollout history deployment/secret-service -n cloud-secrets-manager
+
+# Rollback if needed
+kubectl rollout undo deployment/secret-service -n cloud-secrets-manager
+```
+
+#### Viewing Logs
+
+```bash
+# Secret Service logs
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c secret-service -f
+
+# Audit Service logs
+kubectl logs -l app=audit-service -n cloud-secrets-manager -c audit-service -f
+
+# Cloud SQL Proxy logs
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c cloud-sql-proxy -f
+
+# Last 100 lines
+kubectl logs -l app=secret-service -n cloud-secrets-manager -c secret-service --tail=100
+```
+
+#### Resource Monitoring
+
+```bash
+# Pod resource usage
+kubectl top pods -n cloud-secrets-manager
+
+# Node resource usage
+kubectl top nodes
+
+# Detailed pod information
+kubectl describe pod <pod-name> -n cloud-secrets-manager
+```
+
+### Shutting Down
+
+#### Graceful Shutdown (Recommended)
+
+```bash
+# Scale down to 0 replicas (allows pods to finish current requests)
+kubectl scale deployment secret-service audit-service --replicas=0 -n cloud-secrets-manager
+
+# Wait for pods to terminate
+kubectl get pods -n cloud-secrets-manager -w
+
+# Verify all pods are terminated
+kubectl get pods -n cloud-secrets-manager
+```
+
+#### Complete Shutdown (Removes Resources)
+
+```bash
+# Delete deployments
+kubectl delete deployment secret-service audit-service -n cloud-secrets-manager
+
+# Delete services
+kubectl delete svc secret-service audit-service -n cloud-secrets-manager
+
+# Delete secrets (if not using ESO)
+# kubectl delete secret csm-db-secrets csm-app-config -n cloud-secrets-manager
+
+# Delete namespace (removes everything in namespace)
+# kubectl delete namespace cloud-secrets-manager
+```
+
+**Warning:** Complete shutdown removes all resources. You'll need to recreate secrets and redeploy if you want to start again.
+
+---
+
 ## Next Steps
 
 After successful deployment:
@@ -721,6 +918,17 @@ After successful deployment:
 5. **Review Security** (network policies, pod security standards)
 
 6. **Review Operations Guide** - See [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md) for day-to-day management commands
+
+---
+
+---
+
+## Related Documentation
+
+- **[Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)** - For local development with Docker Compose
+- **[External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)** - Setting up secret management
+- **[Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)** - Alternative deployment using Helm
+- **[Operations Guide](./OPERATIONS_GUIDE.md)** - Day-to-day operations and management
 
 ---
 

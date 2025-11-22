@@ -11,7 +11,7 @@ Creates and manages Google Cloud SQL PostgreSQL instances with production-ready 
 - SSL/TLS encryption enforced
 - Query insights for performance monitoring
 - Automatic password generation and Secret Manager storage
-- Multiple database support (secrets_db, audit_db)
+- Multiple database support (secrets, audit)
 
 ## Usage
 
@@ -55,7 +55,7 @@ module "postgresql" {
   deletion_protection       = true
   network_id                = "projects/PROJECT_ID/global/networks/vpc-name"
   
-  databases = ["secrets_db", "audit_db"]
+  databases = ["secrets", "audit"]
 }
 ```
 
@@ -69,7 +69,7 @@ module "postgresql" {
 | tier | Machine tier | string | db-g1-small | no |
 | high_availability | Enable HA | bool | false | no |
 | deletion_protection | Protect from deletion | bool | true | no |
-| databases | List of databases | list(string) | ["secrets_db", "audit_db"] | no |
+| databases | List of databases | list(string) | ["secrets", "audit"] | no |
 
 ## Outputs
 
@@ -93,7 +93,7 @@ chmod +x cloud_sql_proxy
 ./cloud_sql_proxy -instances=<INSTANCE_CONNECTION_NAME>=tcp:5432
 
 # Connect (in another terminal)
-psql "host=127.0.0.1 port=5432 dbname=secrets_db user=secrets_db_user"
+psql "host=127.0.0.1 port=5432 dbname=secrets user=secrets_user"
 ```
 
 ### From Kubernetes
@@ -125,7 +125,11 @@ Passwords are auto-generated and stored in Secret Manager:
 ```bash
 # Retrieve password
 gcloud secrets versions access latest \
-  --secret="secrets-manager-db-secrets_db-password"
+  --secret="secrets-manager-db-dev-secrets-password"
+
+# Retrieve username
+gcloud secrets versions access latest \
+  --secret="secrets-manager-db-dev-secrets-user"
 ```
 
 ## Notes

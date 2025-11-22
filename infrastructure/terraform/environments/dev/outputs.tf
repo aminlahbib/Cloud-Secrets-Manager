@@ -49,7 +49,10 @@ output "quick_start" {
     gcloud auth configure-docker ${var.region}-docker.pkg.dev
 
     # Get database password:
-    gcloud secrets versions access latest --secret="${module.postgresql.instance_name}-secrets_db-password"
+    gcloud secrets versions access latest --secret="${module.postgresql.instance_name}-secrets-password"
+    
+    # Get database username:
+    gcloud secrets versions access latest --secret="${module.postgresql.instance_name}-secrets-user"
 
     # Connect to database via proxy:
     cloud_sql_proxy -instances=${module.postgresql.instance_connection_name}=tcp:5432
