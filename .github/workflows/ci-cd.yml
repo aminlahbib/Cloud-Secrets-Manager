@@ -1,10 +1,14 @@
 name: CI/CD Pipeline
 
+# DISABLED - Commented out to prevent pipeline from running and incurring costs
+# To re-enable, uncomment the 'on:' section below
+# on:
+#   push:
+#     branches: [ "main", "develop" ]
+#   pull_request:
+#     branches: [ "main", "develop" ]
 on:
-  push:
-    branches: [ "main", "develop" ]
-  pull_request:
-    branches: [ "main", "develop" ]
+  workflow_dispatch:  # Only allows manual triggering, prevents automatic runs
 
 env:
   REGISTRY: docker.io
