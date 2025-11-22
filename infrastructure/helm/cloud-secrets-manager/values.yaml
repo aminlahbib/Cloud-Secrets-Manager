@@ -89,6 +89,22 @@ ingress:
   enabled: true
   className: "nginx"
   host: "secrets.local"
+  tls:
+    enabled: false  # Set to true when you have TLS certificates
+    secretName: "secrets-manager-tls"
+    # For Let's Encrypt with cert-manager, use:
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # Rate limiting (requests per minute per IP)
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+    # DDoS protection
+    nginx.ingress.kubernetes.io/limit-whitelist: ""  # Add trusted IPs if needed
+    # Security headers
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    # CORS (if needed)
+    # nginx.ingress.kubernetes.io/enable-cors: "true"
+    # nginx.ingress.kubernetes.io/cors-allow-origin: "https://yourdomain.com"
 
