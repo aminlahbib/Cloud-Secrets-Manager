@@ -21,11 +21,11 @@ This directory contains all deployment-related documentation for the Cloud Secre
    - Uses Cloud SQL and External Secrets Operator
    - Step-by-step instructions
 
-2. **[Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)**
+2. **[Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)**
    - Deploy using Helm charts
    - Configuration and management
 
-3. **[Terraform Guide](./TERRAFORM_GUIDE.md)**
+3. **[Terraform Guide](./terraform/TERRAFORM_GUIDE.md)**
    - Infrastructure provisioning
    - GKE, Cloud SQL, IAM setup
 
@@ -47,11 +47,11 @@ This directory contains all deployment-related documentation for the Cloud Secre
   - Monitoring, scaling, updates
   - Troubleshooting
 
-- **[Terraform Operations](./TERRAFORM_OPERATIONS.md)**
+- **[Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md)**
   - Common Terraform workflows
   - State management
 
-- **[CI/CD Pipeline Status](./CI_CD_PIPELINE_STATUS.md)**
+- **[CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md)**
   - Current pipeline implementation
   - Enhancement recommendations
   - GCP integration guide
@@ -70,11 +70,42 @@ For a complete overview of all deployment documentation, see [DEPLOYMENT_INDEX.m
 
 ---
 
+## Documentation Organization
+
+Documentation is organized by technology for easier navigation:
+
+### Technology-Specific Guides
+
+- **[Terraform](./terraform/)** - Infrastructure as Code
+  - [Terraform Guide](./terraform/TERRAFORM_GUIDE.md) - Complete infrastructure setup
+  - [Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md) - Day-to-day operations
+
+- **[Kubernetes](./kubernetes/)** - Container Orchestration
+  - [Debugging CrashLoopBackOff](./kubernetes/DEBUGGING_CRASHLOOPBACKOFF.md) - Troubleshooting guide
+  - [Kubernetes Alerts Analysis](./kubernetes/KUBERNETES_ALERTS_ANALYSIS.md) - Alert analysis
+  - [Security Context Update](./kubernetes/SECURITY_CONTEXT_UPDATE.md) - Pod security configuration
+  - [Monitoring Verification](./kubernetes/MONITORING_VERIFICATION.md) - Prometheus monitoring verification
+
+- **[Helm](./helm/)** - Package Management
+  - [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md) - Helm chart deployment
+
+- **[CI/CD](./ci-cd/)** - Continuous Integration/Deployment
+  - [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md) - Pipeline setup
+  - [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md) - Current status
+
+- **[Operations](./operations/)** - Day-2 Operations
+  - [Backup Verification](./operations/BACKUP_VERIFICATION.md) - Backup and restore procedures
+  - [Verification Guide](./operations/VERIFICATION_GUIDE.md) - Deployment verification
+
+---
+
 ## Archived Documentation
 
 Completed or superseded documentation has been moved to the [archive](./archive/) directory:
 - Migration status and completion docs
 - Legacy setup guides
+- Implementation summaries
+- Historical status documents
 
 ---
 
