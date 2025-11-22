@@ -1,21 +1,22 @@
 name: CI/CD Pipeline
 
-# DISABLED - Commented out to prevent pipeline from running and incurring costs
-# To re-enable, uncomment the 'on:' section below
+# DISABLED - Only manual triggering to prevent automatic runs and costs
+# To re-enable, uncomment the push and pull_request triggers below
 # on:
 #   push:
 #     branches: [ "main", "develop" ]
 #   pull_request:
 #     branches: [ "main", "develop" ]
 on:
-  workflow_dispatch:  # Only allows manual triggering, prevents automatic runs
+  workflow_dispatch:  # Only allows manual triggering
 
 env:
-  REGISTRY: docker.io
   GCP_PROJECT_ID: cloud-secrets-manager
   GCP_REGION: europe-west10
   ARTIFACT_REGISTRY: europe-west10-docker.pkg.dev
-  GKE_CLUSTER: cloud-secrets-cluster-dev
+  GKE_CLUSTER_DEV: cloud-secrets-cluster-dev
+  GKE_CLUSTER_STAGING: cloud-secrets-cluster-staging
+  GKE_CLUSTER_PROD: cloud-secrets-cluster-prod
   GKE_NAMESPACE: cloud-secrets-manager
 
 jobs:
@@ -37,14 +38,14 @@ jobs:
       - name: Build and Test Secret Service
         run: |
           cd apps/backend/secret-service
-          ./mvnw clean test
-          # Integration tests use H2 database (no Docker required)
-          # All tests (unit + integration) run with: ./mvnw test
+          ./mvnw clean verify
+        continue-on-error: false
 
       - name: Build and Test Audit Service
         run: |
           cd apps/backend/audit-service
-          ./mvnw clean test
+          ./mvnw clean verify
+        continue-on-error: false
 
       - name: Generate Test Reports
         if: always()
@@ -54,93 +55,52 @@ jobs:
           cd ../audit-service
           ./mvnw surefire-report:report
 
-  docker-build-push:
-    name: Build and Push Docker Images
-    needs: build-test
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            apps/backend/secret-service/target/surefire-reports/
+            apps/backend/audit-service/target/surefire-reports/
+          retention-days: 30
+
+  trivy-code-scan:
+    name: Trivy Code Security Scan
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-test
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Check Docker Hub credentials
-        id: docker-creds
-        run: |
-          if [ -n "${{ secrets.DOCKERHUB_USERNAME }}" ] && [ -n "${{ secrets.DOCKERHUB_TOKEN }}" ]; then
-            echo "has_creds=true" >> $GITHUB_OUTPUT
-            echo "username=${{ secrets.DOCKERHUB_USERNAME }}" >> $GITHUB_OUTPUT
-          else
-            echo "has_creds=false" >> $GITHUB_OUTPUT
-            echo "username=" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Log in to Docker Hub
-        if: steps.docker-creds.outputs.has_creds == 'true'
-        uses: docker/login-action@v3
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'  # Fail on critical/high vulnerabilities
 
-      - name: Extract metadata for Secret Service
-        id: meta-secret
-        uses: docker/metadata-action@v5
+      - name: Upload Trivy results to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          images: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('{0}/secret-service', secrets.DOCKERHUB_USERNAME) || 'secret-service' }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
+          sarif_file: 'trivy-results.sarif'
 
-      - name: Extract metadata for Audit Service
-        id: meta-audit
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('{0}/audit-service', secrets.DOCKERHUB_USERNAME) || 'audit-service' }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Secret Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend/secret-service
-          push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
-          tags: ${{ steps.meta-secret.outputs.tags }}
-          labels: ${{ steps.meta-secret.outputs.labels }}
-          cache-from: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/secret-service:buildcache', secrets.DOCKERHUB_USERNAME) || '' }}
-          cache-to: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/secret-service:buildcache,mode=max', secrets.DOCKERHUB_USERNAME) || '' }}
-
-      - name: Build and push Audit Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./apps/backend/audit-service
-          push: ${{ steps.docker-creds.outputs.has_creds == 'true' }}
-          tags: ${{ steps.meta-audit.outputs.tags }}
-          labels: ${{ steps.meta-audit.outputs.labels }}
-          cache-from: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/audit-service:buildcache', secrets.DOCKERHUB_USERNAME) || '' }}
-          cache-to: ${{ steps.docker-creds.outputs.has_creds == 'true' && format('type=registry,ref={0}/audit-service:buildcache,mode=max', secrets.DOCKERHUB_USERNAME) || '' }}
-
-      - name: Trigger deployment hook (optional)
-        if: env.DEPLOY_HOOK_URL != ''
-        run: |
-          curl -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
-
-  deploy-to-gcp:
-    name: Build and Push to Google Artifact Registry
+  build-and-push-images:
+    name: Build, Scan and Push Docker Images
     needs: build-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    permissions:
+      contents: read
+      security-events: write
     
     steps:
       - name: Checkout code
@@ -161,64 +121,105 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Optimize build: parallelize and cache aggressively
-      - name: Build and push Secret Service
+      - name: Set image tags
+        id: tags
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "TAG_SUFFIX=prod" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_SUFFIX=dev" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      # Build and push Secret Service
+      - name: Build Secret Service Image
         uses: docker/build-push-action@v5
         with:
           context: ./apps/backend/secret-service
-          push: true
+          push: false
+          load: true
           platforms: linux/amd64
           tags: |
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:latest
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ github.sha }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.IMAGE_TAG }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.TAG_SUFFIX }}-latest
           cache-from: type=gha,scope=secret-service
           cache-to: type=gha,mode=max,scope=secret-service
 
-      - name: Build and push Audit Service
+      - name: Scan Secret Service Image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.IMAGE_TAG }}'
+          format: 'sarif'
+          output: 'trivy-secret-service.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'  # Fail on critical/high vulnerabilities
+
+      - name: Upload Secret Service Trivy results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-secret-service.sarif'
+          category: 'secret-service-image'
+
+      - name: Push Secret Service Image
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.IMAGE_TAG }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.TAG_SUFFIX }}-latest
+
+      # Build and push Audit Service
+      - name: Build Audit Service Image
         uses: docker/build-push-action@v5
         with:
           context: ./apps/backend/audit-service
-          push: true
+          push: false
+          load: true
           platforms: linux/amd64
           tags: |
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:latest
-            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ github.sha }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.IMAGE_TAG }}
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.TAG_SUFFIX }}-latest
           cache-from: type=gha,scope=audit-service
           cache-to: type=gha,mode=max,scope=audit-service
 
-
-  security-scan:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    needs: build-test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      security-events: write
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
+      - name: Scan Audit Service Image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
-          scan-ref: '.'
+          image-ref: '${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.IMAGE_TAG }}'
           format: 'sarif'
-          output: 'trivy-results.sarif'
+          output: 'trivy-audit-service.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'  # Fail on critical/high vulnerabilities
 
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Audit Service Trivy results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: 'trivy-audit-service.sarif'
+          category: 'audit-service-image'
 
-  deploy-to-gke:
-    name: Deploy to GKE
-    needs: [deploy-to-gcp, security-scan]
+      - name: Push Audit Service Image
+        run: |
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.IMAGE_TAG }}
+          docker push ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.TAG_SUFFIX }}-latest
+
+      - name: Generate build summary
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Images built and pushed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Images:" >> $GITHUB_STEP_SUMMARY
+          echo "- Secret Service: \`${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Audit Service: \`${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Git SHA: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+
+  deploy-to-dev:
+    name: Deploy to Dev Environment
+    needs: build-and-push-images
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     
     steps:
       - name: Checkout code
@@ -234,12 +235,11 @@ jobs:
 
       - name: Install gke-gcloud-auth-plugin
         run: |
-          # Install gke-gcloud-auth-plugin (required for kubectl authentication with GKE)
           gcloud components install gke-gcloud-auth-plugin --quiet
 
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_DEV }} \
             --region ${{ env.GCP_REGION }} \
             --project ${{ env.GCP_PROJECT_ID }}
 
@@ -249,18 +249,13 @@ jobs:
           kubectl get nodes
 
       - name: Install Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
         with:
-          version: '3.12.0'
+          version: '3.13.0'
 
       - name: Create Artifact Registry image pull secret
         run: |
-          # Create secret for pulling images from Artifact Registry
-          # Helm chart requires this secret to exist for imagePullSecrets
-          # Get access token for authentication
           ACCESS_TOKEN=$(gcloud auth print-access-token)
-          
-          # Create or update the secret
           kubectl create secret docker-registry artifact-registry-secret \
             --docker-server=${{ env.ARTIFACT_REGISTRY }} \
             --docker-username=oauth2accesstoken \
@@ -268,27 +263,6 @@ jobs:
             --docker-email=github-actions-ci@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
             --namespace=${{ env.GKE_NAMESPACE }} \
             --dry-run=client -o yaml | kubectl apply -f -
-          
-          echo "Artifact Registry secret created/updated successfully"
-
-      - name: Check prerequisites before deployment
-        run: |
-          echo "=== Cleaning up ServiceAccounts to prevent Helm ownership conflicts ==="
-          # Delete ServiceAccounts if they exist but aren't managed by Helm (or have conflicting labels)
-          kubectl delete serviceaccount secret-service -n ${{ env.GKE_NAMESPACE }} --ignore-not-found || true
-          kubectl delete serviceaccount audit-service -n ${{ env.GKE_NAMESPACE }} --ignore-not-found || true
-          
-          echo "=== Checking ExternalSecrets ==="
-          kubectl get externalsecrets -n ${{ env.GKE_NAMESPACE }} || echo "No ExternalSecrets found"
-          echo ""
-          echo "=== Checking if secrets exist ==="
-          kubectl get secrets -n ${{ env.GKE_NAMESPACE }} | grep -E "(csm-db-secrets|csm-app-config)" || echo "Required secrets not found yet"
-          echo ""
-          echo "=== Checking ExternalSecrets status ==="
-          kubectl get externalsecrets -n ${{ env.GKE_NAMESPACE }} -o yaml || true
-          echo ""
-          echo "=== Waiting for ExternalSecrets to sync (max 2 minutes) ==="
-          timeout 120 bash -c 'until kubectl get secret csm-db-secrets -n ${{ env.GKE_NAMESPACE }} && kubectl get secret csm-app-config -n ${{ env.GKE_NAMESPACE }}; do echo "Waiting for secrets..."; sleep 5; done' || echo "Secrets may not be ready, continuing anyway"
 
       - name: Deploy with Helm
         run: |
@@ -301,94 +275,205 @@ jobs:
             --set image.repositorySecretService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service \
             --set image.repositoryAuditService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service \
             --timeout 10m \
-            --debug
-
-      - name: Check deployment status
-        run: |
-          echo "=== Helm Release Status ==="
-          helm status cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }} || true
-          echo ""
-          echo "=== All Resources in Namespace ==="
-          kubectl get all -n ${{ env.GKE_NAMESPACE }}
-          echo ""
-          echo "=== Pod Status ==="
-          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
-          echo ""
-          echo "=== Pod Events ==="
-          kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | tail -20
-
-      - name: Check pod details and logs
-        run: |
-          echo "=== Describe Secret Service Pods ==="
-          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=secret-service || echo "No secret-service pods found"
-          echo ""
-          echo "=== Describe Audit Service Pods ==="
-          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service || echo "No audit-service pods found"
-          echo ""
-          echo "=== Secret Service Pod Logs (Current + Previous) ==="
-          for pod in $(kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=secret-service -o jsonpath='{.items[*].metadata.name}'); do
-            echo "--- Logs for pod: $pod (secret-service container) ---"
-            kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c secret-service --tail=200 --previous 2>&1 || kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c secret-service --tail=200 2>&1 || echo "Could not get logs"
-            echo ""
-            echo "--- Logs for pod: $pod (cloud-sql-proxy container) ---"
-            kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c cloud-sql-proxy --tail=100 2>&1 || echo "Could not get cloud-sql-proxy logs"
-            echo ""
-          done
-          echo ""
-          echo "=== Audit Service Pod Logs (Current + Previous) ==="
-          for pod in $(kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service -o jsonpath='{.items[*].metadata.name}'); do
-            echo "--- Logs for pod: $pod (audit-service container) ---"
-            kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c audit-service --tail=200 --previous 2>&1 || kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c audit-service --tail=200 2>&1 || echo "Could not get logs"
-            echo ""
-            echo "--- Logs for pod: $pod (cloud-sql-proxy container) ---"
-            kubectl logs $pod -n ${{ env.GKE_NAMESPACE }} -c cloud-sql-proxy --tail=100 2>&1 || echo "Could not get cloud-sql-proxy logs"
-            echo ""
-          done
-          echo ""
-          echo "=== Check Image Pull Errors ==="
-          kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | grep -i -E "(image|pull|error|failed)" | tail -20 || echo "No image pull errors found"
-          echo ""
-          echo "=== Recent Events ==="
-          kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | tail -30
-          echo ""
-          echo "=== Describe Audit Service Pods ==="
-          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service || echo "No audit-service pods found"
-          echo ""
-          echo "=== Secret Service Pod Logs ==="
-          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=secret-service --tail=100 --all-containers=true || echo "No secret-service pods found"
-          echo ""
-          echo "=== Audit Service Pod Logs ==="
-          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=audit-service --tail=100 --all-containers=true || echo "No audit-service pods found"
-          echo ""
-          echo "=== Check Image Pull Errors ==="
-          kubectl get events -n ${{ env.GKE_NAMESPACE }} --field-selector reason=Failed | grep -i image || echo "No image pull errors found"
+            --wait
 
       - name: Wait for rollout
         run: |
-          echo "=== Current Pod Status Before Waiting ==="
-          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
-          echo ""
-          echo "=== Waiting for deployments to be ready (15 minutes timeout) ==="
-          echo "This may take a while if images need to be pulled or apps are starting up..."
-          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m || {
-            echo "Secret service rollout failed or timed out"
-            echo "=== Checking pod status ==="
-            kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=secret-service -o yaml
-            exit 1
-          }
-          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m || {
-            echo "Audit service rollout failed or timed out"
-            echo "=== Checking pod status ==="
-            kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service -o yaml
-            exit 1
-          }
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
 
-      - name: Verify deployment
+      - name: Run smoke tests
         run: |
-          echo "=== Final Deployment Status ==="
-          kubectl get pods -n ${{ env.GKE_NAMESPACE }}
-          kubectl get svc -n ${{ env.GKE_NAMESPACE }}
-          echo ""
-          echo "=== Pod Details ==="
-          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
+          ./scripts/smoke-test.sh dev
 
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment to Dev" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Helm Release" >> $GITHUB_STEP_SUMMARY
+          helm status cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+
+  deploy-to-staging:
+    name: Deploy to Staging Environment
+    needs: build-and-push-images
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_STAGING }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.13.0'
+
+      - name: Create Artifact Registry image pull secret
+        run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          kubectl create secret docker-registry artifact-registry-secret \
+            --docker-server=${{ env.ARTIFACT_REGISTRY }} \
+            --docker-username=oauth2accesstoken \
+            --docker-password="${ACCESS_TOKEN}" \
+            --docker-email=github-actions-ci@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --namespace=${{ env.GKE_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install cloud-secrets-manager \
+            ./infrastructure/helm/cloud-secrets-manager \
+            --namespace ${{ env.GKE_NAMESPACE }} \
+            --create-namespace \
+            --values ./infrastructure/helm/cloud-secrets-manager/values-staging.yaml \
+            --set image.tag=${{ github.sha }} \
+            --set image.pullPolicy=Always \
+            --set image.repositorySecretService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service \
+            --set image.repositoryAuditService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service \
+            --timeout 10m \
+            --wait
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+
+      - name: Run smoke tests
+        run: |
+          ./scripts/smoke-test.sh staging
+
+      - name: Run regression tests
+        run: |
+          echo "Running regression test suite..."
+          # Add your regression test commands here
+          # For example: newman run tests/postman/collections/regression-suite.json
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment to Staging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Helm Release" >> $GITHUB_STEP_SUMMARY
+          helm status cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+
+  deploy-to-production:
+    name: Deploy to Production Environment
+    needs: deploy-to-staging
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          gcloud components install gke-gcloud-auth-plugin --quiet
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER_PROD }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.13.0'
+
+      - name: Create Artifact Registry image pull secret
+        run: |
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          kubectl create secret docker-registry artifact-registry-secret \
+            --docker-server=${{ env.ARTIFACT_REGISTRY }} \
+            --docker-username=oauth2accesstoken \
+            --docker-password="${ACCESS_TOKEN}" \
+            --docker-email=github-actions-ci@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --namespace=${{ env.GKE_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Backup current deployment
+        run: |
+          echo "Creating backup of current deployment..."
+          kubectl get all -n ${{ env.GKE_NAMESPACE }} -o yaml > backup-$(date +%Y%m%d-%H%M%S).yaml
+
+      - name: Deploy with Helm
+        id: helm-deploy
+        run: |
+          helm upgrade --install cloud-secrets-manager \
+            ./infrastructure/helm/cloud-secrets-manager \
+            --namespace ${{ env.GKE_NAMESPACE }} \
+            --create-namespace \
+            --values ./infrastructure/helm/cloud-secrets-manager/values-production.yaml \
+            --set image.tag=${{ github.sha }} \
+            --set image.pullPolicy=Always \
+            --set image.repositorySecretService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service \
+            --set image.repositoryAuditService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service \
+            --timeout 15m \
+            --wait
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m
+
+      - name: Run smoke tests
+        run: |
+          ./scripts/smoke-test.sh production
+
+      - name: Rollback on failure
+        if: failure() && steps.helm-deploy.conclusion == 'failure'
+        run: |
+          echo "Deployment failed, rolling back..."
+          helm rollback cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }}
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "## Deployment to Production" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Helm Release" >> $GITHUB_STEP_SUMMARY
+          helm status cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }} >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Rollback Command (if needed)" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "helm rollback cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

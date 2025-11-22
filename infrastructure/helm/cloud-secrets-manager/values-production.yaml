@@ -1,0 +1,133 @@
+# Production Environment Values
+# Use with: helm install cloud-secrets-manager ./infrastructure/helm/cloud-secrets-manager -f values-production.yaml
+
+image:
+  repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
+  repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
+  tag: "production"  # Use production tag
+  pullPolicy: IfNotPresent  # Use IfNotPresent for stability
+
+secretService:
+  replicaCount: 3  # Higher replica count for production availability
+  port: 8080
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  # Production-specific configurations
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+
+auditService:
+  replicaCount: 3  # Higher replica count for production
+  port: 8081
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+
+serviceAccount:
+  create: true
+  annotations:
+    # Production service account
+    iam.gke.io/gcp-service-account: "secret-service-prod@cloud-secrets-manager.iam.gserviceaccount.com"
+
+auditServiceAccount:
+  create: true
+  annotations:
+    # Production service account
+    iam.gke.io/gcp-service-account: "audit-service-prod@cloud-secrets-manager.iam.gserviceaccount.com"
+
+createSecrets: false  # Always use External Secrets in production
+
+postgres:
+  enabled: false  # Use Cloud SQL in production
+  secretsDb:
+    user: secrets_user
+    db: secrets
+  auditDb:
+    user: audit_user
+    db: audit
+
+# Cloud SQL Configuration (production instance)
+cloudSql:
+  enabled: true
+  connectionName: "cloud-secrets-manager:europe-west10:secrets-manager-db-prod-XXXXX"  # Update with production instance
+  image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+googleIdentity:
+  enabled: true
+  projectId: "cloud-secrets-manager"
+  apiKey: ""
+  serviceAccount:
+    secretName: "csm-google-service-account"
+    key: "service-account.json"
+  setupEnabled: false  # Disable setup endpoint in production for security
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "secrets.yourdomain.com"  # Update with production domain
+  tls:
+    enabled: true
+    secretName: "secrets-manager-prod-tls"
+    # For Let's Encrypt with cert-manager
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # Stricter rate limiting for production
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    # Additional security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2  # Ensure at least 2 pods are always available during disruptions
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Network Policies (if supported by your cluster)
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
