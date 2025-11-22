@@ -115,6 +115,13 @@ module "iam" {
         "roles/logging.logWriter",
       ]
     }
+    "external-secrets-sa" = {
+      display_name = "External Secrets Operator"
+      description  = "Service account for External Secrets Operator"
+      roles = [
+        "roles/secretmanager.secretAccessor",
+      ]
+    }
   }
 
   # Workload Identity bindings (K8s SA -> GCP SA)
@@ -129,7 +136,57 @@ module "iam" {
       namespace           = "cloud-secrets-manager"
       k8s_service_account = "audit-service"
     }
+    "external-secrets" = {
+      gcp_service_account = "external-secrets-sa@${var.project_id}.iam.gserviceaccount.com"
+      namespace           = "external-secrets"
+      k8s_service_account = "external-secrets"
+    }
   }
 
   depends_on = [google_project_service.required_apis, module.gke]
+}
+
+# External Secrets Operator
+resource "helm_release" "external_secrets" {
+  name             = "external-secrets"
+  repository       = "https://charts.external-secrets.io"
+  chart            = "external-secrets"
+  version          = "0.9.13"
+  namespace        = "external-secrets"
+  create_namespace = true
+
+  set {
+    name  = "serviceAccount.create"
+    value = "true"
+  }
+  set {
+    name  = "serviceAccount.name"
+    value = "external-secrets"
+  }
+  set {
+    name  = "serviceAccount.annotations.iam\\.gke\\.io/gcp-service-account"
+    value = "external-secrets-sa@${var.project_id}.iam.gserviceaccount.com"
+  }
+
+  depends_on = [module.gke, module.iam]
+}
+
+# ClusterSecretStore
+resource "kubernetes_manifest" "cluster_secret_store" {
+  manifest = {
+    apiVersion = "external-secrets.io/v1beta1"
+    kind       = "ClusterSecretStore"
+    metadata = {
+      name = "gcp-secret-manager"
+    }
+    spec = {
+      provider = {
+        gcpsm = {
+          projectID = var.project_id
+        }
+      }
+    }
+  }
+
+  depends_on = [helm_release.external_secrets]
 }
