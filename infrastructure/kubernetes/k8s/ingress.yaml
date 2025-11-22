@@ -19,7 +19,7 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: csm-secret-service
+                name: secret-service
                 port:
                   number: 8080
 
