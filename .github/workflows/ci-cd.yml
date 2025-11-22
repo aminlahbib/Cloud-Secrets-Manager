@@ -270,6 +270,20 @@ jobs:
           
           echo "Artifact Registry secret created/updated successfully"
 
+      - name: Check prerequisites before deployment
+        run: |
+          echo "=== Checking ExternalSecrets ==="
+          kubectl get externalsecrets -n ${{ env.GKE_NAMESPACE }} || echo "No ExternalSecrets found"
+          echo ""
+          echo "=== Checking if secrets exist ==="
+          kubectl get secrets -n ${{ env.GKE_NAMESPACE }} | grep -E "(csm-db-secrets|csm-app-config)" || echo "Required secrets not found yet"
+          echo ""
+          echo "=== Checking ExternalSecrets status ==="
+          kubectl get externalsecrets -n ${{ env.GKE_NAMESPACE }} -o yaml || true
+          echo ""
+          echo "=== Waiting for ExternalSecrets to sync (max 2 minutes) ==="
+          timeout 120 bash -c 'until kubectl get secret csm-db-secrets -n ${{ env.GKE_NAMESPACE }} && kubectl get secret csm-app-config -n ${{ env.GKE_NAMESPACE }}; do echo "Waiting for secrets..."; sleep 5; done' || echo "Secrets may not be ready, continuing anyway"
+
       - name: Deploy with Helm
         run: |
           helm upgrade --install cloud-secrets-manager \
@@ -296,24 +310,42 @@ jobs:
           echo "=== Pod Events ==="
           kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | tail -20
 
-      - name: Check pod logs (if pods exist)
-        if: failure()
-        continue-on-error: true
+      - name: Check pod details and logs
         run: |
+          echo "=== Describe Secret Service Pods ==="
+          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=secret-service || echo "No secret-service pods found"
+          echo ""
+          echo "=== Describe Audit Service Pods ==="
+          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service || echo "No audit-service pods found"
+          echo ""
           echo "=== Secret Service Pod Logs ==="
-          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=secret-service --tail=50 || echo "No secret-service pods found"
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=secret-service --tail=100 --all-containers=true || echo "No secret-service pods found"
           echo ""
           echo "=== Audit Service Pod Logs ==="
-          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=audit-service --tail=50 || echo "No audit-service pods found"
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=audit-service --tail=100 --all-containers=true || echo "No audit-service pods found"
           echo ""
-          echo "=== Describe Pods ==="
-          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} || true
+          echo "=== Check Image Pull Errors ==="
+          kubectl get events -n ${{ env.GKE_NAMESPACE }} --field-selector reason=Failed | grep -i image || echo "No image pull errors found"
 
       - name: Wait for rollout
         run: |
-          echo "Waiting for deployments to be ready..."
-          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
-          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+          echo "=== Current Pod Status Before Waiting ==="
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
+          echo ""
+          echo "=== Waiting for deployments to be ready (15 minutes timeout) ==="
+          echo "This may take a while if images need to be pulled or apps are starting up..."
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m || {
+            echo "Secret service rollout failed or timed out"
+            echo "=== Checking pod status ==="
+            kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=secret-service -o yaml
+            exit 1
+          }
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=15m || {
+            echo "Audit service rollout failed or timed out"
+            echo "=== Checking pod status ==="
+            kubectl get pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service -o yaml
+            exit 1
+          }
 
       - name: Verify deployment
         run: |
