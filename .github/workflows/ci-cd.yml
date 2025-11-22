@@ -55,6 +55,13 @@ jobs:
           cd ../audit-service
           ./mvnw surefire-report:report
 
+      - name: Generate JaCoCo Coverage Report
+        run: |
+          cd apps/backend/secret-service
+          ./mvnw jacoco:report
+          cd ../audit-service
+          ./mvnw jacoco:report
+
       - name: Upload Test Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,6 +71,34 @@ jobs:
             apps/backend/secret-service/target/surefire-reports/
             apps/backend/audit-service/target/surefire-reports/
           retention-days: 30
+
+      - name: Upload Coverage Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            apps/backend/secret-service/target/site/jacoco/
+            apps/backend/audit-service/target/site/jacoco/
+          retention-days: 30
+
+      - name: Coverage Summary
+        run: |
+          echo "## Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f apps/backend/secret-service/target/site/jacoco/index.html ]; then
+            SECRET_COVERAGE=$(grep -oP 'Total.*?(\d+)%' apps/backend/secret-service/target/site/jacoco/index.html | grep -oP '\d+' | head -1 || echo "N/A")
+            echo "### Secret Service Coverage: ${SECRET_COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f apps/backend/audit-service/target/site/jacoco/index.html ]; then
+            AUDIT_COVERAGE=$(grep -oP 'Total.*?(\d+)%' apps/backend/audit-service/target/site/jacoco/index.html | grep -oP '\d+' | head -1 || echo "N/A")
+            echo "### Audit Service Coverage: ${AUDIT_COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 Full coverage reports available in artifacts" >> $GITHUB_STEP_SUMMARY
 
   trivy-code-scan:
     name: Trivy Code Security Scan
