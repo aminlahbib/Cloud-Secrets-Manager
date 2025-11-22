@@ -33,6 +33,10 @@ This guide provides a complete workflow to deploy the Cloud Secrets Manager appl
      - [5.2 Verify All Resources](#52-verify-all-resources)
      - [5.3 Check Application Logs](#53-check-application-logs)
      - [5.4 Test Health Endpoints](#54-test-health-endpoints)
+   - [Phase 6: Monitoring & Observability](#phase-6-monitoring--observability)
+     - [6.1 Deploy Monitoring Stack](#61-deploy-monitoring-stack)
+     - [6.2 Verify Prometheus & Grafana](#62-verify-prometheus--grafana)
+     - [6.3 Verify Async Auditing](#63-verify-async-auditing)
 3. [Operations](#operations)
    - [Starting Services](#starting-services)
    - [Stopping Services](#stopping-services)
@@ -297,7 +301,7 @@ This script automatically checks all aspects of the deployment including:
 - Ingress configuration
 - And more...
 
-For detailed manual verification steps, see [VERIFICATION_GUIDE.md](./VERIFICATION_GUIDE.md).
+For detailed manual verification steps, see [VERIFICATION_GUIDE.md](./operations/VERIFICATION_GUIDE.md).
 
 #### 5.1 Check Pod Status
 
@@ -372,6 +376,60 @@ curl http://localhost:8080/actuator/health/readiness
 **Expected response:** `{"status":"UP"}`
 
 **✅ Checkpoint:** All applications are running and healthy.
+
+---
+
+### Phase 6: Monitoring & Observability
+
+**Goal:** Deploy and verify the observability stack (Prometheus, Grafana, OpenTelemetry).
+
+#### 6.1 Deploy Monitoring Stack
+
+Apply the Prometheus alerting rules and Grafana dashboard configurations:
+
+```bash
+kubectl apply -f monitoring/alerts/prometheus-rules.yaml
+kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
+```
+
+**Note:** Ensure you have the Prometheus Operator and Grafana installed in your cluster (usually via `kube-prometheus-stack`).
+
+#### 6.2 Verify Prometheus & Grafana
+
+**Access Prometheus:**
+```bash
+kubectl port-forward svc/prometheus-operated 9090:9090 -n monitoring
+```
+Open [http://localhost:9090/targets](http://localhost:9090/targets) and verify `secret-service` and `audit-service` are UP.
+
+**Access Grafana:**
+```bash
+kubectl port-forward svc/grafana 3000:3000 -n monitoring
+```
+Open [http://localhost:3000](http://localhost:3000) (Default creds: `admin`/`prom-operator`) and view the "Cloud Secrets Manager Overview" dashboard.
+
+#### 6.3 Verify Async Auditing
+
+To verify that auditing is working asynchronously:
+
+1.  **Create a Secret:**
+    ```bash
+    curl -X POST http://localhost:8080/api/secrets ...
+    ```
+2.  **Check Secret Service Logs:**
+    ```bash
+    kubectl logs -l app=secret-service -n cloud-secrets-manager --tail=20
+    ```
+    You should see "Secret created successfully" immediately.
+3.  **Check Audit Service Logs:**
+    ```bash
+    kubectl logs -l app=audit-service -n cloud-secrets-manager --tail=20
+    ```
+    You should see the audit event being processed shortly after.
+4.  **Check Metrics:**
+    In Grafana, check the "Secret Operations" panel to see the counter increment.
+
+**✅ Checkpoint:** Monitoring stack is active and metrics are flowing.
 
 ---
 
@@ -818,6 +876,10 @@ kubectl wait --for=condition=ready pod \
 kubectl wait --for=condition=ready pod \
   -l app=audit-service -n cloud-secrets-manager --timeout=300s
 
+# Phase 6: Monitoring
+kubectl apply -f monitoring/alerts/prometheus-rules.yaml
+kubectl apply -f monitoring/grafana/dashboard-configmap.yaml
+
 echo "✅ Deployment complete!"
 kubectl get pods -n cloud-secrets-manager
 ```
@@ -875,7 +937,7 @@ After successful deployment, consider these enhancements organized by priority. 
    ```
 
 2. **Backup Verification** ✅
-   - **Complete Documentation**: ✅ See [BACKUP_VERIFICATION.md](./BACKUP_VERIFICATION.md)
+   - **Complete Documentation**: ✅ See [BACKUP_VERIFICATION.md](./operations/BACKUP_VERIFICATION.md)
    - **Restore Procedures**: ✅ Documented with step-by-step instructions
    - **RTO/RPO**: ✅ Defined (RTO: 1 hour, RPO: 15 minutes)
    - **Testing Scripts**: ✅ Provided
@@ -928,9 +990,9 @@ After successful deployment, consider these enhancements organized by priority. 
 
 - **[External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)** - Secret management configuration
 - **[Operations Guide](./OPERATIONS_GUIDE.md)** - Day-to-day operations
-- **[Troubleshooting Guide](./DEBUGGING_CRASHLOOPBACKOFF.md)** - Detailed troubleshooting
+- **[Troubleshooting Guide](./kubernetes/DEBUGGING_CRASHLOOPBACKOFF.md)** - Detailed troubleshooting
 - **[Implementation Summary](./IMPLEMENTATION_SUMMARY.md)** - Details on all implemented next-step features
-- **[Backup Verification](./BACKUP_VERIFICATION.md)** - Backup and restore procedures
+- **[Backup Verification](./operations/BACKUP_VERIFICATION.md)** - Backup and restore procedures
 
 ---
 
