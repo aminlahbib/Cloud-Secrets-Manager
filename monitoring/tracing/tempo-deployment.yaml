@@ -1,0 +1,221 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tracing
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-config
+  namespace: tracing
+data:
+  tempo.yaml: |
+    server:
+      http_listen_port: 3200
+
+    distributor:
+      receivers:
+        otlp:
+          protocols:
+            http:
+              endpoint: 0.0.0.0:4318
+            grpc:
+              endpoint: 0.0.0.0:4317
+        jaeger:
+          protocols:
+            thrift_http:
+              endpoint: 0.0.0.0:14268
+            grpc:
+              endpoint: 0.0.0.0:14250
+
+    ingester:
+      trace_idle_period: 10s
+      max_block_duration: 10m
+
+    compactor:
+      compaction:
+        compaction_window: 1h
+        max_compaction_objects: 1000000
+        block_retention: 720h  # 30 days
+
+    storage:
+      trace:
+        backend: local
+        local:
+          path: /var/tempo/traces
+        pool:
+          max_workers: 100
+          queue_depth: 10000
+
+    query_frontend:
+      search:
+        max_duration: 0s
+
+    overrides:
+      per_tenant_override_config: /conf/overrides.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo
+  namespace: tracing
+  labels:
+    app: tempo
+spec:
+  ports:
+  - name: http
+    port: 3200
+    targetPort: 3200
+  - name: otlp-http
+    port: 4318
+    targetPort: 4318
+  - name: otlp-grpc
+    port: 4317
+    targetPort: 4317
+  - name: jaeger-http
+    port: 14268
+    targetPort: 14268
+  - name: jaeger-grpc
+    port: 14250
+    targetPort: 14250
+  selector:
+    app: tempo
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo
+  namespace: tracing
+  labels:
+    app: tempo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo
+  template:
+    metadata:
+      labels:
+        app: tempo
+    spec:
+      containers:
+      - name: tempo
+        image: grafana/tempo:2.3.0
+        args:
+        - "-config.file=/etc/tempo/tempo.yaml"
+        ports:
+        - containerPort: 3200
+          name: http
+          protocol: TCP
+        - containerPort: 4318
+          name: otlp-http
+          protocol: TCP
+        - containerPort: 4317
+          name: otlp-grpc
+          protocol: TCP
+        - containerPort: 14268
+          name: jaeger-http
+          protocol: TCP
+        - containerPort: 14250
+          name: jaeger-grpc
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/tempo
+        - name: storage
+          mountPath: /var/tempo
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: 3200
+          initialDelaySeconds: 45
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3200
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: tempo-config
+      - name: storage
+        emptyDir: {}
+---
+# Service for exposing Tempo to Grafana
+apiVersion: v1
+kind: Service
+metadata:
+  name: tempo-query
+  namespace: tracing
+  labels:
+    app: tempo
+spec:
+  ports:
+  - name: http
+    port: 16686
+    targetPort: 16686
+  selector:
+    app: tempo-query
+  type: ClusterIP
+---
+# Tempo Query (Jaeger UI compatible)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tempo-query
+  namespace: tracing
+  labels:
+    app: tempo-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tempo-query
+  template:
+    metadata:
+      labels:
+        app: tempo-query
+    spec:
+      containers:
+      - name: tempo-query
+        image: grafana/tempo-query:2.3.0
+        args:
+        - "--grpc-storage-plugin.configuration-file=/etc/tempo-query/tempo-query.yaml"
+        ports:
+        - containerPort: 16686
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: config
+          mountPath: /etc/tempo-query
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+      volumes:
+      - name: config
+        configMap:
+          name: tempo-query-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tempo-query-config
+  namespace: tracing
+data:
+  tempo-query.yaml: |
+    backend: tempo:3200
+

@@ -27,6 +27,8 @@ helm upgrade --install cloud-secrets-manager ./infrastructure/helm/cloud-secrets
 - `--create-namespace`: Creates the namespace if it doesn't exist.
 - `--values ...`: Uses the specified configuration file.
 
+> **Note:** The `values.yaml` file now enables monitoring (Prometheus/Grafana) by default. Ensure your cluster has the necessary CRDs installed, or disable it by setting `monitoring.enabled=false`.
+
 ## Verification
 
 After running the deployment command, you need to verify that everything started correctly.

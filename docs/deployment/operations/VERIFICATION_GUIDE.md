@@ -243,7 +243,7 @@ After initial verification, set up continuous monitoring:
 
 ## Next Steps
 
-- Review [Security Context Update Guide](./SECURITY_CONTEXT_UPDATE.md) for Docker image requirements
+- Review [Security Context Update Guide](../kubernetes/SECURITY_CONTEXT_UPDATE.md) for Docker image requirements
 - Review [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md) for full deployment procedures
 - Review [Implementation Summary](./IMPLEMENTATION_SUMMARY.md) for all implemented features
 
