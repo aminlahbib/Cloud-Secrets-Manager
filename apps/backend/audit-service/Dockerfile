@@ -5,7 +5,8 @@ WORKDIR /app
 
 # Copy Maven wrapper and pom.xml
 COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
+COPY mvnw ./
+COPY pom.xml ./
 
 # Download dependencies
 RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
@@ -27,7 +28,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Copy the Spring Boot executable jar (prepared in builder stage)
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/audit-service-1.0.0.jar app.jar
 
 # Expose port
 EXPOSE 8081
