@@ -30,22 +30,17 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      - name: Build Secret Service
+      - name: Build and Test Secret Service
         run: |
           cd apps/backend/secret-service
-          ./mvnw clean verify -DskipTests=false
+          ./mvnw clean test
+          # Integration tests use H2 database (no Docker required)
+          # All tests (unit + integration) run with: ./mvnw test
 
-      - name: Build Audit Service
+      - name: Build and Test Audit Service
         run: |
           cd apps/backend/audit-service
-          ./mvnw clean verify -DskipTests=false
-
-      - name: Run Unit Tests
-        run: |
-          cd apps/backend/secret-service
-          ./mvnw test
-          cd ../audit-service
-          ./mvnw test
+          ./mvnw clean test
 
       - name: Generate Test Reports
         if: always()
