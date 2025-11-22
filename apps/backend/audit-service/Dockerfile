@@ -7,6 +7,9 @@ WORKDIR /app
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
 
+# Ensure Maven wrapper is executable
+RUN chmod +x mvnw
+
 # Download dependencies
 RUN ./mvnw dependency:go-offline -B
 
@@ -14,7 +17,18 @@ RUN ./mvnw dependency:go-offline -B
 COPY src ./src
 
 # Build the application
-RUN ./mvnw clean package -DskipTests -B
+RUN ./mvnw clean package -DskipTests -B || (echo "Maven build failed!" && exit 1)
+
+# Verify compilation succeeded
+RUN echo "=== Verifying compilation ===" && \
+    if [ -d /app/target/classes/com/audit ]; then \
+        echo "✅ Classes directory exists" && \
+        ls -la /app/target/classes/com/audit/ | head -10; \
+    else \
+        echo "❌ ERROR: Classes directory not found!" && \
+        ls -la /app/target/ || echo "target directory doesn't exist" && \
+        exit 1; \
+    fi
 
 # Verify JAR was created and list all JARs for debugging
 RUN echo "=== Checking target directory ===" && \
@@ -30,7 +44,16 @@ RUN if [ -f /app/target/audit-service-1.0.0.jar ]; then \
         cp /app/target/audit-service-1.0.0.jar /app/target/app.jar && \
         ls -lh /app/target/app.jar && \
         echo "Verifying JAR contents..." && \
-        jar tf /app/target/app.jar | head -20; \
+        jar tf /app/target/app.jar | head -30 && \
+        echo "=== Verifying main class exists ===" && \
+        if jar tf /app/target/app.jar | grep -q "BOOT-INF/classes/com/secrets/AuditServiceApplication.class"; then \
+            echo "✅ Main class found in JAR"; \
+        else \
+            echo "❌ ERROR: Main class NOT found in JAR!" && \
+            echo "Searching for any AuditServiceApplication files:" && \
+            jar tf /app/target/app.jar | grep -i audit || echo "No matches found" && \
+            exit 1; \
+        fi; \
     else \
         echo "ERROR: audit-service-1.0.0.jar not found!" && \
         echo "Available files:" && \
