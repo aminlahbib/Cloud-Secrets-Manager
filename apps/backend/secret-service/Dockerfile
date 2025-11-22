@@ -29,8 +29,20 @@ RUN if [ -f /app/target/secret-service-1.0.0.jar ]; then \
         echo "Found executable JAR: secret-service-1.0.0.jar" && \
         cp /app/target/secret-service-1.0.0.jar /app/target/app.jar && \
         ls -lh /app/target/app.jar && \
-        echo "Verifying JAR contents..." && \
-        jar tf /app/target/app.jar | head -20; \
+        echo "=== Verifying JAR structure ===" && \
+        echo "JAR manifest:" && \
+        unzip -p /app/target/app.jar META-INF/MANIFEST.MF | head -10 && \
+        echo "" && \
+        echo "Checking for main class in JAR..." && \
+        if unzip -l /app/target/app.jar | grep -q "BOOT-INF/classes/com/secrets/SecretServiceApplication.class"; then \
+            echo "✓ Found SecretServiceApplication.class in BOOT-INF/classes/" && \
+            unzip -l /app/target/app.jar | grep "SecretServiceApplication.class"; \
+        else \
+            echo "✗ ERROR: SecretServiceApplication.class not found in JAR!" && \
+            echo "Listing BOOT-INF/classes/com/secrets/:" && \
+            unzip -l /app/target/app.jar | grep "BOOT-INF/classes/com/secrets/" | head -10 && \
+            exit 1; \
+        fi; \
     else \
         echo "ERROR: secret-service-1.0.0.jar not found!" && \
         echo "Available files:" && \
