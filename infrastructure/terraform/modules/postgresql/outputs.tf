@@ -45,3 +45,18 @@ output "connection_strings" {
     "jdbc:postgresql://${google_sql_database_instance.main.ip_address[0].ip_address}:5432/${db_name}"
   }
 }
+
+output "base_instance_name" {
+  description = "Base instance name (without random suffix) used for secret naming"
+  value       = var.instance_name
+}
+
+output "secret_names" {
+  description = "Secret Manager secret names for passwords and users"
+  value = {
+    for db_name in var.databases : db_name => {
+      password_secret = "${var.instance_name}-${db_name}-password"
+      user_secret     = "${var.instance_name}-${db_name}-user"
+    }
+  }
+}

@@ -48,13 +48,20 @@ output "quick_start" {
     # Configure Docker for Artifact Registry:
     gcloud auth configure-docker ${var.region}-docker.pkg.dev
 
-    # Get database password:
-    gcloud secrets versions access latest --secret="${module.postgresql.instance_name}-secrets-password"
+    # Get database passwords:
+    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["secrets"].password_secret}"
+    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["audit"].password_secret}"
     
-    # Get database username:
-    gcloud secrets versions access latest --secret="${module.postgresql.instance_name}-secrets-user"
+    # Get database usernames:
+    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["secrets"].user_secret}"
+    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["audit"].user_secret}"
 
     # Connect to database via proxy:
     cloud_sql_proxy -instances=${module.postgresql.instance_connection_name}=tcp:5432
+
+    # Note: Secrets are automatically synced to Kubernetes via External Secrets Operator
+    # Check synced secrets:
+    kubectl get secrets -n cloud-secrets-manager
+    kubectl get externalsecrets -n cloud-secrets-manager
   EOT
 }
