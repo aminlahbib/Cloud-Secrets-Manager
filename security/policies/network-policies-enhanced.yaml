@@ -1,0 +1,313 @@
+---
+# Enhanced Network Policies for Cloud Secrets Manager
+# These policies implement strict zero-trust networking
+# All traffic is denied by default, only explicitly allowed connections permitted
+
+#============================================================================
+# Default Deny All Traffic (Both Ingress and Egress)
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: cloud-secrets-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  # No rules = deny all traffic
+
+---
+#============================================================================
+# Secret Service Network Policy
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: secret-service-policy
+  namespace: cloud-secrets-manager
+  labels:
+    app: secret-service
+spec:
+  podSelector:
+    matchLabels:
+      app: secret-service
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow traffic from Ingress Controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+    
+    # Allow metrics scraping from Prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow calls to Audit Service
+    - to:
+        - podSelector:
+            matchLabels:
+              app: audit-service
+      ports:
+        - protocol: TCP
+          port: 8081
+    
+    # Allow calls to Redis (for token blacklist)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # Allow HTTPS to GCP metadata server (Workload Identity)
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 80
+    
+    # Allow HTTPS to Google APIs (Secret Manager, Cloud SQL, etc.)
+    - ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow PostgreSQL connection via Cloud SQL Proxy (localhost sidecar)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: secret-service
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+#============================================================================
+# Audit Service Network Policy
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: audit-service-policy
+  namespace: cloud-secrets-manager
+  labels:
+    app: audit-service
+spec:
+  podSelector:
+    matchLabels:
+      app: audit-service
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow traffic from Secret Service
+    - from:
+        - podSelector:
+            matchLabels:
+              app: secret-service
+      ports:
+        - protocol: TCP
+          port: 8081
+    
+    # Allow traffic from Ingress Controller (if direct access needed)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8081
+    
+    # Allow metrics scraping from Prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 8081
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    
+    # Allow HTTPS to GCP metadata server
+    - to:
+        - ipBlock:
+            cidr: 169.254.169.254/32
+      ports:
+        - protocol: TCP
+          port: 80
+    
+    # Allow HTTPS to Google APIs
+    - ports:
+        - protocol: TCP
+          port: 443
+    
+    # Allow PostgreSQL connection via Cloud SQL Proxy (localhost sidecar)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: audit-service
+      ports:
+        - protocol: TCP
+          port: 5432
+
+---
+#============================================================================
+# Redis Network Policy (Token Blacklist Store)
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-policy
+  namespace: cloud-secrets-manager
+  labels:
+    app: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+    - Ingress
+    - Egress
+  
+  ingress:
+    # Allow connections from Secret Service only
+    - from:
+        - podSelector:
+            matchLabels:
+              app: secret-service
+      ports:
+        - protocol: TCP
+          port: 6379
+    
+    # Allow metrics scraping from Prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9121  # Redis exporter port
+  
+  egress:
+    # Allow DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+#============================================================================
+# Prometheus Network Policy (Monitoring)
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scraping
+  namespace: cloud-secrets-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow Prometheus to scrape metrics from all pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+          podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 8080
+        - protocol: TCP
+          port: 8081
+
+---
+#============================================================================
+# Tempo/Tracing Network Policy
+#============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-tempo-traces
+  namespace: cloud-secrets-manager
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    # Allow sending traces to Tempo
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: tracing
+          podSelector:
+            matchLabels:
+              app: tempo
+      ports:
+        - protocol: TCP
+          port: 4318  # OTLP HTTP
+        - protocol: TCP
+          port: 4317  # OTLP gRPC
+
