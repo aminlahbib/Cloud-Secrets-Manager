@@ -1,0 +1,81 @@
+# Staging Environment Values
+# Use with: helm install cloud-secrets-manager ./infrastructure/helm/cloud-secrets-manager -f values-staging.yaml
+
+image:
+  repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
+  repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
+  tag: "staging"  # Use staging tag instead of latest
+  pullPolicy: Always  # Always pull latest staging image
+
+secretService:
+  replicaCount: 2  # Higher replica count for staging
+  port: 8080
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+auditService:
+  replicaCount: 2
+  port: 8081
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+serviceAccount:
+  create: true
+  annotations:
+    # Staging service account
+    iam.gke.io/gcp-service-account: "secret-service-staging@cloud-secrets-manager.iam.gserviceaccount.com"
+
+auditServiceAccount:
+  create: true
+  annotations:
+    # Staging service account
+    iam.gke.io/gcp-service-account: "audit-service-staging@cloud-secrets-manager.iam.gserviceaccount.com"
+
+createSecrets: false
+
+# Cloud SQL Configuration (staging instance)
+cloudSql:
+  enabled: true
+  connectionName: "cloud-secrets-manager:europe-west10:secrets-manager-db-staging-XXXXX"  # Update with staging instance
+  image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
+
+googleIdentity:
+  enabled: true
+  projectId: "cloud-secrets-manager"
+  apiKey: ""
+  serviceAccount:
+    secretName: "csm-google-service-account"
+    key: "service-account.json"
+  setupEnabled: true  # Allow setup in staging
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "secrets-staging.yourdomain.com"  # Update with staging domain
+  tls:
+    enabled: true
+    secretName: "secrets-manager-staging-tls"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/limit-rps: "200"  # Higher limit for staging
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+
