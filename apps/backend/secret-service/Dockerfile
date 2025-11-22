@@ -14,6 +14,7 @@ RUN ./mvnw dependency:go-offline -B
 COPY src ./src
 
 # Build the application
+RUN chmod +x mvnw
 RUN ./mvnw clean package -DskipTests -B
 
 # Verify JAR was created and list all JARs for debugging
@@ -24,10 +25,11 @@ RUN echo "=== Checking target directory ===" && \
 
 # Copy the Spring Boot executable JAR
 # Spring Boot Maven plugin repackages the JAR in place
-# The executable JAR is: secret-service-1.0.0.jar (the .original is the non-executable one)
-RUN if [ -f /app/target/secret-service-1.0.0.jar ]; then \
-        echo "Found executable JAR: secret-service-1.0.0.jar" && \
-        cp /app/target/secret-service-1.0.0.jar /app/target/app.jar && \
+# We use find to locate the JAR to handle potential version naming differences
+RUN JAR_FILE=$(find /app/target -maxdepth 1 -name "*.jar" ! -name "*.original" | head -n 1) && \
+    if [ -n "$JAR_FILE" ]; then \
+        echo "Found executable JAR: $JAR_FILE" && \
+        cp "$JAR_FILE" /app/target/app.jar && \
         ls -lh /app/target/app.jar && \
         echo "=== Verifying JAR structure ===" && \
         echo "JAR manifest:" && \
@@ -44,7 +46,7 @@ RUN if [ -f /app/target/secret-service-1.0.0.jar ]; then \
             exit 1; \
         fi; \
     else \
-        echo "ERROR: secret-service-1.0.0.jar not found!" && \
+        echo "ERROR: No executable JAR found in /app/target/!" && \
         echo "Available files:" && \
         ls -la /app/target/ && \
         exit 1; \
