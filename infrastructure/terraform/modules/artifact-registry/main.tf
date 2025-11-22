@@ -40,19 +40,3 @@ resource "google_artifact_registry_repository" "main" {
 
 # Enable vulnerability scanning (automatic with Artifact Registry)
 # No additional configuration needed - enabled by default
-
-# Output the repository URL for use in CI/CD
-output "repository_url" {
-  description = "The URL of the Artifact Registry repository"
-  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${var.repository_id}"
-}
-
-output "repository_name" {
-  description = "The full name of the Artifact Registry repository"
-  value       = google_artifact_registry_repository.main.name
-}
-
-output "repository_id" {
-  description = "The ID of the Artifact Registry repository"
-  value       = google_artifact_registry_repository.main.repository_id
-}

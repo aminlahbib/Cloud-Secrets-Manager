@@ -52,9 +52,26 @@ resource "google_container_cluster" "primary" {
   }
 
   # Workload Identity
-  workload_identity_config {
-    workload_pool = var.enable_workload_identity ? "${var.project_id}.svc.id.goog" : null
+  # Using dynamic block to avoid errors when disabled
+  dynamic "workload_identity_config" {
+    for_each = var.enable_workload_identity ? [1] : []
+    content {
+      workload_pool = "${var.project_id}.svc.id.goog"
+    }
   }
+
+  # Deletion protection
+  deletion_protection = var.deletion_protection
+
+  # Release channel configuration
+  release_channel {
+    channel = var.release_channel
+  }
+
+  # Maintenance Policy
+  # We use GKE defaults for maintenance window which provides automatic
+  # updates while respecting release channel settings.
+  # No explicit maintenance_policy block defined to use defaults.
 
   # Network policy
   network_policy {
@@ -80,15 +97,6 @@ resource "google_container_cluster" "primary" {
     for_each = var.enable_binary_authorization ? [1] : []
     content {
       evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
-    }
-  }
-
-  # Maintenance window
-  maintenance_policy {
-    recurring_window {
-      start_time = var.maintenance_start_time
-      end_time   = "${substr(var.maintenance_start_time, 0, 11)}${format("%02d", (tonumber(substr(var.maintenance_start_time, 11, 2)) + tonumber(substr(var.maintenance_duration, 0, length(var.maintenance_duration) - 1))) % 24)}:00:00Z"
-      recurrence = "FREQ=WEEKLY;BYDAY=SU"
     }
   }
 
@@ -120,6 +128,11 @@ resource "google_container_cluster" "primary" {
   lifecycle {
     ignore_changes = [
       node_pool, # Managed separately
+      ip_allocation_policy,
+      private_cluster_config[0].master_ipv4_cidr_block, # Prevent forced replacement
+      network,    # Ignore format differences (projects/.../default vs default)
+      subnetwork, # Ignore format differences (projects/.../default vs default)
+      deletion_protection, # Temporarily ignore to allow updates - manually set to false in GCP Console first
     ]
   }
 }
@@ -172,13 +185,6 @@ resource "google_container_node_pool" "primary_nodes" {
       var.labels
     )
 
-    # Taints (optional, for future use)
-    # taint {
-    #   key    = "workload"
-    #   value  = "production"
-    #   effect = "NO_SCHEDULE"
-    # }
-
     # Metadata
     metadata = {
       disable-legacy-endpoints = "true"
@@ -201,7 +207,7 @@ resource "google_container_node_pool" "primary_nodes" {
 # Service account for GKE nodes
 resource "google_service_account" "gke_nodes" {
   project      = var.project_id
-  account_id   = "${var.cluster_name}-nodes"
+  account_id   = "${substr(var.cluster_name, 0, 20)}-nodes"
   display_name = "GKE Node Service Account for ${var.cluster_name}"
 }
 
