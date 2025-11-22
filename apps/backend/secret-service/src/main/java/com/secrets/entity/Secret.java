@@ -46,5 +46,20 @@ public class Secret {
 
     @Version
     private Long version;
+
+    // Expiration management
+    @Column(nullable = true)
+    private LocalDateTime expiresAt;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean expired = false;
+    
+    public boolean isExpired() {
+        if (expiresAt == null) {
+            return false; // No expiration set
+        }
+        return LocalDateTime.now().isAfter(expiresAt) || expired;
+    }
 }
 
