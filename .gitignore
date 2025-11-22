@@ -90,8 +90,12 @@ docker-compose.override.yml
 # Kubernetes
 *.kubeconfig
 
-# Secrets
+# Secrets (but allow Java package com/secrets)
+/secrets/
+/secrets
 secrets/
+!**/src/main/java/com/secrets/
+!**/src/main/java/**/secrets/
 *.secret
 *.token
 
