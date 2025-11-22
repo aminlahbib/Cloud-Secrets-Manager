@@ -252,6 +252,24 @@ jobs:
         with:
           version: '3.12.0'
 
+      - name: Create Artifact Registry image pull secret
+        run: |
+          # Create secret for pulling images from Artifact Registry
+          # Helm chart requires this secret to exist for imagePullSecrets
+          # Get access token for authentication
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          
+          # Create or update the secret
+          kubectl create secret docker-registry artifact-registry-secret \
+            --docker-server=${{ env.ARTIFACT_REGISTRY }} \
+            --docker-username=oauth2accesstoken \
+            --docker-password="${ACCESS_TOKEN}" \
+            --docker-email=github-actions-ci@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --namespace=${{ env.GKE_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          echo "Artifact Registry secret created/updated successfully"
+
       - name: Deploy with Helm
         run: |
           helm upgrade --install cloud-secrets-manager \
