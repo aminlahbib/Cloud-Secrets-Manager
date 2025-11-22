@@ -1,53 +1,76 @@
 # Deployment Documentation
 
-This directory contains all deployment-related documentation for the Cloud Secrets Manager.
+This directory contains all deployment-related documentation for the Cloud Secrets Manager project.
 
 ---
 
-## Quick Navigation
+## Quick Start
 
-### 🚀 Getting Started
-
-1. **[Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)** - Start here for initial deployment
-2. **[Operations Guide](./OPERATIONS_GUIDE.md)** - For managing live deployments
-
-### 📚 All Guides
-
-- **[Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)** - Full deployment workflow
-- **[Operations Guide](./OPERATIONS_GUIDE.md)** - Live deployment management
-- **[Terraform Guide](./TERRAFORM_GUIDE.md)** - Infrastructure setup
-- **[Terraform Operations](./TERRAFORM_OPERATIONS.md)** - Infrastructure management
-- **[Google Identity Deployment](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Authentication setup
-- **[Deployment Index](./DEPLOYMENT_INDEX.md)** - Complete index of all guides
+- **New to the project?** Start with the [Deployment Index](./DEPLOYMENT_INDEX.md)
+- **Deploying to production?** See [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
+- **Developing locally?** See [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
 
 ---
 
-## Deployment Workflow
+## Main Guides
 
-```
-1. Infrastructure Setup (Terraform)
-   └─> [Terraform Guide](./TERRAFORM_GUIDE.md)
-   
-2. Application Deployment (Kubernetes)
-   └─> [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
-   
-3. Day-to-Day Operations
-   └─> [Operations Guide](./OPERATIONS_GUIDE.md)
-```
+### Production Deployment
+
+1. **[Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐
+   - End-to-end production deployment guide
+   - Uses Cloud SQL and External Secrets Operator
+   - Step-by-step instructions
+
+2. **[Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)**
+   - Deploy using Helm charts
+   - Configuration and management
+
+3. **[Terraform Guide](./TERRAFORM_GUIDE.md)**
+   - Infrastructure provisioning
+   - GKE, Cloud SQL, IAM setup
+
+4. **[External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)**
+   - Google Secret Manager integration
+   - External Secrets Operator configuration
+
+### Local Development
+
+- **[Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)** ⭐
+  - Docker Compose setup
+  - Local PostgreSQL databases
+  - Development workflow
+
+### Operations
+
+- **[Operations Guide](./OPERATIONS_GUIDE.md)**
+  - Day-to-day management
+  - Monitoring, scaling, updates
+  - Troubleshooting
+
+- **[Terraform Operations](./TERRAFORM_OPERATIONS.md)**
+  - Common Terraform workflows
+  - State management
+
+### Configuration
+
+- **[Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)**
+  - Google Cloud Identity Platform integration
+  - Authentication configuration
 
 ---
 
-## Documentation Status
+## Documentation Index
 
-| Document | Status | Last Updated |
-|----------|--------|--------------|
-| Complete Deployment Guide | ✅ Active | Nov 22, 2025 |
-| Operations Guide | ✅ Active | Nov 22, 2025 |
-| Terraform Guide | ✅ Active | Nov 22, 2025 |
-| Terraform Operations | ✅ Active | Nov 22, 2025 |
-| Google Identity Deployment | ✅ Active | Nov 22, 2025 |
+For a complete overview of all deployment documentation, see [DEPLOYMENT_INDEX.md](./DEPLOYMENT_INDEX.md).
+
+---
+
+## Archived Documentation
+
+Completed or superseded documentation has been moved to the [archive](./archive/) directory:
+- Migration status and completion docs
+- Legacy setup guides
 
 ---
 
 **Last Updated:** November 22, 2025
-

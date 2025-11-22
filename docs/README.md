@@ -18,12 +18,20 @@ Welcome to the Cloud Secrets Manager documentation. This directory contains all 
 ### [deployment/](./deployment/)
 Complete guides for deploying and managing the Cloud Secrets Manager.
 
-- **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Main deployment guide (startup/shutdown/workflow)
+**Production Deployment:**
+- **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Main production deployment guide (Cloud SQL, ESO)
+- **[Helm Deployment Guide](./deployment/HELM_DEPLOYMENT_GUIDE.md)** - Deploy using Helm charts
+- **[External Secrets Setup](./deployment/EXTERNAL_SECRETS_SETUP.md)** - Google Secret Manager integration
 - **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** ⭐ - Live deployment management and commands
 - **[Terraform Guide](./deployment/TERRAFORM_GUIDE.md)** - Infrastructure as Code
 - **[Terraform Operations](./deployment/TERRAFORM_OPERATIONS.md)** - Terraform workflows
 - **[Google Identity Deployment](./deployment/GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Authentication setup
-- **[Deployment Index](./deployment/DEPLOYMENT_INDEX.md)** - Deployment documentation index
+
+**Local Development:**
+- **[Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)** ⭐ - Run locally with Docker Compose
+
+**Reference:**
+- **[Deployment Index](./deployment/DEPLOYMENT_INDEX.md)** - Complete deployment documentation index
 
 ### [current/](./current/)
 Current feature documentation and guides.
@@ -72,10 +80,10 @@ Implementation details for specific features.
 
 ### For Developers
 
-1. Read the [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
-2. Set up your development environment
-3. Review [Terraform Guide](./deployment/TERRAFORM_GUIDE.md) for infrastructure
-4. Check [Current Status](./status/STATUS.md) for project state
+1. **Local Development**: Start with [Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)
+2. **Production Deployment**: Read the [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
+3. **Infrastructure**: Review [Terraform Guide](./deployment/TERRAFORM_GUIDE.md)
+4. **Project Status**: Check [Current Status](./status/STATUS.md) for project state
 
 ### For DevOps/Infrastructure
 
@@ -119,7 +127,9 @@ When adding new documentation:
 
 ## Recent Updates
 
+- ✅ **Cloud SQL Migration Complete** - Migrated from local PostgreSQL to Google Cloud SQL
+- ✅ **Local Development Guide** - New guide for Docker Compose local development
+- ✅ **Documentation Cleanup** - Archived completed migration and setup docs
 - ✅ Added **Operations Guide** with comprehensive management commands
-- ✅ Enhanced **Deployment Guide** with startup/shutdown procedures
+- ✅ Enhanced **Deployment Guide** with Cloud SQL and External Secrets Operator
 - ✅ Organized and archived historical planning documents
-- ✅ Updated documentation structure and navigation

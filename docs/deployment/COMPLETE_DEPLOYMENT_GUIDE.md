@@ -208,9 +208,9 @@ kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 ```
 
 This will automatically create the following secrets in the `cloud-secrets-manager` namespace:
-- `db-credentials` (or `csm-db-secrets`)
-- `csm-app-config`
-- `csm-google-service-account`
+- `csm-db-secrets` (contains: secrets-db-user, secrets-db-password, audit-db-user, audit-db-password)
+- `csm-app-config` (contains: JWT_SECRET, AES_KEY, GOOGLE_PROJECT_ID, GOOGLE_API_KEY)
+- `csm-google-service-account` (contains: service-account.json)
 
 **Verify:**
 ```bash
@@ -242,12 +242,14 @@ kubectl apply -f infrastructure/kubernetes/k8s/audit-service-deployment.yaml
 
 **Deployment Configuration:**
 - **Replicas**: 1 per service (can be scaled)
-- **Cloud SQL Proxy**: Sidecar container connecting to Cloud SQL via public IP
-- **Database Connection**: Applications connect to `localhost:5432` (proxied by Cloud SQL Proxy)
+- **Cloud SQL Proxy**: Sidecar container connecting to Cloud SQL via Workload Identity
+- **Database Connection**: Applications connect to `127.0.0.1:5432` (proxied by Cloud SQL Proxy)
+- **Databases**: `secrets` and `audit` (Cloud SQL managed PostgreSQL)
+- **Users**: `secrets_user` and `audit_user`
 - **Resource Requests**: 
-  - Secret Service: 300m CPU, 512Mi memory
-  - Audit Service: 200m CPU, 256Mi memory
-  - Cloud SQL Proxy: 30m CPU, 64Mi memory
+  - Secret Service: 200m CPU, 256Mi memory
+  - Audit Service: 100m CPU, 128Mi memory
+  - Cloud SQL Proxy: 50m CPU, 64Mi memory
 
 ---
 
@@ -640,26 +642,13 @@ docker build --platform linux/amd64 \
   -t europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service:latest .
 docker push europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service:latest
 
-# 6. Create secrets
-SECRETS_DB_PASSWORD=$(gcloud secrets versions access latest \
-  --secret="secrets-manager-db-dev-secrets_db-password")
-AUDIT_DB_PASSWORD=$(gcloud secrets versions access latest \
-  --secret="secrets-manager-db-dev-audit_db-password")
-DB_CONNECTION="cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
+# 6. Setup External Secrets (secrets are managed by ESO from Google Secret Manager)
+# See: docs/deployment/EXTERNAL_SECRETS_SETUP.md for creating secrets in Google Secret Manager
+kubectl apply -f infrastructure/kubernetes/k8s/external-secrets.yaml
 
-kubectl create secret generic db-credentials \
-  -n cloud-secrets-manager \
-  --from-literal=connection-name="$DB_CONNECTION" \
-  --from-literal=secrets-db-password="$SECRETS_DB_PASSWORD" \
-  --from-literal=audit-db-password="$AUDIT_DB_PASSWORD"
-
-JWT_SECRET=$(openssl rand -hex 32)
-AES_KEY=$(openssl rand -base64 24 | tr -d '\n' | head -c 32)
-kubectl create secret generic csm-app-config \
-  -n cloud-secrets-manager \
-  --from-literal=JWT_SECRET="$JWT_SECRET" \
-  --from-literal=AES_KEY="$AES_KEY" \
-  --from-literal=GOOGLE_PROJECT_ID="cloud-secrets-manager"
+# Verify secrets are synced
+kubectl get externalsecrets -n cloud-secrets-manager
+kubectl get secrets -n cloud-secrets-manager
 
 # 7. Deploy applications
 kubectl apply -f infrastructure/kubernetes/k8s/secret-service-deployment.yaml
@@ -705,6 +694,17 @@ After successful deployment:
 5. **Review Security** (network policies, pod security standards)
 
 6. **Review Operations Guide** - See [OPERATIONS_GUIDE.md](./OPERATIONS_GUIDE.md) for day-to-day management commands
+
+---
+
+---
+
+## Related Documentation
+
+- **[Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)** - For local development with Docker Compose
+- **[External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)** - Setting up secret management
+- **[Helm Deployment Guide](./HELM_DEPLOYMENT_GUIDE.md)** - Alternative deployment using Helm
+- **[Operations Guide](./OPERATIONS_GUIDE.md)** - Day-to-day operations and management
 
 ---
 
