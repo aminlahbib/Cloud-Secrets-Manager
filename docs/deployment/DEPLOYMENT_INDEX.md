@@ -127,6 +127,31 @@ This directory contains deployment guides for the Cloud Secrets Manager.
 
 **Use this guide for:** Deploying and managing the application with Helm.
 
+### [CI/CD Pipeline Status](./CI_CD_PIPELINE_STATUS.md)
+**Status:** Active  
+**Description:** Current CI/CD pipeline status and enhancement recommendations.
+
+**Key Topics:**
+- Current pipeline implementation
+- Gaps and missing features
+- Recommendations for GCP integration
+- Automated deployment setup
+
+**Use this guide for:** Understanding CI/CD status and planning enhancements.
+
+### [CI/CD Setup Guide](./CI_CD_SETUP.md) ⭐ **FOR CI/CD SETUP**
+**Status:** Active  
+**Description:** Complete guide for setting up and using the CI/CD pipeline with Google Cloud integration.
+
+**Key Topics:**
+- GitHub secrets configuration
+- GCP service account setup
+- Pipeline workflow explanation
+- Troubleshooting
+- Deployment verification
+
+**Use this guide for:** Setting up automated CI/CD with GCP deployment.
+
 ---
 
 ## Quick Links
