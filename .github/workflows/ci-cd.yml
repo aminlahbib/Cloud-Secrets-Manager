@@ -344,6 +344,18 @@ jobs:
           echo ""
           echo "=== Recent Events ==="
           kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | tail -30
+          echo ""
+          echo "=== Describe Audit Service Pods ==="
+          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} -l app=audit-service || echo "No audit-service pods found"
+          echo ""
+          echo "=== Secret Service Pod Logs ==="
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=secret-service --tail=100 --all-containers=true || echo "No secret-service pods found"
+          echo ""
+          echo "=== Audit Service Pod Logs ==="
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=audit-service --tail=100 --all-containers=true || echo "No audit-service pods found"
+          echo ""
+          echo "=== Check Image Pull Errors ==="
+          kubectl get events -n ${{ env.GKE_NAMESPACE }} --field-selector reason=Failed | grep -i image || echo "No image pull errors found"
 
       - name: Wait for rollout
         run: |
