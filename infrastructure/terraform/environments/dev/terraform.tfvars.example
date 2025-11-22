@@ -1,0 +1,4 @@
+# Fill in your GCP project ID
+project_id = "YOUR_PROJECT_ID"
+region     = "europe-west10"
+environment = "dev"
