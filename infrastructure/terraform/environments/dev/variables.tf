@@ -14,3 +14,14 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "billing_account_id" {
+  description = "The ID of the billing account to associate this budget with."
+  type        = string
+}
+
+variable "budget_amount" {
+  description = "The monthly budget amount."
+  type        = number
+  default     = 50
+}
