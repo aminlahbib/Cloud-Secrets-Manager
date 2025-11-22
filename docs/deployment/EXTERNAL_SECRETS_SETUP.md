@@ -38,7 +38,7 @@ printf "your-project-id" | gcloud secrets create google-project-id --data-file=-
 printf "your-api-key" | gcloud secrets create google-api-key --data-file=-
 
 # Service Account JSON
-gcloud secrets create google-service-account-json --data-file=path/to/service-account.json
+gcloud secrets create google-service-account-json --data-file=apps/backend/secret-service/src/main/resources/service-account.json
 ```
 
 ## Step 2: Apply Terraform
