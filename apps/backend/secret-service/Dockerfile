@@ -18,53 +18,118 @@ COPY src ./src
 
 # Verify source code was copied
 RUN echo "=== Verifying source code ===" && \
+    echo "Checking /app/src structure:" && \
     ls -la /app/src/ && \
     echo "" && \
-    echo "Checking for main class source:" && \
-    find /app/src -name "SecretServiceApplication.java" || echo "Main class source not found!" && \
+    echo "Checking for Maven standard directory structure:" && \
+    if [ -d /app/src/main/java ]; then \
+        echo "✅ src/main/java exists" && \
+        ls -la /app/src/main/java/ && \
+        echo "" && \
+        echo "Checking for main class source:" && \
+        find /app/src/main/java -name "SecretServiceApplication.java" || (echo "❌ Main class source not found in src/main/java!" && exit 1) && \
+        echo "" && \
+        echo "Java files in src/main/java:" && \
+        find /app/src/main/java -type f -name "*.java" | head -20; \
+    else \
+        echo "❌ ERROR: src/main/java directory not found!" && \
+        echo "Full src directory structure:" && \
+        find /app/src -type d && \
+        echo "" && \
+        echo "All files in src:" && \
+        find /app/src -type f | head -30 && \
+        exit 1; \
+    fi
+
+# Check what Maven sees
+RUN echo "=== Checking Maven source directories ===" && \
+    ./mvnw help:evaluate -Dexpression=project.build.sourceDirectory -q -DforceStdout && \
     echo "" && \
-    echo "Source directory structure:" && \
-    find /app/src -type f -name "*.java" | head -20
+    ./mvnw help:evaluate -Dexpression=project.build.testSourceDirectory -q -DforceStdout || true
+
+# Try compiling first to see what happens
+RUN echo "=== Attempting Maven compile ===" && \
+    ./mvnw clean compile -DskipTests -B 2>&1 | tee /tmp/maven-compile.log && \
+    echo "" && \
+    echo "=== Compile log summary ===" && \
+    grep -i "compil\|source\|error\|failed" /tmp/maven-compile.log | tail -20 || echo "No compile info found"
 
 # Build the application
-RUN echo "=== Starting Maven build ===" && \
-    ./mvnw clean package -DskipTests -B 2>&1 | tee /tmp/maven-build.log || (echo "❌ Maven build failed!" && echo "=== Last 100 lines of build log ===" && tail -100 /tmp/maven-build.log && exit 1)
-
-# Check Maven build log for errors
-RUN echo "=== Checking Maven build log for errors ===" && \
-    if grep -i "error\|failed\|exception" /tmp/maven-build.log | tail -20; then \
-        echo "⚠️ Warnings/errors found in build log (shown above)"; \
-    else \
-        echo "✅ No obvious errors in build log"; \
-    fi && \
+RUN echo "=== Starting Maven package ===" && \
+    ./mvnw package -DskipTests -B 2>&1 | tee /tmp/maven-build.log; \
+    BUILD_EXIT_CODE=$?; \
     echo "" && \
-    echo "=== Build summary ===" && \
-    tail -30 /tmp/maven-build.log
+    echo "=== Maven build completed with exit code: $BUILD_EXIT_CODE ===" && \
+    echo "=== Checking for compile phase in build log ===" && \
+    grep -i "compiler.*compile\|sources to compile" /tmp/maven-build.log | head -10 || echo "No compile phase found in log" && \
+    echo "" && \
+    echo "=== Last 100 lines of build log ===" && \
+    tail -100 /tmp/maven-build.log && \
+    if [ $BUILD_EXIT_CODE -ne 0 ]; then \
+        echo "" && \
+        echo "❌ Maven build failed! Showing errors:" && \
+        grep -i "error\|failed\|exception" /tmp/maven-build.log | tail -30 || echo "No specific errors found in log"; \
+        exit 1; \
+    fi
 
 # Verify compilation succeeded
 RUN echo "=== Verifying compilation ===" && \
-    echo "Checking target directory structure:" && \
-    ls -la /app/target/ 2>/dev/null || (echo "❌ target directory doesn't exist!" && exit 1) && \
+    echo "Checking if target directory exists:" && \
+    if [ ! -d /app/target ]; then \
+        echo "❌ target directory doesn't exist!" && \
+        echo "Checking if Maven build log exists:" && \
+        ls -la /tmp/maven-build.log 2>/dev/null || echo "Build log not found" && \
+        echo "Last 50 lines of build log:" && \
+        tail -50 /tmp/maven-build.log 2>/dev/null || echo "Cannot read build log" && \
+        exit 1; \
+    fi && \
+    echo "✅ Target directory exists" && \
+    echo "" && \
+    echo "Target directory contents:" && \
+    ls -la /app/target/ && \
     echo "" && \
     echo "Checking for classes directory:" && \
-    if [ -d /app/target/classes ]; then \
-        echo "✅ Classes directory exists" && \
-        echo "Checking for main class:" && \
-        if [ -f /app/target/classes/com/secrets/SecretServiceApplication.class ]; then \
-            echo "✅ Main class compiled successfully" && \
-            ls -lh /app/target/classes/com/secrets/SecretServiceApplication.class; \
-        else \
-            echo "❌ Main class NOT found in classes directory!" && \
-            echo "Files in com/secrets:" && \
-            find /app/target/classes/com/secrets -type f 2>/dev/null | head -20 || echo "com/secrets directory doesn't exist" && \
-            exit 1; \
-        fi; \
-    else \
+    if [ ! -d /app/target/classes ]; then \
         echo "❌ Classes directory not found!" && \
-        echo "Target directory contents:" && \
-        find /app/target -type f | head -20 && \
+        echo "All files in target:" && \
+        find /app/target -type f | head -30 && \
+        echo "" && \
+        echo "All directories in target:" && \
+        find /app/target -type d | head -20 && \
         exit 1; \
-    fi
+    fi && \
+    echo "✅ Classes directory exists" && \
+    echo "" && \
+    echo "=== Detailed classes directory inspection ===" && \
+    echo "Contents of classes directory:" && \
+    ls -la /app/target/classes/ && \
+    echo "" && \
+    echo "All subdirectories in classes:" && \
+    find /app/target/classes -type d && \
+    echo "" && \
+    echo "All files in classes (recursive):" && \
+    find /app/target/classes -type f || echo "No files found" && \
+    echo "" && \
+    echo "All .class files found:" && \
+    find /app/target/classes -name "*.class" || echo "No .class files found" && \
+    echo "" && \
+    echo "Checking for main class:" && \
+    if [ ! -f /app/target/classes/com/secrets/SecretServiceApplication.class ]; then \
+        echo "❌ Main class NOT found in classes directory!" && \
+        echo "" && \
+        echo "This means compilation didn't produce any class files." && \
+        echo "Checking compile log for errors:" && \
+        if [ -f /tmp/maven-compile.log ]; then \
+            echo "=== Compile log errors ===" && \
+            grep -i "error\|failed\|exception\|no sources" /tmp/maven-compile.log | tail -20 || echo "No errors in compile log"; \
+        fi && \
+        echo "" && \
+        echo "Checking if source files exist:" && \
+        find /app/src/main/java -name "*.java" | head -10 || echo "No Java source files found!" && \
+        exit 1; \
+    fi && \
+    echo "✅ Main class compiled successfully" && \
+    ls -lh /app/target/classes/com/secrets/SecretServiceApplication.class
 
 # Verify JAR was created and list all JARs for debugging
 RUN echo "=== Checking target directory ===" && \
