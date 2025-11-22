@@ -6,20 +6,25 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Slf4j
-@RequiredArgsConstructor
 public class RateLimitingFilter implements Filter {
+
+    private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
 
     private final int rateLimit;
     private final long windowMs;
     private final ConcurrentHashMap<String, RateLimitingConfig.RateLimitInfo> cache = new ConcurrentHashMap<>();
+
+    public RateLimitingFilter(int rateLimit, long windowMs) {
+        this.rateLimit = rateLimit;
+        this.windowMs = windowMs;
+    }
 
     @Override
     public void doFilter(jakarta.servlet.ServletRequest request, 

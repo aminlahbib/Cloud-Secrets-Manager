@@ -5,8 +5,8 @@ import com.google.firebase.auth.UserRecord;
 import com.secrets.service.GoogleIdentityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,15 +25,19 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/setup")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Setup", description = "Initial setup operations (temporary)")
 public class SetupController {
+
+    private static final Logger log = LoggerFactory.getLogger(SetupController.class);
 
     private final GoogleIdentityService googleIdentityService;
 
     @Value("${setup.enabled:true}")
     private boolean setupEnabled;
+
+    public SetupController(GoogleIdentityService googleIdentityService) {
+        this.googleIdentityService = googleIdentityService;
+    }
 
     @PostMapping("/create-admin")
     @Operation(summary = "Create initial admin user", 
