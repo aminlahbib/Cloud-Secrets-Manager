@@ -27,9 +27,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
 # Copy the Spring Boot executable jar (prepared in builder stage)
-# We use a wildcard copy which is simpler and more robust than complex shell scripts
-# The * matches the version number, and we exclude the original non-executable jar by not copying it
-COPY --from=builder /app/target/*.jar app.jar
+COPY --from=builder /app/target/secret-service-1.0.0.jar app.jar
 
 # Expose port
 EXPOSE 8080
