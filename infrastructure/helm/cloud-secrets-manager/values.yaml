@@ -26,6 +26,11 @@ auditService:
       memory: "256Mi"
       cpu: "250m"
 
+serviceAccount:
+  create: true
+  annotations: {}
+    # iam.gke.io/gcp-service-account: "service-account-name@project-id.iam.gserviceaccount.com"
+
 # Secrets Configuration
 # Set to false if using External Secrets Operator (recommended for production)
 createSecrets: false
