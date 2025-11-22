@@ -1,0 +1,104 @@
+package com.secrets.service;
+
+import com.secrets.entity.Secret;
+import com.secrets.repository.SecretRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class SecretExpirationService {
+
+    private final SecretRepository secretRepository;
+
+    /**
+     * Set expiration date for a secret
+     */
+    @Transactional
+    public Secret setExpiration(String secretKey, LocalDateTime expiresAt) {
+        Secret secret = secretRepository.findBySecretKey(secretKey)
+            .orElseThrow(() -> new com.secrets.exception.SecretNotFoundException(
+                "Secret with key '" + secretKey + "' not found"));
+        
+        secret.setExpiresAt(expiresAt);
+        secret.setExpired(false); // Reset expired flag if setting new expiration
+        
+        Secret updated = secretRepository.save(secret);
+        log.info("Set expiration for secret '{}' to {}", secretKey, expiresAt);
+        
+        return updated;
+    }
+
+    /**
+     * Remove expiration from a secret (make it never expire)
+     */
+    @Transactional
+    public Secret removeExpiration(String secretKey) {
+        Secret secret = secretRepository.findBySecretKey(secretKey)
+            .orElseThrow(() -> new com.secrets.exception.SecretNotFoundException(
+                "Secret with key '" + secretKey + "' not found"));
+        
+        secret.setExpiresAt(null);
+        secret.setExpired(false);
+        
+        Secret updated = secretRepository.save(secret);
+        log.info("Removed expiration for secret '{}'", secretKey);
+        
+        return updated;
+    }
+
+    /**
+     * Mark expired secrets (scheduled task runs every hour)
+     */
+    @Scheduled(cron = "0 0 * * * *") // Run every hour
+    @Transactional
+    public void markExpiredSecrets() {
+        log.debug("Checking for expired secrets...");
+        
+        LocalDateTime now = LocalDateTime.now();
+        List<Secret> expiredSecrets = secretRepository.findExpiredSecrets(now).stream()
+            .filter(s -> !s.getExpired()) // Only mark those not already marked
+            .toList();
+        
+        if (!expiredSecrets.isEmpty()) {
+            expiredSecrets.forEach(secret -> {
+                secret.setExpired(true);
+                secretRepository.save(secret);
+                log.info("Marked secret '{}' as expired (expired at: {})", 
+                    secret.getSecretKey(), secret.getExpiresAt());
+            });
+            
+            log.info("Marked {} secrets as expired", expiredSecrets.size());
+        } else {
+            log.debug("No expired secrets found");
+        }
+    }
+
+    /**
+     * Get all expired secrets
+     */
+    @Transactional(readOnly = true)
+    public List<Secret> getExpiredSecrets() {
+        LocalDateTime now = LocalDateTime.now();
+        return secretRepository.findExpiredSecrets(now);
+    }
+
+    /**
+     * Get secrets expiring soon (within specified days)
+     */
+    @Transactional(readOnly = true)
+    public List<Secret> getSecretsExpiringSoon(int days) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime threshold = now.plusDays(days);
+        
+        return secretRepository.findSecretsExpiringBetween(now, threshold);
+    }
+}
+

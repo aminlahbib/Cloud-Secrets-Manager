@@ -18,6 +18,8 @@ public class SecretResponse {
     private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime expiresAt;
+    private Boolean expired;
 
     public static SecretResponse from(Secret secret, String decryptedValue) {
         return SecretResponse.builder()
@@ -26,6 +28,8 @@ public class SecretResponse {
             .createdBy(secret.getCreatedBy())
             .createdAt(secret.getCreatedAt())
             .updatedAt(secret.getUpdatedAt())
+            .expiresAt(secret.getExpiresAt())
+            .expired(secret.getExpired())
             .build();
     }
 }
