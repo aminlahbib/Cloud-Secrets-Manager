@@ -41,7 +41,7 @@ output "service_accounts" {
 # Quick Start Commands
 output "quick_start" {
   description = "Quick start commands"
-  value = <<-EOT
+  value       = <<-EOT
     # Configure kubectl:
     ${module.gke.kubectl_config_command}
 

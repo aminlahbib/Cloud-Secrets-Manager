@@ -26,11 +26,11 @@ resource "google_sql_database_instance" "main" {
   deletion_protection = var.deletion_protection
 
   settings {
-    tier              = var.tier
-    availability_type = var.high_availability ? "REGIONAL" : "ZONAL"
-    disk_size         = var.disk_size
-    disk_type         = var.disk_type
-    disk_autoresize   = var.disk_autoresize
+    tier                  = var.tier
+    availability_type     = var.high_availability ? "REGIONAL" : "ZONAL"
+    disk_size             = var.disk_size
+    disk_type             = var.disk_type
+    disk_autoresize       = var.disk_autoresize
     disk_autoresize_limit = var.disk_autoresize_limit
 
     # Backup configuration
@@ -63,8 +63,8 @@ resource "google_sql_database_instance" "main" {
 
     # Maintenance window
     maintenance_window {
-      day          = 7  # Sunday
-      hour         = 2  # 2 AM
+      day          = 7 # Sunday
+      hour         = 2 # 2 AM
       update_track = "stable"
     }
 
@@ -101,7 +101,7 @@ resource "google_sql_database_instance" "main" {
   lifecycle {
     prevent_destroy = true
     ignore_changes = [
-      settings[0].disk_size  # Allow auto-resize without Terraform changes
+      settings[0].disk_size # Allow auto-resize without Terraform changes
     ]
   }
 }
@@ -110,10 +110,10 @@ resource "google_sql_database_instance" "main" {
 resource "google_sql_database" "databases" {
   for_each = toset(var.databases)
 
-  project  = var.project_id
-  name     = each.value
-  instance = google_sql_database_instance.main.name
-  charset  = "UTF8"
+  project   = var.project_id
+  name      = each.value
+  instance  = google_sql_database_instance.main.name
+  charset   = "UTF8"
   collation = "en_US.UTF8"
 }
 
