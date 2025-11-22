@@ -156,6 +156,11 @@ resource "helm_release" "external_secrets" {
   create_namespace = true
 
   set {
+    name  = "installCRDs"
+    value = "true"
+  }
+
+  set {
     name  = "serviceAccount.create"
     value = "true"
   }
