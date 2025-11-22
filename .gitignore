@@ -135,3 +135,5 @@ apps/frontend/build/
 
 # Google Cloud SDK
 google-cloud-sdk/
+
+Cloud-Secrets-Manager.pdf
