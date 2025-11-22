@@ -261,20 +261,48 @@ jobs:
             --set image.tag=latest \
             --set image.repositorySecretService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service \
             --set image.repositoryAuditService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service \
-            --wait \
-            --timeout 10m
+            --timeout 10m \
+            --debug
+
+      - name: Check deployment status
+        run: |
+          echo "=== Helm Release Status ==="
+          helm status cloud-secrets-manager -n ${{ env.GKE_NAMESPACE }} || true
+          echo ""
+          echo "=== All Resources in Namespace ==="
+          kubectl get all -n ${{ env.GKE_NAMESPACE }}
+          echo ""
+          echo "=== Pod Status ==="
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
+          echo ""
+          echo "=== Pod Events ==="
+          kubectl get events -n ${{ env.GKE_NAMESPACE }} --sort-by='.lastTimestamp' | tail -20
+
+      - name: Check pod logs (if pods exist)
+        if: failure()
+        continue-on-error: true
+        run: |
+          echo "=== Secret Service Pod Logs ==="
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=secret-service --tail=50 || echo "No secret-service pods found"
+          echo ""
+          echo "=== Audit Service Pod Logs ==="
+          kubectl logs -n ${{ env.GKE_NAMESPACE }} -l app=audit-service --tail=50 || echo "No audit-service pods found"
+          echo ""
+          echo "=== Describe Pods ==="
+          kubectl describe pods -n ${{ env.GKE_NAMESPACE }} || true
 
       - name: Wait for rollout
         run: |
-          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=5m
-          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=5m
+          echo "Waiting for deployments to be ready..."
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=10m
 
       - name: Verify deployment
         run: |
-          echo "=== Deployment Status ==="
+          echo "=== Final Deployment Status ==="
           kubectl get pods -n ${{ env.GKE_NAMESPACE }}
           kubectl get svc -n ${{ env.GKE_NAMESPACE }}
           echo ""
-          echo "=== Pod Status ==="
+          echo "=== Pod Details ==="
           kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
 
