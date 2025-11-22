@@ -8,6 +8,11 @@ on:
 
 env:
   REGISTRY: docker.io
+  GCP_PROJECT_ID: cloud-secrets-manager
+  GCP_REGION: europe-west10
+  ARTIFACT_REGISTRY: europe-west10-docker.pkg.dev
+  GKE_CLUSTER: cloud-secrets-cluster-dev
+  GKE_NAMESPACE: cloud-secrets-manager
 
 jobs:
   build-test:
@@ -132,10 +137,59 @@ jobs:
         run: |
           curl -X POST "${{ secrets.DEPLOY_HOOK_URL }}"
 
+  deploy-to-gcp:
+    name: Build and Push to Google Artifact Registry
+    needs: build-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.ARTIFACT_REGISTRY }} --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Secret Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend/secret-service
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:latest
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:buildcache
+          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service:buildcache,mode=max
+
+      - name: Build and push Audit Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backend/audit-service
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:latest
+            ${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:buildcache
+          cache-to: type=registry,ref=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service:buildcache,mode=max
+
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    needs: docker-build-push
+    needs: build-test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
@@ -157,4 +211,65 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
+
+  deploy-to-gke:
+    name: Deploy to GKE
+    needs: [deploy-to-gcp, security-scan]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} \
+            --region ${{ env.GCP_REGION }} \
+            --project ${{ env.GCP_PROJECT_ID }}
+
+      - name: Verify cluster connection
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install cloud-secrets-manager \
+            ./infrastructure/helm/cloud-secrets-manager \
+            --namespace ${{ env.GKE_NAMESPACE }} \
+            --create-namespace \
+            --set image.tag=latest \
+            --set image.repositorySecretService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/secret-service \
+            --set image.repositoryAuditService=${{ env.ARTIFACT_REGISTRY }}/${{ env.GCP_PROJECT_ID }}/docker-images/audit-service \
+            --wait \
+            --timeout 10m
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/secret-service -n ${{ env.GKE_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/audit-service -n ${{ env.GKE_NAMESPACE }} --timeout=5m
+
+      - name: Verify deployment
+        run: |
+          echo "=== Deployment Status ==="
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }}
+          kubectl get svc -n ${{ env.GKE_NAMESPACE }}
+          echo ""
+          echo "=== Pod Status ==="
+          kubectl get pods -n ${{ env.GKE_NAMESPACE }} -o wide
 
