@@ -1,86 +1,183 @@
-# Current Documentation 
+# Current Documentation
 
-Active documentation for current features and setup guides.
+This directory contains **active**, **current**, and **reference** documentation for the Cloud Secrets Manager project.
 
----
-
-## **Documentation in This Directory**
-
-### **Setup & Configuration Guides**  **ACTIVE**
-
-1. **[GOOGLE_IDENTITY_SETUP.md](GOOGLE_IDENTITY_SETUP.md)** 
-   - **Status**:  Current and Active
-   - **Purpose**: Step-by-step guide to set up Google Cloud Identity Platform
-   - **Use When**: Setting up the project for the first time
-   - **Last Updated**: Current
-
-2. **[GOOGLE_CLOUD_SERVICES.md](GOOGLE_CLOUD_SERVICES.md)** 
-   - **Status**:  Current and Active
-   - **Purpose**: Complete guide covering services explanation, console navigation, testing, and deployment
-   - **Use When**: Understanding Google Cloud services, navigating console, testing setup, or deploying to production
-   - **Last Updated**: Current
-
-3. **[GET_ID_TOKEN.md](GET_ID_TOKEN.md)**
-   - **Status**:  Current and Active
-   - **Purpose**: Guide for obtaining Google ID tokens for testing
-   - **Use When**: Testing authentication or API calls
-   - **Last Updated**: Current
-
-### **Reference Documentation**  **ACTIVE**
-
-4. **[google-cloud-identity-quick-reference.md](google-cloud-identity-quick-reference.md)**
-   - **Status**:  Current and Active
-   - **Purpose**: Quick reference for Google Identity Platform architecture and API
-   - **Use When**: Need quick lookup for endpoints, architecture, or configuration
-   - **Last Updated**: Current
-
-### **Educational Documentation**  **ACTIVE**
-
-5. **[PROGRESSIVE_EXPLANATION.md](PROGRESSIVE_EXPLANATION.md)**
-   - **Status**:  Current (Updated to reflect Google Identity Platform implementation)
-   - **Purpose**: Progressive deep dive from beginner to expert (15 levels)
-   - **Use When**: Learning about the project architecture and implementation
-   - **Last Updated**: Updated to reflect current Google Identity Platform implementation
+**Last Updated:** November 23, 2025
 
 ---
 
-## **Quick Reference**
+## 📚 What's In This Directory
 
-### **I want to...**
+This folder contains documentation for:
+- ✅ **Completed & Operational Features** (reference guides)
+- 🚧 **Active Development** (in-progress features)
+- 📖 **Reference Material** (quick references, specifications)
 
-**Set up Google Cloud Identity Platform:**
- [GOOGLE_IDENTITY_SETUP.md](GOOGLE_IDENTITY_SETUP.md)
-
-**Understand Google Cloud services and deploy:**
- [GOOGLE_CLOUD_SERVICES.md](GOOGLE_CLOUD_SERVICES.md) (complete guide)
-
-**Get a Google ID token for testing:**
- [GET_ID_TOKEN.md](GET_ID_TOKEN.md)
-
-**Understand the project architecture:**
- [PROGRESSIVE_EXPLANATION.md](PROGRESSIVE_EXPLANATION.md) (start with Level 1)
-
-**Quick lookup for Google Identity:**
- [google-cloud-identity-quick-reference.md](google-cloud-identity-quick-reference.md)
+For **archived/completed implementation guides**, see [`/docs/archive/`](../archive/README.md).
 
 ---
 
-## **Status Indicators**
+## 📂 Current Documentation Files
 
-- **Active** - Currently in use, up-to-date
-- **Reference** - For reference, may contain historical info
-- **Updated** - Recently updated to reflect current state
+### 🔐 Authentication & User Management
+
+#### **ADMIN_UI_SECURITY_CONSIDERATIONS.md**
+- **Status:** ✅ Reference Document
+- **Purpose:** Explains why admin UI for user management is not recommended
+- **Topics:**
+  - Security risks of frontend user management
+  - Google Cloud Console vs custom UI
+  - Best practices for user administration
+  - Alternative approaches (CLI, backend APIs)
+
+#### **USER_MANAGEMENT_DOCUMENTATION_INDEX.md**
+- **Status:** ✅ Reference Index
+- **Purpose:** Central hub for user management and authentication documentation
+- **Links:** Admin UI considerations, Firebase integration, access control
+
+#### **FIREBASE_QUICK_REFERENCE.md**
+- **Status:** ✅ Quick Reference
+- **Purpose:** Firebase/Google Identity Platform quick commands and troubleshooting
+- **Topics:**
+  - Common gcloud commands
+  - Testing authentication locally
+  - Firebase Console quick links
+  - Debugging tips
+
+**Note:** Detailed Firebase integration guides moved to [`/docs/archive/firebase-integration/`](../archive/firebase-integration/)
 
 ---
 
-## **Related Documentation**
+### 🎨 Frontend & UI
 
-- **Implementation Guides**: See `docs/implementations/` for completed feature implementations
-- **Completed Docs**: See `docs/completed/` for historical/decision documentation
-- **Deployment**: See `docs/deployment/` for deployment guides
-- **Status**: See `docs/status/` for project status
+#### **FRONTEND_UI_SPECIFICATION.md**
+- **Status:** ✅ Specification (Implementation In Progress)
+- **Purpose:** Comprehensive UI/UX design specification
+- **Topics:**
+  - Wireframes for 6 core screens
+  - MVP scope definition
+  - Design philosophy and principles
+  - Component architecture
+  - Accessibility requirements
+  - Technical stack details
+
+**Next Step:** Implement the actual React components based on this specification.
 
 ---
 
-**Last Updated**: November 21, 2025
+### ☁️ Google Cloud Platform
 
+#### **GOOGLE_CLOUD_SERVICES.md**
+- **Status:** ✅ Reference Document
+- **Purpose:** Overview of all GCP services used in the project
+- **Services:**
+  - Google Kubernetes Engine (GKE)
+  - Cloud SQL (PostgreSQL)
+  - Artifact Registry
+  - Cloud KMS
+  - Secret Manager
+  - Identity Platform / Firebase Auth
+  - Cloud Monitoring & Logging
+
+---
+
+## 🗂️ Related Documentation
+
+### Deployment & Operations
+See [`/docs/deployment/`](../deployment/README.md) for:
+- CI/CD pipeline configuration
+- Kubernetes and Helm deployment guides
+- Monitoring and observability setup
+- Security policies
+- Backup and disaster recovery procedures
+
+### Testing & Quality
+See [`/docs/features/`](../features/) for:
+- Testing strategy and status
+- Test coverage reports
+- Performance and load testing
+
+### Archived Implementations
+See [`/docs/archive/`](../archive/README.md) for:
+- Epic 1-5 implementation summaries
+- Completed Firebase integration guides
+- Historical setup documentation
+
+---
+
+## 🚧 Active Development
+
+### Epic 5: Frontend & UX Implementation (In Progress)
+
+**Completed:**
+- ✅ UI/UX specification and wireframes (`FRONTEND_UI_SPECIFICATION.md`)
+- ✅ React + TypeScript project setup
+- ✅ Authentication flow (Google OAuth + JWT)
+- ✅ Login page with Google Sign-In
+- ✅ Protected routing
+
+**Next Steps:**
+1. **Build Secrets Management UI**
+   - Secret list with pagination/filtering
+   - Secret detail view
+   - Create/Edit secret forms (tabbed interface)
+   - Delete confirmation dialogs
+   - Share secret functionality
+
+2. **Build Audit Logs UI**
+   - Audit log list with filtering
+   - Detail view with metadata
+   - Real-time updates (optional)
+
+3. **Build Admin UI** (Limited scope)
+   - View users and their roles
+   - Update user roles (admin only)
+   - Basic permissions view
+
+---
+
+## 📝 Documentation Status Summary
+
+| Document | Status | Purpose |
+|----------|--------|---------|
+| `ADMIN_UI_SECURITY_CONSIDERATIONS.md` | ✅ Reference | Security best practices |
+| `USER_MANAGEMENT_DOCUMENTATION_INDEX.md` | ✅ Index | Documentation hub |
+| `FIREBASE_QUICK_REFERENCE.md` | ✅ Reference | Quick commands |
+| `FRONTEND_UI_SPECIFICATION.md` | ✅ Spec (Impl. pending) | UI/UX design |
+| `GOOGLE_CLOUD_SERVICES.md` | ✅ Reference | GCP services overview |
+
+---
+
+## 🔗 Quick Links
+
+### For Developers
+- **Getting Started:** [`/docs/deployment/LOCAL_DEVELOPMENT_GUIDE.md`](../deployment/LOCAL_DEVELOPMENT_GUIDE.md)
+- **Testing Guide:** [`/docs/features/TESTING_STRATEGY_UPDATE.md`](../features/TESTING_STRATEGY_UPDATE.md)
+- **API Documentation:** Backend services expose Swagger/OpenAPI docs at `/swagger-ui`
+
+### For Operations
+- **Deployment:** [`/docs/deployment/COMPLETE_DEPLOYMENT_GUIDE.md`](../deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
+- **Monitoring:** [`/docs/deployment/monitoring/MONITORING_SETUP.md`](../deployment/monitoring/MONITORING_SETUP.md)
+- **Runbooks:** [`/docs/deployment/monitoring/RUNBOOKS.md`](../deployment/monitoring/RUNBOOKS.md)
+
+### For Audits/Compliance
+- **Security:** [`/docs/deployment/security/`](../deployment/security/)
+- **Backup & DR:** [`/docs/deployment/operations/BACKUP_AND_DR_PROCEDURES.md`](../deployment/operations/BACKUP_AND_DR_PROCEDURES.md)
+- **Testing Evidence:** [`/docs/archive/epics/`](../archive/epics/)
+
+---
+
+## 📮 Contributing
+
+When adding new documentation to `docs/current/`:
+
+1. **Use descriptive filenames** in UPPERCASE with underscores
+2. **Include a status header** (Reference / Guide / Specification / In Progress)
+3. **Update this README** with a link and description
+4. **Link from other relevant docs** for discoverability
+5. **Archive completed implementation guides** to `/docs/archive/` when done
+
+---
+
+**Maintained By:** Development Team  
+**Last Updated:** November 23, 2025
