@@ -1,33 +1,24 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { LoginPage } from './pages/Login';
-
-// Placeholder pages
-const SecretsPage = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold mb-4">Secrets Management</h1>
-    <p className="text-gray-600">Secret management features coming soon...</p>
-  </div>
-);
-
-const AuditLogsPage = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold mb-4">Audit Logs</h1>
-    <p className="text-gray-600">Audit log viewer coming soon...</p>
-  </div>
-);
-
-const AdminPage = () => (
-  <div className="p-8">
-    <h1 className="text-2xl font-bold mb-4">Admin Panel</h1>
-    <p className="text-gray-600">Admin features coming soon...</p>
-  </div>
-);
+import { SecretsListPage } from './pages/SecretsList';
+import { SecretDetailPage } from './pages/SecretDetail';
+import { SecretFormPage } from './pages/SecretForm';
+import { AuditLogsPage } from './pages/AuditLogs';
+import { AdminPage } from './pages/Admin';
+import { Key, FileText, Users } from 'lucide-react';
 
 // Layout component
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const navigation = [
+    { name: 'Secrets', href: '/secrets', icon: Key },
+    { name: 'Audit Logs', href: '/audit', icon: FileText },
+    { name: 'Admin', href: '/admin', icon: Users },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -35,15 +26,41 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🔐</span>
-              <h1 className="text-xl font-bold text-gray-900">Cloud Secrets Manager</h1>
+            <div className="flex items-center space-x-8">
+              <Link to="/secrets" className="flex items-center space-x-2">
+                <span className="text-2xl">🔐</span>
+                <h1 className="text-xl font-bold text-gray-900">Cloud Secrets Manager</h1>
+              </Link>
+              
+              {/* Navigation */}
+              <nav className="hidden md:flex space-x-4">
+                {navigation.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`
+                        flex items-center px-3 py-2 text-sm font-medium rounded-md
+                        ${isActive 
+                          ? 'bg-purple-100 text-purple-700' 
+                          : 'text-gray-700 hover:bg-gray-100'
+                        }
+                      `}
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-700">{user?.email}</span>
               <button
                 onClick={logout}
-                className="text-sm text-gray-700 hover:text-gray-900"
+                className="text-sm text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md hover:bg-gray-100"
               >
                 Logout
               </button>
@@ -87,7 +104,31 @@ const App: React.FC = () => {
         path="/secrets"
         element={
           <ProtectedRoute>
-            <SecretsPage />
+            <SecretsListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/secrets/new"
+        element={
+          <ProtectedRoute>
+            <SecretFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/secrets/:id"
+        element={
+          <ProtectedRoute>
+            <SecretDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/secrets/:id/edit"
+        element={
+          <ProtectedRoute>
+            <SecretFormPage />
           </ProtectedRoute>
         }
       />
