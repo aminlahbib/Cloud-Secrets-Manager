@@ -3,116 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Secure secrets management platform">
     <title>Cloud Secrets Manager</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            max-width: 600px;
-        }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-        .subtitle {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-        .status {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            margin: 1rem 0;
-            font-size: 0.9rem;
-        }
-        .features {
-            text-align: left;
-            margin: 2rem 0;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-        }
-        .features h2 {
-            margin-bottom: 1rem;
-            font-size: 1.3rem;
-        }
-        .features ul {
-            list-style: none;
-            padding-left: 0;
-        }
-        .features li {
-            padding: 0.5rem 0;
-            padding-left: 1.5rem;
-            position: relative;
-        }
-        .features li:before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: #4ade80;
-            font-weight: bold;
-        }
-        .api-info {
-            margin-top: 2rem;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            font-size: 0.9rem;
-        }
-        .api-info code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-        }
-    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 Cloud Secrets Manager</h1>
-        <p class="subtitle">Secure Secrets Management Platform</p>
-        <div class="status">🚧 Frontend Coming Soon</div>
-        
-        <div class="features">
-            <h2>Planned Features</h2>
-            <ul>
-                <li>User authentication with Google Identity Platform</li>
-                <li>Secret management UI (Create, Read, Update, Delete)</li>
-                <li>Audit log viewer</li>
-                <li>User and permission management</li>
-                <li>Dashboard and analytics</li>
-            </ul>
-        </div>
-        
-        <div class="api-info">
-            <p><strong>API Endpoints:</strong></p>
-            <p>Secret Service: <code>http://localhost:8080/api</code></p>
-            <p>Audit Service: <code>http://localhost:8081/api</code></p>
-            <p style="margin-top: 1rem;">📚 <a href="/swagger-ui.html" style="color: #93c5fd;">View API Documentation</a></p>
-        </div>
-    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
 

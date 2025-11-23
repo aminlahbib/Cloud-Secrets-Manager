@@ -54,6 +54,9 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${ENVIRONMENT:dev}
+  health:
+    redis:
+      enabled: false
 
 security:
   jwt:
@@ -77,9 +80,7 @@ google:
     identity:
       enabled: ${GOOGLE_IDENTITY_ENABLED:true}
       project-id: ${GOOGLE_PROJECT_ID:cloud-secrets-manager}
-      api-key: ${GOOGLE_API_KEY:}
-      service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:classpath:service-account.json}
-      custom-claims-namespace: ${GOOGLE_CUSTOM_CLAIMS_NAMESPACE:https://secrets-manager.com/claims}
+      service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:infrastructure/gcp/keys/firebase-admin-key.json}
 
 # Setup endpoint (disable after creating first admin user)
 setup:
