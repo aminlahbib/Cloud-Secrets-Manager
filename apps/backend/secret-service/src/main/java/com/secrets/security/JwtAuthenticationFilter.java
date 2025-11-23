@@ -1,15 +1,19 @@
 package com.secrets.security;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -24,6 +28,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtTokenProvider tokenProvider;
+    
+    @Autowired(required = false)
+    private GoogleIdentityTokenValidator firebaseTokenValidator;
+    
+    @Value("${google.cloud.identity.enabled:false}")
+    private boolean firebaseEnabled;
 
     public JwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;
@@ -37,20 +47,45 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
             
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                String username = tokenProvider.getUsername(jwt);
-                Collection<? extends GrantedAuthority> authorities = tokenProvider.getAuthorities(jwt);
+            if (StringUtils.hasText(jwt)) {
+                Authentication authentication = null;
                 
-                // Create UserDetails from JWT token (no database lookup needed)
-                User userDetails = new User(username, "", authorities);
+                // Try Firebase validation first if enabled
+                if (firebaseEnabled && firebaseTokenValidator != null) {
+                    try {
+                        authentication = firebaseTokenValidator.validateToken(jwt);
+                        log.debug("Successfully validated Firebase ID token");
+                    } catch (FirebaseAuthException e) {
+                        log.debug("Token is not a valid Firebase token, trying local JWT: {}", e.getMessage());
+                        // Fall through to local JWT validation
+                    } catch (IllegalStateException e) {
+                        log.debug("Firebase not initialized, using local JWT validation: {}", e.getMessage());
+                        // Fall through to local JWT validation
+                    }
+                }
                 
-                UsernamePasswordAuthenticationToken authentication = 
-                    new UsernamePasswordAuthenticationToken(
+                // Fall back to local JWT validation if Firebase validation failed or disabled
+                if (authentication == null && tokenProvider.validateToken(jwt)) {
+                    String username = tokenProvider.getUsername(jwt);
+                    Collection<? extends GrantedAuthority> authorities = tokenProvider.getAuthorities(jwt);
+                    
+                    // Create UserDetails from JWT token (no database lookup needed)
+                    User userDetails = new User(username, "", authorities);
+                    
+                    authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, authorities
                     );
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    ((UsernamePasswordAuthenticationToken) authentication).setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    
+                    log.debug("Successfully validated local JWT token");
+                }
                 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Set authentication in context if validation succeeded
+                if (authentication != null) {
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         } catch (Exception ex) {
             log.error("Could not set user authentication in security context", ex);

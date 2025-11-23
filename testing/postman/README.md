@@ -34,7 +34,13 @@ cd secret-service
 ./mvnw spring-boot:run
 ```
 
-### **3. Get Google ID Token**
+### **3. Assign Firebase Custom Claims**
+
+1. In Postman, run **`Setup → Assign Custom Claims (Firebase)`**
+2. Ensure the `claims_email` environment variable points to the user you want to elevate (defaults to `admin@example.com`)
+3. After the request succeeds, have that user sign out and back in so their ID token picks up the new roles/permissions
+
+### **4. Get Google ID Token**
 
 You need a Google ID token to authenticate. Use Firebase SDK:
 
@@ -54,13 +60,13 @@ console.log("ID Token:", idToken);
 
 Then set `google_id_token` in Postman environment variables.
 
-### **4. Test Authentication**
+### **5. Test Authentication**
 
 1. Go to **"Authentication"** → **"Login with Google ID Token"**
 2. Click **"Send"**
 3. JWT token will be automatically saved to environment
 
-### **5. Run Full Test Suite**
+### **6. Run Full Test Suite**
 
 1. Click on collection name
 2. Click **"Run"** button
@@ -75,6 +81,7 @@ Then set `google_id_token` in Postman environment variables.
 ### **Setup** (No Authentication Required)
 - ✅ Create Admin User
 - ✅ Create Test User
+- ✅ Assign Custom Claims (Firebase)
 
 ### **Authentication**
 - ✅ Login with Google ID Token
@@ -93,6 +100,9 @@ Then set `google_id_token` in Postman environment variables.
 - ✅ Get Secret Versions
 - ✅ Get Specific Secret Version
 - ✅ Rollback Secret to Version
+
+### **Audit Logs** (Requires ADMIN / MANAGER)
+- ✅ Get Audit Logs (proxy to audit-service)
 
 ### **Health** (Public)
 - ✅ Health Check
@@ -113,6 +123,9 @@ The collection uses these environment variables:
 | `admin_email` | Admin email | `admin@example.com` |
 | `user_uid` | User UID | Set manually |
 | `user_email` | User email | `user@example.com` |
+| `claims_email` | Email used when assigning Firebase claims | `admin@example.com` |
+| `audit_username` | Optional audit filter | *(blank)* |
+| `audit_action` | Optional audit filter | *(blank)* |
 | `secret_id` | Secret ID | Auto-saved after secret creation |
 
 ---
@@ -125,31 +138,36 @@ The collection uses these environment variables:
    - Run: `Setup → Create Admin User`
    - Admin UID and email saved automatically
 
-2. **Get Google ID Token**
+2. **Assign Custom Claims**
+   - Run: `Setup → Assign Custom Claims (Firebase)`
+   - Update `claims_email` if you want to elevate a different user
+   - Have the user sign out/in after this step
+
+3. **Get Google ID Token**
    - Use Firebase SDK or Google Sign-In
    - Set `google_id_token` in environment
 
-3. **Login**
+4. **Login**
    - Run: `Authentication → Login with Google ID Token`
    - JWT token saved automatically
 
 ### **User Management:**
 
-4. **Create Users**
+5. **Create Users**
    - Run: `Admin → Create User`
-   - Requires JWT token (from step 3)
+   - Requires JWT token (from step 4)
 
-5. **Set Roles**
+6. **Set Roles**
    - Run: `Admin → Set User Roles`
    - Update `user_uid` variable first
 
 ### **Secret Management:**
 
-6. **Create Secret**
+7. **Create Secret**
    - Run: `Secrets → Create Secret`
    - Secret ID saved automatically
 
-7. **Get/Update/Delete Secrets**
+8. **Get/Update/Delete Secrets**
    - Use saved `secret_id` variable
 
 ---

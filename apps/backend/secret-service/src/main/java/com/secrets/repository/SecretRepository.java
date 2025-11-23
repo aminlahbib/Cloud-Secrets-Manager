@@ -31,11 +31,36 @@ public interface SecretRepository extends JpaRepository<Secret, Long> {
     @Query("SELECT s FROM Secret s WHERE s.createdBy = :createdBy AND (s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%)")
     Page<Secret> searchSecretsByCreator(@Param("createdBy") String createdBy, @Param("keyword") String keyword, Pageable pageable);
     
+    /**
+     * Find secrets accessible to a user: secrets they created OR secrets shared with them
+     */
+    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (s.createdBy = :username OR ss.sharedWith = :username)")
+    Page<Secret> findAccessibleSecrets(@Param("username") String username, Pageable pageable);
+    
+    /**
+     * Search secrets accessible to a user (owned or shared) with keyword filter
+     */
+    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
+           "AND (s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%)")
+    Page<Secret> searchAccessibleSecrets(@Param("username") String username, @Param("keyword") String keyword, Pageable pageable);
+    
     // Expiration queries
     @Query("SELECT s FROM Secret s WHERE s.expiresAt IS NOT NULL AND s.expiresAt <= :now")
     List<Secret> findExpiredSecrets(@Param("now") java.time.LocalDateTime now);
     
+    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
+           "AND s.expiresAt IS NOT NULL AND s.expiresAt <= :now")
+    List<Secret> findExpiredSecretsForUser(@Param("username") String username, @Param("now") java.time.LocalDateTime now);
+    
     @Query("SELECT s FROM Secret s WHERE s.expiresAt IS NOT NULL AND s.expiresAt > :now AND s.expiresAt <= :threshold AND s.expired = false")
     List<Secret> findSecretsExpiringBetween(@Param("now") java.time.LocalDateTime now, @Param("threshold") java.time.LocalDateTime threshold);
+    
+    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
+           "AND s.expiresAt IS NOT NULL AND s.expiresAt > :now AND s.expiresAt <= :threshold AND s.expired = false")
+    List<Secret> findSecretsExpiringBetweenForUser(@Param("username") String username, @Param("now") java.time.LocalDateTime now, @Param("threshold") java.time.LocalDateTime threshold);
 }
 
