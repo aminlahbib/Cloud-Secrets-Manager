@@ -1,183 +1,184 @@
-# Current Documentation
+# Current Documentation - Active Work
 
-This directory contains **active**, **current**, and **reference** documentation for the Cloud Secrets Manager project.
+This directory contains **only active, in-progress** documentation for the Cloud Secrets Manager project.
 
-**Last Updated:** November 23, 2025
-
----
-
-## 📚 What's In This Directory
-
-This folder contains documentation for:
-- ✅ **Completed & Operational Features** (reference guides)
-- 🚧 **Active Development** (in-progress features)
-- 📖 **Reference Material** (quick references, specifications)
-
-For **archived/completed implementation guides**, see [`/docs/archive/`](../archive/README.md).
+**Last Updated:** November 23, 2025  
+**Status:** Clean slate - Epic 5 Frontend UI implementation in progress
 
 ---
 
-## 📂 Current Documentation Files
+## 📂 What's In This Directory
 
-### 🔐 Authentication & User Management
-
-#### **ADMIN_UI_SECURITY_CONSIDERATIONS.md**
-- **Status:** ✅ Reference Document
-- **Purpose:** Explains why admin UI for user management is not recommended
-- **Topics:**
-  - Security risks of frontend user management
-  - Google Cloud Console vs custom UI
-  - Best practices for user administration
-  - Alternative approaches (CLI, backend APIs)
-
-#### **USER_MANAGEMENT_DOCUMENTATION_INDEX.md**
-- **Status:** ✅ Reference Index
-- **Purpose:** Central hub for user management and authentication documentation
-- **Links:** Admin UI considerations, Firebase integration, access control
-
-#### **FIREBASE_QUICK_REFERENCE.md**
-- **Status:** ✅ Quick Reference
-- **Purpose:** Firebase/Google Identity Platform quick commands and troubleshooting
-- **Topics:**
-  - Common gcloud commands
-  - Testing authentication locally
-  - Firebase Console quick links
-  - Debugging tips
-
-**Note:** Detailed Firebase integration guides moved to [`/docs/archive/firebase-integration/`](../archive/firebase-integration/)
+This folder contains **only documents related to current active work**. Completed documentation is archived to [`/docs/archive/`](../archive/README.md).
 
 ---
 
-### 🎨 Frontend & UI
+## 🚧 Active Documents (3)
 
-#### **FRONTEND_UI_SPECIFICATION.md**
-- **Status:** ✅ Specification (Implementation In Progress)
+### **EPIC_5_FRONTEND_IMPLEMENTATION_PLAN.md** 🎯
+- **Status:** 🚧 In Progress (40% Complete)
+- **Purpose:** Detailed implementation plan for building the frontend UI
+- **What's Done:**
+  - ✅ Project setup (React + TypeScript + Tailwind)
+  - ✅ Authentication (Google OAuth working)
+  - ✅ Login page and protected routing
+- **What's Next:**
+  - 🚧 Secrets List Page
+  - 🚧 Secret Detail View
+  - 🚧 Create/Edit Secret Form
+  - 📅 Audit Logs UI
+  - 📅 Admin UI
+- **Target:** December 2025
+
+---
+
+### **FRONTEND_UI_SPECIFICATION.md** 📐
+- **Status:** ✅ Design Complete / 🚧 Reference for Implementation
 - **Purpose:** Comprehensive UI/UX design specification
-- **Topics:**
-  - Wireframes for 6 core screens
-  - MVP scope definition
-  - Design philosophy and principles
-  - Component architecture
+- **Contents:**
+  - Wireframes for all 6 screens
+  - Component library specifications
+  - User flows
+  - Technical stack
   - Accessibility requirements
-  - Technical stack details
-
-**Next Step:** Implement the actual React components based on this specification.
-
----
-
-### ☁️ Google Cloud Platform
-
-#### **GOOGLE_CLOUD_SERVICES.md**
-- **Status:** ✅ Reference Document
-- **Purpose:** Overview of all GCP services used in the project
-- **Services:**
-  - Google Kubernetes Engine (GKE)
-  - Cloud SQL (PostgreSQL)
-  - Artifact Registry
-  - Cloud KMS
-  - Secret Manager
-  - Identity Platform / Firebase Auth
-  - Cloud Monitoring & Logging
+- **Usage:** Reference document while building components
+- **Note:** Once all components are built, this will be archived
 
 ---
 
-## 🗂️ Related Documentation
-
-### Deployment & Operations
-See [`/docs/deployment/`](../deployment/README.md) for:
-- CI/CD pipeline configuration
-- Kubernetes and Helm deployment guides
-- Monitoring and observability setup
-- Security policies
-- Backup and disaster recovery procedures
-
-### Testing & Quality
-See [`/docs/features/`](../features/) for:
-- Testing strategy and status
-- Test coverage reports
-- Performance and load testing
-
-### Archived Implementations
-See [`/docs/archive/`](../archive/README.md) for:
-- Epic 1-5 implementation summaries
-- Completed Firebase integration guides
-- Historical setup documentation
+### **README.md** 📖
+- **Purpose:** This file - navigation index for active documentation
+- **Maintenance:** Updated as documents are added/archived
 
 ---
 
-## 🚧 Active Development
+## 📊 Project Status
 
-### Epic 5: Frontend & UX Implementation (In Progress)
+### Current Phase: Epic 5 - Frontend UI Implementation
 
-**Completed:**
-- ✅ UI/UX specification and wireframes (`FRONTEND_UI_SPECIFICATION.md`)
-- ✅ React + TypeScript project setup
-- ✅ Authentication flow (Google OAuth + JWT)
-- ✅ Login page with Google Sign-In
-- ✅ Protected routing
+**Completed Epics (Archived):**
+- ✅ Epic 1: CI/CD to GKE & Environments
+- ✅ Epic 2: Observability & Reliability
+- ✅ Epic 3: Security & Compliance Hardening
+- ✅ Epic 4: Testing, Resilience, and Performance
+- ✅ Epic 5: Frontend UX Design (design phase)
 
-**Next Steps:**
-1. **Build Secrets Management UI**
-   - Secret list with pagination/filtering
-   - Secret detail view
-   - Create/Edit secret forms (tabbed interface)
-   - Delete confirmation dialogs
-   - Share secret functionality
+**In Progress:**
+- 🚧 Epic 5: Frontend UI Implementation (40% complete)
 
-2. **Build Audit Logs UI**
-   - Audit log list with filtering
-   - Detail view with metadata
-   - Real-time updates (optional)
-
-3. **Build Admin UI** (Limited scope)
-   - View users and their roles
-   - Update user roles (admin only)
-   - Basic permissions view
+**Metrics:**
+- Backend Test Coverage: 80%+
+- Services: 2 microservices operational
+- Monitoring: 17 Prometheus alerts, 3 Grafana dashboards
+- Authentication: Google OAuth functional locally
 
 ---
 
-## 📝 Documentation Status Summary
+## 🗂️ Recently Archived (Nov 23, 2025)
 
-| Document | Status | Purpose |
-|----------|--------|---------|
-| `ADMIN_UI_SECURITY_CONSIDERATIONS.md` | ✅ Reference | Security best practices |
-| `USER_MANAGEMENT_DOCUMENTATION_INDEX.md` | ✅ Index | Documentation hub |
-| `FIREBASE_QUICK_REFERENCE.md` | ✅ Reference | Quick commands |
-| `FRONTEND_UI_SPECIFICATION.md` | ✅ Spec (Impl. pending) | UI/UX design |
-| `GOOGLE_CLOUD_SERVICES.md` | ✅ Reference | GCP services overview |
+The following documents were completed and archived:
+
+**Archived to [`/docs/archive/guides/`](../archive/guides/):**
+- `ADMIN_UI_SECURITY_CONSIDERATIONS.md` - Why admin UI is a security anti-pattern
+- `GOOGLE_CLOUD_SERVICES.md` - Complete GCP services guide
+- `ARTIFACT_REGISTRY_SETUP.md` - Artifact Registry configuration
+- `GET_ID_TOKEN.md` - Firebase ID token guide
+- `GITHUB_SECURITY_TAB.md` - GitHub security features
+- `PROGRESSIVE_EXPLANATION.md` - Educational guide
+- `google-cloud-identity-quick-reference.md` - Identity Platform commands
+
+**Archived to [`/docs/archive/firebase-integration/`](../archive/firebase-integration/):**
+- `FIREBASE_QUICK_REFERENCE.md` - Firebase quick commands
+- `FIREBASE_INTEGRATION_SETUP_GUIDE.md` - Setup instructions
+- `FIREBASE_INTEGRATION_SUCCESS.md` - Test results
+- `GOOGLE_IDENTITY_PLATFORM_INTEGRATION.md` - Comprehensive integration guide
+- `GOOGLE_IDENTITY_SETUP.md` - Quick setup reference
+
+**Archived to [`/docs/archive/epics/`](../archive/epics/):**
+- `EPIC_1_IMPLEMENTATION_SUMMARY.md` - CI/CD implementation
+- `EPIC_2_IMPLEMENTATION_SUMMARY.md` - Observability implementation
+- `EPIC_3_IMPLEMENTATION_SUMMARY.md` - Security implementation
+- `EPIC_4_IMPLEMENTATION_SUMMARY.md` - Testing implementation
+- `EPIC_5_IMPLEMENTATION_SUMMARY.md` - Frontend UX design
+
+**Archived to [`/docs/archive/`](../archive/):**
+- `USER_MANAGEMENT_DOCUMENTATION_INDEX.md` - User management index
+
+**Total Archived:** 19 completed documents
 
 ---
 
-## 🔗 Quick Links
+## 🎯 Next Steps
 
-### For Developers
-- **Getting Started:** [`/docs/deployment/LOCAL_DEVELOPMENT_GUIDE.md`](../deployment/LOCAL_DEVELOPMENT_GUIDE.md)
-- **Testing Guide:** [`/docs/features/TESTING_STRATEGY_UPDATE.md`](../features/TESTING_STRATEGY_UPDATE.md)
-- **API Documentation:** Backend services expose Swagger/OpenAPI docs at `/swagger-ui`
+### Immediate: Build Secrets List Page
+1. Create `SecretsList.tsx` component
+2. Fetch secrets from `/api/secrets` with pagination
+3. Add search and filter functionality
+4. Display secret cards
+5. "Create New Secret" button
 
-### For Operations
-- **Deployment:** [`/docs/deployment/COMPLETE_DEPLOYMENT_GUIDE.md`](../deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
-- **Monitoring:** [`/docs/deployment/monitoring/MONITORING_SETUP.md`](../deployment/monitoring/MONITORING_SETUP.md)
-- **Runbooks:** [`/docs/deployment/monitoring/RUNBOOKS.md`](../deployment/monitoring/RUNBOOKS.md)
-
-### For Audits/Compliance
-- **Security:** [`/docs/deployment/security/`](../deployment/security/)
-- **Backup & DR:** [`/docs/deployment/operations/BACKUP_AND_DR_PROCEDURES.md`](../deployment/operations/BACKUP_AND_DR_PROCEDURES.md)
-- **Testing Evidence:** [`/docs/archive/epics/`](../archive/epics/)
+**Reference:** See `EPIC_5_FRONTEND_IMPLEMENTATION_PLAN.md` for detailed implementation guide.
 
 ---
 
-## 📮 Contributing
+## 📚 Related Documentation
 
-When adding new documentation to `docs/current/`:
+### For Implementation
+- **[Implementation Plan](./EPIC_5_FRONTEND_IMPLEMENTATION_PLAN.md)** - Step-by-step guide
+- **[UI Specification](./FRONTEND_UI_SPECIFICATION.md)** - Design reference
 
-1. **Use descriptive filenames** in UPPERCASE with underscores
-2. **Include a status header** (Reference / Guide / Specification / In Progress)
-3. **Update this README** with a link and description
-4. **Link from other relevant docs** for discoverability
-5. **Archive completed implementation guides** to `/docs/archive/` when done
+### For Context
+- **[Archive](../archive/README.md)** - Completed work (Epics 1-5, Firebase, etc.)
+- **[Deployment](../deployment/README.md)** - Deployment and operations
+- **[Testing](../features/TESTING_STRATEGY_UPDATE.md)** - Testing strategy
+
+### For Running Locally
+- **[Local Development Guide](../deployment/LOCAL_DEVELOPMENT_GUIDE.md)** - Docker Compose setup
+- **Backend:** `http://localhost:8080` - `cd apps/backend/secret-service && ./mvnw spring-boot:run`
+- **Frontend:** `http://localhost:5173` - `cd apps/frontend && npm run dev`
+
+---
+
+## 🔄 Document Lifecycle
+
+### When to Add Documents Here
+- New implementation plans for active epics
+- Design specifications for in-progress features
+- Working technical documentation
+
+### When to Archive Documents
+- Epic or feature is complete and tested
+- Design specifications are fully implemented
+- Reference guides are no longer actively needed
+- Setup/configuration is done and stable
+
+### Archiving Process
+1. Move document to appropriate `docs/archive/` subdirectory
+2. Update `docs/archive/README.md` with entry
+3. Update this README to remove the document
+4. Commit with clear message about archiving
+
+---
+
+## ✨ Benefits of This Approach
+
+**Clarity:**
+- Only see what you're actively working on
+- No clutter from completed work
+- Easy to focus on current tasks
+
+**History:**
+- All completed work preserved in archive
+- Easy to reference past decisions
+- Clear project evolution
+
+**Fresh Start:**
+- Clean workspace for each new epic
+- Start each phase with only relevant docs
+- Maintain momentum without baggage
 
 ---
 
 **Maintained By:** Development Team  
-**Last Updated:** November 23, 2025
+**Philosophy:** Always finish current docs before starting fresh  
+**Last Cleanup:** November 23, 2025

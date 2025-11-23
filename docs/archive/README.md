@@ -10,9 +10,17 @@ This directory contains completed implementation summaries, guides, and document
 
 This archive contains documentation for successfully completed and tested features. These documents serve as historical records of implementation decisions, testing results, and lessons learned.
 
+**Total Archived Documents:** 20 (as of November 23, 2025)
+
 ---
 
 ## 📁 Directory Structure
+
+### Root Archive Files
+- **USER_MANAGEMENT_DOCUMENTATION_INDEX.md** - Index for user management and authentication documentation
+  - Links to admin UI considerations
+  - Links to Firebase integration guides
+  - Overview of authentication system
 
 ### `/epics/`
 Completed epic implementation summaries:
@@ -66,6 +74,12 @@ Google Cloud Identity Platform (Firebase Auth) integration:
   - Token exchange (Firebase ID → Backend JWT) working
   - User: `amine.lhb00@gmail.com` successfully authenticated
   
+- **FIREBASE_QUICK_REFERENCE.md** - Quick commands and troubleshooting
+  - Backend and frontend setup commands
+  - API endpoints reference
+  - Common troubleshooting steps
+  - Testing authentication locally
+  
 - **GOOGLE_IDENTITY_PLATFORM_INTEGRATION.md** - Comprehensive integration guide
   - Detailed architecture and implementation
   - Custom claims for RBAC
@@ -81,9 +95,11 @@ Google Cloud Identity Platform (Firebase Auth) integration:
 ### `/guides/`
 Miscellaneous completed setup and configuration guides:
 
+- **ADMIN_UI_SECURITY_CONSIDERATIONS.md** - Security considerations for admin UI (reference)
 - **ARTIFACT_REGISTRY_SETUP.md** - Google Artifact Registry configuration for Docker images
 - **GET_ID_TOKEN.md** - Guide for obtaining Firebase ID tokens for testing
 - **GITHUB_SECURITY_TAB.md** - Instructions for GitHub Security features (Dependabot, CodeQL)
+- **GOOGLE_CLOUD_SERVICES.md** - Comprehensive GCP services guide (educational reference)
 - **PROGRESSIVE_EXPLANATION.md** - Progressive learning guide (educational)
 - **google-cloud-identity-quick-reference.md** - Quick command reference
 
