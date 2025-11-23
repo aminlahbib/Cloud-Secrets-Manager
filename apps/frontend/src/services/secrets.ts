@@ -26,6 +26,9 @@ export interface SecretRequest {
   expiresAt?: string;
 }
 
+const buildSecretPath = (key: string, suffix: string = '') =>
+  `/api/secrets/${encodeURIComponent(key)}${suffix}`;
+
 export const secretsService = {
   // List secrets with pagination
   async listSecrets(params: SecretsListParams = {}): Promise<SecretsListResponse> {
@@ -33,9 +36,9 @@ export const secretsService = {
     return data;
   },
 
-  // Get single secret
-  async getSecret(id: string): Promise<Secret> {
-    const { data } = await api.get(`/api/secrets/${id}`);
+  // Get single secret (key-based)
+  async getSecret(key: string): Promise<Secret> {
+    const { data } = await api.get(buildSecretPath(key));
     return data;
   },
 
@@ -46,30 +49,30 @@ export const secretsService = {
   },
 
   // Update secret
-  async updateSecret(id: string, secret: SecretRequest): Promise<Secret> {
-    const { data } = await api.put(`/api/secrets/${id}`, secret);
+  async updateSecret(key: string, secret: SecretRequest): Promise<Secret> {
+    const { data } = await api.put(buildSecretPath(key), secret);
     return data;
   },
 
   // Delete secret
-  async deleteSecret(id: string): Promise<void> {
-    await api.delete(`/api/secrets/${id}`);
+  async deleteSecret(key: string): Promise<void> {
+    await api.delete(buildSecretPath(key));
   },
 
   // Get secret versions
-  async getSecretVersions(id: string): Promise<any[]> {
-    const { data } = await api.get(`/api/secrets/${id}/versions`);
+  async getSecretVersions(key: string): Promise<any[]> {
+    const { data } = await api.get(buildSecretPath(key, '/versions'));
     return data;
   },
 
   // Share secret
-  async shareSecret(id: string, userId: string, permission: string): Promise<void> {
-    await api.post(`/api/secrets/${id}/share`, { userId, permission });
+  async shareSecret(key: string, userId: string, permission: string): Promise<void> {
+    await api.post(buildSecretPath(key, '/share'), { userId, permission });
   },
 
   // Unshare secret
-  async unshareSecret(id: string, userId: string): Promise<void> {
-    await api.delete(`/api/secrets/${id}/share/${userId}`);
+  async unshareSecret(key: string, userId: string): Promise<void> {
+    await api.delete(buildSecretPath(key, `/share/${encodeURIComponent(userId)}`));
   },
 };
 

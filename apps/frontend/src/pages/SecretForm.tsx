@@ -11,10 +11,11 @@ import { Tabs } from '../components/ui/Tabs';
 import { Card } from '../components/ui/Card';
 
 export const SecretFormPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { key: keyParam } = useParams<{ key: string }>();
+  const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isEditMode = !!id;
+  const isEditMode = !!secretKey;
   const [activeTab, setActiveTab] = useState('basic');
 
   const {
@@ -27,8 +28,8 @@ export const SecretFormPage: React.FC = () => {
 
   // Fetch secret if editing
   const { data: secret, isLoading } = useQuery({
-    queryKey: ['secret', id],
-    queryFn: () => secretsService.getSecret(id!),
+    queryKey: ['secret', secretKey],
+    queryFn: () => secretsService.getSecret(secretKey),
     enabled: isEditMode,
   });
 
@@ -44,14 +45,21 @@ export const SecretFormPage: React.FC = () => {
 
   // Create/Update mutation
   const mutation = useMutation({
-    mutationFn: (data: SecretRequest) =>
+    mutationFn: (payload: SecretRequest) =>
       isEditMode
-        ? secretsService.updateSecret(id!, data)
-        : secretsService.createSecret(data),
+        ? secretsService.updateSecret(secretKey, payload)
+        : secretsService.createSecret(payload),
     onSuccess: (data) => {
+      const targetKey = data.key;
       queryClient.invalidateQueries({ queryKey: ['secrets'] });
-      queryClient.invalidateQueries({ queryKey: ['secret', data.id] });
-      navigate(isEditMode ? `/secrets/${id}` : '/secrets');
+      if (targetKey) {
+        queryClient.invalidateQueries({ queryKey: ['secret', targetKey] });
+        navigate(`/secrets/${encodeURIComponent(targetKey)}`);
+      } else if (secretKey) {
+        navigate(`/secrets/${encodeURIComponent(secretKey)}`);
+      } else {
+        navigate('/secrets');
+      }
     },
   });
 

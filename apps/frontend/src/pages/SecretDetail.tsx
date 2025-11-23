@@ -22,7 +22,8 @@ import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 
 export const SecretDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { key: keyParam } = useParams<{ key: string }>();
+  const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showValue, setShowValue] = useState(false);
@@ -31,14 +32,14 @@ export const SecretDetailPage: React.FC = () => {
 
   // Fetch secret
   const { data: secret, isLoading, error } = useQuery({
-    queryKey: ['secret', id],
-    queryFn: () => secretsService.getSecret(id!),
-    enabled: !!id,
+    queryKey: ['secret', secretKey],
+    queryFn: () => secretsService.getSecret(secretKey),
+    enabled: !!secretKey,
   });
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: () => secretsService.deleteSecret(id!),
+    mutationFn: () => secretsService.deleteSecret(secretKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['secrets'] });
       navigate('/secrets');
@@ -107,7 +108,7 @@ export const SecretDetailPage: React.FC = () => {
           <div className="mt-4 sm:mt-0 flex space-x-3">
             <Button
               variant="secondary"
-              onClick={() => navigate(`/secrets/${id}/edit`)}
+              onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`)}
             >
               <Edit className="h-4 w-4 mr-2" />
               Edit

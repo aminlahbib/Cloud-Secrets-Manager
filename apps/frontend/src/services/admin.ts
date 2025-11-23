@@ -3,10 +3,13 @@ import api from './api';
 export interface AdminUser {
   id: string;
   email: string;
-  role: string;
-  permissions: string[];
-  lastLogin?: string;
-  createdAt: string;
+  primaryRole: string;
+  roles?: string[];
+  permissions?: string[];
+  lastLoginAt?: string;
+  createdAt?: string;
+  disabled?: boolean;
+  emailVerified?: boolean;
 }
 
 export const adminService = {

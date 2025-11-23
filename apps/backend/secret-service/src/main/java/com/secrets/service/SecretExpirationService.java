@@ -86,23 +86,32 @@ public class SecretExpirationService {
     }
 
     /**
-     * Get all expired secrets
+     * Get all expired secrets (admin only) or expired secrets accessible to user
      */
     @Transactional(readOnly = true)
-    public List<Secret> getExpiredSecrets() {
+    public List<Secret> getExpiredSecrets(String username, boolean isAdmin) {
         LocalDateTime now = LocalDateTime.now();
-        return secretRepository.findExpiredSecrets(now);
+        if (isAdmin) {
+            return secretRepository.findExpiredSecrets(now);
+        } else {
+            return secretRepository.findExpiredSecretsForUser(username, now);
+        }
     }
 
     /**
      * Get secrets expiring soon (within specified days)
+     * Admin sees all, regular users see only their accessible secrets
      */
     @Transactional(readOnly = true)
-    public List<Secret> getSecretsExpiringSoon(int days) {
+    public List<Secret> getSecretsExpiringSoon(int days, String username, boolean isAdmin) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime threshold = now.plusDays(days);
         
-        return secretRepository.findSecretsExpiringBetween(now, threshold);
+        if (isAdmin) {
+            return secretRepository.findSecretsExpiringBetween(now, threshold);
+        } else {
+            return secretRepository.findSecretsExpiringBetweenForUser(username, now, threshold);
+        }
     }
 }
 

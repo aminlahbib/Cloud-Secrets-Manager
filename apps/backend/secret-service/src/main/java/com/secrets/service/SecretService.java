@@ -212,6 +212,7 @@ public class SecretService {
 
     /**
      * List all secrets with pagination and optional filtering
+     * SECURITY: Non-admin users can only see secrets they created OR secrets shared with them
      */
     @Transactional(readOnly = true)
     public org.springframework.data.domain.Page<Secret> listSecrets(
@@ -220,33 +221,54 @@ public class SecretService {
             String createdBy,
             Authentication authentication) {
         
-        log.debug("Listing secrets with pagination - page: {}, size: {}, keyword: {}, createdBy: {}", 
-            pageable.getPageNumber(), pageable.getPageSize(), keyword, createdBy);
+        String username = authentication.getName();
+        boolean isAdmin = permissionEvaluator.isAdmin(authentication);
+        
+        log.debug("Listing secrets - user: {}, isAdmin: {}, page: {}, size: {}, keyword: {}, createdBy: {}", 
+            username, isAdmin, pageable.getPageNumber(), pageable.getPageSize(), keyword, createdBy);
         
         // Check permission
-        if (!permissionEvaluator.isAdmin(authentication) && 
-            !permissionEvaluator.hasPermission(authentication, Permission.READ)) {
+        if (!isAdmin && !permissionEvaluator.hasPermission(authentication, Permission.READ)) {
             throw new AccessDeniedException("User does not have READ permission");
         }
         
         org.springframework.data.domain.Page<Secret> secrets;
         
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            // Search with keyword
-            if (createdBy != null && !createdBy.trim().isEmpty()) {
-                secrets = secretRepository.searchSecretsByCreator(createdBy, keyword.trim(), pageable);
+        if (isAdmin) {
+            // Admins can see all secrets
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // Search with keyword
+                if (createdBy != null && !createdBy.trim().isEmpty()) {
+                    secrets = secretRepository.searchSecretsByCreator(createdBy, keyword.trim(), pageable);
+                } else {
+                    secrets = secretRepository.searchSecrets(keyword.trim(), pageable);
+                }
+            } else if (createdBy != null && !createdBy.trim().isEmpty()) {
+                // Filter by creator
+                secrets = secretRepository.findByCreatedBy(createdBy.trim(), pageable);
             } else {
-                secrets = secretRepository.searchSecrets(keyword.trim(), pageable);
+                // List all
+                secrets = secretRepository.findAll(pageable);
             }
-        } else if (createdBy != null && !createdBy.trim().isEmpty()) {
-            // Filter by creator
-            secrets = secretRepository.findByCreatedBy(createdBy.trim(), pageable);
         } else {
-            // List all
-            secrets = secretRepository.findAll(pageable);
+            // Regular users can only see secrets they created OR secrets shared with them
+            if (keyword != null && !keyword.trim().isEmpty()) {
+                // Search accessible secrets with keyword
+                secrets = secretRepository.searchAccessibleSecrets(username, keyword.trim(), pageable);
+            } else if (createdBy != null && !createdBy.trim().isEmpty()) {
+                // If filtering by creator, ensure user can only filter by themselves
+                if (!createdBy.trim().equals(username)) {
+                    throw new AccessDeniedException("Users can only filter secrets by their own username");
+                }
+                secrets = secretRepository.findByCreatedBy(username, pageable);
+            } else {
+                // List accessible secrets (owned + shared)
+                secrets = secretRepository.findAccessibleSecrets(username, pageable);
+            }
         }
         
-        log.info("Retrieved {} secrets (page {})", secrets.getNumberOfElements(), pageable.getPageNumber());
+        log.info("Retrieved {} secrets for user {} (admin: {}, page {})", 
+            secrets.getNumberOfElements(), username, isAdmin, pageable.getPageNumber());
         return secrets;
     }
 
