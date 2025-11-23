@@ -42,13 +42,13 @@ export interface SharedSecret {
 
 export interface AuditLog {
   id: string;
-  timestamp: string;
+  username: string;  // Backend returns 'username'
   action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'ROTATE' | 'SHARE' | 'UNSHARE';
   secretKey?: string;
-  user: string;
+  timestamp: string;
   ipAddress?: string;
   userAgent?: string;
-  details?: string;
+  details?: string;  // Optional - not in backend yet
 }
 
 export interface PaginatedResponse<T> {
