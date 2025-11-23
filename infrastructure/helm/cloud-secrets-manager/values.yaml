@@ -76,14 +76,9 @@ cloudSql:
 
 # Google Cloud Identity Platform Configuration
 googleIdentity:
-  enabled: true
+  enabled: false  # Set to true to enable Firebase authentication
   projectId: "cloud-secrets-manager"
-  apiKey: ""  # Optional, set if needed
-  serviceAccount:
-    # Service account JSON should be provided as a Kubernetes secret (csm-google-service-account)
-    secretName: "csm-google-service-account"
-    key: "service-account.json"
-  setupEnabled: false  # Disable setup endpoint in production
+  setupEnabled: false  # Disable setup endpoint in production after initial configuration
 
 ingress:
   enabled: true

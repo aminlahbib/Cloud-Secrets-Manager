@@ -105,6 +105,12 @@ service-account.json
 apps/backend/secret-service/src/main/resources/service-account.json
 github-actions-key.json
 
+# Firebase/GCP Keys Directory
+infrastructure/gcp/keys/
+**/*-admin-key.json
+firebase-admin-key.json
+infrastructure/k8s/firebase-admin-secret.yaml
+
 # Files with sensitive credentials (generated from environment variables)
 testing/postman/firebase-config.js
 test-auth.sh
