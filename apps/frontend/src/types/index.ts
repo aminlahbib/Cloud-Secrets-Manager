@@ -12,10 +12,12 @@ export type Permission = 'READ' | 'WRITE' | 'DELETE' | 'LIST' | 'ROTATE' | 'SHAR
 export interface Secret {
   id: string;
   key: string;
-  encryptedValue: string;
+  value?: string;
+  encryptedValue?: string;
   description?: string;
   tags?: string[];
-  createdBy: string;
+  version?: number;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
@@ -42,10 +44,11 @@ export interface AuditLog {
   id: string;
   timestamp: string;
   action: 'CREATE' | 'READ' | 'UPDATE' | 'DELETE' | 'ROTATE' | 'SHARE' | 'UNSHARE';
-  secretKey: string;
+  secretKey?: string;
   user: string;
   ipAddress?: string;
   userAgent?: string;
+  details?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -57,8 +60,9 @@ export interface PaginatedResponse<T> {
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  idToken?: string;
 }
 
 export interface LoginResponse {

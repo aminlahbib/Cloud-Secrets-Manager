@@ -4,8 +4,7 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
-  User as FirebaseUser,
-  UserCredential
+  User as FirebaseUser
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 

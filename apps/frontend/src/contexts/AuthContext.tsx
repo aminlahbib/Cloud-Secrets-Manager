@@ -48,8 +48,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setUser({
                 id: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                roles: [], // Roles will be in the token claims
-                permissions: [], // Permissions will be in the token claims
+                role: 'USER',
+                permissions: [],
+                active: true,
+                createdAt: new Date().toISOString(),
               });
             } catch (error) {
               console.error('Failed to get Firebase ID token:', error);
@@ -80,14 +82,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     };
 
-    const unsubscribe = initAuth();
-    
-    // Cleanup function
-    return () => {
-      if (unsubscribe && typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
+    void initAuth();
+    // No cleanup needed since Firebase handles unsubscribe internally
   }, [isFirebaseEnabled]);
 
   // Auto-refresh token before expiration
@@ -144,12 +140,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest) => {
     if (isFirebaseEnabled) {
       // Firebase email/password login
+      if (!credentials.email || !credentials.password) {
+        throw new Error('Email and password are required');
+      }
       try {
         const idToken = await firebaseAuthService.signInWithEmail(
           credentials.email,
           credentials.password
         );
-        sessionStorage.setItem('accessToken', idToken);
+        if (idToken) {
+          sessionStorage.setItem('accessToken', idToken);
+        }
         // User state will be set by onAuthStateChanged listener
         navigate('/secrets');
       } catch (error) {
@@ -159,7 +160,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Local authentication
       const response = await authService.login(credentials);
       sessionStorage.setItem('accessToken', response.accessToken);
-      sessionStorage.setItem('refreshToken', response.refreshToken);
+      if (response.refreshToken) {
+        sessionStorage.setItem('refreshToken', response.refreshToken);
+      }
       setUser(response.user);
       navigate('/secrets');
     }

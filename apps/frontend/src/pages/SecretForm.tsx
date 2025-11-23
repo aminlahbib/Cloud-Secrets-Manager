@@ -30,13 +30,17 @@ export const SecretFormPage: React.FC = () => {
     queryKey: ['secret', id],
     queryFn: () => secretsService.getSecret(id!),
     enabled: isEditMode,
-    onSuccess: (data) => {
-      setValue('key', data.key);
-      setValue('value', data.value);
-      setValue('description', data.description || '');
-      setValue('tags', data.tags || []);
-    },
   });
+
+  // Populate form when secret loads
+  React.useEffect(() => {
+    if (secret) {
+      setValue('key', secret.key);
+      setValue('value', secret.value || '');
+      setValue('description', secret.description || '');
+      setValue('tags', secret.tags || []);
+    }
+  }, [secret, setValue]);
 
   // Create/Update mutation
   const mutation = useMutation({
