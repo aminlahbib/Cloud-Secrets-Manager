@@ -4,7 +4,7 @@ import type { AuditLog } from '../types';
 export interface AuditLogsParams {
   page?: number;
   size?: number;
-  user?: string;
+  username?: string;  // Backend uses 'username' not 'user'
   action?: string;
   startDate?: string;
   endDate?: string;

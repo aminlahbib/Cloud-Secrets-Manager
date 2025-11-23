@@ -21,7 +21,7 @@ const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger'
 export const AuditLogsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
-    user: '',
+    username: '',
     action: '',
   });
   const [showFilters, setShowFilters] = useState(false);
@@ -43,11 +43,11 @@ export const AuditLogsPage: React.FC = () => {
   };
 
   const handleClearFilters = () => {
-    setFilters({ user: '', action: '' });
+    setFilters({ username: '', action: '' });
     setPage(1);
   };
 
-  const hasActiveFilters = filters.user || filters.action;
+  const hasActiveFilters = filters.username || filters.action;
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -80,8 +80,8 @@ export const AuditLogsPage: React.FC = () => {
               </label>
               <input
                 type="text"
-                value={filters.user}
-                onChange={(e) => handleFilterChange('user', e.target.value)}
+                value={filters.username}
+                onChange={(e) => handleFilterChange('username', e.target.value)}
                 placeholder="Filter by user..."
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
               />
@@ -169,7 +169,7 @@ export const AuditLogsPage: React.FC = () => {
                     <div className="flex items-center space-x-4 text-sm text-gray-600">
                       <div className="flex items-center">
                         <User className="h-4 w-4 mr-1" />
-                        {log.user}
+                        {log.username}
                       </div>
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
