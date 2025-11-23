@@ -9,7 +9,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 
-const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger'> = {
+const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   CREATE: 'success',
   READ: 'info',
   UPDATE: 'warning',
