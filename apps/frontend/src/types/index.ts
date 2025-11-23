@@ -10,7 +10,7 @@ export interface User {
 export type Permission = 'READ' | 'WRITE' | 'DELETE' | 'LIST' | 'ROTATE' | 'SHARE';
 
 export interface Secret {
-  id: string;
+  id?: string;
   key: string;
   value?: string;
   encryptedValue?: string;

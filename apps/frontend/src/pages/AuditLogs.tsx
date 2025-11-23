@@ -137,7 +137,7 @@ export const AuditLogsPage: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && data?.content.length === 0 && (
+      {!isLoading && !error && (!data || !data.content || data.content.length === 0) && (
         <EmptyState
           icon={<FileText className="h-16 w-16 text-gray-400" />}
           title="No audit logs found"
@@ -150,7 +150,7 @@ export const AuditLogsPage: React.FC = () => {
       )}
 
       {/* Audit Logs List */}
-      {!isLoading && !error && data && data.content.length > 0 && (
+      {!isLoading && !error && data && data.content && data.content.length > 0 && (
         <>
           <div className="space-y-3">
             {data.content.map((log) => (
@@ -193,7 +193,7 @@ export const AuditLogsPage: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          {data.page.totalPages > 1 && (
+          {data.page && data.page.totalPages > 1 && (
             <Pagination
               currentPage={page}
               totalPages={data.page.totalPages}
@@ -203,9 +203,11 @@ export const AuditLogsPage: React.FC = () => {
           )}
 
           {/* Results count */}
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Showing {data.content.length} of {data.page.totalElements} logs
-          </div>
+          {data.page && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Showing {data.content.length} of {data.page.totalElements || 0} logs
+            </div>
+          )}
         </>
       )}
     </div>

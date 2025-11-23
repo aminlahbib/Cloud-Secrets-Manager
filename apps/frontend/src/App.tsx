@@ -117,7 +117,7 @@ const App: React.FC = () => {
         }
       />
       <Route
-        path="/secrets/:id"
+        path="/secrets/:key"
         element={
           <ProtectedRoute>
             <SecretDetailPage />
@@ -125,7 +125,7 @@ const App: React.FC = () => {
         }
       />
       <Route
-        path="/secrets/:id/edit"
+        path="/secrets/:key/edit"
         element={
           <ProtectedRoute>
             <SecretFormPage />

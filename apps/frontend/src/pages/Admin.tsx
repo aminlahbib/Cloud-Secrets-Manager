@@ -41,7 +41,7 @@ export const AdminPage: React.FC = () => {
 
   const handleEditRole = (user: any) => {
     setSelectedUser(user);
-    setNewRole(user.role);
+    setNewRole(user.primaryRole ?? 'USER');
   };
 
   const handleSaveRole = () => {
@@ -86,9 +86,40 @@ export const AdminPage: React.FC = () => {
       {/* Error State */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-red-800">
-            Failed to load users. You may not have admin permissions.
+          <p className="text-sm font-medium text-red-800 mb-2">
+            Failed to load users
           </p>
+          <p className="text-sm text-red-700 mb-2">
+            {error instanceof Error ? error.message : 'You may not have admin permissions or the service account may lack required permissions.'}
+          </p>
+          {error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && (
+            <div className="mt-2 text-xs text-red-600 space-y-1">
+              {typeof error.response.data === 'object' && error.response.data !== null && (
+                <>
+                  {('details' in error.response.data) && (
+                    <p className="font-medium">Details: {String(error.response.data.details)}</p>
+                  )}
+                  {('message' in error.response.data) && (
+                    <p>Message: {String(error.response.data.message)}</p>
+                  )}
+                  {('code' in error.response.data) && (
+                    <p>Error Code: {String(error.response.data.code)}</p>
+                  )}
+                  {('error' in error.response.data) && (
+                    <p>Error: {String(error.response.data.error)}</p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+          <div className="mt-3 pt-3 border-t border-red-200">
+            <p className="text-xs text-red-600 font-medium">Troubleshooting:</p>
+            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-1">
+              <li>Ensure your Firebase service account has "Firebase Admin" role</li>
+              <li>Check backend logs for detailed error information</li>
+              <li>Verify Firebase Admin SDK is properly initialized</li>
+            </ul>
+          </div>
         </div>
       )}
 
@@ -112,9 +143,9 @@ export const AdminPage: React.FC = () => {
                     <h3 className="text-lg font-semibold text-gray-900">
                       {user.email}
                     </h3>
-                    <Badge variant={ROLE_COLORS[user.role] || 'default'}>
+                    <Badge variant={ROLE_COLORS[user.primaryRole] || 'default'}>
                       <Shield className="h-3 w-3 mr-1" />
-                      {user.role}
+                      {user.primaryRole}
                     </Badge>
                   </div>
 
@@ -131,15 +162,18 @@ export const AdminPage: React.FC = () => {
 
                   {/* Metadata */}
                   <div className="flex items-center space-x-4 text-sm text-gray-600">
-                    {user.lastLogin && (
+                    {user.lastLoginAt && (
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
-                        Last login: {new Date(user.lastLogin).toLocaleString()}
+                        Last login: {new Date(user.lastLoginAt).toLocaleString()}
                       </div>
                     )}
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-1" />
-                      Joined: {new Date(user.createdAt).toLocaleDateString()}
+                      Joined:{' '}
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString()
+                        : 'Unknown'}
                     </div>
                   </div>
                 </div>
@@ -220,7 +254,7 @@ export const AdminPage: React.FC = () => {
               <Button
                 onClick={handleSaveRole}
                 isLoading={updateRoleMutation.isPending}
-                disabled={newRole === selectedUser.role}
+                disabled={newRole === (selectedUser?.primaryRole ?? 'USER')}
               >
                 Update Role
               </Button>

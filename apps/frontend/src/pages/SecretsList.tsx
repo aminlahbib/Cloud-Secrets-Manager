@@ -40,6 +40,10 @@ export const SecretsListPage: React.FC = () => {
     setPage(1);
   };
 
+  const content = data?.content ?? [];
+  const pagination = data?.page;
+  const hasResults = content.length > 0;
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
@@ -102,7 +106,7 @@ export const SecretsListPage: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {!isLoading && !error && data?.content.length === 0 && !search && (
+      {!isLoading && !error && content.length === 0 && !search && (
         <EmptyState
           icon={<Key className="h-16 w-16 text-gray-400" />}
           title="No secrets yet"
@@ -115,7 +119,7 @@ export const SecretsListPage: React.FC = () => {
       )}
 
       {/* No Search Results */}
-      {!isLoading && !error && data?.content.length === 0 && search && (
+      {!isLoading && !error && content.length === 0 && search && (
         <EmptyState
           icon={<Search className="h-16 w-16 text-gray-400" />}
           title="No secrets found"
@@ -128,14 +132,14 @@ export const SecretsListPage: React.FC = () => {
       )}
 
       {/* Secrets List */}
-      {!isLoading && !error && data && data.content.length > 0 && (
+      {!isLoading && !error && hasResults && (
         <>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {data.content.map((secret) => (
+            {content.map((secret) => (
               <Card
-                key={secret.id}
+                key={secret.id ?? secret.key}
                 hover
-                onClick={() => navigate(`/secrets/${secret.id}`)}
+                onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
                 className="p-4"
               >
                 {/* Secret Key */}
@@ -154,10 +158,10 @@ export const SecretsListPage: React.FC = () => {
                 )}
 
                 {/* Tags */}
-                {secret.tags && secret.tags.length > 0 && (
+                  {secret.tags && secret.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {secret.tags.slice(0, 3).map((tag) => (
-                      <Badge key={tag} variant="info">
+                      <Badge key={`${secret.id ?? secret.key}-${tag}`} variant="info">
                         <Tag className="h-3 w-3 mr-1" />
                         {tag}
                       </Badge>
@@ -185,10 +189,10 @@ export const SecretsListPage: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          {data.page.totalPages > 1 && (
+          {(pagination?.totalPages ?? 0) > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={data.page.totalPages}
+              totalPages={pagination?.totalPages ?? 1}
               onPageChange={setPage}
               className="mt-8"
             />
@@ -196,7 +200,7 @@ export const SecretsListPage: React.FC = () => {
 
           {/* Results count */}
           <div className="mt-4 text-center text-sm text-gray-600">
-            Showing {data.content.length} of {data.page.totalElements} secrets
+            Showing {content.length} of {pagination?.totalElements ?? content.length} secrets
           </div>
         </>
       )}
