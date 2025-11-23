@@ -1,139 +1,251 @@
 # Cloud Secrets Manager - Documentation
 
-Welcome to the Cloud Secrets Manager documentation. This directory contains all documentation for the project.
+Welcome to the Cloud Secrets Manager documentation. This directory contains all project documentation, organized for quick access and clarity.
+
+**Last Updated:** November 23, 2025
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 **New to the project?** Start here:
 
-1. **[Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md)** ⭐ - Complete project analysis and local dev setup
-2. **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** - Step-by-step guide to deploy the application
-3. **[Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)** - Infrastructure setup and management
+1. **[Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)** ⭐ - Run the app locally with Docker Compose
+2. **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** - Deploy to GKE/Cloud SQL
+3. **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** - Manage and troubleshoot deployments
+
+**For Epic/Feature History:** See [Archive](./archive/README.md) for completed epic summaries and implementation guides.
 
 ---
 
-## Documentation Structure
+## 📂 Documentation Structure
 
-### [deployment/](./deployment/)
-Complete guides for deploying and managing the Cloud Secrets Manager.
+### 🎯 [`current/`](./current/) - Active & Reference Documentation
+Current features, specifications, and reference material:
 
-**Production Deployment:**
-- **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Main production deployment guide (Cloud SQL, ESO)
-- **[Helm Deployment Guide](./deployment/helm/HELM_DEPLOYMENT_GUIDE.md)** - Deploy using Helm charts
+- **UI/UX Specification:** Frontend design and wireframes
+- **Firebase Quick Reference:** Authentication commands and troubleshooting
+- **Admin UI Considerations:** Security best practices for user management
+- **GCP Services Overview:** All Google Cloud services in use
+- **User Management Index:** Authentication and access control docs
+
+[→ See current/ README](./current/README.md)
+
+---
+
+### 🚢 [`deployment/`](./deployment/) - Deployment & Operations
+Everything needed to deploy and manage the application:
+
+#### Production Deployment
+- **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Main guide (GKE + Cloud SQL + ESO)
+- **[Helm Deployment](./deployment/helm/HELM_DEPLOYMENT_GUIDE.md)** - Helm charts and configuration
 - **[External Secrets Setup](./deployment/EXTERNAL_SECRETS_SETUP.md)** - Google Secret Manager integration
-- **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** ⭐ - Live deployment management and commands
+- **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** ⭐ - Day-to-day management
+
+#### Infrastructure
 - **[Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)** - Infrastructure as Code
 - **[Terraform Operations](./deployment/terraform/TERRAFORM_OPERATIONS.md)** - Terraform workflows
-- **[Google Identity Deployment](./deployment/GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)** - Authentication setup
 
-**Local Development:**
-- **[Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)** ⭐ - Run locally with Docker Compose
+#### CI/CD
+- **[CI/CD Setup](./deployment/ci-cd/CI_CD_SETUP.md)** - GitHub Actions pipeline
+- **[Branch Protection](./deployment/ci-cd/BRANCH_PROTECTION_SETUP.md)** - Git workflow
+- **[CI/CD Quick Reference](./deployment/ci-cd/CI_CD_QUICK_REFERENCE.md)** - Common commands
 
-**Reference:**
-- **[Deployment Index](./deployment/DEPLOYMENT_INDEX.md)** - Complete deployment documentation index
+**Note:** CI/CD pipeline is currently disabled for solo development workflow.
 
-### [current/](./current/)
-Current feature documentation and guides.
+#### Monitoring & Observability
+- **[Monitoring Setup](./deployment/monitoring/MONITORING_SETUP.md)** - Prometheus/Grafana/Tempo
+- **[Runbooks](./deployment/monitoring/RUNBOOKS.md)** - Incident response procedures
+- **[SLOs & Error Budgets](./deployment/monitoring/SLOS_AND_ERROR_BUDGETS.md)** - Reliability targets
 
-- Google Cloud Services overview
-- Identity Platform setup
-- Artifact Registry configuration
-- API documentation
+#### Security & Operations
+- **[Security Context Update](./deployment/kubernetes/SECURITY_CONTEXT_UPDATE.md)** - Pod security
+- **[Backup & DR](./deployment/operations/BACKUP_AND_DR_PROCEDURES.md)** - Disaster recovery
+- **[Verification Guide](./deployment/operations/VERIFICATION_GUIDE.md)** - Post-deployment checks
 
-### [completed/](./completed/)
-Completed feature documentation (historical reference).
+#### Local Development
+- **[Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)** ⭐ - Docker Compose setup
 
-- Authentication approach comparison
-- Dockerization guide
-- Google Cloud Identity integration
-- Hybrid user registry architecture
-- Kubernetes/Helm guides
+[→ See deployment/ README](./deployment/README.md)
 
-### [planning/](./planning/)
-Planning documents and architecture decisions.
+---
+
+### ✅ [`archive/`](./archive/) - Completed Implementation Guides
+Archived documentation for successfully completed work:
+
+#### Epic Summaries (All ✅ Complete)
+- **Epic 1:** CI/CD to GKE & Environments
+- **Epic 2:** Observability & Reliability (Prometheus/Grafana/Tempo)
+- **Epic 3:** Security & Compliance Hardening
+- **Epic 4:** Testing, Resilience, and Performance
+- **Epic 5:** Frontend & UX Design Specification
+
+#### Firebase Integration (✅ Complete)
+- Google Cloud Identity Platform integration
+- Firebase Admin SDK setup
+- Google OAuth implementation
+- End-to-end testing results
+
+#### Setup Guides
+- Artifact Registry, GitHub Security, GCP Identity, and more
+
+[→ See archive/ README](./archive/README.md)
+
+---
+
+### 🧪 [`features/`](./features/) - Feature Development & Testing
+Active feature development and testing documentation:
+
+- **[Testing Strategy](./features/TESTING_STRATEGY_UPDATE.md)** - Unit, integration, performance testing
+- **[Testing Status](./features/TESTING_STATUS.md)** - Current test coverage and results
+- **[Testing Checklist](./features/TESTING_CHECKLIST.md)** - QA checklist
+
+---
+
+### 🏗️ [`implementations/`](./implementations/) - Implementation Details
+Deep-dive implementation documentation:
+
+- **Enhanced RBAC Implementation** - Role-based access control
+- **JWT Refresh Tokens** - Token refresh strategy
+- **Business Logic Features** - Core business logic
+
+---
+
+### 📝 [`planning/`](./planning/) - Architecture & Planning
+Planning documents and architecture decisions:
 
 - Production deployment plans
 - Archived planning notes
-
-### [status/](./status/)
-Project status and progress tracking.
-
-- Current project status
-- Feature implementation status
-
-### [features/](./features/)
-Feature-specific documentation.
-
-- Testing setup and status
-- Feature checklists
-
-### [implementations/](./implementations/)
-Implementation details for specific features.
-
-- Enhanced RBAC implementation
-- JWT refresh tokens
+- Architecture decision records
 
 ---
 
-## Getting Started
+### 📊 [`status/`](./status/) - Project Status
+Project progress and status tracking:
+
+- Current implementation status
+- Feature completion tracking
+
+---
+
+### 📚 [`completed/`](./completed/) - Legacy Completed Docs
+Historical completed documentation (pre-archive structure):
+
+- Authentication approach comparison
+- Dockerization guide
+- Hybrid user registry architecture
+
+**Note:** New completed docs go to `/archive/` instead.
+
+---
+
+## 🎯 Getting Started
 
 ### For Developers
 
-1. **Project Analysis & Local Dev Plan**: Start with [Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md) ⭐ **NEW**
-2. **Local Development**: See [Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)
-3. **Production Deployment**: Read the [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
-4. **Infrastructure**: Review [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
-5. **Project Status**: Check [Current Status](./status/STATUS.md) for project state
+1. **Start Locally:**
+   - [Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md) - Docker Compose setup
+   - [Frontend UI Specification](./current/FRONTEND_UI_SPECIFICATION.md) - UI/UX design
+
+2. **Understand the System:**
+   - [GCP Services Overview](./current/GOOGLE_CLOUD_SERVICES.md) - Infrastructure
+   - [Testing Strategy](./features/TESTING_STRATEGY_UPDATE.md) - Quality assurance
+
+3. **Review Completed Work:**
+   - [Archive](./archive/README.md) - Epics 1-5 implementation summaries
+   - [Monitoring Setup](./deployment/monitoring/MONITORING_SETUP.md) - Observability
 
 ### For DevOps/Infrastructure
 
-1. Start with [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
-2. Review [Terraform Operations](./deployment/terraform/TERRAFORM_OPERATIONS.md)
-3. Follow [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md) for application deployment
-4. Use [Operations Guide](./deployment/OPERATIONS_GUIDE.md) for day-to-day management
+1. **Infrastructure:**
+   - [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md) - IaC setup
+   - [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md) - GKE deployment
+
+2. **Operations:**
+   - [Operations Guide](./deployment/OPERATIONS_GUIDE.md) - Day-to-day management
+   - [Runbooks](./deployment/monitoring/RUNBOOKS.md) - Incident response
+   - [Backup & DR](./deployment/operations/BACKUP_AND_DR_PROCEDURES.md) - Disaster recovery
+
+3. **Monitoring:**
+   - [Monitoring Setup](./deployment/monitoring/MONITORING_SETUP.md) - Prometheus/Grafana
+   - [SLOs & Error Budgets](./deployment/monitoring/SLOS_AND_ERROR_BUDGETS.md) - Reliability
 
 ### For Project Managers
 
-1. Review [Current Status](./status/STATUS.md)
-2. Check [Features](./features/) for implementation status
-3. Review [Planning](./planning/) for architecture decisions
+1. **Status & Progress:**
+   - [Archive](./archive/README.md) - Completed epics (1-5)
+   - [Status](./status/STATUS.md) - Current project state
+   - [Features](./features/) - Active development
+
+2. **Planning:**
+   - [Planning](./planning/) - Architecture decisions
+   - [Implementations](./implementations/) - Technical details
 
 ---
 
-## Key Resources
+## 📋 Project Status Summary
 
-- **Project Analysis & Local Dev**: [Comprehensive Project Status & Local Development Plan](./PROJECT_STATUS_AND_LOCAL_DEVELOPMENT_PLAN.md) ⭐ **NEW**
-- **Main Deployment Guide**: [Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)
-- **Operations & Management**: [Operations Guide](./deployment/OPERATIONS_GUIDE.md)
-- **Infrastructure**: [Terraform Guide](./deployment/terraform/TERRAFORM_GUIDE.md)
-- **Project Status**: [Status](./status/STATUS.md)
-- **Architecture**: [Planning](./planning/a-plus-production-plan.md)
+| Component | Status | Documentation |
+|-----------|--------|---------------|
+| **Backend Services** | ✅ Operational | [Implementation Summaries](./archive/epics/) |
+| **CI/CD Pipeline** | 🟡 Disabled (Solo Dev) | [CI/CD Setup](./deployment/ci-cd/) |
+| **Monitoring** | ✅ Operational | [Monitoring Setup](./deployment/monitoring/) |
+| **Security** | ✅ Enforced | [Security](./deployment/security/) |
+| **Testing** | ✅ 80%+ Coverage | [Testing Strategy](./features/TESTING_STRATEGY_UPDATE.md) |
+| **Firebase Auth** | ✅ Functional (Local) | [Archive: Firebase](./archive/firebase-integration/) |
+| **Frontend UI** | 🚧 In Progress | [UI Specification](./current/FRONTEND_UI_SPECIFICATION.md) |
 
 ---
 
-## Contributing
+## 🔗 Key Resources
+
+### Must-Read Documents
+- **[Local Development Guide](./deployment/LOCAL_DEVELOPMENT_GUIDE.md)** ⭐ - Start here for local dev
+- **[Complete Deployment Guide](./deployment/COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐ - Production deployment
+- **[Operations Guide](./deployment/OPERATIONS_GUIDE.md)** ⭐ - Day-to-day management
+- **[Archive](./archive/README.md)** ⭐ - Completed epics and implementations
+
+### Reference
+- **[Firebase Quick Reference](./current/FIREBASE_QUICK_REFERENCE.md)** - Auth commands
+- **[Runbooks](./deployment/monitoring/RUNBOOKS.md)** - Incident response
+- **[Testing Checklist](./features/TESTING_CHECKLIST.md)** - QA checklist
+
+---
+
+## ✨ Recent Updates
+
+**November 23, 2025:**
+- ✅ **Firebase Integration Complete** - Google OAuth working end-to-end
+- ✅ **Documentation Reorganization** - New `/archive/` structure for completed work
+- ✅ **Epic 1-5 Archived** - All epic summaries moved to archive
+- ✅ **Updated Documentation Indexes** - Clearer navigation and status
+
+**Previous:**
+- ✅ **Epic 5 UI/UX Design Complete** - Comprehensive wireframes and specifications
+- ✅ **Epic 4 Testing Complete** - 80%+ backend coverage, k6 load tests, chaos experiments
+- ✅ **Epic 3 Security Complete** - Network policies, JWT blacklisting, backup/DR
+- ✅ **Epic 2 Observability Complete** - Prometheus/Grafana/Tempo operational
+- ✅ **Epic 1 CI/CD Complete** - GitHub Actions pipeline (disabled for solo dev)
+
+---
+
+## 📝 Contributing
 
 When adding new documentation:
 
-1. Place deployment guides in `deployment/`
-2. Place feature docs in `features/` or `current/`
-3. Update relevant index files
-4. Follow existing documentation structure and format
+1. **Active development docs** → `current/` or `features/`
+2. **Deployment guides** → `deployment/`
+3. **Completed implementation summaries** → `archive/epics/`
+4. **Update relevant indexes** - This README and subdirectory READMEs
+5. **Follow naming conventions** - UPPERCASE_WITH_UNDERSCORES.md
+
+When completing an epic or major feature:
+1. Write an implementation summary
+2. Move to `/archive/epics/` or `/archive/guides/`
+3. Update `/archive/README.md`
+4. Keep quick references in `/current/` if needed
 
 ---
 
-**Last Updated:** November 22, 2025
-
----
-
-## Recent Updates
-
-- ✅ **Cloud SQL Migration Complete** - Migrated from local PostgreSQL to Google Cloud SQL
-- ✅ **Local Development Guide** - New guide for Docker Compose local development
-- ✅ **Documentation Cleanup** - Archived completed migration and setup docs
-- ✅ Added **Operations Guide** with comprehensive management commands
-- ✅ Enhanced **Deployment Guide** with Cloud SQL and External Secrets Operator
-- ✅ Organized and archived historical planning documents
-- ✅ **Comprehensive Project Status & Local Development Plan** - Complete analysis and local dev guide
+**Maintained By:** Development Team  
+**Last Updated:** November 23, 2025
