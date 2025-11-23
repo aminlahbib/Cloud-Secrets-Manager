@@ -1,6 +1,34 @@
-version: "3.8"
 name: cloud-secrets-manager
 services:
+  # ===============================
+  # Frontend
+  # ===============================
+  frontend:
+    build:
+      context: ../../apps/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    container_name: frontend
+    depends_on:
+      - secret-service
+    ports:
+      - "3000:80"
+    networks:
+      - secrets-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   # ===============================
   # Secret Service
   # ===============================
@@ -17,24 +45,23 @@ services:
       SPRING_DATASOURCE_USERNAME: secret_user
       SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      JWT_SECRET: mySuperStrongSecretKeyForJWTTokenGeneration123456
-      ENCRYPTION_KEY: MySecure32ByteKeyForAES256Enc!@#
+      JWT_SECRET: ${JWT_SECRET:-mySuperStrongSecretKeyForJWTTokenGeneration123456}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-MySecure32ByteKeyForAES256Enc!@#}
       AUDIT_SERVICE_URL: http://audit-service:8081
       SPRING_PROFILES_ACTIVE: docker
       # Google Cloud Identity Platform Configuration
-      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-false}
-      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-}
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
-      GOOGLE_SERVICE_ACCOUNT_PATH: ${GOOGLE_SERVICE_ACCOUNT_PATH:-/app/service-account.json}
+      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-cloud-secrets-manager}
+      GOOGLE_SERVICE_ACCOUNT_PATH: /app/firebase-admin-key.json
     volumes:
-      # Mount service account JSON file if provided
-      - ${GOOGLE_SERVICE_ACCOUNT_PATH:-../../apps/backend/secret-service/src/main/resources/service-account.json}:/app/service-account.json:ro
+      # Mount Firebase service account key
+      - ../../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-admin-key.json:ro
     ports:
       - "8080:8080"
     networks:
       - secrets-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -61,7 +88,7 @@ services:
     networks:
       - secrets-net
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -115,4 +142,3 @@ networks:
 volumes:
   secrets-db-data:
   audit-db-data:
-

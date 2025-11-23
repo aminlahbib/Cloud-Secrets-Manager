@@ -407,20 +407,23 @@ public class SecretController {
 
     @GetMapping("/expired")
     @Operation(summary = "Get expired secrets", 
-               description = "Retrieves all secrets that have expired. Requires READ permission.")
+               description = "Retrieves expired secrets. Admins see all, regular users see only their accessible secrets. Requires READ permission.")
     public ResponseEntity<List<SecretResponse>> getExpiredSecrets(
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
         
-        log.debug("Getting expired secrets");
+        String username = userDetails.getUsername();
+        boolean isAdmin = permissionEvaluator.isAdmin(authentication);
+        
+        log.debug("Getting expired secrets for user {} (admin: {})", username, isAdmin);
         
         // Check permission
-        if (!permissionEvaluator.isAdmin(authentication) && 
+        if (!isAdmin && 
             !permissionEvaluator.hasPermission(authentication, com.secrets.security.Permission.READ)) {
             throw new org.springframework.security.access.AccessDeniedException("User does not have READ permission");
         }
         
-        var expiredSecrets = secretExpirationService.getExpiredSecrets();
+        var expiredSecrets = secretExpirationService.getExpiredSecrets(username, isAdmin);
         List<SecretResponse> response = expiredSecrets.stream()
             .map(secret -> SecretResponse.builder()
                 .key(secret.getSecretKey())
@@ -436,21 +439,24 @@ public class SecretController {
 
     @GetMapping("/expiring-soon")
     @Operation(summary = "Get secrets expiring soon", 
-               description = "Retrieves secrets that will expire within the specified number of days. Requires READ permission.")
+               description = "Retrieves secrets that will expire within the specified number of days. Admins see all, regular users see only their accessible secrets. Requires READ permission.")
     public ResponseEntity<List<SecretResponse>> getSecretsExpiringSoon(
             @RequestParam(defaultValue = "7") int days,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
         
-        log.debug("Getting secrets expiring within {} days", days);
+        String username = userDetails.getUsername();
+        boolean isAdmin = permissionEvaluator.isAdmin(authentication);
+        
+        log.debug("Getting secrets expiring within {} days for user {} (admin: {})", days, username, isAdmin);
         
         // Check permission
-        if (!permissionEvaluator.isAdmin(authentication) && 
+        if (!isAdmin && 
             !permissionEvaluator.hasPermission(authentication, com.secrets.security.Permission.READ)) {
             throw new org.springframework.security.access.AccessDeniedException("User does not have READ permission");
         }
         
-        var expiringSecrets = secretExpirationService.getSecretsExpiringSoon(days);
+        var expiringSecrets = secretExpirationService.getSecretsExpiringSoon(days, username, isAdmin);
         List<SecretResponse> response = expiringSecrets.stream()
             .map(secret -> SecretResponse.builder()
                 .key(secret.getSecretKey())

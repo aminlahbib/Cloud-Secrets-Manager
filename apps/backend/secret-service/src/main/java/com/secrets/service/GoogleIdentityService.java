@@ -2,6 +2,7 @@ package com.secrets.service;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.UserRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +100,36 @@ public class GoogleIdentityService {
         }
 
         return firebaseAuth.getUserByEmail(email);
+    }
+
+    /**
+     * List all users from Google Identity Platform
+     */
+    public List<UserRecord> listUsers() throws FirebaseAuthException {
+        if (!enabled || firebaseAuth == null) {
+            throw new IllegalStateException("Google Cloud Identity Platform is not enabled");
+        }
+
+        try {
+            List<UserRecord> users = new ArrayList<>();
+            ListUsersPage page = firebaseAuth.listUsers(null);
+            
+            // Iterate through all pages of users
+            // iterateAll() handles pagination automatically
+            for (com.google.firebase.auth.ExportedUserRecord user : page.iterateAll()) {
+                users.add(user);
+            }
+            
+            log.info("Successfully listed {} users from Google Identity Platform", users.size());
+            return users;
+        } catch (FirebaseAuthException e) {
+            log.error("Firebase Auth error listing users: {}", e.getMessage(), e);
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error listing users from Google Identity Platform: {}", e.getMessage(), e);
+            // Wrap in FirebaseAuthException to maintain the method signature
+            throw new FirebaseAuthException("INTERNAL_ERROR", "Failed to list users: " + e.getMessage(), e);
+        }
     }
 
     /**
