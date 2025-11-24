@@ -130,6 +130,13 @@ kubectl describe pod <pod-name> -n cloud-secrets-manager
 trivy image <image-name>:<tag>
 ```
 
+#### Install Trivy Quickly
+- macOS: `brew install trivy`
+- Docker: `docker run aquasec/trivy`
+- Direct binary: download from the Trivy GitHub releases
+
+See the [Trivy “First steps” guide](https://trivy.dev/docs/latest/getting-started/) for more install channels and integrations.
+
 ### Dependency Scanning
 ```bash
 # Scan Maven dependencies
@@ -141,6 +148,13 @@ trivy fs apps/backend/secret-service/
 # Scan Kubernetes manifests
 trivy k8s cluster
 ```
+
+#### Recommended Workflow
+1. Run `trivy image "$REGION-docker.pkg.dev/$PROJECT_ID/csm/secret-service:$TAG"` after each build to block vulnerable images.
+2. Run `trivy fs --scanners vuln,secret,misconfig .` as part of CI for repository checks.
+3. After deployment, execute `trivy k8s --report summary cluster` to validate the running cluster.
+
+Examples and CLI syntax come directly from the Trivy getting-started documentation.参考: [Trivy docs](https://trivy.dev/docs/latest/getting-started/)
 
 ## Security Testing
 

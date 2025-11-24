@@ -1,6 +1,7 @@
 package com.secrets.controller;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserMetadata;
 import com.google.firebase.auth.UserRecord;
 import com.secrets.service.GoogleIdentityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -223,7 +224,7 @@ public class AdminController {
         }
         List<String> permissions = extractClaimList(claims.get("permissions"));
 
-        UserRecord.UserMetadata metadata = userRecord.getUserMetadata();
+        UserMetadata metadata = userRecord.getUserMetadata();
         String createdAt = metadata != null && metadata.getCreationTimestamp() > 0
             ? Instant.ofEpochMilli(metadata.getCreationTimestamp()).toString()
             : null;

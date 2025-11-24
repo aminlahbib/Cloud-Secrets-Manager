@@ -1,203 +1,98 @@
 # Deployment Documentation Index
 
-This directory contains deployment guides for the Cloud Secrets Manager.
+Use this index to jump straight to the deployment doc that fits your workflow.
 
 ---
 
-## Main Deployment Guides
+## Primary scenarios
 
-### [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md) ⭐ **START HERE**
-**Status:** Active  
-**Description:** Comprehensive step-by-step guide for deploying the Cloud Secrets Manager to GKE after Terraform infrastructure is provisioned. Uses Cloud SQL and External Secrets Operator.
-
-### [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md) ⭐ **FOR LOCAL DEV**
-**Status:** Active  
-**Description:** Guide for running the application locally using Docker Compose for development and testing.
-
-**Key Topics:**
-- Docker Compose setup
-- Local PostgreSQL databases
-- Development workflow
-- Testing and debugging
-- Differences from production
-
-**Use this guide for:** Local development, testing, and debugging without needing GCP resources.
-
-**Key Topics:**
-- Prerequisites and authentication
-- Step-by-step deployment process
-- Docker image building and pushing
-- Kubernetes configuration
-- Database connectivity setup
-- Startup and shutdown procedures
-- Complete deployment workflow
-- Troubleshooting guide
-- Quick reference commands
-
-**Use this guide for:** Complete end-to-end deployment from infrastructure to running applications.
+| Scenario | Docs | Notes |
+| --- | --- | --- |
+| Production go-live | [Quick Deployment Guide](./QUICK_DEPLOYMENT_GUIDE.md), [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md) | Quick checklist + deep dive |
+| Provisioning infra | [Terraform Guide](./terraform/TERRAFORM_GUIDE.md), [Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md) | Stand up and maintain GCP resources |
+| Secrets & identity | [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md), [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md) | GSM, ESO, Firebase/GIP |
+| Local development | [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md) | Docker Compose workflow |
+| Day-2 operations | [Operations Guide](./OPERATIONS_GUIDE.md), [Monitoring Setup](./monitoring/MONITORING_SETUP.md) | Runbooks, scaling, observability |
+| Automation / CI | [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md), [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md) | Configure or assess pipelines |
+| Helm-focused rollout | [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md) | Values, upgrades, rollback steps |
 
 ---
 
-### [Operations Guide](./OPERATIONS_GUIDE.md) ⭐ **FOR LIVE DEPLOYMENTS**
-**Status:** Active  
-**Description:** Complete guide for managing and operating the Cloud Secrets Manager deployment on GKE.
+## Guide directory
 
-**Key Topics:**
-- Monitoring and health checks
-- Scaling operations (horizontal and vertical)
-- Update and rollout management
-- Log management
-- Resource management
-- Database operations
-- Troubleshooting commands
-- Backup and recovery
-- Security operations
+### [Quick Deployment Guide](./QUICK_DEPLOYMENT_GUIDE.md) ⭐ START HERE FOR PROD
+- Single-page checklist covering prerequisites, Terraform apply, artifact build/push, Helm install, and verification.
+- Links directly into detailed docs for any step that needs more context.
 
-**Use this guide for:** Day-to-day operations, monitoring, scaling, updates, and troubleshooting of live deployments.
-
----
+### [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
+- Comprehensive, step-by-step instructions for deploying to GKE after infrastructure exists.
+- Includes Docker image build/push, Kubernetes manifests, database connectivity, troubleshooting, and rollback.
 
 ### [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
-**Status:** Active  
-**Description:** Complete guide to managing Cloud Secrets Manager infrastructure with Terraform.
-
-**Key Topics:**
-- Infrastructure overview
-- Terraform module structure
-- Deploying infrastructure
-- Managing state
-- Importing existing resources
-- Daily operations
-
-**Use this guide for:** Setting up and managing GCP infrastructure (GKE, Cloud SQL, Artifact Registry, IAM).
-
----
+- Explains module layout, backend state, environment structure, and how to provision GKE/Cloud SQL/Artifact Registry/IAM.
 
 ### [Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md)
-**Status:** Active  
-**Description:** Common Terraform operations and workflows.
-
-**Key Topics:**
-- Initializing Terraform
-- Planning changes
-- Applying infrastructure
-- Destroying resources
-- State management
-
-**Use this guide for:** Day-to-day Terraform operations and workflows.
-
----
-
-### [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
-**Status:** Active  
-**Description:** Guide for deploying with Google Cloud Identity Platform in Kubernetes and Helm.
-
-**Key Topics:**
-- Service account setup
-- Kubernetes secrets configuration
-- Helm chart configuration
-- Environment variables
-- Security best practices
-
-**Use this guide for:** Configuring Google Identity Platform authentication.
-
----
+- Common day-to-day workflows (init, plan, apply, import, state repair, destroy) with command snippets.
 
 ### [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
-**Status:** Active  
-**Description:** Guide for setting up External Secrets Operator with Google Secret Manager.
+- How to create secrets in Google Secret Manager, wire External Secrets Operator, and map values into Kubernetes.
 
-**Key Topics:**
-- Creating secrets in Google Secret Manager
-- External Secrets Operator configuration
-- Secret synchronization
-- Troubleshooting
-
-**Use this guide for:** Setting up secret management with ESO and Google Secret Manager.
+### [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
+- Detailed instructions for enabling Google Cloud Identity Platform, creating service accounts, and injecting configuration into Helm/Kubernetes.
 
 ### [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)
-**Status:** Active  
-**Description:** Guide for deploying the application using Helm charts.
+- Helm chart structure, key values, deployment/upgrade/rollback commands, and release hygiene.
 
-**Key Topics:**
-- Helm chart structure
-- Configuration values
-- Deployment commands
-- Upgrading deployments
+### [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
+- Docker Compose topology, local Postgres setup, per-service environment variables, and developer workflows.
 
-**Use this guide for:** Deploying and managing the application with Helm.
+### [Operations Guide](./OPERATIONS_GUIDE.md)
+- Monitoring, scaling, log access, rolling updates, database procedures, backup/restore, and security operations.
+
+### [Monitoring Setup](./monitoring/MONITORING_SETUP.md)
+- Installing ServiceMonitors, Grafana dashboards, alert rules, and tracing stack. Pair with the runbooks and SLO docs in the same folder.
+
+### [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md)
+- GitHub Actions configuration, required GCP service accounts/secrets, workflow layout, deployment verification, and troubleshooting.
 
 ### [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md)
-**Status:** Active  
-**Description:** Current CI/CD pipeline status and enhancement recommendations.
-
-**Key Topics:**
-- Current pipeline implementation
-- Gaps and missing features
-- Recommendations for GCP integration
-- Automated deployment setup
-
-**Use this guide for:** Understanding CI/CD status and planning enhancements.
-
-### [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md) ⭐ **FOR CI/CD SETUP**
-**Status:** Active  
-**Description:** Complete guide for setting up and using the CI/CD pipeline with Google Cloud integration.
-
-**Key Topics:**
-- GitHub secrets configuration
-- GCP service account setup
-- Pipeline workflow explanation
-- Troubleshooting
-- Deployment verification
-
-**Use this guide for:** Setting up automated CI/CD with GCP deployment.
+- Current maturity snapshot plus recommended enhancements for releases, rollbacks, and testing gates.
 
 ---
 
-## Quick Links
+## Deployment workflow overview
 
-- [Main Documentation](../README.md)
-- [Current Status](../status/STATUS.md)
-- [Project Overview](../README.md)
-
----
-
-## Deployment Workflow
-
-### Production Deployment
 ```
-1. Infrastructure Setup (Terraform)
-   └─> [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
-   
-2. Secrets Setup
-   └─> [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
-   
-3. Application Deployment
-   └─> [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
-   └─> OR [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)
-   
-4. Identity & Authentication
-   └─> [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
-```
+1. Provision infrastructure
+   -> Terraform Guide / Terraform Operations
 
-### Local Development
-```
-1. Local Setup
-   └─> [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
+2. Configure secrets & identity
+   -> External Secrets Setup / Google Identity Deployment Setup
+
+3. Deploy application workloads
+   -> Quick Deployment Guide (summary)
+   -> Complete Deployment Guide or Helm Deployment Guide (details)
+
+4. Enable monitoring & operations
+   -> Monitoring Setup / Operations Guide
+
+5. (Optional) Automate the pipeline
+   -> CI/CD Setup Guide / CI/CD Pipeline Status
 ```
 
 ---
 
-## Documentation Organization
+## Supporting directories
 
-Documentation is organized by technology:
-
-- **Terraform** - Infrastructure provisioning guides in [`terraform/`](./terraform/)
-- **Kubernetes** - Container orchestration guides in [`kubernetes/`](./kubernetes/)
-- **Helm** - Package management guides in [`helm/`](./helm/)
-- **CI/CD** - Pipeline guides in [`ci-cd/`](./ci-cd/)
-- **Operations** - Day-2 operations guides in [`operations/`](./operations/)
+- **Terraform** – [`terraform/`](./terraform/)  
+- **Kubernetes** – [`kubernetes/`](./kubernetes/)  
+- **Helm** – [`helm/`](./helm/)  
+- **CI/CD** – [`ci-cd/`](./ci-cd/)  
+- **Operations** – [`operations/`](./operations/)  
+- **Monitoring** – [`monitoring/`](./monitoring/)  
+- **Security** – [`../security/`](../security/)  
+- **Archive** – [`archive/`](./archive/) for historical docs
 
 ---
 
-**Last Updated:** November 22, 2025
+**Last Updated:** November 24, 2025
