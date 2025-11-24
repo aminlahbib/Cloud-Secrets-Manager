@@ -9,7 +9,7 @@
         <groupId>com.cloudsecrets</groupId>
         <artifactId>cloud-secrets-manager</artifactId>
         <version>1.0.0</version>
-        <relativePath>../../../../pom.xml</relativePath>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.secrets</groupId>
@@ -172,12 +172,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.secrets.SecretServiceApplication</mainClass>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
                 </configuration>
                 <executions>
                     <execution>

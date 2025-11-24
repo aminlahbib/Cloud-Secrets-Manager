@@ -1,4 +1,6 @@
-# Complete Deployment Guide - Cloud Secrets Manager
+Update every other audit-service class that currently uses Lombok annotations (AuditService, AuditController, GlobalExceptionHandler, AuditLogRequest, AuditLogResponse, ErrorResponse) to plain Java equivalents with explicit constructors, getters/setters, and logging fields.
+Remove the Lombok dependency and annotation-processor references from apps/backend/audit-service/pom.xml, apps/backend/secret-service/pom.xml, and the root pom.xml (including the <lombok.version> property and dependency-management entry).
+Re-run mvn clean install to confirm both modules build without Lombok.# Complete Deployment Guide - Cloud Secrets Manager
 
 This guide provides a complete workflow to deploy the Cloud Secrets Manager application to Google Kubernetes Engine (GKE) using Helm.
 

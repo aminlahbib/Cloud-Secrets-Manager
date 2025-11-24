@@ -1,112 +1,57 @@
-# Deployment Documentation
+# Deployment documentation hub
 
-This directory contains all deployment-related documentation for the Cloud Secrets Manager project.
-
----
-
-## Quick Start
-
-- **New to the project?** Start with the [Deployment Index](./DEPLOYMENT_INDEX.md)
-- **Deploying to production?** See [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
-- **Developing locally?** See [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
+All artifacts required to deploy, operate, and evolve Cloud Secrets Manager live here.
 
 ---
 
-## Main Guides
+## Quick navigation
 
-### Production Deployment
+| Need | Start here | Why |
+| --- | --- | --- |
+| ✅ Production go-live | [Quick Deployment Guide](./QUICK_DEPLOYMENT_GUIDE.md) | Tight checklist that links to deep dives |
+| 🧱 End-to-end detail | [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md) | Terraform → GKE → verification |
+| ☁️ Infrastructure only | [Terraform Guide](./terraform/TERRAFORM_GUIDE.md) | Provision and manage GCP resources |
+| 🔐 Secrets & identity | [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md) + [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md) | Configure GSM/ESO/auth |
+| 🧪 Local dev/test | [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md) | Docker Compose workflow |
+| 📈 Operations & SRE | [Operations Guide](./OPERATIONS_GUIDE.md) | Day-2 ops, monitoring, scaling |
+| 🤖 Automation | [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md) | GitHub Actions ↔︎ GCP pipeline |
+| 🛡️ Security scanning | [Security README](../security/README.md) | Trivy usage + security policies |
 
-1. **[Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)** ⭐
-   - End-to-end production deployment guide
-   - Uses Cloud SQL and External Secrets Operator
-   - Step-by-step instructions
-
-2. **[Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md)**
-   - Deploy using Helm charts
-   - Configuration and management
-
-3. **[Terraform Guide](./terraform/TERRAFORM_GUIDE.md)**
-   - Infrastructure provisioning
-   - GKE, Cloud SQL, IAM setup
-
-4. **[External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)**
-   - Google Secret Manager integration
-   - External Secrets Operator configuration
-
-### Local Development
-
-- **[Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)** ⭐
-  - Docker Compose setup
-  - Local PostgreSQL databases
-  - Development workflow
-
-### Operations
-
-- **[Operations Guide](./OPERATIONS_GUIDE.md)**
-  - Day-to-day management
-  - Monitoring, scaling, updates
-  - Troubleshooting
-
-- **[Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md)**
-  - Common Terraform workflows
-  - State management
-
-- **[CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md)**
-  - Current pipeline implementation
-  - Enhancement recommendations
-  - GCP integration guide
-
-### Configuration
-
-- **[Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)**
-  - Google Cloud Identity Platform integration
-  - Authentication configuration
+Need the full catalog? Jump to the [Deployment Index](./DEPLOYMENT_INDEX.md).
 
 ---
 
-## Documentation Index
+## Deployment flows
 
-For a complete overview of all deployment documentation, see [DEPLOYMENT_INDEX.md](./DEPLOYMENT_INDEX.md).
+### Production (GKE + Cloud SQL)
+1. **Provision infra:** [Terraform Guide](./terraform/TERRAFORM_GUIDE.md)
+2. **Bootstrap secrets:** [External Secrets Setup](./EXTERNAL_SECRETS_SETUP.md)
+3. **Configure identity:** [Google Identity Deployment Setup](./GOOGLE_IDENTITY_DEPLOYMENT_SETUP.md)
+4. **Deploy services:** Use the [Quick Deployment Guide](./QUICK_DEPLOYMENT_GUIDE.md) or the detailed [Complete Deployment Guide](./COMPLETE_DEPLOYMENT_GUIDE.md)
+5. **Operate & verify:** [Operations Guide](./OPERATIONS_GUIDE.md) + [Monitoring Setup](./monitoring/MONITORING_SETUP.md)
 
----
+### Local development
+1. Follow the [Local Development Guide](./LOCAL_DEVELOPMENT_GUIDE.md)
+2. Spin up Docker Compose, local Postgres, and mock secrets for fast iteration
 
-## Documentation Organization
-
-Documentation is organized by technology for easier navigation:
-
-### Technology-Specific Guides
-
-- **[Terraform](./terraform/)** - Infrastructure as Code
-  - [Terraform Guide](./terraform/TERRAFORM_GUIDE.md) - Complete infrastructure setup
-  - [Terraform Operations](./terraform/TERRAFORM_OPERATIONS.md) - Day-to-day operations
-
-- **[Kubernetes](./kubernetes/)** - Container Orchestration
-  - [Debugging CrashLoopBackOff](./kubernetes/DEBUGGING_CRASHLOOPBACKOFF.md) - Troubleshooting guide
-  - [Kubernetes Alerts Analysis](./kubernetes/KUBERNETES_ALERTS_ANALYSIS.md) - Alert analysis
-  - [Security Context Update](./kubernetes/SECURITY_CONTEXT_UPDATE.md) - Pod security configuration
-  - [Monitoring Verification](./kubernetes/MONITORING_VERIFICATION.md) - Prometheus monitoring verification
-
-- **[Helm](./helm/)** - Package Management
-  - [Helm Deployment Guide](./helm/HELM_DEPLOYMENT_GUIDE.md) - Helm chart deployment
-
-- **[CI/CD](./ci-cd/)** - Continuous Integration/Deployment
-  - [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md) - Pipeline setup
-  - [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md) - Current status
-
-- **[Operations](./operations/)** - Day-2 Operations
-  - [Backup Verification](./operations/BACKUP_VERIFICATION.md) - Backup and restore procedures
-  - [Verification Guide](./operations/VERIFICATION_GUIDE.md) - Deployment verification
+### CI/CD automation
+1. Configure GitHub ↔︎ GCP credentials via [CI/CD Setup Guide](./ci-cd/CI_CD_SETUP.md)
+2. Review current automation posture in [CI/CD Pipeline Status](./ci-cd/CI_CD_PIPELINE_STATUS.md)
 
 ---
 
-## Archived Documentation
+## Technology directories
 
-Completed or superseded documentation has been moved to the [archive](./archive/) directory:
-- Migration status and completion docs
-- Legacy setup guides
-- Implementation summaries
-- Historical status documents
+- **[`terraform/`](./terraform/)** – IaC blueprints for GKE, Cloud SQL, networking, Artifact Registry
+- **[`kubernetes/`](./kubernetes/)** – Runtime troubleshooting, security context updates, alert analysis
+- **[`helm/`](./helm/)** – Chart deployment guide and value references
+- **[`ci-cd/`](./ci-cd/)** – Pipeline setup, secret management, and status docs
+- **[`operations/`](./operations/)** – Backup verification, rollout verification, and incident procedures
+- **[`monitoring/`](./monitoring/)** – Monitoring setup, SLOs, dashboards, and runbooks
+- **[`../security/`](../security/)** – Security hardening that deployment engineers reference frequently
+
+Completed or superseded docs live under [`archive/`](./archive/); keep referencing the live docs unless you need history.
 
 ---
 
-**Last Updated:** November 22, 2025
+**Last Updated:** November 24, 2025
