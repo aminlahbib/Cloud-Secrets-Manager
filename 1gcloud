@@ -1,0 +1,12 @@
+ERROR: (gcloud.container.clusters.list) unrecognized arguments:
+  container
+  clusters
+  list
+  To search the help text of gcloud commands, run:
+  gcloud help -- SEARCH_TERMS
+ERROR: (gcloud.container.clusters.list) unrecognized arguments:
+  container
+  clusters
+  list
+  To search the help text of gcloud commands, run:
+  gcloud help -- SEARCH_TERMS

@@ -1,0 +1,12 @@
+# Cloud Build Configuration for Dev Environment
+# Extends base cloudbuild.yaml with dev-specific settings
+# NOTE: Triggers are DISABLED by default - enable when ready
+
+include:
+  - cloudbuild.yaml
+
+substitutions:
+  _ENV: 'dev'
+  _GKE_CLUSTER: 'cloud-secrets-cluster-dev'
+  _DEPLOY: 'true'  # Auto-deploy to dev (only if trigger is enabled)
+
