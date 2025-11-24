@@ -179,7 +179,7 @@ This is more secure for production environments.
 
 ```bash
 # Navigate to project root
-cd "/Users/amine/Developer/Cloud Secrets Manager project"
+cd "/Users/amine/Developer/CSM-Project/Cloud Secrets Manager"
 
 # Build secret-service
 docker build -t secret-service:latest ./apps/backend/secret-service

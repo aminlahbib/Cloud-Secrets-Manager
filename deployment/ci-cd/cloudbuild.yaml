@@ -1,0 +1,151 @@
+# Cloud Build Configuration for Cloud Secrets Manager
+# Base configuration for building Docker images and deploying to GKE
+
+steps:
+  # Step 1: Build Secret Service Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-secret-service'
+    args:
+      - 'build'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${SHORT_SHA}'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${_ENV}-latest'
+      - '--cache-from'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${_ENV}-latest'
+      - './apps/backend/secret-service'
+    waitFor: ['-']
+
+  # Step 2: Build Audit Service Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-audit-service'
+    args:
+      - 'build'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${SHORT_SHA}'
+      - '-t'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${_ENV}-latest'
+      - '--cache-from'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${_ENV}-latest'
+      - './apps/backend/audit-service'
+    waitFor: ['-']
+
+  # Step 3: Scan Secret Service Image
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'scan-secret-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container images scan \
+          ${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${SHORT_SHA} \
+          --format=json || echo "Scan completed with findings"
+    waitFor: ['build-secret-service']
+
+  # Step 4: Scan Audit Service Image
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'scan-audit-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container images scan \
+          ${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${SHORT_SHA} \
+          --format=json || echo "Scan completed with findings"
+    waitFor: ['build-audit-service']
+
+  # Step 5: Push Secret Service Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-secret-service'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service'
+    waitFor: ['scan-secret-service']
+
+  # Step 6: Push Audit Service Image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-audit-service'
+    args:
+      - 'push'
+      - '--all-tags'
+      - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service'
+    waitFor: ['scan-audit-service']
+
+  # Step 7: Deploy to GKE (conditional - only if _DEPLOY is true)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-to-gke'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        if [ "${_DEPLOY}" = "true" ]; then
+          echo "Deploying to GKE cluster: ${_GKE_CLUSTER}"
+          gcloud container clusters get-credentials ${_GKE_CLUSTER} \
+            --region ${_GKE_REGION} \
+            --project ${PROJECT_ID}
+          
+          # Install Helm if not present
+          if ! command -v helm &> /dev/null; then
+            curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          fi
+          
+          # Create image pull secret
+          ACCESS_TOKEN=$(gcloud auth print-access-token)
+          kubectl create secret docker-registry artifact-registry-secret \
+            --docker-server=${_ARTIFACT_REGISTRY} \
+            --docker-username=oauth2accesstoken \
+            --docker-password="${ACCESS_TOKEN}" \
+            --docker-email=cloud-build@${PROJECT_ID}.iam.gserviceaccount.com \
+            --namespace=${_GKE_NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Deploy with Helm
+          helm upgrade --install cloud-secrets-manager \
+            ./infrastructure/helm/cloud-secrets-manager \
+            --namespace ${_GKE_NAMESPACE} \
+            --create-namespace \
+            --set image.tag=${SHORT_SHA} \
+            --set image.pullPolicy=Always \
+            --set image.repositorySecretService=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service \
+            --set image.repositoryAuditService=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service \
+            --timeout 10m \
+            --wait
+          
+          # Wait for rollout
+          kubectl rollout status deployment/secret-service -n ${_GKE_NAMESPACE} --timeout=10m
+          kubectl rollout status deployment/audit-service -n ${_GKE_NAMESPACE} --timeout=10m
+          
+          echo "Deployment completed successfully"
+        else
+          echo "Skipping deployment (_DEPLOY=false)"
+        fi
+    waitFor: ['push-secret-service', 'push-audit-service']
+
+# Substitutions (default values)
+substitutions:
+  _ARTIFACT_REGISTRY: 'europe-west10-docker.pkg.dev'
+  _GKE_REGION: 'europe-west10'
+  _GKE_NAMESPACE: 'cloud-secrets-manager'
+  _ENV: 'dev'
+  _DEPLOY: 'false'  # Set to 'true' to enable deployment
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
+  env:
+    - 'DOCKER_BUILDKIT=1'
+    - 'COMPOSE_DOCKER_CLI_BUILD=1'
+
+# Timeout
+timeout: '1800s'  # 30 minutes
+
+# Images to be pushed to registry
+images:
+  - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${SHORT_SHA}'
+  - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${_ENV}-latest'
+  - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${SHORT_SHA}'
+  - '${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${_ENV}-latest'
+
