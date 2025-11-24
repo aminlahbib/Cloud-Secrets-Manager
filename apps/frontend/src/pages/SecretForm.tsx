@@ -222,7 +222,7 @@ export const SecretFormPage: React.FC = () => {
       <div className="mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate(isEditMode ? `/secrets/${id}` : '/secrets')}
+          onClick={() => navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets')}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -250,7 +250,7 @@ export const SecretFormPage: React.FC = () => {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate(isEditMode ? `/secrets/${id}` : '/secrets')}
+            onClick={() => navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets')}
           >
             Cancel
           </Button>
