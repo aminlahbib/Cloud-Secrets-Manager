@@ -34,8 +34,8 @@ services:
   # ===============================
   secret-service:
     build:
-      context: ../../apps/backend/secret-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backend/secret-service/Dockerfile
     container_name: secret-service
     depends_on:
       - secrets-db
@@ -72,8 +72,8 @@ services:
   # ===============================
   audit-service:
     build:
-      context: ../../apps/backend/audit-service
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: apps/backend/audit-service/Dockerfile
     container_name: audit-service
     depends_on:
       - audit-db
