@@ -244,9 +244,9 @@ Once running, access Swagger UI at `http://localhost:8080/swagger-ui.html`
 ---
 
 ## Architecture
-
-```
-
+              
+```mermaid
+graph LR
    Client    
 
        
@@ -259,8 +259,8 @@ Once running, access Swagger UI at `http://localhost:8080/swagger-ui.html`
                                        
               
  Secrets DB                   Audit DB    
- (PostgreSQL)                (PostgreSQL) 
-              
+ (PostgreSQL)                (PostgreSQL)
+
 ```
 
 **Two microservices:**
