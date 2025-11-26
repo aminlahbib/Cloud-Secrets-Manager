@@ -5,10 +5,10 @@
 ```bash
 # 1. Setup environment
 cp env.example .env.local
-# Edit .env.local with your Firebase credentials
+# (Optional) Set GOOGLE_IDENTITY_ENABLED=true only if you have a Firebase key mounted
 
 # 2. Start all services
-docker-compose up
+docker-compose --env-file .env.local up
 
 # 3. Access the app
 open http://localhost:3000
@@ -76,7 +76,14 @@ docker-compose down
 
 # Reset database (delete volumes)
 docker-compose down -v
-docker-compose up
+docker-compose --env-file .env.local up
+```
+
+## Troubleshooting
+
+- **Firebase optional locally** – set `GOOGLE_IDENTITY_ENABLED=false` (default) unless you mount a real service account file.
+- **Database drift** – run `scripts/dev/reset-db.sh` or `docker-compose down -v` when schema changes. Migrations live in `infrastructure/database/migrations`.
+- **Frontend ↔ Backend proxy** – the nginx config now proxies `/api` to the `backend` service inside Docker. Ensure the compose stack is up so `backend` resolves.
 ```
 
 ## Database Access
