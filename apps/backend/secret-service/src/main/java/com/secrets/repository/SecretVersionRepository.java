@@ -3,24 +3,30 @@ package com.secrets.repository;
 import com.secrets.entity.SecretVersion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SecretVersionRepository extends JpaRepository<SecretVersion, Long> {
+public interface SecretVersionRepository extends JpaRepository<SecretVersion, UUID> {
 
-    List<SecretVersion> findBySecretKeyOrderByVersionNumberDesc(String secretKey);
-
-    Optional<SecretVersion> findBySecretKeyAndVersionNumber(String secretKey, Integer versionNumber);
-
-    @Query("SELECT MAX(sv.versionNumber) FROM SecretVersion sv WHERE sv.secretKey = :secretKey")
-    Optional<Integer> findMaxVersionNumberBySecretKey(String secretKey);
-
-    @Query("SELECT COUNT(sv) FROM SecretVersion sv WHERE sv.secretKey = :secretKey")
-    Long countBySecretKey(String secretKey);
-
-    void deleteBySecretKey(String secretKey);
+    // v3 queries
+    List<SecretVersion> findBySecretIdOrderByVersionNumberDesc(UUID secretId);
+    Optional<SecretVersion> findBySecretIdAndVersionNumber(UUID secretId, Integer versionNumber);
+    
+    @Query("SELECT MAX(sv.versionNumber) FROM SecretVersion sv WHERE sv.secretId = :secretId")
+    Optional<Integer> findMaxVersionNumberBySecretId(@Param("secretId") UUID secretId);
+    
+    @Query("SELECT COUNT(sv) FROM SecretVersion sv WHERE sv.secretId = :secretId")
+    Long countBySecretId(@Param("secretId") UUID secretId);
+    
+    void deleteBySecretId(UUID secretId);
+    
+    // Legacy queries (deprecated)
+    @Deprecated
+    @Query("SELECT sv FROM SecretVersion sv JOIN Secret s ON sv.secretId = s.id WHERE s.secretKey = :secretKey ORDER BY sv.versionNumber DESC")
+    List<SecretVersion> findBySecretKeyOrderByVersionNumberDesc(@Param("secretKey") String secretKey);
 }
-

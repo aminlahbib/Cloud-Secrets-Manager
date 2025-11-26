@@ -289,54 +289,54 @@ export const SecretsListPage: React.FC = () => {
                     const secretKey = secret.key || secret.secretKey || '';
                     return (
                       <tr key={secretKey} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div
-                            className="text-sm font-medium text-purple-700 cursor-pointer hover:underline"
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div
+                          className="text-sm font-medium text-purple-700 cursor-pointer hover:underline"
                             onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}`)}
-                          >
+                        >
                             {secretKey}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                          {secret.createdBy || 'Unknown'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(secret.createdAt).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(secret.updatedAt).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {renderStatus(secret)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {secret.createdBy || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(secret.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(secret.updatedAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {renderStatus(secret)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                            onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {canWrite && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}`)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {canWrite && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
                               onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
                               onClick={() => setSecretToDelete(secretKey)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
                     );
                   })}
                 </tbody>
