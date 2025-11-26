@@ -8,59 +8,69 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface SecretRepository extends JpaRepository<Secret, Long> {
+public interface SecretRepository extends JpaRepository<Secret, UUID> {
     
+    // ============================================================================
+    // Project-Scoped Queries (v3)
+    // ============================================================================
+    
+    Optional<Secret> findByProjectIdAndSecretKey(UUID projectId, String secretKey);
+    boolean existsByProjectIdAndSecretKey(UUID projectId, String secretKey);
+    Page<Secret> findByProjectId(UUID projectId, Pageable pageable);
+    
+    @Query("SELECT s FROM Secret s WHERE s.projectId = :projectId " +
+           "AND (LOWER(s.secretKey) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
+           "OR LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    Page<Secret> findByProjectIdAndKeyword(
+        @Param("projectId") UUID projectId, 
+        @Param("keyword") String keyword, 
+        Pageable pageable
+    );
+    
+    @Query("SELECT COUNT(s) FROM Secret s WHERE s.projectId = :projectId")
+    Long countByProjectId(@Param("projectId") UUID projectId);
+    
+    // ============================================================================
+    // Legacy Queries (for backwards compatibility during migration)
+    // ============================================================================
+    
+    @Deprecated
     Optional<Secret> findBySecretKey(String secretKey);
     
+    @Deprecated
     boolean existsBySecretKey(String secretKey);
     
+    @Deprecated
     void deleteBySecretKey(String secretKey);
     
-    // Pagination and filtering
-    Page<Secret> findAll(Pageable pageable);
-    
+    @Deprecated
     Page<Secret> findByCreatedBy(String createdBy, Pageable pageable);
     
+    @Deprecated
     @Query("SELECT s FROM Secret s WHERE s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%")
     Page<Secret> searchSecrets(@Param("keyword") String keyword, Pageable pageable);
     
-    @Query("SELECT s FROM Secret s WHERE s.createdBy = :createdBy AND (s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%)")
-    Page<Secret> searchSecretsByCreator(@Param("createdBy") String createdBy, @Param("keyword") String keyword, Pageable pageable);
+    // ============================================================================
+    // Expiration Queries
+    // ============================================================================
     
-    /**
-     * Find secrets accessible to a user: secrets they created OR secrets shared with them
-     */
-    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
-           "WHERE (s.createdBy = :username OR ss.sharedWith = :username)")
-    Page<Secret> findAccessibleSecrets(@Param("username") String username, Pageable pageable);
-    
-    /**
-     * Search secrets accessible to a user (owned or shared) with keyword filter
-     */
-    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
-           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
-           "AND (s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%)")
-    Page<Secret> searchAccessibleSecrets(@Param("username") String username, @Param("keyword") String keyword, Pageable pageable);
-    
-    // Expiration queries
     @Query("SELECT s FROM Secret s WHERE s.expiresAt IS NOT NULL AND s.expiresAt <= :now")
-    List<Secret> findExpiredSecrets(@Param("now") java.time.LocalDateTime now);
+    List<Secret> findExpiredSecrets(@Param("now") LocalDateTime now);
     
-    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
-           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
+    @Query("SELECT s FROM Secret s WHERE s.projectId = :projectId " +
            "AND s.expiresAt IS NOT NULL AND s.expiresAt <= :now")
-    List<Secret> findExpiredSecretsForUser(@Param("username") String username, @Param("now") java.time.LocalDateTime now);
+    List<Secret> findExpiredSecretsByProject(@Param("projectId") UUID projectId, @Param("now") LocalDateTime now);
     
-    @Query("SELECT s FROM Secret s WHERE s.expiresAt IS NOT NULL AND s.expiresAt > :now AND s.expiresAt <= :threshold AND s.expired = false")
-    List<Secret> findSecretsExpiringBetween(@Param("now") java.time.LocalDateTime now, @Param("threshold") java.time.LocalDateTime threshold);
-    
-    @Query("SELECT DISTINCT s FROM Secret s LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
-           "WHERE (s.createdBy = :username OR ss.sharedWith = :username) " +
-           "AND s.expiresAt IS NOT NULL AND s.expiresAt > :now AND s.expiresAt <= :threshold AND s.expired = false")
-    List<Secret> findSecretsExpiringBetweenForUser(@Param("username") String username, @Param("now") java.time.LocalDateTime now, @Param("threshold") java.time.LocalDateTime threshold);
+    @Query("SELECT s FROM Secret s WHERE s.expiresAt IS NOT NULL AND s.expiresAt > :now " +
+           "AND s.expiresAt <= :threshold")
+    List<Secret> findSecretsExpiringBetween(
+        @Param("now") LocalDateTime now, 
+        @Param("threshold") LocalDateTime threshold
+    );
 }
-
