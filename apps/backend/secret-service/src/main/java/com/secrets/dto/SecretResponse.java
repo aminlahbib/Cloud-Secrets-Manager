@@ -88,14 +88,22 @@ public class SecretResponse {
     }
 
     public static SecretResponse from(Secret secret, String decryptedValue) {
+        // Get createdBy as string (email if creator is loaded, otherwise UUID string)
+        String createdByStr = "Unknown";
+        if (secret.getCreator() != null) {
+            createdByStr = secret.getCreator().getEmail();
+        } else if (secret.getCreatedBy() != null) {
+            createdByStr = secret.getCreatedBy().toString();
+        }
+        
         return SecretResponse.builder()
             .key(secret.getSecretKey())
             .value(decryptedValue)
-            .createdBy(secret.getCreatedBy())
+            .createdBy(createdByStr)
             .createdAt(secret.getCreatedAt())
             .updatedAt(secret.getUpdatedAt())
             .expiresAt(secret.getExpiresAt())
-            .expired(secret.getExpired())
+            .expired(secret.isExpired())
             .build();
     }
 
