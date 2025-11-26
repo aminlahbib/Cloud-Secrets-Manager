@@ -119,7 +119,8 @@ public class WorkflowService {
         }
 
         // Delete all workflow-project associations
-        workflowProjectRepository.deleteAll(workflowProjectRepository.findByWorkflowId(workflowId));
+        List<com.secrets.entity.WorkflowProject> associations = workflowProjectRepository.findByWorkflowIdOrderByDisplayOrderAsc(workflowId);
+        workflowProjectRepository.deleteAll(associations);
         
         workflowRepository.delete(workflow);
         log.info("Deleted workflow: {} for user: {}", workflowId, userId);

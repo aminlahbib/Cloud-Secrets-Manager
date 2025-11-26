@@ -65,9 +65,19 @@ public class ProjectService {
             projects = projectRepository.findAccessibleProjectsByUserId(userId, pageable);
         }
 
+        // Filter out archived projects if needed
         if (!includeArchived) {
-            // Filter out archived projects
-            projects = projects.filter(p -> !p.getIsArchived());
+            // Convert to list, filter, then convert back to page
+            java.util.List<com.secrets.entity.Project> filtered = projects.getContent().stream()
+                .filter(p -> !p.getIsArchived())
+                .collect(java.util.stream.Collectors.toList());
+            
+            // Create new page with filtered content
+            return new org.springframework.data.domain.PageImpl<>(
+                filtered.stream().map(p -> toResponse(p, userId)).collect(java.util.stream.Collectors.toList()),
+                pageable,
+                filtered.size()
+            );
         }
 
         return projects.map(p -> toResponse(p, userId));

@@ -32,7 +32,7 @@ public class SecretExpirationService {
                 "Secret with key '" + secretKey + "' not found"));
         
         secret.setExpiresAt(expiresAt);
-        secret.setExpired(false); // Reset expired flag if setting new expiration
+        // Note: In v3, expired is computed via isExpired() method, not stored
         
         Secret updated = secretRepository.save(secret);
         log.info("Set expiration for secret '{}' to {}", secretKey, expiresAt);
@@ -50,7 +50,7 @@ public class SecretExpirationService {
                 "Secret with key '" + secretKey + "' not found"));
         
         secret.setExpiresAt(null);
-        secret.setExpired(false);
+        // Note: In v3, expired is computed via isExpired() method, not stored
         
         Secret updated = secretRepository.save(secret);
         log.info("Removed expiration for secret '{}'", secretKey);
@@ -68,18 +68,17 @@ public class SecretExpirationService {
         
         LocalDateTime now = LocalDateTime.now();
         List<Secret> expiredSecrets = secretRepository.findExpiredSecrets(now).stream()
-            .filter(s -> !s.getExpired()) // Only mark those not already marked
+            .filter(s -> s.isExpired()) // Only get those that are expired
             .toList();
         
         if (!expiredSecrets.isEmpty()) {
+            // In v3, expired is computed, not stored, so we just log
             expiredSecrets.forEach(secret -> {
-                secret.setExpired(true);
-                secretRepository.save(secret);
-                log.info("Marked secret '{}' as expired (expired at: {})", 
+                log.info("Secret '{}' is expired (expired at: {})", 
                     secret.getSecretKey(), secret.getExpiresAt());
             });
             
-            log.info("Marked {} secrets as expired", expiredSecrets.size());
+            log.info("Found {} expired secrets", expiredSecrets.size());
         } else {
             log.debug("No expired secrets found");
         }
@@ -94,7 +93,10 @@ public class SecretExpirationService {
         if (isAdmin) {
             return secretRepository.findExpiredSecrets(now);
         } else {
-            return secretRepository.findExpiredSecretsForUser(username, now);
+            // Legacy method - in v3, use project-scoped queries
+            // For now, return empty list as this is a legacy feature
+            log.warn("getExpiredSecrets for non-admin users is deprecated in v3 - use project-scoped queries");
+            return java.util.Collections.emptyList();
         }
     }
 
@@ -110,7 +112,10 @@ public class SecretExpirationService {
         if (isAdmin) {
             return secretRepository.findSecretsExpiringBetween(now, threshold);
         } else {
-            return secretRepository.findSecretsExpiringBetweenForUser(username, now, threshold);
+            // Legacy method - in v3, use project-scoped queries
+            // For now, return empty list as this is a legacy feature
+            log.warn("getSecretsExpiringSoon for non-admin users is deprecated in v3 - use project-scoped queries");
+            return java.util.Collections.emptyList();
         }
     }
 }

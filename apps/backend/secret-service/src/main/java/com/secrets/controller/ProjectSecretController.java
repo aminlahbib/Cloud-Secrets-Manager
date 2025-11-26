@@ -190,14 +190,7 @@ public class ProjectSecretController {
     }
 
     private SecretVersionResponse toVersionResponse(SecretVersion version) {
-        SecretVersionResponse response = new SecretVersionResponse();
-        response.setId(version.getId().toString());
-        response.setSecretKey(version.getSecret().getSecretKey());
-        response.setVersionNumber(version.getVersionNumber());
-        response.setChangedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : "Unknown");
-        response.setChangeDescription(version.getChangeNote());
-        response.setCreatedAt(version.getCreatedAt());
-        return response;
+        return SecretVersionResponse.from(version);
     }
 
     // DTOs for move/copy requests
