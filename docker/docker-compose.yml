@@ -1,114 +1,108 @@
 # =============================================================================
-# Cloud Secrets Manager - Docker Compose (Local Development)
+# Cloud Secrets Manager - Local Development
 # =============================================================================
-# Usage:
-#   Development:  docker-compose up
-#   With rebuild: docker-compose up --build
-#   Background:   docker-compose up -d
-#   Stop:         docker-compose down
-#   Reset DB:     docker-compose down -v && docker-compose up
+#
+# Quick Start:
+#   1. cp env.example .env.local
+#   2. docker-compose --env-file .env.local up
+#
+# Or rename .env.local to .env for automatic loading:
+#   1. cp env.example .env
+#   2. docker-compose up
+#
 # =============================================================================
 
-name: cloud-secrets-manager
+name: csm
 
 services:
-  # ===========================================================================
-  # DATABASE - PostgreSQL
-  # ===========================================================================
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
   postgres:
     image: postgres:16-alpine
-    container_name: csm-postgres
+    container_name: csm-db
     environment:
-      POSTGRES_DB: csm_dev
-      POSTGRES_USER: csm_user
-      POSTGRES_PASSWORD: csm_password
+      POSTGRES_DB: ${POSTGRES_DB:-csm}
+      POSTGRES_USER: ${POSTGRES_USER:-csm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-csm}
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
       - ../database/migrations:/docker-entrypoint-initdb.d:ro
-    networks:
-      - csm-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U csm_user -d csm_dev"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
+      interval: 5s
+      timeout: 3s
       retries: 5
+    networks:
+      - csm
 
-  # ===========================================================================
-  # BACKEND - Secret Service (Spring Boot)
-  # ===========================================================================
-  secret-service:
+  # ---------------------------------------------------------------------------
+  # Secret Service (Backend API)
+  # ---------------------------------------------------------------------------
+  backend:
     build:
       context: ..
       dockerfile: apps/backend/secret-service/Dockerfile
-    container_name: csm-secret-service
+    container_name: csm-backend
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
-      # Database
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/csm_dev
-      SPRING_DATASOURCE_USERNAME: csm_user
-      SPRING_DATASOURCE_PASSWORD: csm_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
-      # Security
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-chars!!}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-32-bytes!!}
-      # Firebase/Google Identity
-      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
-      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-cloud-secrets-manager}
-      GOOGLE_APPLICATION_CREDENTIALS: /app/config/firebase-admin-key.json
-      # Audit Service
-      AUDIT_SERVICE_URL: http://audit-service:8081
-      # Profile
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firebase-key.json
+      AUDIT_SERVICE_URL: http://audit:8081
       SPRING_PROFILES_ACTIVE: dev
     volumes:
-      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/config/firebase-admin-key.json:ro
+      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-key.json:ro
     ports:
       - "8080:8080"
-    networks:
-      - csm-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 60s
+      start_period: 40s
+    networks:
+      - csm
 
-  # ===========================================================================
-  # BACKEND - Audit Service (Spring Boot)
-  # ===========================================================================
-  audit-service:
+  # ---------------------------------------------------------------------------
+  # Audit Service
+  # ---------------------------------------------------------------------------
+  audit:
     build:
       context: ..
       dockerfile: apps/backend/audit-service/Dockerfile
-    container_name: csm-audit-service
+    container_name: csm-audit
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      # Database (same DB, different schema could be used)
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/csm_dev
-      SPRING_DATASOURCE_USERNAME: csm_user
-      SPRING_DATASOURCE_PASSWORD: csm_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
-      # Profile
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: dev
     ports:
       - "8081:8081"
-    networks:
-      - csm-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 60s
+      start_period: 40s
+    networks:
+      - csm
 
-  # ===========================================================================
-  # FRONTEND - React (Vite)
-  # ===========================================================================
+  # ---------------------------------------------------------------------------
+  # Frontend (React)
+  # ---------------------------------------------------------------------------
   frontend:
     build:
       context: ../apps/frontend
@@ -123,29 +117,20 @@ services:
         VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
     container_name: csm-frontend
     depends_on:
-      - secret-service
+      - backend
     ports:
       - "3000:80"
-    networks:
-      - csm-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
       retries: 3
-      start_period: 10s
+    networks:
+      - csm
 
-# =============================================================================
-# NETWORKS
-# =============================================================================
 networks:
-  csm-network:
+  csm:
     driver: bridge
 
-# =============================================================================
-# VOLUMES
-# =============================================================================
 volumes:
-  postgres-data:
-    name: csm-postgres-data
-
+  db-data:
