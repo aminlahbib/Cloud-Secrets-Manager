@@ -1,17 +1,3 @@
-# =============================================================================
-# Cloud Secrets Manager - Local Development
-# =============================================================================
-#
-# Quick Start:
-#   1. cp env.example .env.local
-#   2. docker-compose --env-file .env.local up
-#
-# Or rename .env.local to .env for automatic loading:
-#   1. cp env.example .env
-#   2. docker-compose up
-#
-# =============================================================================
-
 name: csm
 
 services:
@@ -29,7 +15,8 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ../infrastructure/database/migrations:/docker-entrypoint-initdb.d:ro
+      - ../database/migrations:/docker-entrypoint-initdb.d/migrations:ro
+      - ../database/seeds/dev:/docker-entrypoint-initdb.d/seeds:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
       interval: 5s
@@ -58,9 +45,9 @@ services:
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       AUDIT_SERVICE_URL: http://audit:8081
       SPRING_PROFILES_ACTIVE: dev
-      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-false}
-      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-}
-      GOOGLE_SERVICE_ACCOUNT_PATH: ${GOOGLE_SERVICE_ACCOUNT_PATH:-}
+      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-your-firebase-project-id}
+      GOOGLE_SERVICE_ACCOUNT_PATH: /app/firebase-admin-key.json
     ports:
       - "8080:8080"
     healthcheck:
@@ -69,6 +56,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+    volumes:
+      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-admin-key.json:ro
     networks:
       - csm
 
