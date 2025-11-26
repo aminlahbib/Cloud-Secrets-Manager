@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@SuppressWarnings("deprecation") // Legacy methods are deprecated but kept for backwards compatibility
 public class SecretVersionService {
 
     private static final Logger log = LoggerFactory.getLogger(SecretVersionService.class);

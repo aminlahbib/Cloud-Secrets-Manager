@@ -142,6 +142,7 @@ public class SecretController {
 
     @GetMapping("/{key}/versions/{versionNumber}")
     @Operation(summary = "Get specific secret version", description = "Retrieves a specific version of a secret")
+    @SuppressWarnings("deprecation") // Legacy endpoint using deprecated method
     public ResponseEntity<SecretVersionResponse> getSecretVersion(
             @PathVariable String key,
             @PathVariable Integer versionNumber,
@@ -164,8 +165,8 @@ public class SecretController {
         
         log.debug("Rolling back secret '{}' to version {}", key, versionNumber);
         // Rollback requires WRITE permission (it modifies the secret)
-        // Check permission by attempting to update the secret first
-        Secret secret = secretService.getSecret(key, userDetails.getUsername(), authentication);
+        // Verify secret exists and user has access
+        secretService.getSecret(key, userDetails.getUsername(), authentication);
         
         Secret rolledBackSecret = secretVersionService.rollbackToVersion(
             key, versionNumber, userDetails.getUsername()

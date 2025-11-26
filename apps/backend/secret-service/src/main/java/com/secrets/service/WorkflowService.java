@@ -26,14 +26,11 @@ public class WorkflowService {
     
     private final WorkflowRepository workflowRepository;
     private final WorkflowProjectRepository workflowProjectRepository;
-    private final UserService userService;
 
     public WorkflowService(WorkflowRepository workflowRepository,
-                          WorkflowProjectRepository workflowProjectRepository,
-                          UserService userService) {
+                          WorkflowProjectRepository workflowProjectRepository) {
         this.workflowRepository = workflowRepository;
         this.workflowProjectRepository = workflowProjectRepository;
-        this.userService = userService;
     }
 
     /**
@@ -143,7 +140,8 @@ public class WorkflowService {
      * Add project to workflow
      */
     public void addProjectToWorkflow(UUID workflowId, UUID projectId, UUID userId) {
-        Workflow workflow = workflowRepository.findByIdAndUserId(workflowId, userId)
+        // Verify workflow exists and belongs to user
+        workflowRepository.findByIdAndUserId(workflowId, userId)
             .orElseThrow(() -> new IllegalArgumentException("Workflow not found"));
 
         if (workflowProjectRepository.existsByWorkflowIdAndProjectId(workflowId, projectId)) {
@@ -165,7 +163,8 @@ public class WorkflowService {
      * Remove project from workflow
      */
     public void removeProjectFromWorkflow(UUID workflowId, UUID projectId, UUID userId) {
-        Workflow workflow = workflowRepository.findByIdAndUserId(workflowId, userId)
+        // Verify workflow exists and belongs to user
+        workflowRepository.findByIdAndUserId(workflowId, userId)
             .orElseThrow(() -> new IllegalArgumentException("Workflow not found"));
 
         WorkflowProject wp = workflowProjectRepository.findByWorkflowIdAndProjectId(workflowId, projectId)
@@ -191,9 +190,7 @@ public class WorkflowService {
 
     private WorkflowResponse toResponse(Workflow workflow) {
         WorkflowResponse response = WorkflowResponse.from(workflow);
-        // Load projects if needed
-        List<WorkflowProject> projects = workflowProjectRepository.findByWorkflowIdOrderByDisplayOrderAsc(workflow.getId());
-        // Note: Project details would need to be loaded separately if needed
+        // Note: Projects can be loaded separately if needed via WorkflowProjectRepository
         return response;
     }
 }

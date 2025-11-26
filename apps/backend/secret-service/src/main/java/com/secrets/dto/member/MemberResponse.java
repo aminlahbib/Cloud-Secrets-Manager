@@ -1,7 +1,6 @@
 package com.secrets.dto.member;
 
 import com.secrets.entity.ProjectMembership;
-import com.secrets.entity.User;
 import java.time.LocalDateTime;
 import java.util.UUID;
 

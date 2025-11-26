@@ -2,13 +2,10 @@ package com.secrets.service;
 
 import com.secrets.dto.member.MemberRequest;
 import com.secrets.dto.member.MemberResponse;
-import com.secrets.entity.Project;
-import com.secrets.entity.ProjectInvitation;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
 import com.secrets.entity.Workflow;
 import com.secrets.entity.WorkflowProject;
-import com.secrets.repository.ProjectInvitationRepository;
 import com.secrets.repository.ProjectMembershipRepository;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.UserRepository;
@@ -36,7 +33,6 @@ public class MemberService {
     private final ProjectMembershipRepository membershipRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final ProjectInvitationRepository invitationRepository;
     private final ProjectPermissionService permissionService;
     private final InvitationService invitationService;
     private final WorkflowRepository workflowRepository;
@@ -46,7 +42,6 @@ public class MemberService {
     public MemberService(ProjectMembershipRepository membershipRepository,
                         ProjectRepository projectRepository,
                         UserRepository userRepository,
-                        ProjectInvitationRepository invitationRepository,
                         ProjectPermissionService permissionService,
                         InvitationService invitationService,
                         WorkflowRepository workflowRepository,
@@ -55,7 +50,6 @@ public class MemberService {
         this.membershipRepository = membershipRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
-        this.invitationRepository = invitationRepository;
         this.permissionService = permissionService;
         this.invitationService = invitationService;
         this.workflowRepository = workflowRepository;
@@ -88,7 +82,8 @@ public class MemberService {
             throw new SecurityException("You don't have permission to invite " + request.getRole() + " role");
         }
 
-        Project project = projectRepository.findById(projectId)
+        // Verify project exists
+        projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
         // Check if user exists
