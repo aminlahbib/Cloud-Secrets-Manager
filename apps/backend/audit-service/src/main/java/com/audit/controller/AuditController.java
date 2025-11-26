@@ -7,8 +7,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,26 +16,36 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/audit")
-@RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Audit", description = "Audit log operations")
 public class AuditController {
 
+    private static final Logger log = LoggerFactory.getLogger(AuditController.class);
+
     private final AuditService auditService;
+
+    public AuditController(AuditService auditService) {
+        this.auditService = auditService;
+    }
 
     @PostMapping("/log")
     @Operation(summary = "Log an audit event", description = "Internal endpoint for logging audit events")
     public ResponseEntity<AuditLogResponse> logEvent(
             @Valid @RequestBody AuditLogRequest request,
             HttpServletRequest httpRequest) {
-        
+
         log.debug("Received audit log request: {}", request.getAction());
         AuditLogResponse response = auditService.logEvent(request, httpRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -48,7 +58,7 @@ public class AuditController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "timestamp") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
         Page<AuditLogResponse> logs = auditService.getLogs(pageable);
         return ResponseEntity.ok(logs);
@@ -75,10 +85,9 @@ public class AuditController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        
+
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "timestamp"));
         Page<AuditLogResponse> logs = auditService.getLogsByDateRange(start, end, pageable);
         return ResponseEntity.ok(logs);
     }
 }
-

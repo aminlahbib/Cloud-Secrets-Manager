@@ -81,7 +81,7 @@ Automated setup of Kubernetes secrets for Google Identity Platform deployment.
 
 **Example:**
 ```bash
-cd "/Users/amine/Developer/Cloud Secrets Manager project"
+cd "/Users/amine/Developer/CSM-Project/Cloud Secrets Manager"
 ./scripts/deployment/setup-kubernetes-secrets.sh
 ```
 

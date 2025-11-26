@@ -92,26 +92,40 @@ export const AdminPage: React.FC = () => {
           <p className="text-sm text-red-700 mb-2">
             {error instanceof Error ? error.message : 'You may not have admin permissions or the service account may lack required permissions.'}
           </p>
-          {error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'data' in error.response && (
-            <div className="mt-2 text-xs text-red-600 space-y-1">
-              {typeof error.response.data === 'object' && error.response.data !== null && (
-                <>
-                  {('details' in error.response.data) && (
-                    <p className="font-medium">Details: {String(error.response.data.details)}</p>
-                  )}
-                  {('message' in error.response.data) && (
-                    <p>Message: {String(error.response.data.message)}</p>
-                  )}
-                  {('code' in error.response.data) && (
-                    <p>Error Code: {String(error.response.data.code)}</p>
-                  )}
-                  {('error' in error.response.data) && (
-                    <p>Error: {String(error.response.data.error)}</p>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          {(() => {
+            if (!error || typeof error !== 'object' || !('response' in error)) {
+              return null;
+            }
+            
+            const errorWithResponse = error as { response?: { data?: unknown } };
+            
+            if (!errorWithResponse.response || 
+                typeof errorWithResponse.response !== 'object' || 
+                !('data' in errorWithResponse.response) ||
+                typeof errorWithResponse.response.data !== 'object' ||
+                errorWithResponse.response.data === null) {
+              return null;
+            }
+            
+            const responseData = errorWithResponse.response.data as Record<string, unknown>;
+            
+            return (
+              <div className="mt-2 text-xs text-red-600 space-y-1">
+                {('details' in responseData) && (
+                  <p className="font-medium">Details: {String(responseData.details)}</p>
+                )}
+                {('message' in responseData) && (
+                  <p>Message: {String(responseData.message)}</p>
+                )}
+                {('code' in responseData) && (
+                  <p>Error Code: {String(responseData.code)}</p>
+                )}
+                {('error' in responseData) && (
+                  <p>Error: {String(responseData.error)}</p>
+                )}
+              </div>
+            );
+          })()}
           <div className="mt-3 pt-3 border-t border-red-200">
             <p className="text-xs text-red-600 font-medium">Troubleshooting:</p>
             <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-1">

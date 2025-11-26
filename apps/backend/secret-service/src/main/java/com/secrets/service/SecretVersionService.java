@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@SuppressWarnings("deprecation") // Legacy methods are deprecated but kept for backwards compatibility
 public class SecretVersionService {
 
     private static final Logger log = LoggerFactory.getLogger(SecretVersionService.class);
@@ -26,27 +27,55 @@ public class SecretVersionService {
     }
 
     /**
-     * Create a new version of a secret
+     * Create a new version of a secret (v3 - uses UUID)
      */
     @Transactional
-    public SecretVersion createVersion(Secret secret, String changedBy, String changeDescription) {
+    public SecretVersion createVersion(Secret secret, java.util.UUID createdBy, String changeNote) {
         // Get the next version number
-        Integer nextVersion = secretVersionRepository.findMaxVersionNumberBySecretKey(secret.getSecretKey())
+        Integer nextVersion = secretVersionRepository.findMaxVersionNumberBySecretId(secret.getId())
             .map(v -> v + 1)
             .orElse(1);
 
-        SecretVersion version = SecretVersion.builder()
-            .secretKey(secret.getSecretKey())
-            .versionNumber(nextVersion)
-            .encryptedValue(secret.getEncryptedValue())
-            .changedBy(changedBy)
-            .changeDescription(changeDescription)
-            .secret(secret)
-            .build();
+        SecretVersion version = new SecretVersion();
+        version.setSecretId(secret.getId());
+        version.setSecret(secret);
+        version.setVersionNumber(nextVersion);
+        version.setEncryptedValue(secret.getEncryptedValue());
+        version.setCreatedBy(createdBy);
+        version.setChangeNote(changeNote);
 
         SecretVersion savedVersion = secretVersionRepository.save(version);
         log.debug("Created version {} for secret: {}", nextVersion, secret.getSecretKey());
         return savedVersion;
+    }
+
+    /**
+     * Create a new version of a secret (legacy - uses String for createdBy)
+     */
+    @Transactional
+    @Deprecated
+    public SecretVersion createVersion(Secret secret, String changedBy, String changeDescription) {
+        // Try to parse as UUID, otherwise use legacy method
+        try {
+            java.util.UUID userId = java.util.UUID.fromString(changedBy);
+            return createVersion(secret, userId, changeDescription);
+        } catch (IllegalArgumentException e) {
+            // Legacy: use secretId-based lookup (fallback)
+            Integer nextVersion = secretVersionRepository.findMaxVersionNumberBySecretId(secret.getId())
+                .map(v -> v + 1)
+                .orElse(1);
+
+            SecretVersion version = new SecretVersion();
+            version.setSecretId(secret.getId());
+            version.setSecret(secret);
+            version.setVersionNumber(nextVersion);
+            version.setEncryptedValue(secret.getEncryptedValue());
+            version.setChangeNote(changeDescription);
+            // Note: createdBy cannot be set from string in v3 - this is a legacy method limitation
+            // In production, resolve user by email first to get UUID
+
+            return secretVersionRepository.save(version);
+        }
     }
 
     /**
@@ -62,11 +91,17 @@ public class SecretVersionService {
     }
 
     /**
-     * Get a specific version of a secret
+     * Get a specific version of a secret (legacy - uses secretKey)
      */
     @Transactional(readOnly = true)
+    @Deprecated
     public SecretVersion getVersion(String secretKey, Integer versionNumber) {
-        SecretVersion version = secretVersionRepository.findBySecretKeyAndVersionNumber(secretKey, versionNumber)
+        // This is a legacy method - in v3, use getVersion(UUID secretId, Integer versionNumber)
+        // For now, we need to find the secret first, then get the version
+        com.secrets.entity.Secret secret = secretRepository.findBySecretKey(secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + secretKey + "' not found"));
+        
+        SecretVersion version = secretVersionRepository.findBySecretIdAndVersionNumber(secret.getId(), versionNumber)
             .orElseThrow(() -> new SecretNotFoundException(
                 String.format("Version %d of secret '%s' not found", versionNumber, secretKey)
             ));
@@ -103,20 +138,26 @@ public class SecretVersionService {
     }
 
     /**
-     * Get the current version number for a secret
+     * Get the current version number for a secret (legacy)
      */
     @Transactional(readOnly = true)
+    @Deprecated
     public Integer getCurrentVersionNumber(String secretKey) {
-        return secretVersionRepository.findMaxVersionNumberBySecretKey(secretKey)
+        com.secrets.entity.Secret secret = secretRepository.findBySecretKey(secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + secretKey + "' not found"));
+        return secretVersionRepository.findMaxVersionNumberBySecretId(secret.getId())
             .orElse(0);
     }
 
     /**
-     * Get the total number of versions for a secret
+     * Get the total number of versions for a secret (legacy)
      */
     @Transactional(readOnly = true)
+    @Deprecated
     public Long getVersionCount(String secretKey) {
-        return secretVersionRepository.countBySecretKey(secretKey);
+        com.secrets.entity.Secret secret = secretRepository.findBySecretKey(secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + secretKey + "' not found"));
+        return secretVersionRepository.countBySecretId(secret.getId());
     }
 }
 

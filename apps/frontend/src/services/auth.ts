@@ -13,12 +13,12 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User> {
-    const { data } = await api.get<User>('/api/v1/auth/me');
+    const { data } = await api.get<User>('/api/auth/me');
     return data;
   },
 
   async logout(): Promise<void> {
-    await api.post('/api/v1/auth/logout');
+    await api.post('/api/auth/logout');
   },
 };
 
