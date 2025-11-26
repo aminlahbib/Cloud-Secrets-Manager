@@ -47,14 +47,37 @@ public interface SecretRepository extends JpaRepository<Secret, UUID> {
     boolean existsBySecretKey(String secretKey);
     
     @Deprecated
-    void deleteBySecretKey(String secretKey);
+    default void deleteBySecretKey(String secretKey) {
+        findBySecretKey(secretKey).ifPresent(this::delete);
+    }
     
     @Deprecated
-    Page<Secret> findByCreatedBy(String createdBy, Pageable pageable);
+    @Query("SELECT s FROM Secret s JOIN User u ON s.createdBy = u.id WHERE u.email = :createdBy")
+    Page<Secret> findByCreatedBy(@Param("createdBy") String createdBy, Pageable pageable);
     
     @Deprecated
-    @Query("SELECT s FROM Secret s WHERE s.secretKey LIKE %:keyword% OR s.createdBy LIKE %:keyword%")
+    @Query("SELECT s FROM Secret s WHERE s.secretKey LIKE %:keyword%")
     Page<Secret> searchSecrets(@Param("keyword") String keyword, Pageable pageable);
+    
+    @Deprecated
+    @Query("SELECT s FROM Secret s JOIN User u ON s.createdBy = u.id " +
+           "WHERE u.email = :createdBy AND s.secretKey LIKE %:keyword%")
+    Page<Secret> searchSecretsByCreator(@Param("createdBy") String createdBy, @Param("keyword") String keyword, Pageable pageable);
+    
+    @Deprecated
+    @Query("SELECT DISTINCT s FROM Secret s " +
+           "LEFT JOIN User u ON s.createdBy = u.id " +
+           "LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (u.email = :username OR ss.sharedWith = :username)")
+    Page<Secret> findAccessibleSecrets(@Param("username") String username, Pageable pageable);
+    
+    @Deprecated
+    @Query("SELECT DISTINCT s FROM Secret s " +
+           "LEFT JOIN User u ON s.createdBy = u.id " +
+           "LEFT JOIN SharedSecret ss ON s.secretKey = ss.secretKey " +
+           "WHERE (u.email = :username OR ss.sharedWith = :username) " +
+           "AND (s.secretKey LIKE %:keyword%)")
+    Page<Secret> searchAccessibleSecrets(@Param("username") String username, @Param("keyword") String keyword, Pageable pageable);
     
     // ============================================================================
     // Expiration Queries
