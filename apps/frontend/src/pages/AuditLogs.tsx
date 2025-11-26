@@ -7,6 +7,9 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import type { AuditLog, PaginatedResponse } from '../types';
+
+type AuditLogsResponse = PaginatedResponse<AuditLog>;
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   CREATE: 'success',
@@ -37,7 +40,7 @@ export const AuditLogsPage: React.FC = () => {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery<AuditLogsResponse>({
     queryKey: ['audit-logs', page, filters],
     queryFn: () =>
       auditService.listAuditLogs({
@@ -49,7 +52,7 @@ export const AuditLogsPage: React.FC = () => {
         startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
         endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
       }),
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 
   const handleFilterChange = (key: keyof FilterState, value: string) => {

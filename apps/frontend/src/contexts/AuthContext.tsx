@@ -52,7 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 id: firebaseUser.uid,
                 email: firebaseUser.email || '',
                 role: roles.includes('ADMIN') ? 'ADMIN' : 'USER',
-                permissions: permissions,
+                permissions: permissions as ('READ' | 'WRITE' | 'DELETE' | 'LIST' | 'ROTATE' | 'SHARE')[],
                 active: true,
                 createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
               });
