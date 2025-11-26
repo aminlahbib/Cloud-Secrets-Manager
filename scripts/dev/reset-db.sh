@@ -36,7 +36,7 @@ fi
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-DB_DIR="$PROJECT_ROOT/database"
+DB_DIR="$PROJECT_ROOT/infrastructure/database"
 
 echo -e "${YELLOW}=== Cloud Secrets Manager - Database Reset ===${NC}"
 echo ""
