@@ -6,6 +6,7 @@ export interface AuditLogsParams {
   size?: number;
   username?: string;  // Backend uses 'username' not 'user'
   action?: string;
+  secretKey?: string;
   startDate?: string;
   endDate?: string;
 }

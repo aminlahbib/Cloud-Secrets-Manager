@@ -1,63 +1,135 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Plus, Search, Key, Calendar, Tag } from 'lucide-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search, ArrowUpDown, Eye, Edit, Trash2, Key } from 'lucide-react';
 import { secretsService } from '../services/secrets';
 import { Spinner } from '../components/ui/Spinner';
-import { Card } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { Badge } from '../components/ui/Badge';
+import { useAuth } from '../contexts/AuthContext';
+
+const PAGE_SIZE = 20;
+
+type OwnerFilter = 'all' | 'mine' | 'specific';
+type SortField = 'createdAt' | 'updatedAt' | 'key';
 
 export const SecretsListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
-  const [searchInput, setSearchInput] = useState('');
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  // Fetch secrets
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['secrets', page, search],
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilter>('all');
+  const [specificOwner, setSpecificOwner] = useState('');
+  const [sortBy, setSortBy] = useState<SortField>('createdAt');
+  const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
+  const [secretToDelete, setSecretToDelete] = useState<string | null>(null);
+
+  const isAdmin = user?.role === 'ADMIN';
+  const canWrite = isAdmin || user?.permissions.includes('WRITE');
+  const canDelete = isAdmin || user?.permissions.includes('DELETE');
+
+  const createdByParam =
+    ownerFilter === 'mine'
+      ? user?.email
+      : ownerFilter === 'specific' && specificOwner.trim()
+      ? specificOwner.trim()
+      : undefined;
+
+  const { data, isLoading, error, isFetching } = useQuery({
+    queryKey: ['secrets', page, searchTerm, createdByParam ?? 'all', sortBy, sortDir],
     queryFn: () =>
       secretsService.listSecrets({
-        page: page - 1, // Backend uses 0-based indexing
-        size: 20,
-        search,
-        sort: 'createdAt,desc',
+        page: page - 1,
+        size: PAGE_SIZE,
+        keyword: searchTerm || undefined,
+        createdBy: createdByParam,
+        sortBy,
+        sortDir,
       }),
+    enabled: !!user,
+    keepPreviousData: true,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (key: string) => secretsService.deleteSecret(key),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['secrets'] });
+      setSecretToDelete(null);
+    },
   });
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setSearch(searchInput);
-    setPage(1); // Reset to first page on search
+    setSearchTerm(searchInput.trim());
+    setPage(1);
   };
 
   const handleClearSearch = () => {
     setSearchInput('');
-    setSearch('');
+    setSearchTerm('');
     setPage(1);
+  };
+
+  const handleOwnerFilterChange = (value: OwnerFilter) => {
+    setOwnerFilter(value);
+    setPage(1);
+    if (value !== 'specific') {
+      setSpecificOwner('');
+    }
+  };
+
+  const handleSortToggle = () => {
+    setSortDir((prev) => (prev === 'DESC' ? 'ASC' : 'DESC'));
   };
 
   const content = data?.content ?? [];
   const pagination = data?.page;
   const hasResults = content.length > 0;
 
+  const renderStatus = (secret: (typeof content)[number]) => {
+    const isExpired =
+      secret.expired ||
+      (secret.expiresAt ? new Date(secret.expiresAt).getTime() < Date.now() : false);
+
+    if (isExpired) {
+      return (
+        <Badge variant="danger">
+          Expired
+        </Badge>
+      );
+    }
+
+    if (secret.expiresAt) {
+      return (
+        <Badge variant="warning">
+          Expires {new Date(secret.expiresAt).toLocaleDateString()}
+        </Badge>
+      );
+    }
+
+    return <Badge variant="default">Active</Badge>;
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      {/* Header */}
       <div className="sm:flex sm:items-center sm:justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Secrets</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Manage your encrypted secrets securely
+            Browse, search, and manage encrypted secrets
           </p>
         </div>
         <div className="mt-4 sm:mt-0">
           <Button
             onClick={() => navigate('/secrets/new')}
             className="inline-flex items-center"
+            disabled={!canWrite}
           >
             <Plus className="h-5 w-5 mr-2" />
             Create Secret
@@ -65,145 +137,258 @@ export const SecretsListPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="flex-1 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
+      <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+        <form onSubmit={handleSearch} className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div className="flex-1 relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-gray-400" />
+              </div>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search by key or owner..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+              />
             </div>
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by key name..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-            />
+            <div className="flex gap-2">
+              <Button type="submit" size="sm">
+                Search
+              </Button>
+              {searchTerm && (
+                <Button type="button" variant="secondary" size="sm" onClick={handleClearSearch}>
+                  Clear
+                </Button>
+              )}
+            </div>
           </div>
-          <Button type="submit">Search</Button>
-          {search && (
-            <Button type="button" variant="secondary" onClick={handleClearSearch}>
-              Clear
-            </Button>
-          )}
+
+          <div className="grid gap-3 md:grid-cols-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Owner Filter
+              </label>
+              <select
+                value={ownerFilter}
+                onChange={(e) => handleOwnerFilterChange(e.target.value as OwnerFilter)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              >
+                <option value="all">All accessible</option>
+                <option value="mine">Created by me</option>
+                {isAdmin && <option value="specific">Specific user</option>}
+              </select>
+            </div>
+
+            {ownerFilter === 'specific' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Specific Owner
+                </label>
+                <input
+                  type="email"
+                  value={specificOwner}
+                  onChange={(e) => setSpecificOwner(e.target.value)}
+                  placeholder="user@example.com"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sort By
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortField)}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              >
+                <option value="createdAt">Created date</option>
+                <option value="updatedAt">Updated date</option>
+                <option value="key">Key name</option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleSortToggle}
+                className="w-full"
+              >
+                <ArrowUpDown className="h-4 w-4 mr-2" />
+                {sortDir === 'DESC' ? 'Newest first' : 'Oldest first'}
+              </Button>
+            </div>
+          </div>
         </form>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
+      {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <Spinner size="lg" />
         </div>
-      )}
-
-      {/* Error State */}
-      {error && (
+      ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-sm text-red-800">
             Failed to load secrets. Please try again.
           </p>
         </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && !error && content.length === 0 && !search && (
+      ) : !hasResults ? (
         <EmptyState
           icon={<Key className="h-16 w-16 text-gray-400" />}
-          title="No secrets yet"
-          description="Get started by creating your first secret. Secrets are encrypted and stored securely."
-          action={{
-            label: 'Create Secret',
-            onClick: () => navigate('/secrets/new'),
-          }}
+          title={searchTerm ? 'No secrets match your search' : 'No secrets yet'}
+          description={
+            searchTerm
+              ? `No secrets match "${searchTerm}". Try a different search term.`
+              : 'Get started by creating your first secret. Secrets are encrypted and stored securely.'
+          }
+          action={
+            canWrite
+              ? {
+                  label: 'Create Secret',
+                  onClick: () => navigate('/secrets/new'),
+                }
+              : undefined
+          }
         />
-      )}
-
-      {/* No Search Results */}
-      {!isLoading && !error && content.length === 0 && search && (
-        <EmptyState
-          icon={<Search className="h-16 w-16 text-gray-400" />}
-          title="No secrets found"
-          description={`No secrets match "${search}". Try a different search term.`}
-          action={{
-            label: 'Clear Search',
-            onClick: handleClearSearch,
-          }}
-        />
-      )}
-
-      {/* Secrets List */}
-      {!isLoading && !error && hasResults && (
+      ) : (
         <>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {content.map((secret) => (
-              <Card
-                key={secret.id ?? secret.key}
-                hover
-                onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
-                className="p-4"
-              >
-                {/* Secret Key */}
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate flex-1">
-                    {secret.key}
-                  </h3>
-                  <Key className="h-5 w-5 text-purple-600 ml-2 flex-shrink-0" />
-                </div>
-
-                {/* Description */}
-                {secret.description && (
-                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                    {secret.description}
-                  </p>
-                )}
-
-                {/* Tags */}
-                  {secret.tags && secret.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-3">
-                    {secret.tags.slice(0, 3).map((tag) => (
-                      <Badge key={`${secret.id ?? secret.key}-${tag}`} variant="info">
-                        <Tag className="h-3 w-3 mr-1" />
-                        {tag}
-                      </Badge>
-                    ))}
-                    {secret.tags.length > 3 && (
-                      <Badge variant="default">+{secret.tags.length - 3}</Badge>
-                    )}
-                  </div>
-                )}
-
-                {/* Metadata */}
-                <div className="flex items-center text-xs text-gray-500 space-x-4">
-                  <div className="flex items-center">
-                    <Calendar className="h-3.5 w-3.5 mr-1" />
-                    {new Date(secret.createdAt).toLocaleDateString()}
-                  </div>
-                  {secret.version && (
-                    <div className="flex items-center">
-                      <span>v{secret.version}</span>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
+          <div className="bg-white shadow-sm border border-gray-200 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Key
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Owner
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Updated
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {content.map((secret) => (
+                    <tr key={secret.key} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div
+                          className="text-sm font-medium text-purple-700 cursor-pointer hover:underline"
+                          onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
+                        >
+                          {secret.key}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {secret.createdBy || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(secret.createdAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(secret.updatedAt).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {renderStatus(secret)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {canWrite && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}/edit`)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSecretToDelete(secret.key)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600" />
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {isFetching && (
+              <div className="flex items-center justify-center py-4 border-t border-gray-100 text-sm text-gray-500">
+                Refreshing data…
+              </div>
+            )}
           </div>
 
-          {/* Pagination */}
-          {(pagination?.totalPages ?? 0) > 1 && (
+          {pagination?.totalPages && pagination.totalPages > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={pagination?.totalPages ?? 1}
+              totalPages={pagination.totalPages}
               onPageChange={setPage}
-              className="mt-8"
+              className="mt-6"
             />
           )}
 
-          {/* Results count */}
-          <div className="mt-4 text-center text-sm text-gray-600">
-            Showing {content.length} of {pagination?.totalElements ?? content.length} secrets
-          </div>
+          {pagination && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              Showing page {page} of {pagination.totalPages} •{' '}
+              {pagination.totalElements} total secrets
+            </div>
+          )}
         </>
       )}
+
+      <Modal
+        isOpen={!!secretToDelete}
+        onClose={() => setSecretToDelete(null)}
+        title="Delete Secret"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-700">
+            Are you sure you want to delete{' '}
+            <strong>{secretToDelete}</strong>? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setSecretToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => secretToDelete && deleteMutation.mutate(secretToDelete)}
+              isLoading={deleteMutation.isPending}
+            >
+              Delete
+            </Button>
+          </div>
+          {deleteMutation.isError && (
+            <p className="text-sm text-red-600">
+              Failed to delete the secret. Please try again.
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

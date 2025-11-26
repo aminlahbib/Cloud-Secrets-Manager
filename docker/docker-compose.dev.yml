@@ -1,0 +1,84 @@
+# =============================================================================
+# Cloud Secrets Manager - Docker Compose DEVELOPMENT Overrides
+# =============================================================================
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This file provides development-specific overrides:
+#   - Hot reload for frontend
+#   - Debug ports
+#   - Volume mounts for live code changes
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # DATABASE - No changes, just use base
+  # ===========================================================================
+  postgres:
+    # Add pgAdmin for database management (optional)
+    labels:
+      - "dev.environment=true"
+
+  # ===========================================================================
+  # BACKEND - Secret Service with debug
+  # ===========================================================================
+  secret-service:
+    environment:
+      # Enable debug logging
+      LOGGING_LEVEL_COM_SECRETS: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: DEBUG
+      # Java debug port
+      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "8080:8080"
+      - "5005:5005"  # Java debug port
+
+  # ===========================================================================
+  # BACKEND - Audit Service with debug
+  # ===========================================================================
+  audit-service:
+    environment:
+      LOGGING_LEVEL_COM_SECRETS: DEBUG
+      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5006
+    ports:
+      - "8081:8081"
+      - "5006:5006"  # Java debug port
+
+  # ===========================================================================
+  # FRONTEND - Development mode with hot reload
+  # ===========================================================================
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile.dev  # Use dev Dockerfile if exists
+    volumes:
+      - ../apps/frontend/src:/app/src:ro
+      - ../apps/frontend/public:/app/public:ro
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "5173:5173"  # Vite dev server port
+
+  # ===========================================================================
+  # PGADMIN - Database management UI (dev only)
+  # ===========================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: csm-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@csm.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - csm-network
+    depends_on:
+      - postgres
+
+volumes:
+  pgadmin-data:
+    name: csm-pgadmin-data
+

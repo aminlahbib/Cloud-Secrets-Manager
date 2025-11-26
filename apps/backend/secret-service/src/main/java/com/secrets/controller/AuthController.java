@@ -24,10 +24,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import io.swagger.v3.oas.annotations.Operation;
+import com.secrets.dto.UserResponse;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -54,6 +58,40 @@ public class AuthController {
 
     @Value("${google.cloud.identity.enabled:false}")
     private boolean googleIdentityEnabled;
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current user", description = "Retrieves the currently authenticated user's details")
+    public ResponseEntity<UserResponse> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        List<String> authorities = userDetails.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .toList();
+            
+        String role = authorities.stream()
+            .filter(a -> a.startsWith("ROLE_"))
+            .findFirst()
+            .map(r -> r.substring(5)) // Remove ROLE_
+            .orElse("USER");
+            
+        List<String> permissions = authorities.stream()
+            .filter(a -> a.startsWith("PERMISSION_"))
+            .map(p -> p.substring(11)) // Remove PERMISSION_
+            .toList();
+            
+        UserResponse response = UserResponse.builder()
+            .id(userDetails.getUsername()) 
+            .email(userDetails.getUsername())
+            .role(role)
+            .permissions(permissions)
+            .active(true)
+            .createdAt(java.time.LocalDateTime.now()) 
+            .build();
+            
+        return ResponseEntity.ok(response);
+    }
 
     /**
      * Google Cloud Identity Platform login endpoint

@@ -1,0 +1,151 @@
+# =============================================================================
+# Cloud Secrets Manager - Docker Compose (Local Development)
+# =============================================================================
+# Usage:
+#   Development:  docker-compose up
+#   With rebuild: docker-compose up --build
+#   Background:   docker-compose up -d
+#   Stop:         docker-compose down
+#   Reset DB:     docker-compose down -v && docker-compose up
+# =============================================================================
+
+name: cloud-secrets-manager
+
+services:
+  # ===========================================================================
+  # DATABASE - PostgreSQL
+  # ===========================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: csm-postgres
+    environment:
+      POSTGRES_DB: csm_dev
+      POSTGRES_USER: csm_user
+      POSTGRES_PASSWORD: csm_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ../database/migrations:/docker-entrypoint-initdb.d:ro
+    networks:
+      - csm-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U csm_user -d csm_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===========================================================================
+  # BACKEND - Secret Service (Spring Boot)
+  # ===========================================================================
+  secret-service:
+    build:
+      context: ..
+      dockerfile: apps/backend/secret-service/Dockerfile
+    container_name: csm-secret-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/csm_dev
+      SPRING_DATASOURCE_USERNAME: csm_user
+      SPRING_DATASOURCE_PASSWORD: csm_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      # Security
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-chars!!}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-encryption-key-32-bytes!!}
+      # Firebase/Google Identity
+      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-cloud-secrets-manager}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/config/firebase-admin-key.json
+      # Audit Service
+      AUDIT_SERVICE_URL: http://audit-service:8081
+      # Profile
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/config/firebase-admin-key.json:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - csm-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===========================================================================
+  # BACKEND - Audit Service (Spring Boot)
+  # ===========================================================================
+  audit-service:
+    build:
+      context: ..
+      dockerfile: apps/backend/audit-service/Dockerfile
+    container_name: csm-audit-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database (same DB, different schema could be used)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/csm_dev
+      SPRING_DATASOURCE_USERNAME: csm_user
+      SPRING_DATASOURCE_PASSWORD: csm_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      # Profile
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8081:8081"
+    networks:
+      - csm-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ===========================================================================
+  # FRONTEND - React (Vite)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+    container_name: csm-frontend
+    depends_on:
+      - secret-service
+    ports:
+      - "3000:80"
+    networks:
+      - csm-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  csm-network:
+    driver: bridge
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres-data:
+    name: csm-postgres-data
+

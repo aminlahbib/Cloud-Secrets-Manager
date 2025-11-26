@@ -21,6 +21,7 @@ export interface Secret {
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
+  expired?: boolean;
 }
 
 export interface SecretFormData {
@@ -32,12 +33,21 @@ export interface SecretFormData {
 }
 
 export interface SharedSecret {
-  id: string;
+  id: string | number;
   secretKey: string;
   sharedWith: string;
   sharedBy: string;
-  permission: 'read' | 'write';
+  permission: Permission | string;
   sharedAt: string;
+}
+
+export interface SecretVersion {
+  id: string | number;
+  secretKey: string;
+  versionNumber: number;
+  changedBy: string;
+  changeDescription?: string;
+  createdAt: string;
 }
 
 export interface AuditLog {
