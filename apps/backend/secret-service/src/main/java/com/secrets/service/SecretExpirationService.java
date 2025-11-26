@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@SuppressWarnings("deprecation") // Legacy methods are deprecated but kept for backwards compatibility
 public class SecretExpirationService {
 
     private static final Logger log = LoggerFactory.getLogger(SecretExpirationService.class);

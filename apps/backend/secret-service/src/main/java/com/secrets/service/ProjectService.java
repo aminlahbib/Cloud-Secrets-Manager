@@ -5,12 +5,10 @@ import com.secrets.dto.project.ProjectResponse;
 import com.secrets.entity.Project;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.Workflow;
-import com.secrets.entity.WorkflowProject;
 import com.secrets.repository.ProjectMembershipRepository;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
 import com.secrets.repository.WorkflowProjectRepository;
-import com.secrets.repository.WorkflowRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -33,20 +30,17 @@ public class ProjectService {
     
     private final ProjectRepository projectRepository;
     private final ProjectMembershipRepository membershipRepository;
-    private final WorkflowRepository workflowRepository;
     private final WorkflowProjectRepository workflowProjectRepository;
     private final SecretRepository secretRepository;
     private final WorkflowService workflowService;
 
     public ProjectService(ProjectRepository projectRepository,
                          ProjectMembershipRepository membershipRepository,
-                         WorkflowRepository workflowRepository,
                          WorkflowProjectRepository workflowProjectRepository,
                          SecretRepository secretRepository,
                          WorkflowService workflowService) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
-        this.workflowRepository = workflowRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.secretRepository = secretRepository;
         this.workflowService = workflowService;

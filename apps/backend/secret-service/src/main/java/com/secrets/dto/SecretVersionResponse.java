@@ -77,13 +77,16 @@ public class SecretVersionResponse {
         return new SecretVersionResponseBuilder();
     }
 
+    @SuppressWarnings("deprecation")
     public static SecretVersionResponse from(SecretVersion version) {
         return SecretVersionResponse.builder()
             .id(version.getId() != null ? version.getId().toString() : null)
             .secretKey(version.getSecret() != null ? version.getSecret().getSecretKey() : null)
             .versionNumber(version.getVersionNumber())
-            .changedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : version.getChangedBy())
-            .changeDescription(version.getChangeNote() != null ? version.getChangeNote() : version.getChangeDescription())
+            .changedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : 
+                      (version.getChangedBy() != null ? version.getChangedBy() : "Unknown"))
+            .changeDescription(version.getChangeNote() != null ? version.getChangeNote() : 
+                             (version.getChangeDescription() != null ? version.getChangeDescription() : ""))
             .createdAt(version.getCreatedAt())
             .build();
     }

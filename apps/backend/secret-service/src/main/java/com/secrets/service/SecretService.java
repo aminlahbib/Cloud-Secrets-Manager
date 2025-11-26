@@ -22,6 +22,7 @@ import com.secrets.service.rotation.SecretRotationStrategy;
 import java.util.List;
 
 @Service
+@SuppressWarnings("deprecation") // Legacy methods are deprecated but kept for backwards compatibility
 public class SecretService {
 
     private static final Logger log = LoggerFactory.getLogger(SecretService.class);

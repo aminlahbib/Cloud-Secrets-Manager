@@ -1,10 +1,7 @@
 package com.secrets.service;
 
 import com.secrets.entity.ProjectMembership;
-import com.secrets.entity.User;
 import com.secrets.repository.ProjectMembershipRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,8 +15,6 @@ import java.util.UUID;
 @Service
 @Transactional(readOnly = true)
 public class ProjectPermissionService {
-
-    private static final Logger log = LoggerFactory.getLogger(ProjectPermissionService.class);
     
     private final ProjectMembershipRepository membershipRepository;
 

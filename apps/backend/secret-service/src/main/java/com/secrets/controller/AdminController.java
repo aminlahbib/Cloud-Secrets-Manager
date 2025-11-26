@@ -245,7 +245,6 @@ public class AdminController {
         return response;
     }
 
-    @SuppressWarnings("unchecked")
     private List<String> extractClaimList(Object claimValue) {
         if (claimValue instanceof List<?>) {
             return ((List<?>) claimValue).stream()

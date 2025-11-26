@@ -1,7 +1,6 @@
 package com.secrets.service;
 
 import com.secrets.dto.invitation.InvitationResponse;
-import com.secrets.entity.Project;
 import com.secrets.entity.ProjectInvitation;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
@@ -52,7 +51,8 @@ public class InvitationService {
      */
     public ProjectInvitation createInvitation(UUID projectId, String email, 
                                              ProjectMembership.ProjectRole role, UUID invitedBy) {
-        Project project = projectRepository.findById(projectId)
+        // Verify project exists
+        projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
         // Check if user already exists

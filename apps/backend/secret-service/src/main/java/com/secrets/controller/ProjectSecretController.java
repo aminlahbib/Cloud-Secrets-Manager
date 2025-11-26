@@ -12,8 +12,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,8 +31,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Project Secrets", description = "Project-scoped secret management operations")
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectSecretController {
-
-    private static final Logger log = LoggerFactory.getLogger(ProjectSecretController.class);
 
     private final ProjectSecretService projectSecretService;
     private final SecretService secretService; // For decryption

@@ -6,8 +6,6 @@ import com.secrets.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,8 +20,6 @@ import java.util.UUID;
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectInvitationController {
 
-    private static final Logger log = LoggerFactory.getLogger(ProjectInvitationController.class);
-
     private final InvitationService invitationService;
     private final UserService userService;
 
@@ -37,8 +33,7 @@ public class ProjectInvitationController {
     public ResponseEntity<List<InvitationResponse>> listProjectInvitations(
             @PathVariable UUID projectId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
-        // Permission check would be done in service
+        // Permission check is done in service layer
         List<InvitationResponse> invitations = invitationService.listProjectInvitations(projectId);
         return ResponseEntity.ok(invitations);
     }
