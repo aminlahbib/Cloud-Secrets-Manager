@@ -1,30 +1,34 @@
 import api from './api';
-import type { AuditLog } from '../types';
+import type { AuditLog, PaginatedResponse } from '../types';
 
 export interface AuditLogsParams {
   page?: number;
   size?: number;
-  username?: string;  // Backend uses 'username' not 'user'
+  username?: string;
   action?: string;
   secretKey?: string;
   startDate?: string;
   endDate?: string;
 }
 
-export interface AuditLogsResponse {
-  content: AuditLog[];
-  page: {
-    number: number;
-    size: number;
-    totalElements: number;
-    totalPages: number;
-  };
-}
+// Use the standard PaginatedResponse type
+export type AuditLogsResponse = PaginatedResponse<AuditLog>;
 
 export const auditService = {
   // List audit logs with filtering
   async listAuditLogs(params: AuditLogsParams = {}): Promise<AuditLogsResponse> {
     const { data } = await api.get('/api/audit', { params });
+    // Normalize response to match PaginatedResponse interface
+    // Backend might return nested page object or flat structure
+    if (data.page && typeof data.page === 'object') {
+      return {
+        content: data.content || [],
+        page: data.page.number ?? 0,
+        size: data.page.size ?? params.size ?? 20,
+        totalElements: data.page.totalElements ?? 0,
+        totalPages: data.page.totalPages ?? 0,
+      };
+    }
     return data;
   },
 
@@ -34,4 +38,3 @@ export const auditService = {
     return data;
   },
 };
-

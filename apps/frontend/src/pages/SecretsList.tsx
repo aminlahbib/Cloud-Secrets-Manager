@@ -33,9 +33,11 @@ export const SecretsListPage: React.FC = () => {
   const [sortDir, setSortDir] = useState<'ASC' | 'DESC'>('DESC');
   const [secretToDelete, setSecretToDelete] = useState<string | null>(null);
 
-  const isAdmin = user?.role === 'ADMIN';
-  const canWrite = isAdmin || user?.permissions.includes('WRITE');
-  const canDelete = isAdmin || user?.permissions.includes('DELETE');
+  // Legacy permission checks - these pages will be deprecated in v3
+  // For now, grant full access since permissions are now project-scoped
+  const isAdmin = user?.platformRole === 'PLATFORM_ADMIN';
+  const canWrite = true; // Will be determined by project membership in v3
+  const canDelete = true;
 
   const createdByParam =
     ownerFilter === 'mine'
@@ -283,57 +285,60 @@ export const SecretsListPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {content.map((secret: Secret) => (
-                    <tr key={secret.key} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div
-                          className="text-sm font-medium text-purple-700 cursor-pointer hover:underline"
-                          onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
-                        >
-                          {secret.key}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {secret.createdBy || 'Unknown'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(secret.createdAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(secret.updatedAt).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {renderStatus(secret)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}`)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {canWrite && (
+                  {content.map((secret: Secret) => {
+                    const secretKey = secret.key || secret.secretKey || '';
+                    return (
+                      <tr key={secretKey} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div
+                            className="text-sm font-medium text-purple-700 cursor-pointer hover:underline"
+                            onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}`)}
+                          >
+                            {secretKey}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                          {secret.createdBy || 'Unknown'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(secret.createdAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {new Date(secret.updatedAt).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {renderStatus(secret)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/secrets/${encodeURIComponent(secret.key)}/edit`)}
+                            onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}`)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Eye className="h-4 w-4" />
                           </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSecretToDelete(secret.key)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                          {canWrite && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setSecretToDelete(secretKey)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-600" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

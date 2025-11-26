@@ -1,15 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
-import { auditService } from '../services/audit';
+import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import type { AuditLog, PaginatedResponse } from '../types';
-
-type AuditLogsResponse = PaginatedResponse<AuditLog>;
+import type { AuditLog } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions

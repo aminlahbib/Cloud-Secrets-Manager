@@ -128,6 +128,14 @@ export const secretsService = {
    */
   async listSecrets(params: SecretsListParams & { createdBy?: string } = {}): Promise<SecretsListResponse> {
     const { data } = await api.get('/api/secrets', { params });
+    // Normalize secrets to include both key and secretKey
+    if (data.content) {
+      data.content = data.content.map((s: Secret) => ({
+        ...s,
+        key: s.key || s.secretKey,
+        secretKey: s.secretKey || s.key,
+      }));
+    }
     return data;
   },
 
@@ -136,7 +144,12 @@ export const secretsService = {
    */
   async getSecret(key: string): Promise<Secret> {
     const { data } = await api.get(`/api/secrets/${encodeURIComponent(key)}`);
-    return data;
+    // Normalize to include both key and secretKey
+    return {
+      ...data,
+      key: data.key || data.secretKey,
+      secretKey: data.secretKey || data.key,
+    };
   },
 
   /**
