@@ -142,6 +142,7 @@ public class SecretController {
 
     @GetMapping("/{key}/versions/{versionNumber}")
     @Operation(summary = "Get specific secret version", description = "Retrieves a specific version of a secret")
+    @SuppressWarnings("deprecation") // Legacy endpoint using deprecated method
     public ResponseEntity<SecretVersionResponse> getSecretVersion(
             @PathVariable String key,
             @PathVariable Integer versionNumber,
@@ -164,8 +165,8 @@ public class SecretController {
         
         log.debug("Rolling back secret '{}' to version {}", key, versionNumber);
         // Rollback requires WRITE permission (it modifies the secret)
-        // Check permission by attempting to update the secret first
-        Secret secret = secretService.getSecret(key, userDetails.getUsername(), authentication);
+        // Verify secret exists and user has access
+        secretService.getSecret(key, userDetails.getUsername(), authentication);
         
         Secret rolledBackSecret = secretVersionService.rollbackToVersion(
             key, versionNumber, userDetails.getUsername()
@@ -197,15 +198,21 @@ public class SecretController {
         Page<Secret> secrets = secretService.listSecrets(pageable, keyword, createdBy, authentication);
         
         // Convert to response DTOs (without decrypting values for list view - only show metadata)
-        Page<SecretResponse> response = secrets.map(secret -> 
-            SecretResponse.builder()
+        Page<SecretResponse> response = secrets.map(secret -> {
+            String createdByStr = "Unknown";
+            if (secret.getCreator() != null) {
+                createdByStr = secret.getCreator().getEmail();
+            } else if (secret.getCreatedBy() != null) {
+                createdByStr = secret.getCreatedBy().toString();
+            }
+            return SecretResponse.builder()
                 .key(secret.getSecretKey())
                 .value("***REDACTED***") // Don't expose values in list view
-                .createdBy(secret.getCreatedBy())
+                .createdBy(createdByStr)
                 .createdAt(secret.getCreatedAt())
                 .updatedAt(secret.getUpdatedAt())
-                .build()
-        );
+                .build();
+        });
         
         return ResponseEntity.ok(response);
     }
@@ -425,13 +432,21 @@ public class SecretController {
         
         var expiredSecrets = secretExpirationService.getExpiredSecrets(username, isAdmin);
         List<SecretResponse> response = expiredSecrets.stream()
-            .map(secret -> SecretResponse.builder()
-                .key(secret.getSecretKey())
-                .value("***REDACTED***")
-                .createdBy(secret.getCreatedBy())
-                .createdAt(secret.getCreatedAt())
-                .updatedAt(secret.getUpdatedAt())
-                .build())
+            .map(secret -> {
+                String createdByStr = "Unknown";
+                if (secret.getCreator() != null) {
+                    createdByStr = secret.getCreator().getEmail();
+                } else if (secret.getCreatedBy() != null) {
+                    createdByStr = secret.getCreatedBy().toString();
+                }
+                return SecretResponse.builder()
+                    .key(secret.getSecretKey())
+                    .value("***REDACTED***")
+                    .createdBy(createdByStr)
+                    .createdAt(secret.getCreatedAt())
+                    .updatedAt(secret.getUpdatedAt())
+                    .build();
+            })
             .toList();
         
         return ResponseEntity.ok(response);
@@ -458,13 +473,21 @@ public class SecretController {
         
         var expiringSecrets = secretExpirationService.getSecretsExpiringSoon(days, username, isAdmin);
         List<SecretResponse> response = expiringSecrets.stream()
-            .map(secret -> SecretResponse.builder()
-                .key(secret.getSecretKey())
-                .value("***REDACTED***")
-                .createdBy(secret.getCreatedBy())
-                .createdAt(secret.getCreatedAt())
-                .updatedAt(secret.getUpdatedAt())
-                .build())
+            .map(secret -> {
+                String createdByStr = "Unknown";
+                if (secret.getCreator() != null) {
+                    createdByStr = secret.getCreator().getEmail();
+                } else if (secret.getCreatedBy() != null) {
+                    createdByStr = secret.getCreatedBy().toString();
+                }
+                return SecretResponse.builder()
+                    .key(secret.getSecretKey())
+                    .value("***REDACTED***")
+                    .createdBy(createdByStr)
+                    .createdAt(secret.getCreatedAt())
+                    .updatedAt(secret.getUpdatedAt())
+                    .build();
+            })
             .toList();
         
         return ResponseEntity.ok(response);

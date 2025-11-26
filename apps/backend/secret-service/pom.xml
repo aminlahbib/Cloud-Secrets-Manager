@@ -6,10 +6,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.5</version>
-        <relativePath/>
+        <groupId>com.cloudsecrets</groupId>
+        <artifactId>cloud-secrets-manager</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <groupId>com.secrets</groupId>
@@ -19,10 +19,7 @@
     <description>Cloud Secrets Manager - Secret Service</description>
 
     <properties>
-        <java.version>21</java.version>
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
-        <jjwt.version>0.12.5</jjwt.version>
-        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <!-- Properties are inherited from parent pom.xml -->
     </properties>
 
     <dependencies>
@@ -71,58 +68,50 @@
         </dependency>
 
         <!-- JWT -->
+        <!-- JWT (versions managed by parent) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>${jjwt.version}</version>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
 
-
-        <!-- MapStruct -->
+        <!-- MapStruct (version managed by parent) -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
-            <version>${mapstruct.version}</version>
         </dependency>
 
-        <!-- OpenAPI / Swagger -->
+        <!-- OpenAPI / Swagger (version managed by parent) -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.5.0</version>
         </dependency>
 
-        <!-- Google Cloud Identity Platform (Firebase Admin SDK) -->
+        <!-- Google Cloud Identity Platform (Firebase Admin SDK) (version managed by parent) -->
         <dependency>
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
-            <version>9.2.0</version>
         </dependency>
 
-        <!-- Google OAuth Client (for token validation) -->
+        <!-- Google OAuth Client (version managed by parent) -->
         <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
-            <version>1.19.0</version>
         </dependency>
 
-        <!-- Google API Client -->
+        <!-- Google API Client (version managed by parent) -->
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>2.2.0</version>
         </dependency>
 
         <!-- Distributed Tracing -->
@@ -174,157 +163,7 @@
         </dependency>
     </dependencies>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-bom</artifactId>
-                <version>1.19.3</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-            
-            <!-- Security Fixes: Override vulnerable dependencies -->
-            
-            <!-- Fix Apache Tomcat vulnerabilities (CVE-2025-55754, CVE-2024-50379, CVE-2024-50380) -->
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>10.1.45</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>10.1.45</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat</groupId>
-                <artifactId>tomcat-annotations-api</artifactId>
-                <version>10.1.45</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat</groupId>
-                <artifactId>tomcat-juli</artifactId>
-                <version>10.1.45</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat</groupId>
-                <artifactId>tomcat-catalina</artifactId>
-                <version>10.1.45</version>
-            </dependency>
-            
-            <!-- Note: Spring Framework and Spring Security fixes may require Spring Boot upgrade -->
-            <!-- CVE-2025-41249 (Spring Framework annotation detection) and Spring Security -->
-            <!-- BCryptPasswordEncoder fixes are not yet available as standalone versions -->
-            <!-- Consider upgrading Spring Boot to 3.3.6+ when available -->
-            
-            <!-- Fix Logback arbitrary code execution vulnerabilities (CVE-2024-4323, CVE-2024-12801) -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>1.5.13</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>1.5.13</version>
-            </dependency>
-            
-            <!-- Fix Commons Lang3 uncontrolled recursion vulnerability (CVE-2024-47551) -->
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-lang3</artifactId>
-                <version>3.17.0</version>
-            </dependency>
-            
-            <!-- Fix Netty HTTP/2 DDoS vulnerability (MadeYouReset) -->
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-http2</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-handler</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-http</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-common</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-buffer</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-transport</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-resolver</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            <dependency>
-                <groupId>io.netty</groupId>
-                <artifactId>netty-codec-compression</artifactId>
-                <version>4.1.125.Final</version>
-            </dependency>
-            
-            <!-- Fix Reactor Netty credential leak vulnerability -->
-            <dependency>
-                <groupId>io.projectreactor.netty</groupId>
-                <artifactId>reactor-netty-http</artifactId>
-                <version>1.2.9</version>
-            </dependency>
-            <dependency>
-                <groupId>io.projectreactor.netty</groupId>
-                <artifactId>reactor-netty-core</artifactId>
-                <version>1.2.9</version>
-            </dependency>
-            
-            <!-- Fix Protobuf StackOverflow vulnerability -->
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java</artifactId>
-                <version>4.28.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.protobuf</groupId>
-                <artifactId>protobuf-java-util</artifactId>
-                <version>4.28.3</version>
-            </dependency>
-            
-            <!-- Fix Guava insecure temporary directory vulnerabilities -->
-            <dependency>
-                <groupId>com.google.guava</groupId>
-                <artifactId>guava</artifactId>
-                <version>33.3.1-jre</version>
-            </dependency>
-            
-            <!-- Fix PostgreSQL JDBC insecure authentication vulnerability (CVE-2025-49146) -->
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>42.7.7</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <!-- Dependency management is handled by parent pom.xml -->
 
     <build>
         <plugins>
@@ -333,12 +172,6 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.secrets.SecretServiceApplication</mainClass>
-                    <excludes>
-                        <exclude>
-                            <groupId>org.projectlombok</groupId>
-                            <artifactId>lombok</artifactId>
-                        </exclude>
-                    </excludes>
                 </configuration>
                 <executions>
                     <execution>
@@ -352,15 +185,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.13.0</version>
                 <configuration>
-                    <release>21</release>
-                    <fork>true</fork>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
-                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
@@ -373,7 +202,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
                 <configuration>
                     <argLine>-Djdk.attach.allowAttachSelf=true -XX:+EnableDynamicAgentLoading -Dnet.bytebuddy.experimental=true</argLine>
                     <includes>

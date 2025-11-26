@@ -4,17 +4,31 @@ import {
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
+  setPersistence,
+  browserSessionPersistence,
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 
 export const firebaseAuthService = {
   /**
+   * Initialize auth persistence
+   */
+  async initPersistence(): Promise<void> {
+    try {
+      await setPersistence(auth, browserSessionPersistence);
+    } catch (error) {
+      console.error('Failed to set auth persistence:', error);
+    }
+  },
+
+  /**
    * Sign in with Google OAuth popup
    * Returns the Firebase ID token which can be sent to the backend
    */
   async signInWithGoogle(): Promise<string> {
     try {
+      await this.initPersistence();
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
       return idToken;
@@ -30,6 +44,7 @@ export const firebaseAuthService = {
    */
   async signInWithEmail(email: string, password: string): Promise<string> {
     try {
+      await this.initPersistence();
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();
       return idToken;

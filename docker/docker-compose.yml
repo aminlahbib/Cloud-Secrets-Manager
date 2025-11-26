@@ -1,0 +1,136 @@
+# =============================================================================
+# Cloud Secrets Manager - Local Development
+# =============================================================================
+#
+# Quick Start:
+#   1. cp env.example .env.local
+#   2. docker-compose --env-file .env.local up
+#
+# Or rename .env.local to .env for automatic loading:
+#   1. cp env.example .env
+#   2. docker-compose up
+#
+# =============================================================================
+
+name: csm
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: csm-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-csm}
+      POSTGRES_USER: ${POSTGRES_USER:-csm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ../database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - csm
+
+  # ---------------------------------------------------------------------------
+  # Secret Service (Backend API)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ..
+      dockerfile: apps/backend/secret-service/Dockerfile
+    container_name: csm-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      GOOGLE_APPLICATION_CREDENTIALS: /app/firebase-key.json
+      AUDIT_SERVICE_URL: http://audit:8081
+      SPRING_PROFILES_ACTIVE: dev
+    volumes:
+      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-key.json:ro
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - csm
+
+  # ---------------------------------------------------------------------------
+  # Audit Service
+  # ---------------------------------------------------------------------------
+  audit:
+    build:
+      context: ..
+      dockerfile: apps/backend/audit-service/Dockerfile
+    container_name: csm-audit
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: dev
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - csm
+
+  # ---------------------------------------------------------------------------
+  # Frontend (React)
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ../apps/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
+        VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
+        VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
+    container_name: csm-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - csm
+
+networks:
+  csm:
+    driver: bridge
+
+volumes:
+  db-data:
