@@ -1,15 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download } from 'lucide-react';
-import { auditService } from '../services/audit';
+import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import type { AuditLog, PaginatedResponse } from '../types';
-
-type AuditLogsResponse = PaginatedResponse<AuditLog>;
+import type { AuditLog } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   CREATE: 'success',
@@ -75,10 +73,10 @@ export const AuditLogsPage: React.FC = () => {
     if (!data?.content?.length) return;
     const header = ['Timestamp', 'Action', 'Secret Key', 'User', 'IP Address', 'Details'];
     const rows = data.content.map((log: AuditLog) => [
-      new Date(log.timestamp).toISOString(),
+      new Date(log.timestamp || log.createdAt || '').toISOString(),
       log.action,
       log.secretKey ?? '',
-      log.username,
+      log.username || '',
       log.ipAddress ?? '',
       log.details ?? '',
     ]);
@@ -269,7 +267,7 @@ export const AuditLogsPage: React.FC = () => {
                   {logs.map((log: AuditLog) => (
                     <tr key={log.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(log.timestamp).toLocaleString()}
+                        {new Date(log.timestamp || log.createdAt || '').toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant={ACTION_COLORS[log.action] || 'default'}>

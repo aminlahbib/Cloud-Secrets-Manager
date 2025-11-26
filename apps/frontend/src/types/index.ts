@@ -159,8 +159,9 @@ export interface ProjectInvitation {
 
 export interface Secret {
   id: string;
-  projectId: string;
+  projectId?: string; // Optional for legacy API compatibility
   secretKey: string;
+  key?: string; // Legacy alias for secretKey
   value?: string; // Only returned when decrypted
   encryptedValue?: string;
   description?: string;
@@ -201,12 +202,15 @@ export interface CopySecretRequest {
 // ----------------------------------------------------------------------------
 
 export interface SecretVersion {
-  id: string;
-  secretId: string;
+  id: string | number;
+  secretId?: string;
+  secretKey?: string; // Legacy field
   versionNumber: number;
-  createdBy: string;
+  createdBy?: string;
+  changedBy?: string; // Legacy alias for createdBy
   createdAt: string;
   changeNote?: string;
+  changeDescription?: string; // Legacy alias for changeNote
   creator?: User;
 }
 

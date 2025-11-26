@@ -55,7 +55,7 @@ export const SecretFormPage: React.FC = () => {
 
   useEffect(() => {
     if (secret) {
-      setValue('key', secret.key);
+      setValue('key', secret.key || secret.secretKey || '');
       setValue('value', secret.value || '');
       setValue('expiresAt', toInputValue(secret.expiresAt));
     }
@@ -70,7 +70,7 @@ export const SecretFormPage: React.FC = () => {
         ? await secretsService.updateSecret(secretKey, baseRequest)
         : await secretsService.createSecret(baseRequest);
 
-      const targetKey = result.key;
+      const targetKey = result.key || result.secretKey || key;
       const formattedExpiration = toApiValue(expiresAt);
 
       if (formattedExpiration) {
@@ -82,7 +82,7 @@ export const SecretFormPage: React.FC = () => {
       return result;
     },
     onSuccess: (data) => {
-      const targetKey = data.key;
+      const targetKey = data.key || data.secretKey || '';
       queryClient.invalidateQueries({ queryKey: ['secrets'] });
       queryClient.invalidateQueries({ queryKey: ['secret', targetKey] });
       navigate(`/secrets/${encodeURIComponent(targetKey)}`);
