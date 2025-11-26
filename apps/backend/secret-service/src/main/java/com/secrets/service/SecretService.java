@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.secrets.service.rotation.SecretRotationStrategy;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @SuppressWarnings("deprecation") // Legacy methods are deprecated but kept for backwards compatibility
@@ -343,8 +344,15 @@ public class SecretService {
             .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + key + "' not found"));
         
         // Verify user owns the secret (unless admin)
-        if (!permissionEvaluator.isAdmin(authentication) && !secret.getCreatedBy().equals(sharedBy)) {
-            throw new AccessDeniedException("Only the secret owner can share it");
+        if (!permissionEvaluator.isAdmin(authentication)) {
+            try {
+                UUID sharedByUuid = UUID.fromString(sharedBy);
+                if (!secret.getCreatedBy().equals(sharedByUuid)) {
+                    throw new AccessDeniedException("Only the secret owner can share it");
+                }
+            } catch (IllegalArgumentException e) {
+                throw new AccessDeniedException("Only the secret owner can share it");
+            }
         }
         
         // Check if already shared
@@ -391,8 +399,15 @@ public class SecretService {
             .orElseThrow(() -> new SecretNotFoundException("Secret with key '" + key + "' not found"));
         
         // Verify user owns the secret (unless admin)
-        if (!permissionEvaluator.isAdmin(authentication) && !secret.getCreatedBy().equals(unsharedBy)) {
-            throw new AccessDeniedException("Only the secret owner can unshare it");
+        if (!permissionEvaluator.isAdmin(authentication)) {
+            try {
+                UUID unsharedByUuid = UUID.fromString(unsharedBy);
+                if (!secret.getCreatedBy().equals(unsharedByUuid)) {
+                    throw new AccessDeniedException("Only the secret owner can unshare it");
+                }
+            } catch (IllegalArgumentException e) {
+                throw new AccessDeniedException("Only the secret owner can unshare it");
+            }
         }
         
         if (!sharedSecretRepository.existsBySecretKeyAndSharedWith(key, sharedWith)) {
