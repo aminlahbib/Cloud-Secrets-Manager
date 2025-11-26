@@ -29,7 +29,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ../database/migrations:/docker-entrypoint-initdb.d:ro
+      - ../infrastructure/database/migrations:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
       interval: 5s
@@ -56,11 +56,11 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      GOOGLE_APPLICATION_CREDENTIALS: /app/firebase-key.json
       AUDIT_SERVICE_URL: http://audit:8081
       SPRING_PROFILES_ACTIVE: dev
-    volumes:
-      - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-key.json:ro
+      GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-false}
+      GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-}
+      GOOGLE_SERVICE_ACCOUNT_PATH: ${GOOGLE_SERVICE_ACCOUNT_PATH:-}
     ports:
       - "8080:8080"
     healthcheck:
