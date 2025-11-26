@@ -5,75 +5,78 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "secret_versions", indexes = {
-    @Index(name = "idx_secret_key_version", columnList = "secretKey,versionNumber", unique = true),
-    @Index(name = "idx_secret_key", columnList = "secretKey"),
-    @Index(name = "idx_created_at", columnList = "createdAt")
+    @Index(name = "idx_versions_secret", columnList = "secretId"),
+    @Index(name = "idx_versions_number", columnList = "secretId,versionNumber")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uq_secret_versions", columnNames = {"secretId", "versionNumber"})
 })
 @EntityListeners(AuditingEntityListener.class)
 public class SecretVersion {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    @Column(nullable = false, length = 255)
-    private String secretKey;
+    @Column(name = "secret_id", nullable = false)
+    private UUID secretId;
 
-    @Column(nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "secret_id", insertable = false, updatable = false)
+    private Secret secret;
+
+    @Column(name = "version_number", nullable = false)
     private Integer versionNumber;
 
-    @Column(nullable = false, length = 5000)
+    @Column(name = "encrypted_value", nullable = false, columnDefinition = "TEXT")
     private String encryptedValue;
 
-    @Column(nullable = false)
-    private String changedBy;
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
 
-    @Column(length = 1000)
-    private String changeDescription; // Optional description of the change
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", insertable = false, updatable = false)
+    private User creator;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Reference to the secret (for easier querying)
-    // Made optional to avoid circular dependency issues during creation
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "secret_id")
-    private Secret secret;
+    @Column(name = "change_note", columnDefinition = "TEXT")
+    private String changeNote;
 
     public SecretVersion() {
     }
 
-    public SecretVersion(Long id, String secretKey, Integer versionNumber, String encryptedValue,
-                        String changedBy, String changeDescription, LocalDateTime createdAt, Secret secret) {
-        this.id = id;
-        this.secretKey = secretKey;
-        this.versionNumber = versionNumber;
-        this.encryptedValue = encryptedValue;
-        this.changedBy = changedBy;
-        this.changeDescription = changeDescription;
-        this.createdAt = createdAt;
-        this.secret = secret;
-    }
-
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public String getSecretKey() {
-        return secretKey;
+    public UUID getSecretId() {
+        return secretId;
     }
 
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
+    public void setSecretId(UUID secretId) {
+        this.secretId = secretId;
+    }
+
+    public Secret getSecret() {
+        return secret;
+    }
+
+    public void setSecret(Secret secret) {
+        this.secret = secret;
+        if (secret != null) {
+            this.secretId = secret.getId();
+        }
     }
 
     public Integer getVersionNumber() {
@@ -92,20 +95,23 @@ public class SecretVersion {
         this.encryptedValue = encryptedValue;
     }
 
-    public String getChangedBy() {
-        return changedBy;
+    public UUID getCreatedBy() {
+        return createdBy;
     }
 
-    public void setChangedBy(String changedBy) {
-        this.changedBy = changedBy;
+    public void setCreatedBy(UUID createdBy) {
+        this.createdBy = createdBy;
     }
 
-    public String getChangeDescription() {
-        return changeDescription;
+    public User getCreator() {
+        return creator;
     }
 
-    public void setChangeDescription(String changeDescription) {
-        this.changeDescription = changeDescription;
+    public void setCreator(User creator) {
+        this.creator = creator;
+        if (creator != null) {
+            this.createdBy = creator.getId();
+        }
     }
 
     public LocalDateTime getCreatedAt() {
@@ -116,70 +122,22 @@ public class SecretVersion {
         this.createdAt = createdAt;
     }
 
-    public Secret getSecret() {
-        return secret;
+    public String getChangeNote() {
+        return changeNote;
     }
 
-    public void setSecret(Secret secret) {
-        this.secret = secret;
+    public void setChangeNote(String changeNote) {
+        this.changeNote = changeNote;
     }
 
-    public static SecretVersionBuilder builder() {
-        return new SecretVersionBuilder();
+    // Legacy getters for backwards compatibility
+    @Deprecated
+    public String getChangedBy() {
+        return createdBy != null ? createdBy.toString() : null;
     }
 
-    public static class SecretVersionBuilder {
-        private Long id;
-        private String secretKey;
-        private Integer versionNumber;
-        private String encryptedValue;
-        private String changedBy;
-        private String changeDescription;
-        private LocalDateTime createdAt;
-        private Secret secret;
-
-        public SecretVersionBuilder id(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public SecretVersionBuilder secretKey(String secretKey) {
-            this.secretKey = secretKey;
-            return this;
-        }
-
-        public SecretVersionBuilder versionNumber(Integer versionNumber) {
-            this.versionNumber = versionNumber;
-            return this;
-        }
-
-        public SecretVersionBuilder encryptedValue(String encryptedValue) {
-            this.encryptedValue = encryptedValue;
-            return this;
-        }
-
-        public SecretVersionBuilder changedBy(String changedBy) {
-            this.changedBy = changedBy;
-            return this;
-        }
-
-        public SecretVersionBuilder changeDescription(String changeDescription) {
-            this.changeDescription = changeDescription;
-            return this;
-        }
-
-        public SecretVersionBuilder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public SecretVersionBuilder secret(Secret secret) {
-            this.secret = secret;
-            return this;
-        }
-
-        public SecretVersion build() {
-            return new SecretVersion(id, secretKey, versionNumber, encryptedValue, changedBy, changeDescription, createdAt, secret);
-        }
+    @Deprecated
+    public String getChangeDescription() {
+        return changeNote;
     }
 }

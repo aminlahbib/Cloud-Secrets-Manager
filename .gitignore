@@ -144,7 +144,11 @@ apps/frontend/dist/
 apps/frontend/build/
 *.local
 
-# Google Cloud SDK
-google-cloud-sdk/
+# Test files
+testing/
 
+# Documents
+docs
+
+# PDF files
 Cloud-Secrets-Manager.pdf

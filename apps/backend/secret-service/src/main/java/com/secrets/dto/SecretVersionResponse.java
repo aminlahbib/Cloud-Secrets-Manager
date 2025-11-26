@@ -5,7 +5,7 @@ import com.secrets.entity.SecretVersion;
 import java.time.LocalDateTime;
 
 public class SecretVersionResponse {
-    private Long id;
+    private String id; // Changed to String to support UUID
     private String secretKey;
     private Integer versionNumber;
     private String changedBy;
@@ -15,7 +15,7 @@ public class SecretVersionResponse {
     public SecretVersionResponse() {
     }
 
-    public SecretVersionResponse(Long id, String secretKey, Integer versionNumber, String changedBy, 
+    public SecretVersionResponse(String id, String secretKey, Integer versionNumber, String changedBy, 
                                 String changeDescription, LocalDateTime createdAt) {
         this.id = id;
         this.secretKey = secretKey;
@@ -25,11 +25,11 @@ public class SecretVersionResponse {
         this.createdAt = createdAt;
     }
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -77,26 +77,29 @@ public class SecretVersionResponse {
         return new SecretVersionResponseBuilder();
     }
 
+    @SuppressWarnings("deprecation")
     public static SecretVersionResponse from(SecretVersion version) {
         return SecretVersionResponse.builder()
-            .id(version.getId())
-            .secretKey(version.getSecretKey())
+            .id(version.getId() != null ? version.getId().toString() : null)
+            .secretKey(version.getSecret() != null ? version.getSecret().getSecretKey() : null)
             .versionNumber(version.getVersionNumber())
-            .changedBy(version.getChangedBy())
-            .changeDescription(version.getChangeDescription())
+            .changedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : 
+                      (version.getChangedBy() != null ? version.getChangedBy() : "Unknown"))
+            .changeDescription(version.getChangeNote() != null ? version.getChangeNote() : 
+                             (version.getChangeDescription() != null ? version.getChangeDescription() : ""))
             .createdAt(version.getCreatedAt())
             .build();
     }
 
     public static class SecretVersionResponseBuilder {
-        private Long id;
+        private String id;
         private String secretKey;
         private Integer versionNumber;
         private String changedBy;
         private String changeDescription;
         private LocalDateTime createdAt;
 
-        public SecretVersionResponseBuilder id(Long id) {
+        public SecretVersionResponseBuilder id(String id) {
             this.id = id;
             return this;
         }

@@ -127,8 +127,9 @@ public class GoogleIdentityService {
             throw e;
         } catch (Exception e) {
             log.error("Unexpected error listing users from Google Identity Platform: {}", e.getMessage(), e);
-            // Wrap in FirebaseAuthException to maintain the method signature
-            throw new FirebaseAuthException("INTERNAL_ERROR", "Failed to list users: " + e.getMessage(), e);
+            // FirebaseAuthException doesn't have public constructors, so wrap in RuntimeException
+            // The caller should handle this as a general error
+            throw new IllegalStateException("Failed to list users: " + e.getMessage(), e);
         }
     }
 

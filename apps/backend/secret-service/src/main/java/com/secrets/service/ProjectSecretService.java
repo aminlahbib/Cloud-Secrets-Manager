@@ -1,0 +1,340 @@
+package com.secrets.service;
+
+import com.secrets.client.AuditClient;
+import com.secrets.dto.SecretRequest;
+import com.secrets.entity.Secret;
+import com.secrets.exception.SecretAlreadyExistsException;
+import com.secrets.exception.SecretNotFoundException;
+import com.secrets.entity.User;
+import com.secrets.repository.ProjectRepository;
+import com.secrets.repository.SecretRepository;
+import com.secrets.repository.SecretVersionRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+/**
+ * Service for project-scoped secret operations (v3 architecture)
+ */
+@Service
+@Transactional
+public class ProjectSecretService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectSecretService.class);
+
+    private final SecretRepository secretRepository;
+    private final ProjectRepository projectRepository;
+    private final EncryptionService encryptionService;
+    private final SecretVersionService secretVersionService;
+    private final SecretVersionRepository secretVersionRepository;
+    private final ProjectPermissionService permissionService;
+    private final AuditClient auditClient;
+    private final UserService userService;
+
+    public ProjectSecretService(SecretRepository secretRepository,
+                               ProjectRepository projectRepository,
+                               EncryptionService encryptionService,
+                               SecretVersionService secretVersionService,
+                               SecretVersionRepository secretVersionRepository,
+                               ProjectPermissionService permissionService,
+                               AuditClient auditClient,
+                               UserService userService) {
+        this.secretRepository = secretRepository;
+        this.projectRepository = projectRepository;
+        this.encryptionService = encryptionService;
+        this.secretVersionService = secretVersionService;
+        this.secretVersionRepository = secretVersionRepository;
+        this.permissionService = permissionService;
+        this.auditClient = auditClient;
+        this.userService = userService;
+    }
+
+    /**
+     * List secrets in a project
+     */
+    @Transactional(readOnly = true)
+    public Page<Secret> listProjectSecrets(UUID projectId, UUID userId, String keyword, Pageable pageable) {
+        // Check access
+        if (!permissionService.canViewProject(projectId, userId)) {
+            throw new AccessDeniedException("Access denied to project");
+        }
+
+        // Verify project exists
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return secretRepository.findByProjectIdAndKeyword(projectId, keyword.trim(), pageable);
+        } else {
+            return secretRepository.findByProjectId(projectId, pageable);
+        }
+    }
+
+    /**
+     * Get a secret from a project
+     */
+    @Transactional(readOnly = true)
+    public Secret getProjectSecret(UUID projectId, String secretKey, UUID userId) {
+        // Check access
+        if (!permissionService.canViewProject(projectId, userId)) {
+            throw new AccessDeniedException("Access denied to project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_READ", secretKey, username);
+
+        return secret;
+    }
+
+    /**
+     * Create a secret in a project
+     */
+    public Secret createProjectSecret(UUID projectId, SecretRequest request, UUID userId) {
+        // Check permission
+        if (!permissionService.canCreateSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to create secrets in this project");
+        }
+
+        // Verify project exists
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+
+        // Check if secret key already exists in this project
+        if (secretRepository.existsByProjectIdAndSecretKey(projectId, request.getKey())) {
+            throw new SecretAlreadyExistsException("Secret with key '" + request.getKey() + "' already exists in this project");
+        }
+
+        String encryptedValue = encryptionService.encrypt(request.getValue());
+
+        Secret secret = new Secret();
+        secret.setProjectId(projectId);
+        secret.setSecretKey(request.getKey());
+        secret.setEncryptedValue(encryptedValue);
+        secret.setCreatedBy(userId);
+
+        Secret saved = secretRepository.save(secret);
+
+        // Create initial version
+        secretVersionService.createVersion(saved, userId, "Initial version");
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_CREATE", request.getKey(), username);
+
+        log.info("Created secret {} in project {}", request.getKey(), projectId);
+        return saved;
+    }
+
+    /**
+     * Update a secret in a project
+     */
+    public Secret updateProjectSecret(UUID projectId, String secretKey, SecretRequest request, UUID userId) {
+        // Check permission
+        if (!permissionService.canUpdateSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to update secrets in this project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        String encryptedValue = encryptionService.encrypt(request.getValue());
+        secret.setEncryptedValue(encryptedValue);
+        secret.setUpdatedBy(userId);
+
+        Secret saved = secretRepository.save(secret);
+
+        // Create new version
+        secretVersionService.createVersion(saved, userId, "Secret value updated");
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_UPDATE", secretKey, username);
+
+        log.info("Updated secret {} in project {}", secretKey, projectId);
+        return saved;
+    }
+
+    /**
+     * Delete a secret from a project
+     */
+    public void deleteProjectSecret(UUID projectId, String secretKey, UUID userId) {
+        // Check permission
+        if (!permissionService.canDeleteSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to delete secrets in this project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        // Delete all versions
+        secretVersionRepository.deleteBySecretId(secret.getId());
+
+        // Delete the secret
+        secretRepository.delete(secret);
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_DELETE", secretKey, username);
+
+        log.info("Deleted secret {} from project {}", secretKey, projectId);
+    }
+
+    /**
+     * Rotate a secret in a project
+     */
+    public Secret rotateProjectSecret(UUID projectId, String secretKey, UUID userId) {
+        // Check permission
+        if (!permissionService.canRotateSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to rotate secrets in this project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        // Generate new value (simple rotation - in production, use rotation strategies)
+        String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
+        String newValue = generateRotatedValue(currentValue);
+        String encryptedValue = encryptionService.encrypt(newValue);
+
+        secret.setEncryptedValue(encryptedValue);
+        secret.setUpdatedBy(userId);
+        secret.setLastRotatedAt(java.time.LocalDateTime.now());
+
+        Secret saved = secretRepository.save(secret);
+
+        // Create new version
+        secretVersionService.createVersion(saved, userId, "Secret rotated");
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_ROTATE", secretKey, username);
+
+        log.info("Rotated secret {} in project {}", secretKey, projectId);
+        return saved;
+    }
+
+    /**
+     * Move a secret to another project
+     */
+    public Secret moveSecret(UUID sourceProjectId, String secretKey, UUID targetProjectId, UUID userId) {
+        // Check permission on source project (OWNER or ADMIN)
+        if (!permissionService.canMoveSecrets(sourceProjectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to move secrets from this project");
+        }
+
+        // Check access to target project (at least MEMBER)
+        if (!permissionService.isMemberOrHigher(targetProjectId, userId)) {
+            throw new AccessDeniedException("You don't have access to the target project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(sourceProjectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        // Check if key already exists in target project
+        if (secretRepository.existsByProjectIdAndSecretKey(targetProjectId, secretKey)) {
+            throw new SecretAlreadyExistsException("Secret with key '" + secretKey + "' already exists in target project");
+        }
+
+        // Move secret
+        secret.setProjectId(targetProjectId);
+        secret.setUpdatedBy(userId);
+        Secret saved = secretRepository.save(secret);
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_MOVE", secretKey, username);
+
+        log.info("Moved secret {} from project {} to {}", secretKey, sourceProjectId, targetProjectId);
+        return saved;
+    }
+
+    /**
+     * Copy a secret to another project
+     */
+    public Secret copySecret(UUID sourceProjectId, String secretKey, UUID targetProjectId, String newKey, UUID userId) {
+        // Check permission on source project (OWNER or ADMIN)
+        if (!permissionService.canMoveSecrets(sourceProjectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to copy secrets from this project");
+        }
+
+        // Check access to target project (at least MEMBER)
+        if (!permissionService.isMemberOrHigher(targetProjectId, userId)) {
+            throw new AccessDeniedException("You don't have access to the target project");
+        }
+
+        Secret sourceSecret = secretRepository.findByProjectIdAndSecretKey(sourceProjectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        String targetKey = newKey != null ? newKey : secretKey;
+
+        // Check if key already exists in target project
+        if (secretRepository.existsByProjectIdAndSecretKey(targetProjectId, targetKey)) {
+            throw new SecretAlreadyExistsException("Secret with key '" + targetKey + "' already exists in target project");
+        }
+
+        // Copy secret
+        Secret copiedSecret = new Secret();
+        copiedSecret.setProjectId(targetProjectId);
+        copiedSecret.setSecretKey(targetKey);
+        copiedSecret.setEncryptedValue(sourceSecret.getEncryptedValue()); // Same encrypted value
+        copiedSecret.setDescription(sourceSecret.getDescription());
+        copiedSecret.setCreatedBy(userId);
+        copiedSecret.setExpiresAt(sourceSecret.getExpiresAt());
+
+        Secret saved = secretRepository.save(copiedSecret);
+
+        // Create initial version
+        secretVersionService.createVersion(saved, userId, 
+            String.format("Copied from project %s", sourceProjectId));
+
+        // Audit log
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_COPY", secretKey, username);
+
+        log.info("Copied secret {} from project {} to {} as {}", secretKey, sourceProjectId, targetProjectId, targetKey);
+        return saved;
+    }
+
+    /**
+     * Get version history for a secret
+     */
+    @Transactional(readOnly = true)
+    public java.util.List<com.secrets.entity.SecretVersion> getSecretVersions(UUID projectId, String secretKey, UUID userId) {
+        // Check access
+        if (!permissionService.canViewProject(projectId, userId)) {
+            throw new AccessDeniedException("Access denied to project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        return secretVersionRepository.findBySecretIdOrderByVersionNumberDesc(secret.getId());
+    }
+
+    /**
+     * Simple value rotation (in production, use rotation strategies)
+     */
+    private String generateRotatedValue(String currentValue) {
+        // Simple implementation - append timestamp
+        // In production, use SecretRotationStrategy implementations
+        return currentValue + "_rotated_" + System.currentTimeMillis();
+    }
+}
+

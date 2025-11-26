@@ -1,7 +1,6 @@
 package com.secrets.dto;
 
 import java.util.List;
-import java.util.Objects;
 
 public class BulkSecretResponse {
     private int total;

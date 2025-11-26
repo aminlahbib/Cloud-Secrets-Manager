@@ -6,77 +6,109 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "secrets", indexes = {
-    @Index(name = "idx_secret_key", columnList = "secretKey", unique = true),
-    @Index(name = "idx_created_by", columnList = "createdBy")
+    @Index(name = "idx_secrets_project", columnList = "projectId"),
+    @Index(name = "idx_secrets_key", columnList = "secretKey"),
+    @Index(name = "idx_secrets_expires", columnList = "expiresAt"),
+    @Index(name = "idx_secrets_created_by", columnList = "createdBy")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uq_secrets_project_key", columnNames = {"projectId", "secretKey"})
 })
 @EntityListeners(AuditingEntityListener.class)
 public class Secret {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    @Column(unique = true, nullable = false, length = 255)
+    @Column(name = "project_id", nullable = false)
+    private UUID projectId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", insertable = false, updatable = false)
+    private Project project;
+
+    @Column(name = "secret_key", nullable = false, length = 255)
     private String secretKey;
 
-    @Column(nullable = false, length = 5000)
+    @Column(name = "encrypted_value", nullable = false, columnDefinition = "TEXT")
     private String encryptedValue;
 
-    @Column(nullable = false)
-    private String createdBy;
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "created_by", nullable = false)
+    private UUID createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", insertable = false, updatable = false)
+    private User creator;
 
     @CreatedDate
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @Version
-    private Long version;
+    @Column(name = "updated_by")
+    private UUID updatedBy;
 
-    // Expiration management
-    @Column(nullable = true)
+    @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
-    @Column(nullable = false)
-    private Boolean expired = false;
+    @Column(name = "last_rotated_at")
+    private LocalDateTime lastRotatedAt;
+
+    @Column(name = "rotation_interval_days")
+    private Integer rotationIntervalDays;
+
+    @OneToMany(mappedBy = "secret", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("versionNumber DESC")
+    private List<SecretVersion> versions = new ArrayList<>();
 
     public Secret() {
     }
 
-    public Secret(Long id, String secretKey, String encryptedValue, String createdBy, 
-                  LocalDateTime createdAt, LocalDateTime updatedAt, Long version, 
-                  LocalDateTime expiresAt, Boolean expired) {
-        this.id = id;
-        this.secretKey = secretKey;
-        this.encryptedValue = encryptedValue;
-        this.createdBy = createdBy;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.version = version;
-        this.expiresAt = expiresAt;
-        this.expired = expired;
-    }
-    
     public boolean isExpired() {
         if (expiresAt == null) {
-            return false; // No expiration set
+            return false;
         }
-        return LocalDateTime.now().isAfter(expiresAt) || expired;
+        return LocalDateTime.now().isAfter(expiresAt);
     }
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
+    }
+
+    public UUID getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(UUID projectId) {
+        this.projectId = projectId;
+    }
+
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+        if (project != null) {
+            this.projectId = project.getId();
+        }
     }
 
     public String getSecretKey() {
@@ -95,12 +127,31 @@ public class Secret {
         this.encryptedValue = encryptedValue;
     }
 
-    public String getCreatedBy() {
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public UUID getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(String createdBy) {
+    public void setCreatedBy(UUID createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public User getCreator() {
+        return creator;
+    }
+
+    public void setCreator(User creator) {
+        this.creator = creator;
+        if (creator != null) {
+            this.createdBy = creator.getId();
+        }
     }
 
     public LocalDateTime getCreatedAt() {
@@ -119,12 +170,12 @@ public class Secret {
         this.updatedAt = updatedAt;
     }
 
-    public Long getVersion() {
-        return version;
+    public UUID getUpdatedBy() {
+        return updatedBy;
     }
 
-    public void setVersion(Long version) {
-        this.version = version;
+    public void setUpdatedBy(UUID updatedBy) {
+        this.updatedBy = updatedBy;
     }
 
     public LocalDateTime getExpiresAt() {
@@ -135,76 +186,27 @@ public class Secret {
         this.expiresAt = expiresAt;
     }
 
-    public Boolean getExpired() {
-        return expired;
+    public LocalDateTime getLastRotatedAt() {
+        return lastRotatedAt;
     }
 
-    public void setExpired(Boolean expired) {
-        this.expired = expired;
+    public void setLastRotatedAt(LocalDateTime lastRotatedAt) {
+        this.lastRotatedAt = lastRotatedAt;
     }
 
-    public static SecretBuilder builder() {
-        return new SecretBuilder();
+    public Integer getRotationIntervalDays() {
+        return rotationIntervalDays;
     }
 
-    public static class SecretBuilder {
-        private Long id;
-        private String secretKey;
-        private String encryptedValue;
-        private String createdBy;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
-        private Long version;
-        private LocalDateTime expiresAt;
-        private Boolean expired = false;
+    public void setRotationIntervalDays(Integer rotationIntervalDays) {
+        this.rotationIntervalDays = rotationIntervalDays;
+    }
 
-        public SecretBuilder id(Long id) {
-            this.id = id;
-            return this;
-        }
+    public List<SecretVersion> getVersions() {
+        return versions;
+    }
 
-        public SecretBuilder secretKey(String secretKey) {
-            this.secretKey = secretKey;
-            return this;
-        }
-
-        public SecretBuilder encryptedValue(String encryptedValue) {
-            this.encryptedValue = encryptedValue;
-            return this;
-        }
-
-        public SecretBuilder createdBy(String createdBy) {
-            this.createdBy = createdBy;
-            return this;
-        }
-
-        public SecretBuilder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public SecretBuilder updatedAt(LocalDateTime updatedAt) {
-            this.updatedAt = updatedAt;
-            return this;
-        }
-
-        public SecretBuilder version(Long version) {
-            this.version = version;
-            return this;
-        }
-
-        public SecretBuilder expiresAt(LocalDateTime expiresAt) {
-            this.expiresAt = expiresAt;
-            return this;
-        }
-
-        public SecretBuilder expired(Boolean expired) {
-            this.expired = expired;
-            return this;
-        }
-
-        public Secret build() {
-            return new Secret(id, secretKey, encryptedValue, createdBy, createdAt, updatedAt, version, expiresAt, expired);
-        }
+    public void setVersions(List<SecretVersion> versions) {
+        this.versions = versions;
     }
 }
