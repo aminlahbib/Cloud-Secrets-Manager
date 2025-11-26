@@ -74,7 +74,7 @@ export const AuditLogsPage: React.FC = () => {
   const handleExport = () => {
     if (!data?.content?.length) return;
     const header = ['Timestamp', 'Action', 'Secret Key', 'User', 'IP Address', 'Details'];
-    const rows = data.content.map((log) => [
+    const rows = data.content.map((log: AuditLog) => [
       new Date(log.timestamp).toISOString(),
       log.action,
       log.secretKey ?? '',
@@ -86,7 +86,7 @@ export const AuditLogsPage: React.FC = () => {
     const csv = [header, ...rows]
       .map((row) =>
         row
-          .map((value) => {
+          .map((value: string) => {
             const safe = value.replace(/"/g, '""');
             return `"${safe}"`;
           })
@@ -266,7 +266,7 @@ export const AuditLogsPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {logs.map((log) => (
+                  {logs.map((log: AuditLog) => (
                     <tr key={log.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                         {new Date(log.timestamp).toLocaleString()}
@@ -289,18 +289,18 @@ export const AuditLogsPage: React.FC = () => {
             </div>
           </div>
 
-          {data?.page?.totalPages && data.page.totalPages > 1 && (
+          {data?.totalPages && data.totalPages > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={data.page.totalPages}
+              totalPages={data.totalPages}
               onPageChange={setPage}
               className="mt-8"
             />
           )}
 
-          {data?.page && (
+          {data && (
             <div className="mt-4 text-center text-sm text-gray-600">
-              Showing {logs.length} of {data.page.totalElements || 0} logs
+              Showing {logs.length} of {data.totalElements || 0} logs
             </div>
           )}
         </>

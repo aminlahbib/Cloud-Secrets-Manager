@@ -10,6 +10,9 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
+import type { Secret, PaginatedResponse } from '../types';
+
+type SecretsListResponse = PaginatedResponse<Secret>;
 
 const PAGE_SIZE = 20;
 
@@ -41,7 +44,7 @@ export const SecretsListPage: React.FC = () => {
       ? specificOwner.trim()
       : undefined;
 
-  const { data, isLoading, error, isFetching } = useQuery({
+  const { data, isLoading, error, isFetching } = useQuery<SecretsListResponse>({
     queryKey: ['secrets', page, searchTerm, createdByParam ?? 'all', sortBy, sortDir],
     queryFn: () =>
       secretsService.listSecrets({
@@ -53,7 +56,7 @@ export const SecretsListPage: React.FC = () => {
         sortDir,
       }),
     enabled: !!user,
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
   });
 
   const deleteMutation = useMutation({
@@ -88,8 +91,7 @@ export const SecretsListPage: React.FC = () => {
     setSortDir((prev) => (prev === 'DESC' ? 'ASC' : 'DESC'));
   };
 
-  const content = data?.content ?? [];
-  const pagination = data?.page;
+  const content: Secret[] = data?.content ?? [];
   const hasResults = content.length > 0;
 
   const renderStatus = (secret: (typeof content)[number]) => {
@@ -281,7 +283,7 @@ export const SecretsListPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {content.map((secret) => (
+                  {content.map((secret: Secret) => (
                     <tr key={secret.key} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div
@@ -342,19 +344,19 @@ export const SecretsListPage: React.FC = () => {
             )}
           </div>
 
-          {pagination?.totalPages && pagination.totalPages > 1 && (
+          {data?.totalPages && data.totalPages > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={pagination.totalPages}
+              totalPages={data.totalPages}
               onPageChange={setPage}
               className="mt-6"
             />
           )}
 
-          {pagination && (
+          {data && (
             <div className="mt-4 text-center text-sm text-gray-600">
-              Showing page {page} of {pagination.totalPages} •{' '}
-              {pagination.totalElements} total secrets
+              Showing page {page} of {data.totalPages} •{' '}
+              {data.totalElements} total secrets
             </div>
           )}
         </>
