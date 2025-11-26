@@ -2,13 +2,14 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
-import type { User, LoginRequest } from '@/types';
+import type { User, PlatformRole, LoginRequest } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isFirebaseEnabled: boolean;
+  isPlatformAdmin: boolean;
   login: (credentials: LoginRequest) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
   logout: () => void;
@@ -43,18 +44,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (firebaseUser) {
             try {
               const idTokenResult = await firebaseUser.getIdTokenResult();
-              const roles = (idTokenResult.claims.roles as string[]) || ['USER'];
-              const permissions = (idTokenResult.claims.permissions as string[]) || [];
+              
+              // Extract platform role from claims (v3 architecture)
+              const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
               
               sessionStorage.setItem('accessToken', idTokenResult.token);
-              // In Firebase mode, we construct a user object from the Firebase user and claims
+              
+              // Construct user object from Firebase user and claims
               setUser({
                 id: firebaseUser.uid,
+                firebaseUid: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                role: roles.includes('ADMIN') ? 'ADMIN' : 'USER',
-                permissions: permissions as ('READ' | 'WRITE' | 'DELETE' | 'LIST' | 'ROTATE' | 'SHARE')[],
-                active: true,
+                displayName: firebaseUser.displayName || undefined,
+                avatarUrl: firebaseUser.photoURL || undefined,
+                platformRole,
                 createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
+                lastLoginAt: firebaseUser.metadata.lastSignInTime || undefined,
               });
             } catch (error) {
               console.error('Failed to get Firebase ID token:', error);
@@ -155,7 +160,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           sessionStorage.setItem('accessToken', idToken);
         }
         // User state will be set by onAuthStateChanged listener
-        navigate('/secrets');
+        navigate('/home');
       } catch (error) {
         throw error;
       }
@@ -167,7 +172,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         sessionStorage.setItem('refreshToken', response.refreshToken);
       }
       setUser(response.user);
-      navigate('/secrets');
+      navigate('/home');
     }
   };
 
@@ -180,7 +185,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const idToken = await firebaseAuthService.signInWithGoogle();
       sessionStorage.setItem('accessToken', idToken);
       // User state will be set by onAuthStateChanged listener
-      navigate('/secrets');
+      navigate('/home');
     } catch (error) {
       throw error;
     }
@@ -202,6 +207,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     navigate('/login');
   };
 
+  const isPlatformAdmin = user?.platformRole === 'PLATFORM_ADMIN';
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -209,6 +216,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated: !!user, 
         isLoading, 
         isFirebaseEnabled,
+        isPlatformAdmin,
         login, 
         loginWithGoogle,
         logout 
@@ -218,4 +226,3 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-

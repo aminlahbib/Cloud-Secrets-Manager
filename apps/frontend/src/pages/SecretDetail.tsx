@@ -8,8 +8,6 @@ import {
   Eye,
   EyeOff,
   Copy,
-  Clock,
-  User,
   Share2,
   CheckCircle,
   RefreshCw,
