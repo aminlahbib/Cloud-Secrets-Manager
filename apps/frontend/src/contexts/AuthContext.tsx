@@ -42,16 +42,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const unsubscribe = firebaseAuthService.onAuthStateChanged(async (firebaseUser) => {
           if (firebaseUser) {
             try {
-              const idToken = await firebaseUser.getIdToken();
-              sessionStorage.setItem('accessToken', idToken);
-              // In Firebase mode, we construct a minimal user object from the Firebase user
+              const idTokenResult = await firebaseUser.getIdTokenResult();
+              const roles = (idTokenResult.claims.roles as string[]) || ['USER'];
+              const permissions = (idTokenResult.claims.permissions as string[]) || [];
+              
+              sessionStorage.setItem('accessToken', idTokenResult.token);
+              // In Firebase mode, we construct a user object from the Firebase user and claims
               setUser({
                 id: firebaseUser.uid,
                 email: firebaseUser.email || '',
-                role: 'USER',
-                permissions: [],
+                role: roles.includes('ADMIN') ? 'ADMIN' : 'USER',
+                permissions: permissions,
                 active: true,
-                createdAt: new Date().toISOString(),
+                createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
               });
             } catch (error) {
               console.error('Failed to get Firebase ID token:', error);
