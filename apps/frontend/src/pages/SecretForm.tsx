@@ -4,12 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { ArrowLeft, Save } from 'lucide-react';
 import { secretsService, type SecretRequest } from '../services/secrets';
+import type { CreateSecretRequest } from '../types';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 
 type SecretFormValues = SecretRequest & {
+  description?: string;
   expiresAt?: string;
 };
 
@@ -28,11 +30,12 @@ const toApiValue = (value?: string) => {
 };
 
 export const SecretFormPage: React.FC = () => {
-  const { key: keyParam } = useParams<{ key: string }>();
+  const { key: keyParam, projectId } = useParams<{ key: string; projectId?: string }>();
   const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isEditMode = !!secretKey;
+  const isProjectScoped = !!projectId;
 
   const {
     register,
@@ -48,8 +51,10 @@ export const SecretFormPage: React.FC = () => {
   });
 
   const { data: secret, isLoading } = useQuery({
-    queryKey: ['secret', secretKey],
-    queryFn: () => secretsService.getSecret(secretKey),
+    queryKey: isProjectScoped ? ['project-secret', projectId, secretKey] : ['secret', secretKey],
+    queryFn: () => isProjectScoped && projectId 
+      ? secretsService.getProjectSecret(projectId, secretKey)
+      : secretsService.getSecret(secretKey),
     enabled: isEditMode,
   });
 
@@ -64,18 +69,31 @@ export const SecretFormPage: React.FC = () => {
   const mutation = useMutation({
     mutationFn: async (payload: SecretFormValues) => {
       const { key, value, expiresAt } = payload;
-      const baseRequest: SecretRequest = { key, value };
-
-      const result = isEditMode
-        ? await secretsService.updateSecret(secretKey, baseRequest)
-        : await secretsService.createSecret(baseRequest);
+      
+      let result: any;
+      
+      if (isProjectScoped && projectId) {
+        // Use project-scoped endpoints
+        // Backend expects 'key' not 'secretKey' for SecretRequest
+        const request: CreateSecretRequest = { secretKey: key, value, description: payload.description };
+        result = isEditMode
+          ? await secretsService.updateProjectSecret(projectId, secretKey, { value, description: payload.description })
+          : await secretsService.createProjectSecret(projectId, request);
+      } else {
+        // Use legacy endpoints
+        const baseRequest: SecretRequest = { key, value };
+        result = isEditMode
+          ? await secretsService.updateSecret(secretKey, baseRequest)
+          : await secretsService.createSecret(baseRequest);
+      }
 
       const targetKey = result.key || result.secretKey || key;
       const formattedExpiration = toApiValue(expiresAt);
 
-      if (formattedExpiration) {
+      // Note: Expiration setting may need project-scoped endpoint too
+      if (formattedExpiration && !isProjectScoped) {
         await secretsService.setExpiration(targetKey, formattedExpiration);
-      } else if (isEditMode && secret?.expiresAt) {
+      } else if (isEditMode && secret?.expiresAt && !isProjectScoped) {
         await secretsService.removeExpiration(targetKey);
       }
 
@@ -83,9 +101,16 @@ export const SecretFormPage: React.FC = () => {
     },
     onSuccess: (data) => {
       const targetKey = data.key || data.secretKey || '';
-      queryClient.invalidateQueries({ queryKey: ['secrets'] });
-      queryClient.invalidateQueries({ queryKey: ['secret', targetKey] });
-      navigate(`/secrets/${encodeURIComponent(targetKey)}`);
+      
+      if (isProjectScoped && projectId) {
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+        queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, targetKey] });
+        navigate(`/projects/${projectId}/secrets/${encodeURIComponent(targetKey)}`);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['secrets'] });
+        queryClient.invalidateQueries({ queryKey: ['secret', targetKey] });
+        navigate(`/secrets/${encodeURIComponent(targetKey)}`);
+      }
     },
   });
 
@@ -106,9 +131,15 @@ export const SecretFormPage: React.FC = () => {
       <div className="mb-6">
         <Button
           variant="ghost"
-          onClick={() =>
-            navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets')
-          }
+          onClick={() => {
+            if (isProjectScoped && projectId) {
+              navigate(isEditMode 
+                ? `/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}` 
+                : `/projects/${projectId}`);
+            } else {
+              navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets');
+            }
+          }}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -187,9 +218,15 @@ export const SecretFormPage: React.FC = () => {
           <Button
             type="button"
             variant="secondary"
-            onClick={() =>
-              navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets')
-            }
+            onClick={() => {
+              if (isProjectScoped && projectId) {
+                navigate(isEditMode 
+                  ? `/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}` 
+                  : `/projects/${projectId}`);
+              } else {
+                navigate(isEditMode ? `/secrets/${encodeURIComponent(secretKey)}` : '/secrets');
+              }
+            }}
           >
             Cancel
           </Button>

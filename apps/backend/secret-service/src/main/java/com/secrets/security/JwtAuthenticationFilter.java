@@ -3,6 +3,7 @@ package com.secrets.security;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.secrets.service.UserService;
+import com.secrets.service.WorkflowService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,6 +37,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     
     @Autowired(required = false)
     private UserService userService;
+    
+    @Autowired(required = false)
+    private WorkflowService workflowService;
     
     @Value("${google.cloud.identity.enabled:false}")
     private boolean firebaseEnabled;
@@ -71,8 +75,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 String photoUrl = firebaseToken.getPicture();
                                 
                                 // Ensure user exists in local database
-                                userService.getOrCreateUser(uid, email, displayName, photoUrl);
+                                com.secrets.entity.User user = userService.getOrCreateUser(uid, email, displayName, photoUrl);
                                 log.debug("Ensured user exists in local database: {}", email);
+                                
+                                // Ensure default workflow exists for the user
+                                if (workflowService != null) {
+                                    try {
+                                        workflowService.ensureDefaultWorkflow(user.getId());
+                                        log.debug("Ensured default workflow exists for user: {}", email);
+                                    } catch (Exception e) {
+                                        log.warn("Failed to create default workflow for user, continuing: {}", e.getMessage());
+                                        // Don't fail authentication if workflow creation fails
+                                    }
+                                }
                             } catch (Exception e) {
                                 log.warn("Failed to create/update user in local database, continuing with authentication: {}", e.getMessage());
                                 // Don't fail authentication if user creation fails
