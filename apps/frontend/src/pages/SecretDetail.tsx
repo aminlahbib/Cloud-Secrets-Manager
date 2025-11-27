@@ -44,7 +44,11 @@ export const SecretDetailPage: React.FC = () => {
 
   const { data: secret, isLoading, error } = useQuery<Secret>({
     queryKey: ['project-secret', projectId, secretKey],
-    queryFn: () => secretsService.getProjectSecret(projectId, secretKey),
+    queryFn: async () => {
+      const data = await secretsService.getProjectSecret(projectId, secretKey);
+      console.log('DEBUG: Fetched secret:', data);
+      return data;
+    },
     enabled: !!secretKey && !!projectId,
   });
 
