@@ -87,7 +87,18 @@ export const ProjectDetailPage: React.FC = () => {
   // Debug: Log tab changes
   useEffect(() => {
     console.log('Active tab changed to:', activeTab);
-  }, [activeTab]);
+    console.log('Project ID:', projectId);
+    console.log('Activity view:', activityView);
+  }, [activeTab, projectId, activityView]);
+
+  // Prevent tab from resetting on errors
+  useEffect(() => {
+    if (activeTab === 'activity') {
+      console.log('Activity tab is active, checking queries...');
+      console.log('Analytics loading:', isAnalyticsLoading, 'Error:', analyticsError);
+      console.log('Activity loading:', isActivityLoading, 'Error:', activityError);
+    }
+  }, [activeTab, isAnalyticsLoading, analyticsError, isActivityLoading, activityError]);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -129,10 +140,14 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
     enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
     retry: false,
-    onError: (error) => {
-      console.error('Activity list query error:', error);
-    },
   });
+
+  // Log activity errors
+  useEffect(() => {
+    if (activityError) {
+      console.error('Activity list query error:', activityError);
+    }
+  }, [activityError]);
 
   // Fetch all activity logs for analytics (larger size, with date filter)
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery<AuditLogsResponse>({
@@ -147,15 +162,24 @@ export const ProjectDetailPage: React.FC = () => {
     },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
-    onError: (error) => {
-      console.error('Analytics query error:', error);
-    },
   });
+
+  // Log analytics errors
+  useEffect(() => {
+    if (analyticsError) {
+      console.error('Analytics query error:', analyticsError);
+    }
+  }, [analyticsError]);
 
   // Calculate analytics stats
   const analyticsStats = useMemo(() => {
-    if (!analyticsData?.content) return null;
-    return calculateActivityStats(analyticsData.content);
+    if (!analyticsData || !('content' in analyticsData) || !analyticsData.content) return null;
+    try {
+      return calculateActivityStats(analyticsData.content);
+    } catch (error) {
+      console.error('Error calculating analytics stats:', error);
+      return null;
+    }
   }, [analyticsData]);
 
   // Prepare chart data
@@ -712,7 +736,7 @@ export const ProjectDetailPage: React.FC = () => {
                     <p className="text-sm text-gray-500">{String(analyticsError)}</p>
                   </div>
                 </Card>
-              ) : !analyticsData || analyticsData.content.length === 0 ? (
+              ) : !analyticsData || !('content' in analyticsData) || analyticsData.content.length === 0 ? (
                 <Card className="p-6">
                   <EmptyState
                     icon={<Activity className="h-16 w-16 text-gray-400" />}
@@ -720,76 +744,101 @@ export const ProjectDetailPage: React.FC = () => {
                     description="Activity for this project will appear here as actions are performed"
                   />
                 </Card>
-              ) : analyticsStats ? (
-                <div className="space-y-6">
-                  {/* Stats Cards */}
-                  <StatsCards stats={analyticsStats} />
+              ) : (() => {
+                try {
+                  if (!analyticsStats) {
+                    return (
+                      <Card className="p-6">
+                        <EmptyState
+                          icon={<Activity className="h-16 w-16 text-gray-400" />}
+                          title="No Activity"
+                          description="Activity for this project will appear here as actions are performed"
+                        />
+                      </Card>
+                    );
+                  }
+                  return (
+                    <div className="space-y-6">
+                      {/* Stats Cards */}
+                      <StatsCards stats={analyticsStats} />
 
-                  {/* Charts */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <ActivityChart data={chartData} title="Activity Over Time" type="line" />
-                    <ActionDistributionChart 
-                      actionsByType={analyticsStats.actionsByType} 
-                      title="Actions Distribution" 
-                    />
-                  </div>
+                      {/* Charts */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <ActivityChart data={chartData} title="Activity Over Time" type="line" />
+                        <ActionDistributionChart 
+                          actionsByType={analyticsStats.actionsByType} 
+                          title="Actions Distribution" 
+                        />
+                      </div>
 
-                  {/* Top Users and Actions */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Top Users */}
-                    <Card className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Contributors</h3>
-                      {analyticsStats.topUsers.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No user data available</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {analyticsStats.topUsers.map((user, index) => (
-                            <div key={user.userId} className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
-                                  {index + 1}
+                      {/* Top Users and Actions */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top Users */}
+                        <Card className="p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Contributors</h3>
+                          {analyticsStats.topUsers.length === 0 ? (
+                            <p className="text-gray-500 text-sm">No user data available</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {analyticsStats.topUsers.map((user, index) => (
+                                <div key={user.userId} className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {user.email || 'Unknown User'}
+                                      </p>
+                                      <p className="text-xs text-gray-500">{user.count} actions</p>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {user.email || 'Unknown User'}
-                                  </p>
-                                  <p className="text-xs text-gray-500">{user.count} actions</p>
-                                </div>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </Card>
+                          )}
+                        </Card>
 
-                    {/* Top Actions */}
-                    <Card className="p-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Actions</h3>
-                      {analyticsStats.topActions.length === 0 ? (
-                        <p className="text-gray-500 text-sm">No action data available</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {analyticsStats.topActions.map((action, index) => (
-                            <div key={action.action} className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
-                                  {index + 1}
+                        {/* Top Actions */}
+                        <Card className="p-6">
+                          <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Actions</h3>
+                          {analyticsStats.topActions.length === 0 ? (
+                            <p className="text-gray-500 text-sm">No action data available</p>
+                          ) : (
+                            <div className="space-y-3">
+                              {analyticsStats.topActions.map((action, index) => (
+                                <div key={action.action} className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
+                                      {index + 1}
+                                    </div>
+                                    <div>
+                                      <p className="text-sm font-medium text-gray-900">
+                                        {formatActionName(action.action)}
+                                      </p>
+                                      <p className="text-xs text-gray-500">{action.count} occurrences</p>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">
-                                    {formatActionName(action.action)}
-                                  </p>
-                                  <p className="text-xs text-gray-500">{action.count} occurrences</p>
-                                </div>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      )}
+                          )}
+                        </Card>
+                      </div>
+                    </div>
+                  );
+                } catch (error) {
+                  console.error('Error rendering analytics:', error);
+                  return (
+                    <Card className="p-6">
+                      <div className="text-center">
+                        <p className="text-red-600 mb-2">Error rendering analytics</p>
+                        <p className="text-sm text-gray-500">{String(error)}</p>
+                      </div>
                     </Card>
-                  </div>
-                </div>
-              ) : null}
+                  );
+                }
+              })()}
             </>
           )}
 
@@ -807,7 +856,7 @@ export const ProjectDetailPage: React.FC = () => {
                     <p className="text-sm text-gray-500">{String(activityError)}</p>
                   </div>
                 </Card>
-              ) : !activityData || activityData.content.length === 0 ? (
+              ) : !activityData || !('content' in activityData) || activityData.content.length === 0 ? (
                 <Card className="p-6">
                   <EmptyState
                     icon={<Activity className="h-16 w-16 text-gray-400" />}
