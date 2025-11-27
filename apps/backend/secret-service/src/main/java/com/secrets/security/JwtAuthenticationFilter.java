@@ -1,6 +1,9 @@
 package com.secrets.security;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.secrets.service.UserService;
+import com.secrets.service.WorkflowService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +35,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired(required = false)
     private GoogleIdentityTokenValidator firebaseTokenValidator;
     
+    @Autowired(required = false)
+    private UserService userService;
+    
+    @Autowired(required = false)
+    private WorkflowService workflowService;
+    
     @Value("${google.cloud.identity.enabled:false}")
     private boolean firebaseEnabled;
 
@@ -55,6 +64,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                         authentication = firebaseTokenValidator.validateToken(jwt);
                         log.debug("Successfully validated Firebase ID token");
+                        
+                        // Auto-create user in local database if they don't exist
+                        if (authentication != null && authentication.getDetails() instanceof FirebaseToken && userService != null) {
+                            try {
+                                FirebaseToken firebaseToken = (FirebaseToken) authentication.getDetails();
+                                String uid = firebaseToken.getUid();
+                                String email = firebaseToken.getEmail();
+                                String displayName = firebaseToken.getName();
+                                String photoUrl = firebaseToken.getPicture();
+                                
+                                // Ensure user exists in local database
+                                com.secrets.entity.User user = userService.getOrCreateUser(uid, email, displayName, photoUrl);
+                                log.debug("Ensured user exists in local database: {}", email);
+                                
+                                // Ensure default workflow exists for the user
+                                if (workflowService != null) {
+                                    try {
+                                        workflowService.ensureDefaultWorkflow(user.getId());
+                                        log.debug("Ensured default workflow exists for user: {}", email);
+                                    } catch (Exception e) {
+                                        log.warn("Failed to create default workflow for user, continuing: {}", e.getMessage());
+                                        // Don't fail authentication if workflow creation fails
+                                    }
+                                }
+                            } catch (Exception e) {
+                                log.warn("Failed to create/update user in local database, continuing with authentication: {}", e.getMessage());
+                                // Don't fail authentication if user creation fails
+                            }
+                        }
                     } catch (FirebaseAuthException e) {
                         log.debug("Token is not a valid Firebase token, trying local JWT: {}", e.getMessage());
                         // Fall through to local JWT validation

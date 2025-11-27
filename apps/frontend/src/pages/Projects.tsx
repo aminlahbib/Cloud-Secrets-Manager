@@ -104,7 +104,7 @@ export const ProjectsPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search projects..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
           />
         </div>
         <label className="flex items-center space-x-2 text-sm text-gray-600">
@@ -112,7 +112,7 @@ export const ProjectsPage: React.FC = () => {
             type="checkbox"
             checked={showArchived}
             onChange={(e) => setShowArchived(e.target.checked)}
-            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
           />
           <span>Show archived</span>
         </label>
@@ -153,7 +153,7 @@ export const ProjectsPage: React.FC = () => {
                 bg-white rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
                 ${project.isArchived 
                   ? 'border-gray-200 opacity-75' 
-                  : 'border-gray-100 hover:shadow-md hover:border-purple-200'
+                  : 'border-neutral-200 hover:shadow-md hover:border-neutral-900'
                 }
               `}>
                 <div className="flex justify-between items-start mb-4">
@@ -161,13 +161,13 @@ export const ProjectsPage: React.FC = () => {
                     p-3 rounded-lg transition-colors
                     ${project.isArchived 
                       ? 'bg-gray-100' 
-                      : 'bg-purple-50 group-hover:bg-purple-100'
+                      : 'bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white transition-colors'
                     }
                   `}>
                     {project.isArchived ? (
                       <Archive className="w-8 h-8 text-gray-400" />
                     ) : (
-                      <Folder className="w-8 h-8 text-purple-600" />
+                      <Folder className="w-8 h-8" />
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export const ProjectsPage: React.FC = () => {
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-purple-700 transition-colors">
+                  <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-neutral-900">
                     {project.name}
                   </h3>
                   {project.description && (
@@ -218,7 +218,7 @@ export const ProjectsPage: React.FC = () => {
           {/* Create New Project Card */}
           <button
             onClick={() => setShowCreateModal(true)}
-            className="border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:border-purple-400 hover:text-purple-600 transition-colors min-h-[200px]"
+            className="border-2 border-dashed border-neutral-300 rounded-xl p-6 flex flex-col items-center justify-center text-neutral-400 hover:border-neutral-900 hover:text-neutral-900 transition-colors min-h-[200px]"
           >
             <Plus className="w-12 h-12 mb-3 opacity-50" />
             <span className="font-medium">Create new project</span>
@@ -263,7 +263,7 @@ export const ProjectsPage: React.FC = () => {
               onChange={(e) => setNewProjectDescription(e.target.value)}
               placeholder="Brief description of this project..."
               rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
             />
           </div>
 

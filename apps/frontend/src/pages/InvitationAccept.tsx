@@ -38,10 +38,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // Show loading while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-          <Loader2 className="h-12 w-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <Loader2 className="h-12 w-12 text-neutral-900 animate-spin mx-auto mb-4" />
+          <p className="text-neutral-600">Loading...</p>
         </div>
       </div>
     );
@@ -50,16 +50,16 @@ export const InvitationAcceptPage: React.FC = () => {
   // If not authenticated, prompt to login
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="bg-purple-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-            <Mail className="h-8 w-8 text-purple-600" />
+          <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+            <Mail className="h-8 w-8 text-neutral-700" />
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-neutral-900 mb-2">
             You've Been Invited!
           </h1>
-          <p className="text-gray-600 mb-8">
+          <p className="text-neutral-600 mb-8">
             Sign in or create an account to accept this project invitation.
           </p>
           
@@ -70,7 +70,7 @@ export const InvitationAcceptPage: React.FC = () => {
             </Button>
           </Link>
           
-          <p className="mt-6 text-sm text-gray-500">
+          <p className="mt-6 text-sm text-neutral-500">
             After signing in, you'll automatically join the project.
           </p>
         </div>
@@ -81,13 +81,13 @@ export const InvitationAcceptPage: React.FC = () => {
   // Processing state
   if (acceptMutation.isPending || status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-          <Loader2 className="h-12 w-12 text-purple-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <Loader2 className="h-12 w-12 text-neutral-900 animate-spin mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-neutral-900 mb-2">
             Accepting Invitation...
           </h2>
-          <p className="text-gray-600">
+          <p className="text-neutral-600">
             Please wait while we add you to the project.
           </p>
         </div>
@@ -98,16 +98,16 @@ export const InvitationAcceptPage: React.FC = () => {
   // Success state
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="bg-green-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-            <CheckCircle className="h-8 w-8 text-green-600" />
+          <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+            <CheckCircle className="h-8 w-8 text-neutral-700" />
           </div>
           
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl font-bold text-neutral-900 mb-2">
             Welcome to the Project!
           </h1>
-          <p className="text-gray-600 mb-8">
+          <p className="text-neutral-600 mb-8">
             You've successfully joined the project. You can now access its secrets and collaborate with your team.
           </p>
           
@@ -122,16 +122,16 @@ export const InvitationAcceptPage: React.FC = () => {
 
   // Error state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-        <div className="bg-red-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-          <XCircle className="h-8 w-8 text-red-600" />
+        <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
+          <XCircle className="h-8 w-8 text-neutral-700" />
         </div>
         
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold text-neutral-900 mb-2">
           Invitation Failed
         </h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-neutral-600 mb-8">
           {errorMessage}
         </p>
         

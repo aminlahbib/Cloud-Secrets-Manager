@@ -1,159 +1,77 @@
-import React, { useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Copy,
-  Share2,
-  CheckCircle,
-  RefreshCw,
-} from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { secretsService, type ShareSecretPayload } from '../services/secrets';
-import { Spinner } from '../components/ui/Spinner';
+import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { ArrowLeft, Edit, Trash2, Copy, Eye, EyeOff, RotateCcw, Clock } from 'lucide-react';
+import { secretsService } from '../services/secrets';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { Card } from '../components/ui/Card';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { useAuth } from '../contexts/AuthContext';
+import { Badge } from '../components/ui/Badge';
+import { Spinner } from '../components/ui/Spinner';
+import { queryClient } from '../main';
+import type { Secret, SecretVersion } from '../types';
 
 export const SecretDetailPage: React.FC = () => {
-  const { key: keyParam } = useParams<{ key: string }>();
+  const { projectId, key: keyParam } = useParams<{ projectId: string; key: string }>();
   const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  useAuth(); // For authentication check
-
   const [showValue, setShowValue] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showRotateModal, setShowRotateModal] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [pendingUnshare, setPendingUnshare] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ShareSecretPayload>({
-    defaultValues: {
-      sharedWith: '',
-      permission: 'READ',
-    },
+  // Early return if secretKey is missing
+  if (!secretKey || !projectId) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">
+            Invalid URL. Please navigate from a project page.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/home')}
+            className="mt-4"
+          >
+            Back to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const { data: secret, isLoading, error } = useQuery<Secret>({
+    queryKey: ['project-secret', projectId, secretKey],
+    queryFn: () => secretsService.getProjectSecret(projectId, secretKey),
+    enabled: !!secretKey && !!projectId,
   });
 
-  const { data: secret, isLoading, error } = useQuery({
-    queryKey: ['secret', secretKey],
-    queryFn: () => secretsService.getSecret(secretKey),
-    enabled: !!secretKey,
+  const { data: versions } = useQuery<SecretVersion[]>({
+    queryKey: ['project-secret-versions', projectId, secretKey],
+    queryFn: () => secretsService.getProjectSecretVersions(projectId, secretKey),
+    enabled: !!secretKey && !!projectId,
   });
-
-  const { data: versions, isLoading: isVersionsLoading } = useQuery({
-    queryKey: ['secret', secretKey, 'versions'],
-    queryFn: () => secretsService.getSecretVersions(secretKey),
-    enabled: !!secretKey,
-  });
-
-  const {
-    data: sharedUsers,
-    isLoading: isSharingLoading,
-    error: sharingError,
-  } = useQuery({
-    queryKey: ['secret', secretKey, 'shared-users'],
-    queryFn: () => secretsService.getSharedUsers(secretKey),
-    enabled: !!secretKey,
-  });
-
-  // Legacy permission checks - these pages will be deprecated in v3
-  // For now, grant full access since permissions are now project-scoped
-  const canWrite = true; // Will be determined by project membership in v3
-  const canDelete = true;
-  const canShare = true;
-  const canRotate = true;
 
   const deleteMutation = useMutation({
-    mutationFn: () => secretsService.deleteSecret(secretKey),
+    mutationFn: () => secretsService.deleteProjectSecret(projectId, secretKey),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['secrets'] });
-      navigate('/secrets');
-    },
-  });
-
-  const shareMutation = useMutation({
-    mutationFn: (payload: ShareSecretPayload) => secretsService.shareSecret(secretKey, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['secret', secretKey, 'shared-users'] });
-      reset();
-      setShowShareModal(false);
-    },
-  });
-
-  const unshareMutation = useMutation({
-    mutationFn: (sharedWith: string) => secretsService.unshareSecret(secretKey, sharedWith),
-    onMutate: (sharedWith: string) => {
-      setPendingUnshare(sharedWith);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['secret', secretKey, 'shared-users'] });
-    },
-    onSettled: () => {
-      setPendingUnshare(null);
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      navigate(`/projects/${projectId}`);
     },
   });
 
   const rotateMutation = useMutation({
-    mutationFn: () => secretsService.rotateSecret(secretKey),
+    mutationFn: () => secretsService.rotateProjectSecret(projectId, secretKey),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['secret', secretKey] });
-      queryClient.invalidateQueries({ queryKey: ['secret', secretKey, 'versions'] });
-      setShowRotateModal(false);
+      queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
+      queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
     },
   });
 
-  const handleCopyValue = () => {
-    if (secret?.value) {
-      navigator.clipboard.writeText(secret.value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
     }
   };
-
-  const handleDelete = () => {
-    deleteMutation.mutate();
-  };
-
-  const handleShare = (payload: ShareSecretPayload) => {
-    shareMutation.mutate(payload);
-  };
-
-  const sensitiveValue = showValue ? secret?.value : '••••••••••••••••••••';
-
-  const statusBadge = useMemo(() => {
-    if (!secret) return null;
-    const isExpired =
-      secret.expired ||
-      (secret.expiresAt ? new Date(secret.expiresAt).getTime() < Date.now() : false);
-
-    if (isExpired) {
-      return <Badge variant="danger">Expired</Badge>;
-    }
-
-    if (secret.expiresAt) {
-      return (
-        <Badge variant="warning">
-          Expires {new Date(secret.expiresAt).toLocaleDateString()}
-        </Badge>
-      );
-    }
-
-    return <Badge variant="default">Active</Badge>;
-  }, [secret]);
 
   if (isLoading) {
     return (
@@ -168,314 +86,153 @@ export const SecretDetailPage: React.FC = () => {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800">
-            Failed to load secret. It may have been deleted.
+            Failed to load secret. It may have been deleted or you do not have access.
           </p>
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/secrets')}
-            className="mt-4"
-          >
-            Back to Secrets
+          <Button variant="secondary" onClick={() => navigate(`/projects/${projectId}`)} className="mt-4">
+            Back to Project
           </Button>
         </div>
       </div>
     );
   }
 
+  const isExpired = secret.expiresAt && new Date(secret.expiresAt) < new Date();
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/secrets')}
-          className="mb-4"
-        >
+      <div className="mb-6 flex items-center justify-between">
+        <Button variant="ghost" onClick={() => navigate(`/projects/${projectId}`)} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Secrets
+          Back to Project
         </Button>
 
-        <div className="sm:flex sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">{secret.key}</h1>
-              {statusBadge}
-            </div>
-            <p className="mt-2 text-sm text-gray-600">
-              Created by {secret.createdBy || 'you'} on{' '}
-              {new Date(secret.createdAt).toLocaleString()}
-            </p>
-          </div>
-          <div className="mt-4 sm:mt-0 flex flex-wrap gap-3">
-            {canWrite && (
-              <Button
-                variant="secondary"
-                onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            )}
-            {canRotate && (
-              <Button variant="secondary" onClick={() => setShowRotateModal(true)}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Rotate
-              </Button>
-            )}
-            {canDelete && (
-              <Button variant="danger" onClick={() => setShowDeleteModal(true)}>
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            )}
-          </div>
+        <div className="flex space-x-2">
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}/edit`)}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            Edit
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => rotateMutation.mutate()}
+            disabled={rotateMutation.isPending}
+          >
+            <RotateCcw className={`h-4 w-4 mr-2 ${rotateMutation.isPending ? 'animate-spin' : ''}`} />
+            Rotate
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => {
+              if (confirm('Are you sure you want to delete this secret? This action cannot be undone.')) {
+                deleteMutation.mutate();
+              }
+            }}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Secret Info */}
         <div className="lg:col-span-2 space-y-6">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Secret Value</h2>
+              <h1 className="text-2xl font-bold text-gray-900">{secret.secretKey}</h1>
               <div className="flex space-x-2">
-                <Button variant="ghost" size="sm" onClick={() => setShowValue(!showValue)}>
-                  {showValue ? (
-                    <>
-                      <EyeOff className="h-4 w-4 mr-2" />
-                      Hide
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="h-4 w-4 mr-2" />
-                      Show
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCopyValue}
-                  disabled={copied}
-                >
-                  {copied ? (
-                    <>
-                      <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy
-                    </>
-                  )}
-                </Button>
+                {isExpired && <Badge variant="danger">Expired</Badge>}
+                <Badge variant="default">v{secret.version || 1}</Badge>
               </div>
             </div>
-            <div className="bg-gray-50 rounded-md p-4 font-mono text-sm break-all">
-              {sensitiveValue}
-            </div>
-            {secret.expiresAt && (
-              <p className="mt-3 text-xs text-gray-500">
-                Secret expires {new Date(secret.expiresAt).toLocaleString()}
-              </p>
-            )}
-          </Card>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Version History</h2>
-              <Badge variant="info">Current v{secret.version ?? versions?.[0]?.versionNumber ?? 1}</Badge>
-            </div>
-            {isVersionsLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Spinner size="sm" />
-              </div>
-            ) : versions && versions.length > 0 ? (
-              <div className="space-y-3">
-                {versions.map((version) => (
-                  <div
-                    key={version.id}
-                    className="flex items-center justify-between border border-gray-100 rounded-lg p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        Version {version.versionNumber}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {version.changedBy} • {new Date(version.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <Badge variant="default">
-                      {version.changeDescription || 'Updated'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-600">
-                No version history yet. Rotations and edits will appear here.
-              </p>
+            {secret.description && (
+              <p className="text-gray-600 mb-4">{secret.description}</p>
             )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Value</label>
+                <div className="flex space-x-2">
+                  <div className="flex-1 relative">
+                    <input
+                      type={showValue ? 'text' : 'password'}
+                      value={secret.value || ''}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 font-mono text-sm"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowValue(!showValue)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showValue ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => copyToClipboard(secret.value || '')}
+                  >
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {secret.expiresAt && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Expires At
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Clock className="h-4 w-4 text-gray-400" />
+                    <span className={isExpired ? 'text-red-600' : 'text-gray-900'}>
+                      {new Date(secret.expiresAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="text-sm text-gray-500">
+                Created {new Date(secret.createdAt).toLocaleString()}
+                {secret.creator && ` by ${secret.creator.email}`}
+              </div>
+            </div>
           </Card>
         </div>
 
+        {/* Version History */}
         <div className="space-y-6">
           <Card className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Metadata</h2>
-            <div className="space-y-3 text-sm text-gray-600">
-              <div>
-                <span className="font-medium text-gray-900">Owner:</span> {secret.createdBy || 'Unknown'}
-              </div>
-              <div>
-                <span className="font-medium text-gray-900">Created:</span>{' '}
-                {new Date(secret.createdAt).toLocaleString()}
-              </div>
-              <div>
-                <span className="font-medium text-gray-900">Last updated:</span>{' '}
-                {new Date(secret.updatedAt).toLocaleString()}
-              </div>
-              {secret.expiresAt && (
-                <div>
-                  <span className="font-medium text-gray-900">Expires:</span>{' '}
-                  {new Date(secret.expiresAt).toLocaleString()}
-                </div>
-              )}
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Sharing</h2>
-              {canShare && (
-                <Button variant="ghost" size="sm" onClick={() => setShowShareModal(true)}>
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
-                </Button>
-              )}
-            </div>
-            {isSharingLoading ? (
-              <div className="flex items-center justify-center py-4">
-                <Spinner size="sm" />
-              </div>
-            ) : sharingError ? (
-              <p className="text-sm text-red-600">
-                Failed to load sharing data. Please refresh.
-              </p>
-            ) : sharedUsers && sharedUsers.length > 0 ? (
-              <div className="space-y-4">
-                {sharedUsers.map((shared) => (
-                  <div key={shared.sharedWith} className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Version History</h2>
+            {versions && versions.length > 0 ? (
+              <div className="space-y-3">
+                {versions.slice(0, 10).map((version) => (
+                  <div key={version.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{shared.sharedWith}</p>
-                      <p className="text-xs text-gray-500">
-                        {shared.permission} • Shared{' '}
-                        {new Date(shared.sharedAt).toLocaleString()}
-                      </p>
+                      <div className="font-medium">Version {version.versionNumber}</div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(version.createdAt).toLocaleString()}
+                      </div>
                     </div>
-                    {canShare && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => unshareMutation.mutate(shared.sharedWith)}
-                        isLoading={pendingUnshare === shared.sharedWith && unshareMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                    {version.changeNote && (
+                      <div className="text-sm text-gray-600 max-w-32 truncate">
+                        {version.changeNote}
+                      </div>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-600">
-                This secret is private. Use the share button to grant access.
-              </p>
+              <p className="text-gray-500 text-sm">No version history available</p>
             )}
           </Card>
         </div>
       </div>
-
-      <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Secret">
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Are you sure you want to delete <strong>{secret.key}</strong>? This action cannot be undone.
-          </p>
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleDelete}
-              isLoading={deleteMutation.isPending}
-            >
-              Delete Secret
-            </Button>
-          </div>
-          {deleteMutation.isError && (
-            <p className="text-sm text-red-600">Failed to delete the secret. Please try again.</p>
-          )}
-        </div>
-      </Modal>
-
-      <Modal isOpen={showShareModal} onClose={() => setShowShareModal(false)} title="Share Secret" size="md">
-        <form onSubmit={handleSubmit(handleShare)} className="space-y-4">
-          <Input
-            label="User email or username"
-            placeholder="user@example.com"
-            {...register('sharedWith', { required: 'User is required' })}
-            error={errors.sharedWith?.message}
-          />
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Permission</label>
-            <select
-              {...register('permission')}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
-            >
-              <option value="READ">Read</option>
-              <option value="WRITE">Write</option>
-            </select>
-          </div>
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" type="button" onClick={() => setShowShareModal(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" isLoading={shareMutation.isPending}>
-              Share Secret
-            </Button>
-          </div>
-          {shareMutation.isError && (
-            <p className="text-sm text-red-600">
-              Failed to share the secret. Ensure the user exists and try again.
-            </p>
-          )}
-        </form>
-      </Modal>
-
-      <Modal
-        isOpen={showRotateModal}
-        onClose={() => setShowRotateModal(false)}
-        title="Rotate Secret"
-      >
-        <div className="space-y-4">
-          <p className="text-gray-700">
-            Rotating will generate a brand new secret value and create a new version. Continue?
-          </p>
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={() => setShowRotateModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => rotateMutation.mutate()}
-              isLoading={rotateMutation.isPending}
-            >
-              Rotate
-            </Button>
-          </div>
-          {rotateMutation.isError && (
-            <p className="text-sm text-red-600">Rotation failed. Please try again.</p>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 };
-

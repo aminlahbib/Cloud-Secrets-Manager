@@ -6,7 +6,7 @@ import com.secrets.dto.SecretVersionResponse;
 import com.secrets.entity.Secret;
 import com.secrets.entity.SecretVersion;
 import com.secrets.service.ProjectSecretService;
-import com.secrets.service.SecretService;
+import com.secrets.util.EncryptionUtil;
 import com.secrets.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -33,14 +33,14 @@ import java.util.stream.Collectors;
 public class ProjectSecretController {
 
     private final ProjectSecretService projectSecretService;
-    private final SecretService secretService; // For decryption
+    private final EncryptionUtil encryptionUtil;
     private final UserService userService;
 
     public ProjectSecretController(ProjectSecretService projectSecretService,
-                                  SecretService secretService,
+                                  EncryptionUtil encryptionUtil,
                                   UserService userService) {
         this.projectSecretService = projectSecretService;
-        this.secretService = secretService;
+        this.encryptionUtil = encryptionUtil;
         this.userService = userService;
     }
 
@@ -62,7 +62,7 @@ public class ProjectSecretController {
         Page<Secret> secrets = projectSecretService.listProjectSecrets(projectId, userId, keyword, pageable);
         
         Page<SecretResponse> responses = secrets.map(secret -> {
-            String decryptedValue = secretService.decryptSecretValue(secret);
+            String decryptedValue = encryptionUtil.decryptSecretValue(secret);
             return SecretResponse.from(secret, decryptedValue);
         });
         
@@ -78,7 +78,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.getProjectSecret(projectId, key, userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
@@ -92,7 +92,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.createProjectSecret(projectId, request, userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(SecretResponse.from(secret, decryptedValue));
@@ -108,7 +108,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.updateProjectSecret(projectId, key, request, userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
@@ -134,7 +134,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.rotateProjectSecret(projectId, key, userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
@@ -149,7 +149,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.moveSecret(projectId, key, request.getTargetProjectId(), userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
@@ -164,7 +164,7 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.copySecret(projectId, key, request.getTargetProjectId(), request.getNewKey(), userId);
-        String decryptedValue = secretService.decryptSecretValue(secret);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }

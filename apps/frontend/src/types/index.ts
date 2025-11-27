@@ -254,6 +254,16 @@ export interface AuditLog {
 // API Response Types
 // ----------------------------------------------------------------------------
 
+export interface SecretsListParams {
+  page?: number;
+  size?: number;
+  keyword?: string;
+  sortBy?: string;
+  sortDir?: 'ASC' | 'DESC';
+}
+
+export interface SecretsListResponse extends PaginatedResponse<Secret> {}
+
 export interface PaginatedResponse<T> {
   content: T[];
   page: number;
@@ -298,6 +308,13 @@ export interface SharedSecret {
   sharedBy: string;
   permission: Permission | string;
   sharedAt: string;
+}
+
+export interface SecretFormValues {
+  key: string;
+  value: string;
+  description?: string;
+  expiresAt?: Date;
 }
 
 export interface SecretFormData {

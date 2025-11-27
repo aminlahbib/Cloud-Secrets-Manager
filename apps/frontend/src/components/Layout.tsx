@@ -1,24 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { workflowsService } from '../services/workflows';
-import { 
-  LayoutDashboard, 
-  Folder, 
-  FolderOpen,
-  Activity, 
-  Users, 
-  Settings, 
+import { Button } from './ui/Button';
+import {
+  LayoutDashboard,
+  Folder,
+  Activity,
+  Users,
+  Settings,
   LogOut,
   User,
   Menu,
   X,
   Plus,
   ChevronDown,
-  ChevronRight,
-  Shield,
-  Bell
+  Shield
 } from 'lucide-react';
 import type { Workflow } from '../types';
 
@@ -31,25 +29,45 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedWorkflows, setExpandedWorkflows] = useState<Set<string>>(new Set());
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [isWorkflowMenuOpen, setIsWorkflowMenuOpen] = useState(false);
+  const workflowSelectorRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch user's workflows
   const { data: workflows } = useQuery<Workflow[]>({
-    queryKey: ['workflows'],
+    queryKey: ['workflows', user?.id],
     queryFn: () => workflowsService.listWorkflows(),
+    enabled: !!user?.id,
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  const toggleWorkflow = (workflowId: string) => {
-    setExpandedWorkflows(prev => {
-      const next = new Set(prev);
-      if (next.has(workflowId)) {
-        next.delete(workflowId);
-      } else {
-        next.add(workflowId);
+  useEffect(() => {
+    if (!selectedWorkflowId && workflows && workflows.length > 0) {
+      const defaultWorkflow = workflows.find((wf) => wf.isDefault) || workflows[0];
+      setSelectedWorkflowId(defaultWorkflow.id);
+    }
+  }, [workflows, selectedWorkflowId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        workflowSelectorRef.current &&
+        !workflowSelectorRef.current.contains(event.target as Node)
+      ) {
+        setIsWorkflowMenuOpen(false);
       }
-      return next;
-    });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedWorkflow = workflows?.find((wf) => wf.id === selectedWorkflowId);
+
+  const handleWorkflowSelect = (workflowId: string) => {
+    setSelectedWorkflowId(workflowId);
+    setIsWorkflowMenuOpen(false);
+    navigate(`/workflows/${workflowId}`);
   };
 
   const mainNavigation = [
@@ -71,77 +89,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm z-20 relative border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <button
-                onClick={toggleSidebar}
-                className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500 md:hidden"
-              >
-                {isSidebarOpen ? (
-                  <X className="h-6 w-6" aria-hidden="true" />
-                ) : (
-                  <Menu className="h-6 w-6" aria-hidden="true" />
-                )}
-              </button>
-              <Link to="/home" className="flex items-center space-x-3 md:ml-0 ml-3">
-                <div className="bg-gradient-to-br from-purple-600 to-indigo-600 p-2 rounded-lg shadow-sm">
-                   <span className="text-white font-bold text-xl">CSM</span>
-                </div>
-                <h1 className="text-xl font-bold text-gray-900 hidden sm:block">Cloud Secrets Manager</h1>
-              </Link>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              {/* Notifications */}
-              <button className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-                <Bell className="h-5 w-5" />
-              </button>
-
-              {/* User Menu */}
-              <div className="flex items-center space-x-3 px-3 py-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer">
-                {user?.avatarUrl ? (
-                  <img 
-                    src={user.avatarUrl} 
-                    alt={user.displayName || user.email} 
-                    className="h-8 w-8 rounded-full"
-                  />
-                ) : (
-                  <div className="bg-purple-100 p-2 rounded-full">
-                    <User className="h-5 w-5 text-purple-600" />
-                  </div>
-                )}
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-gray-700">
-                    {user?.displayName || user?.email?.split('@')[0]}
-                  </p>
-                  {isPlatformAdmin && (
-                    <p className="text-xs text-purple-600 font-medium flex items-center">
-                      <Shield className="h-3 w-3 mr-1" />
-                      Platform Admin
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
+    <div className="min-h-screen bg-neutral-100 text-neutral-900">
+      <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-10 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:shadow-none border-r border-gray-200 pt-16 md:pt-0
+            fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-neutral-200 flex flex-col justify-between px-6 py-8 transition-transform duration-300 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
-          <div className="h-full flex flex-col">
-            {/* Main Navigation */}
-            <nav className="mt-5 px-3 space-y-1">
+          <div>
+            <Link to="/home" className="flex items-center space-x-3">
+              <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold">
+                CSM
+              </div>
+              <span className="text-lg font-semibold tracking-tight">Cloud Secrets</span>
+            </Link>
+
+            <div className="mt-10 space-y-1">
               {mainNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = isActiveLink(item.href);
@@ -150,110 +114,106 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`
-                      group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                      ${isActive 
-                        ? 'bg-purple-50 text-purple-700' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }
-                    `}
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-neutral-100 text-neutral-900'
+                        : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    }`}
                   >
-                    <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        isActive ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-500'
-                      }`}
-                    />
+                    <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
                     {item.name}
                   </Link>
                 );
               })}
-            </nav>
-
-            {/* Workflows Section */}
-            <div className="mt-6 px-3">
-              <div className="flex items-center justify-between px-3 mb-2">
-                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Workflows
-                </h3>
-                <button 
-                  onClick={() => navigate('/workflows/new')}
-                  className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded transition-colors"
-                  title="New Workflow"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              
-              <div className="space-y-1 max-h-64 overflow-y-auto">
-                {workflows?.map((workflow) => {
-                  const isExpanded = expandedWorkflows.has(workflow.id);
-                  const hasProjects = workflow.projects && workflow.projects.length > 0;
-                  
-                  return (
-                    <div key={workflow.id}>
-                      <button
-                        onClick={() => hasProjects && toggleWorkflow(workflow.id)}
-                        className={`
-                          w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                          ${hasProjects ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}
-                          text-gray-600
-                        `}
-                      >
-                        {hasProjects ? (
-                          isExpanded ? (
-                            <ChevronDown className="h-4 w-4 mr-2 text-gray-400" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 mr-2 text-gray-400" />
-                          )
-                        ) : (
-                          <span className="w-4 mr-2" />
-                        )}
-                        <FolderOpen className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="truncate flex-1 text-left">{workflow.name}</span>
-                        {workflow.isDefault && (
-                          <span className="text-xs text-purple-500 ml-2">Default</span>
-                        )}
-                      </button>
-                      
-                      {/* Projects under workflow */}
-                      {isExpanded && workflow.projects && (
-                        <div className="ml-6 mt-1 space-y-1">
-                          {workflow.projects.map((wp) => (
-                            <Link
-                              key={wp.projectId}
-                              to={`/projects/${wp.projectId}`}
-                              onClick={() => setIsSidebarOpen(false)}
-                              className={`
-                                flex items-center px-3 py-1.5 text-sm rounded-md transition-colors
-                                ${location.pathname === `/projects/${wp.projectId}`
-                                  ? 'bg-purple-50 text-purple-700'
-                                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                                }
-                              `}
-                            >
-                              <Folder className="h-4 w-4 mr-2" />
-                              <span className="truncate">{wp.project?.name || 'Project'}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                
-                {(!workflows || workflows.length === 0) && (
-                  <p className="px-3 py-2 text-sm text-gray-400 italic">
-                    No workflows yet
-                  </p>
-                )}
-              </div>
             </div>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+            <div className="mt-10" ref={workflowSelectorRef}>
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 px-1 mb-3">
+                <span>Workspace</span>
+                <button
+                  onClick={() => navigate('/workflows/new')}
+                  className="text-xs font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1"
+                >
+                  <Plus className="h-4 w-4" />
+                  New
+                </button>
+              </div>
 
-            {/* Bottom Navigation */}
-            <nav className="px-3 space-y-1 mb-2">
+              {workflows && workflows.length > 0 ? (
+                <div>
+                  <button
+                    onClick={() => setIsWorkflowMenuOpen((prev) => !prev)}
+                    className={`
+                      w-full text-left rounded-2xl border px-4 py-3 transition-all flex items-center justify-between
+                      ${isWorkflowMenuOpen ? 'border-neutral-900 shadow-sm' : 'border-neutral-200 hover:border-neutral-300'}
+                    `}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900">
+                        {selectedWorkflow?.name || 'Select workflow'}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {(selectedWorkflow?.projects?.length || 0)} Projects
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-neutral-400 transition-transform ${
+                        isWorkflowMenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {isWorkflowMenuOpen && (
+                    <div className="mt-2 rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                      <div className="max-h-64 overflow-y-auto">
+                        {workflows.map((workflow) => {
+                          const isSelected = workflow.id === selectedWorkflowId;
+                          return (
+                            <button
+                              key={workflow.id}
+                              onClick={() => handleWorkflowSelect(workflow.id)}
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${
+                                isSelected ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-50'
+                              }`}
+                            >
+                              <div>
+                                <p className="font-medium">{workflow.name}</p>
+                                <p className="text-xs text-neutral-500">
+                                  {(workflow.projects?.length || 0)} Projects
+                                </p>
+                              </div>
+                              {isSelected && <span className="text-neutral-900 text-lg">•</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsWorkflowMenuOpen(false);
+                          navigate('/workflows/new');
+                        }}
+                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 border-t border-neutral-100 text-left hover:bg-neutral-50 flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Create Workflow
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-neutral-200 p-6 text-center">
+                  <p className="text-sm text-neutral-500 mb-3">No workflows yet</p>
+                  <Button onClick={() => navigate('/workflows/new')} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Workflow
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="space-y-2">
               {bottomNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = isActiveLink(item.href);
@@ -262,78 +222,82 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`
-                      group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                      ${isActive 
-                        ? 'bg-purple-50 text-purple-700' 
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      }
-                    `}
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      isActive
+                        ? 'bg-neutral-100 text-neutral-900'
+                        : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    }`}
                   >
-                    <Icon
-                      className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                        isActive ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-500'
-                      }`}
-                    />
+                    <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
                     {item.name}
                     {item.badge && (
-                      <span className="ml-auto text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
+                      <span className="ml-auto text-[11px] uppercase tracking-wide text-neutral-400">{item.badge}</span>
                     )}
                   </Link>
                 );
               })}
-              
-              {/* Platform Admin Link */}
+
               {isPlatformAdmin && (
                 <Link
                   to="/admin"
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`
-                    group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors
-                    ${isActiveLink('/admin')
-                      ? 'bg-purple-50 text-purple-700' 
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }
-                  `}
+                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                    isActiveLink('/admin')
+                      ? 'bg-neutral-100 text-neutral-900'
+                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                  }`}
                 >
-                  <Shield
-                    className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                      isActiveLink('/admin') ? 'text-purple-600' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                  />
+                  <Shield className={`mr-3 h-5 w-5 ${isActiveLink('/admin') ? 'text-neutral-900' : 'text-neutral-400'}`} />
                   Admin
                 </Link>
               )}
-            </nav>
+            </div>
 
-            {/* Logout */}
-            <div className="p-3 border-t border-gray-200">
+            <div className="border-t border-neutral-200 pt-6">
+              <div className="flex items-center space-x-3">
+                {user?.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.displayName || user.email} className="h-10 w-10 rounded-full" />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-neutral-900 text-white flex items-center justify-center">
+                    <User className="h-5 w-5" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-medium">{user?.displayName || user?.email?.split('@')[0]}</p>
+                  <p className="text-xs text-neutral-500">{user?.email}</p>
+                </div>
+              </div>
               <button
                 onClick={logout}
-                className="w-full flex items-center px-3 py-2.5 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
               >
-                <LogOut className="mr-3 h-5 w-5" />
+                <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </button>
             </div>
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
-        
-        {/* Overlay for mobile sidebar */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-gray-600 bg-opacity-50 z-0 md:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
+        <div className="flex-1 flex flex-col md:ml-72">
+          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 bg-white">
+            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200">
+              {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <span className="text-sm font-semibold tracking-tight uppercase">Cloud Secrets</span>
+            <div className="h-8 w-8 rounded-full bg-neutral-900 text-white flex items-center justify-center">
+              {user?.displayName?.[0] || user?.email?.[0] || 'U'}
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto px-4 py-10 md:px-12">
+            <div className="max-w-4xl mx-auto w-full space-y-6">{children}</div>
+          </main>
+        </div>
       </div>
+
+      {isSidebarOpen && (
+        <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsSidebarOpen(false)} />
+      )}
     </div>
   );
 };
