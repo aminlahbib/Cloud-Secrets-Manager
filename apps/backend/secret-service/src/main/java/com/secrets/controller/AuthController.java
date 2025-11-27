@@ -69,25 +69,24 @@ public class AuthController {
         List<String> authorities = userDetails.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .toList();
-            
+
         String role = authorities.stream()
             .filter(a -> a.startsWith("ROLE_"))
             .findFirst()
             .map(r -> r.substring(5)) // Remove ROLE_
             .orElse("USER");
-            
-        List<String> permissions = authorities.stream()
-            .filter(a -> a.startsWith("PERMISSION_"))
-            .map(p -> p.substring(11)) // Remove PERMISSION_
-            .toList();
-            
+
+        // In v3 architecture, permissions are project-scoped, not global
+        // The permissions array is kept empty for backwards compatibility
+        List<String> permissions = List.of();
+
         UserResponse response = UserResponse.builder()
-            .id(userDetails.getUsername()) 
+            .id(userDetails.getUsername())
             .email(userDetails.getUsername())
             .role(role)
             .permissions(permissions)
             .active(true)
-            .createdAt(java.time.LocalDateTime.now()) 
+            .createdAt(java.time.LocalDateTime.now())
             .build();
             
         return ResponseEntity.ok(response);
@@ -240,17 +239,8 @@ public class AuthController {
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + ((String) rolesClaim).toUpperCase()));
             }
 
-            // Extract permissions
-            Object permissionsClaim = claims.get("permissions");
-            if (permissionsClaim instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> permissions = (List<String>) permissionsClaim;
-                permissions.forEach(permission -> 
-                    authorities.add(new SimpleGrantedAuthority("PERMISSION_" + permission.toUpperCase()))
-                );
-            } else if (permissionsClaim instanceof String) {
-                authorities.add(new SimpleGrantedAuthority("PERMISSION_" + ((String) permissionsClaim).toUpperCase()));
-            }
+            // In v3 architecture, permissions are project-scoped via membership table
+            // Global permissions from Firebase claims are not used
 
             // Default to USER role if no roles found
             if (authorities.stream().noneMatch(a -> a.getAuthority().startsWith("ROLE_"))) {

@@ -26,14 +26,16 @@ export const HomePage: React.FC = () => {
 
   // Fetch recent projects
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
-    queryKey: ['projects', 'recent'],
+    queryKey: ['projects', 'recent', user?.id],
     queryFn: () => projectsService.listProjects({ size: 6 }),
+    enabled: !!user?.id,
   });
 
   // Fetch workflows
   const { data: workflows, isLoading: isWorkflowsLoading } = useQuery<Workflow[]>({
-    queryKey: ['workflows'],
+    queryKey: ['workflows', user?.id],
     queryFn: () => workflowsService.listWorkflows(),
+    enabled: !!user?.id,
   });
 
   // Fetch recent activity (only for platform admins)
