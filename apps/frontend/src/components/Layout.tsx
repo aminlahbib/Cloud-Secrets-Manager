@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
 import { workflowsService } from '../services/workflows';
+import { Button } from './ui/Button';
 import {
   LayoutDashboard,
   Folder,
-  FolderOpen,
   Activity,
   Users,
   Settings,
@@ -16,7 +16,6 @@ import {
   X,
   Plus,
   ChevronDown,
-  ChevronRight,
   Shield
 } from 'lucide-react';
 import type { Workflow } from '../types';
@@ -30,7 +29,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [expandedWorkflows, setExpandedWorkflows] = useState<Set<string>>(new Set());
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const [isWorkflowMenuOpen, setIsWorkflowMenuOpen] = useState(false);
+  const workflowSelectorRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch user's workflows
   const { data: workflows } = useQuery<Workflow[]>({
@@ -40,16 +41,33 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     staleTime: 30000, // Cache for 30 seconds
   });
 
-  const toggleWorkflow = (workflowId: string) => {
-    setExpandedWorkflows(prev => {
-      const next = new Set(prev);
-      if (next.has(workflowId)) {
-        next.delete(workflowId);
-      } else {
-        next.add(workflowId);
+  useEffect(() => {
+    if (!selectedWorkflowId && workflows && workflows.length > 0) {
+      const defaultWorkflow = workflows.find((wf) => wf.isDefault) || workflows[0];
+      setSelectedWorkflowId(defaultWorkflow.id);
+    }
+  }, [workflows, selectedWorkflowId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        workflowSelectorRef.current &&
+        !workflowSelectorRef.current.contains(event.target as Node)
+      ) {
+        setIsWorkflowMenuOpen(false);
       }
-      return next;
-    });
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedWorkflow = workflows?.find((wf) => wf.id === selectedWorkflowId);
+
+  const handleWorkflowSelect = (workflowId: string) => {
+    setSelectedWorkflowId(workflowId);
+    setIsWorkflowMenuOpen(false);
+    navigate(`/workflows/${workflowId}`);
   };
 
   const mainNavigation = [
@@ -109,79 +127,88 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </div>
 
-            <div className="mt-10">
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 px-1">
-                <span>Workflows</span>
+            <div className="mt-10" ref={workflowSelectorRef}>
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 px-1 mb-3">
+                <span>Workspace</span>
                 <button
                   onClick={() => navigate('/workflows/new')}
-                  className="p-1 rounded-full text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100 transition-colors"
-                  title="New Workflow"
+                  className="text-xs font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1"
                 >
                   <Plus className="h-4 w-4" />
+                  New
                 </button>
               </div>
-              <div className="mt-4 space-y-1 max-h-64 overflow-y-auto pr-1">
-                {workflows?.map((workflow) => {
-                  const isExpanded = expandedWorkflows.has(workflow.id);
-                  const hasProjects = workflow.projects && workflow.projects.length > 0;
-                  return (
-                    <div key={workflow.id}>
-                      <div className="flex items-center">
-                        {hasProjects ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleWorkflow(workflow.id);
-                            }}
-                            className="p-1 rounded-full text-neutral-400 hover:text-neutral-900"
-                          >
-                            {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </button>
-                        ) : (
-                          <span className="w-6" />
-                        )}
-                        <button
-                          onClick={() => navigate(`/workflows/${workflow.id}`)}
-                          className="flex-1 text-left px-3 py-2 rounded-xl hover:bg-neutral-100 transition-colors text-sm font-medium text-neutral-700"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <FolderOpen className="h-4 w-4 text-neutral-400" />
-                            <span className="truncate">{workflow.name}</span>
-                            {workflow.isDefault && (
-                              <span className="text-[11px] text-neutral-500 border border-neutral-200 rounded-full px-2 py-0.5">
-                                Default
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </div>
-                      {isExpanded && workflow.projects && (
-                        <div className="ml-8 mt-1 space-y-1">
-                          {workflow.projects.map((wp) => (
-                            <Link
-                              key={wp.projectId}
-                              to={`/projects/${wp.projectId}`}
-                              onClick={() => setIsSidebarOpen(false)}
-                              className={`flex items-center px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                                location.pathname === `/projects/${wp.projectId}`
-                                  ? 'bg-neutral-900 text-white'
-                                  : 'text-neutral-500 hover:bg-neutral-100'
+
+              {workflows && workflows.length > 0 ? (
+                <div>
+                  <button
+                    onClick={() => setIsWorkflowMenuOpen((prev) => !prev)}
+                    className={`
+                      w-full text-left rounded-2xl border px-4 py-3 transition-all flex items-center justify-between
+                      ${isWorkflowMenuOpen ? 'border-neutral-900 shadow-sm' : 'border-neutral-200 hover:border-neutral-300'}
+                    `}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-neutral-900">
+                        {selectedWorkflow?.name || 'Select workflow'}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {(selectedWorkflow?.projects?.length || 0)} Projects
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-neutral-400 transition-transform ${
+                        isWorkflowMenuOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </button>
+
+                  {isWorkflowMenuOpen && (
+                    <div className="mt-2 rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                      <div className="max-h-64 overflow-y-auto">
+                        {workflows.map((workflow) => {
+                          const isSelected = workflow.id === selectedWorkflowId;
+                          return (
+                            <button
+                              key={workflow.id}
+                              onClick={() => handleWorkflowSelect(workflow.id)}
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${
+                                isSelected ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-50'
                               }`}
                             >
-                              <Folder className="h-4 w-4 mr-2" />
-                              <span className="truncate">{wp.project?.name || 'Project'}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      )}
+                              <div>
+                                <p className="font-medium">{workflow.name}</p>
+                                <p className="text-xs text-neutral-500">
+                                  {(workflow.projects?.length || 0)} Projects
+                                </p>
+                              </div>
+                              {isSelected && <span className="text-neutral-900 text-lg">•</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setIsWorkflowMenuOpen(false);
+                          navigate('/workflows/new');
+                        }}
+                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 border-t border-neutral-100 text-left hover:bg-neutral-50 flex items-center gap-2"
+                      >
+                        <Plus className="h-4 w-4" />
+                        Create Workflow
+                      </button>
                     </div>
-                  );
-                })}
-
-                {(!workflows || workflows.length === 0) && (
-                  <p className="px-3 py-2 text-sm text-neutral-400 italic">No workflows yet</p>
-                )}
-              </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-neutral-200 p-6 text-center">
+                  <p className="text-sm text-neutral-500 mb-3">No workflows yet</p>
+                  <Button onClick={() => navigate('/workflows/new')} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Workflow
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
