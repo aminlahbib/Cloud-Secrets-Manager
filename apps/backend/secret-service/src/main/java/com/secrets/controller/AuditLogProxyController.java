@@ -25,8 +25,8 @@ public class AuditLogProxyController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
-    @Operation(summary = "Get audit logs", description = "Retrieves audit logs via the audit-service")
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Operation(summary = "Get audit logs", description = "Retrieves audit logs via the audit-service. Requires PLATFORM_ADMIN role.")
     public ResponseEntity<AuditLogPageResponse> getAuditLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
