@@ -91,6 +91,20 @@ google:
 setup:
   enabled: ${SETUP_ENABLED:false}  # Disabled by default for security. Set SETUP_ENABLED=true only during initial setup.
 
+# Email notifications
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  provider: sendgrid
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY:}
+  from:
+    address: ${EMAIL_FROM_ADDRESS:noreply@cloudsecrets.com}
+    name: ${EMAIL_FROM_NAME:Cloud Secrets Manager}
+
+# Application URLs
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+
 logging:
   level:
     root: INFO
