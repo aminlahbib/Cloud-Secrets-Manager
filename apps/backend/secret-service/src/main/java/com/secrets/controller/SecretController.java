@@ -1,16 +1,11 @@
 package com.secrets.controller;
 
 import com.secrets.dto.SecretRequest;
-import com.secrets.dto.SecretResponse;
-import com.secrets.dto.SecretVersionResponse;
 import com.secrets.dto.ShareSecretRequest;
-import com.secrets.dto.SharedSecretResponse;
 import com.secrets.dto.BulkSecretRequest;
-import com.secrets.dto.BulkSecretResponse;
 import com.secrets.dto.BulkUpdateRequest;
 import com.secrets.dto.BulkDeleteRequest;
 import com.secrets.dto.SetExpirationRequest;
-import com.secrets.entity.Secret;
 import com.secrets.service.SecretService;
 import com.secrets.service.SecretVersionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,10 +14,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -30,158 +21,125 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/secrets")
-@Tag(name = "Secrets", description = "Secret management operations")
+@Tag(name = "Secrets (DEPRECATED)", description = "Legacy global secret management - DEPRECATED. Use project-scoped endpoints instead.")
 @SecurityRequirement(name = "bearerAuth")
+@Deprecated
 public class SecretController {
 
     private static final Logger log = LoggerFactory.getLogger(SecretController.class);
 
-    private final SecretService secretService;
-    private final SecretVersionService secretVersionService;
-    private final com.secrets.service.SecretExpirationService secretExpirationService;
-    private final com.secrets.security.PermissionEvaluator permissionEvaluator;
-
     public SecretController(SecretService secretService, SecretVersionService secretVersionService,
                            com.secrets.service.SecretExpirationService secretExpirationService,
                            com.secrets.security.PermissionEvaluator permissionEvaluator) {
-        this.secretService = secretService;
-        this.secretVersionService = secretVersionService;
-        this.secretExpirationService = secretExpirationService;
-        this.permissionEvaluator = permissionEvaluator;
+        // Constructor kept for dependency injection compatibility
+        // All methods now return deprecation messages
+    }
+
+    /**
+     * Helper method to return deprecation response for legacy endpoints
+     */
+    private ResponseEntity<Map<String, String>> deprecatedResponse(String endpoint) {
+        log.warn("DEPRECATED API called: {}. User should use project-scoped endpoints.", endpoint);
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use project-scoped endpoints instead.",
+                        "migration", "All secret operations must now be performed within a project context."));
     }
 
     @PostMapping
-    @Operation(summary = "Create a new secret", description = "Creates a new encrypted secret")
-    public ResponseEntity<SecretResponse> createSecret(
+    @Operation(summary = "Create a new secret (DEPRECATED)",
+               description = "DEPRECATED: Creates a new encrypted secret. Use /api/projects/{projectId}/secrets instead.")
+    public ResponseEntity<Map<String, String>> createSecret(
             @Valid @RequestBody SecretRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Creating secret with key: {}", request.getKey());
-        Secret secret = secretService.createSecret(
-            request.getKey(),
-            request.getValue(),
-            userDetails.getUsername(),
-            authentication
-        );
-        
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        log.warn("DEPRECATED API called: POST /api/secrets. User should use project-scoped endpoints.");
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use /api/projects/{projectId}/secrets instead.",
+                        "migration", "Secrets must now be created within a project context."));
     }
 
     @GetMapping("/{key}")
-    @Operation(summary = "Get a secret", description = "Retrieves and decrypts a secret by key")
-    public ResponseEntity<SecretResponse> getSecret(
+    @Operation(summary = "Get a secret (DEPRECATED)",
+               description = "DEPRECATED: Retrieves and decrypts a secret by key. Use /api/projects/{projectId}/secrets/{key} instead.")
+    public ResponseEntity<Map<String, String>> getSecret(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Retrieving secret with key: {}", key);
-        Secret secret = secretService.getSecret(key, userDetails.getUsername(), authentication);
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+
+        log.warn("DEPRECATED API called: GET /api/secrets/{}. User should use project-scoped endpoints.", key);
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use /api/projects/{projectId}/secrets/{key} instead.",
+                        "migration", "Secrets must now be accessed within a project context."));
     }
 
     @PutMapping("/{key}")
-    @Operation(summary = "Update a secret", description = "Updates an existing secret")
-    public ResponseEntity<SecretResponse> updateSecret(
+    @Operation(summary = "Update a secret (DEPRECATED)",
+               description = "DEPRECATED: Updates an existing secret. Use /api/projects/{projectId}/secrets/{key} instead.")
+    public ResponseEntity<Map<String, String>> updateSecret(
             @PathVariable String key,
             @Valid @RequestBody SecretRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Updating secret with key: {}", key);
-        Secret secret = secretService.updateSecret(
-            key,
-            request.getValue(),
-            userDetails.getUsername(),
-            authentication
-        );
-        
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+
+        log.warn("DEPRECATED API called: PUT /api/secrets/{}. User should use project-scoped endpoints.", key);
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use /api/projects/{projectId}/secrets/{key} instead.",
+                        "migration", "Secrets must now be updated within a project context."));
     }
 
     @DeleteMapping("/{key}")
-    @Operation(summary = "Delete a secret", description = "Deletes a secret by key")
-    public ResponseEntity<Void> deleteSecret(
+    @Operation(summary = "Delete a secret (DEPRECATED)",
+               description = "DEPRECATED: Deletes a secret by key. Use /api/projects/{projectId}/secrets/{key} instead.")
+    public ResponseEntity<Map<String, String>> deleteSecret(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Deleting secret with key: {}", key);
-        secretService.deleteSecret(key, userDetails.getUsername(), authentication);
-        
-        return ResponseEntity.noContent().build();
+
+        log.warn("DEPRECATED API called: DELETE /api/secrets/{}. User should use project-scoped endpoints.", key);
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use /api/projects/{projectId}/secrets/{key} instead.",
+                        "migration", "Secrets must now be deleted within a project context."));
     }
 
     @GetMapping("/{key}/versions")
-    @Operation(summary = "Get secret version history", description = "Retrieves all versions of a secret")
-    public ResponseEntity<List<SecretVersionResponse>> getSecretVersions(
+    @Operation(summary = "Get secret version history (DEPRECATED)",
+               description = "DEPRECATED: Retrieves all versions of a secret. Use /api/projects/{projectId}/secrets/{key}/versions instead.")
+    public ResponseEntity<Map<String, String>> getSecretVersions(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
-        log.debug("Retrieving versions for secret with key: {}", key);
-        var versions = secretVersionService.getVersions(key);
-        List<SecretVersionResponse> response = versions.stream()
-            .map(SecretVersionResponse::from)
-            .toList();
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("GET /api/secrets/" + key + "/versions");
     }
 
     @GetMapping("/{key}/versions/{versionNumber}")
-    @Operation(summary = "Get specific secret version", description = "Retrieves a specific version of a secret")
-    @SuppressWarnings("deprecation") // Legacy endpoint using deprecated method
-    public ResponseEntity<SecretVersionResponse> getSecretVersion(
+    @Operation(summary = "Get specific secret version (DEPRECATED)",
+               description = "DEPRECATED: Retrieves a specific version of a secret. Use project-scoped endpoints instead.")
+    public ResponseEntity<Map<String, String>> getSecretVersion(
             @PathVariable String key,
             @PathVariable Integer versionNumber,
             @AuthenticationPrincipal UserDetails userDetails) {
-        
-        log.debug("Retrieving version {} for secret with key: {}", versionNumber, key);
-        var version = secretVersionService.getVersion(key, versionNumber);
-        
-        return ResponseEntity.ok(SecretVersionResponse.from(version));
+        return deprecatedResponse("GET /api/secrets/" + key + "/versions/" + versionNumber);
     }
 
     @PostMapping("/{key}/rollback/{versionNumber}")
-    @Operation(summary = "Rollback secret to a specific version", 
-               description = "Rolls back a secret to a previous version. Creates a new version for the rollback.")
-    public ResponseEntity<SecretResponse> rollbackSecret(
+    @Operation(summary = "Rollback secret to a specific version (DEPRECATED)",
+               description = "DEPRECATED: Rolls back a secret to a previous version. Use project-scoped endpoints instead.")
+    public ResponseEntity<Map<String, String>> rollbackSecret(
             @PathVariable String key,
             @PathVariable Integer versionNumber,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Rolling back secret '{}' to version {}", key, versionNumber);
-        // Rollback requires WRITE permission (it modifies the secret)
-        // Verify secret exists and user has access
-        secretService.getSecret(key, userDetails.getUsername(), authentication);
-        
-        Secret rolledBackSecret = secretVersionService.rollbackToVersion(
-            key, versionNumber, userDetails.getUsername()
-        );
-        
-        String decryptedValue = secretService.decryptSecretValue(rolledBackSecret);
-        SecretResponse response = SecretResponse.from(rolledBackSecret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("POST /api/secrets/" + key + "/rollback/" + versionNumber);
     }
 
     @GetMapping
-    @Operation(summary = "List secrets", 
-               description = "Retrieves a paginated list of secrets with optional filtering and search")
-    public ResponseEntity<Page<SecretResponse>> listSecrets(
+    @Operation(summary = "List secrets (DEPRECATED)",
+               description = "DEPRECATED: Retrieves a paginated list of secrets. Use /api/projects/{projectId}/secrets instead.")
+    public ResponseEntity<Map<String, String>> listSecrets(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -190,307 +148,132 @@ public class SecretController {
             @RequestParam(required = false) String createdBy,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Listing secrets - page: {}, size: {}, sortBy: {}, keyword: {}, createdBy: {}", 
-            page, size, sortBy, keyword, createdBy);
-        
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
-        Page<Secret> secrets = secretService.listSecrets(pageable, keyword, createdBy, authentication);
-        
-        // Convert to response DTOs (without decrypting values for list view - only show metadata)
-        Page<SecretResponse> response = secrets.map(secret -> {
-            String createdByStr = "Unknown";
-            if (secret.getCreator() != null) {
-                createdByStr = secret.getCreator().getEmail();
-            } else if (secret.getCreatedBy() != null) {
-                createdByStr = secret.getCreatedBy().toString();
-            }
-            return SecretResponse.builder()
-                .key(secret.getSecretKey())
-                .value("***REDACTED***") // Don't expose values in list view
-                .createdBy(createdByStr)
-                .createdAt(secret.getCreatedAt())
-                .updatedAt(secret.getUpdatedAt())
-                .build();
-        });
-        
-        return ResponseEntity.ok(response);
+
+        log.warn("DEPRECATED API called: GET /api/secrets (list). User should use project-scoped endpoints.");
+        return ResponseEntity.status(HttpStatus.GONE)
+            .body(Map.of("error", "This endpoint is deprecated. Use /api/projects/{projectId}/secrets instead.",
+                        "migration", "Secrets must now be listed within a project context."));
     }
 
     @PostMapping("/{key}/rotate")
-    @Operation(summary = "Rotate a secret", 
-               description = "Generates a new value for a secret and creates a new version. Requires ROTATE permission.")
-    public ResponseEntity<SecretResponse> rotateSecret(
+    @Operation(summary = "Rotate a secret (DEPRECATED)",
+               description = "DEPRECATED: Generates a new value for a secret. Use /api/projects/{projectId}/secrets/{key}/rotate instead.")
+    public ResponseEntity<Map<String, String>> rotateSecret(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Rotating secret with key: {}", key);
-        Secret secret = secretService.rotateSecret(key, userDetails.getUsername(), authentication);
-        
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("POST /api/secrets/" + key + "/rotate");
     }
 
     @PostMapping("/{key}/share")
-    @Operation(summary = "Share a secret", 
-               description = "Shares a secret with another user. Requires SHARE permission.")
-    public ResponseEntity<SharedSecretResponse> shareSecret(
+    @Operation(summary = "Share a secret (DEPRECATED)",
+               description = "DEPRECATED: Shares a secret with another user. Use project membership instead.")
+    public ResponseEntity<Map<String, String>> shareSecret(
             @PathVariable String key,
             @Valid @RequestBody ShareSecretRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Sharing secret '{}' with user '{}'", key, request.getSharedWith());
-        var sharedSecret = secretService.shareSecret(
-            key, 
-            request.getSharedWith(), 
-            userDetails.getUsername(),
-            request.getPermission(),
-            authentication
-        );
-        
-        return ResponseEntity.status(HttpStatus.CREATED).body(SharedSecretResponse.from(sharedSecret));
+        return deprecatedResponse("POST /api/secrets/" + key + "/share");
     }
 
     @DeleteMapping("/{key}/share/{sharedWith}")
-    @Operation(summary = "Unshare a secret", 
-               description = "Revokes access to a secret for a user. Requires SHARE permission.")
-    public ResponseEntity<Void> unshareSecret(
+    @Operation(summary = "Unshare a secret (DEPRECATED)",
+               description = "DEPRECATED: Revokes access to a secret for a user. Use project membership instead.")
+    public ResponseEntity<Map<String, String>> unshareSecret(
             @PathVariable String key,
             @PathVariable String sharedWith,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Unsharing secret '{}' from user '{}'", key, sharedWith);
-        secretService.unshareSecret(key, sharedWith, userDetails.getUsername(), authentication);
-        
-        return ResponseEntity.noContent().build();
+        return deprecatedResponse("DELETE /api/secrets/" + key + "/share/" + sharedWith);
     }
 
     @GetMapping("/{key}/shared")
-    @Operation(summary = "Get users a secret is shared with", 
-               description = "Retrieves list of users a secret is shared with. Only the owner can view this.")
-    public ResponseEntity<List<SharedSecretResponse>> getSharedUsers(
+    @Operation(summary = "Get users a secret is shared with (DEPRECATED)",
+               description = "DEPRECATED: Retrieves list of users a secret is shared with. Use project membership instead.")
+    public ResponseEntity<Map<String, String>> getSharedUsers(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Getting shared users for secret '{}'", key);
-        var sharedSecrets = secretService.getSharedUsers(key, userDetails.getUsername(), authentication);
-        
-        List<SharedSecretResponse> response = sharedSecrets.stream()
-            .map(SharedSecretResponse::from)
-            .toList();
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("GET /api/secrets/" + key + "/shared");
     }
 
     @GetMapping("/shared/with-me")
-    @Operation(summary = "Get secrets shared with me", 
-               description = "Retrieves all secrets that have been shared with the current user")
-    public ResponseEntity<List<SharedSecretResponse>> getSecretsSharedWithMe(
+    @Operation(summary = "Get secrets shared with me (DEPRECATED)",
+               description = "DEPRECATED: Retrieves all secrets that have been shared with the current user. Use project membership instead.")
+    public ResponseEntity<Map<String, String>> getSecretsSharedWithMe(
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Getting secrets shared with user '{}'", userDetails.getUsername());
-        var sharedSecrets = secretService.getSecretsSharedWithUser(userDetails.getUsername(), authentication);
-        
-        List<SharedSecretResponse> response = sharedSecrets.stream()
-            .map(SharedSecretResponse::from)
-            .toList();
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("GET /api/secrets/shared/with-me");
     }
 
     @PostMapping("/bulk")
-    @Operation(summary = "Bulk create secrets", 
-               description = "Creates multiple secrets in a single request. Returns results for each secret.")
-    public ResponseEntity<BulkSecretResponse> bulkCreateSecrets(
+    @Operation(summary = "Bulk create secrets (DEPRECATED)",
+               description = "DEPRECATED: Creates multiple secrets. Use project-scoped bulk operations instead.")
+    public ResponseEntity<Map<String, String>> bulkCreateSecrets(
             @Valid @RequestBody BulkSecretRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Bulk creating {} secrets", request.getSecrets().size());
-        BulkSecretResponse response = secretService.bulkCreateSecrets(
-            request.getSecrets(),
-            userDetails.getUsername(),
-            authentication
-        );
-        
-        HttpStatus status = response.getFailed() == 0 
-            ? HttpStatus.CREATED 
-            : HttpStatus.MULTI_STATUS; // 207
-        
-        return ResponseEntity.status(status).body(response);
+        return deprecatedResponse("POST /api/secrets/bulk");
     }
 
     @PutMapping("/bulk")
-    @Operation(summary = "Bulk update secrets", 
-               description = "Updates multiple secrets in a single request. Returns results for each secret.")
-    public ResponseEntity<BulkSecretResponse> bulkUpdateSecrets(
+    @Operation(summary = "Bulk update secrets (DEPRECATED)",
+               description = "DEPRECATED: Updates multiple secrets. Use project-scoped bulk operations instead.")
+    public ResponseEntity<Map<String, String>> bulkUpdateSecrets(
             @Valid @RequestBody BulkUpdateRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Bulk updating {} secrets", request.getSecrets().size());
-        BulkSecretResponse response = secretService.bulkUpdateSecrets(
-            request.getSecrets(),
-            userDetails.getUsername(),
-            authentication
-        );
-        
-        HttpStatus status = response.getFailed() == 0 
-            ? HttpStatus.OK 
-            : HttpStatus.MULTI_STATUS; // 207
-        
-        return ResponseEntity.status(status).body(response);
+        return deprecatedResponse("PUT /api/secrets/bulk");
     }
 
     @DeleteMapping("/bulk")
-    @Operation(summary = "Bulk delete secrets", 
-               description = "Deletes multiple secrets in a single request. Returns results for each secret.")
-    public ResponseEntity<BulkSecretResponse> bulkDeleteSecrets(
+    @Operation(summary = "Bulk delete secrets (DEPRECATED)",
+               description = "DEPRECATED: Deletes multiple secrets. Use project-scoped bulk operations instead.")
+    public ResponseEntity<Map<String, String>> bulkDeleteSecrets(
             @Valid @RequestBody BulkDeleteRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Bulk deleting {} secrets", request.getKeys().size());
-        BulkSecretResponse response = secretService.bulkDeleteSecrets(
-            request.getKeys(),
-            userDetails.getUsername(),
-            authentication
-        );
-        
-        HttpStatus status = response.getFailed() == 0 
-            ? HttpStatus.OK 
-            : HttpStatus.MULTI_STATUS; // 207
-        
-        return ResponseEntity.status(status).body(response);
+        return deprecatedResponse("DELETE /api/secrets/bulk");
     }
 
     @PostMapping("/{key}/expiration")
-    @Operation(summary = "Set secret expiration", 
-               description = "Sets an expiration date for a secret. The secret will be marked as expired after this date.")
-    public ResponseEntity<SecretResponse> setExpiration(
+    @Operation(summary = "Set secret expiration (DEPRECATED)",
+               description = "DEPRECATED: Sets an expiration date for a secret. Use project-scoped expiration instead.")
+    public ResponseEntity<Map<String, String>> setExpiration(
             @PathVariable String key,
             @Valid @RequestBody SetExpirationRequest request,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Setting expiration for secret '{}' to {}", key, request.getExpiresAt());
-        
-        // Verify user has access to the secret
-        secretService.getSecret(key, userDetails.getUsername(), authentication);
-        
-        Secret secret = secretExpirationService.setExpiration(key, request.getExpiresAt());
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("POST /api/secrets/" + key + "/expiration");
     }
 
     @DeleteMapping("/{key}/expiration")
-    @Operation(summary = "Remove secret expiration", 
-               description = "Removes expiration from a secret, making it never expire.")
-    public ResponseEntity<SecretResponse> removeExpiration(
+    @Operation(summary = "Remove secret expiration (DEPRECATED)",
+               description = "DEPRECATED: Removes expiration from a secret. Use project-scoped expiration instead.")
+    public ResponseEntity<Map<String, String>> removeExpiration(
             @PathVariable String key,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        log.debug("Removing expiration for secret '{}'", key);
-        
-        // Verify user has access to the secret
-        secretService.getSecret(key, userDetails.getUsername(), authentication);
-        
-        Secret secret = secretExpirationService.removeExpiration(key);
-        String decryptedValue = secretService.decryptSecretValue(secret);
-        SecretResponse response = SecretResponse.from(secret, decryptedValue);
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("DELETE /api/secrets/" + key + "/expiration");
     }
 
     @GetMapping("/expired")
-    @Operation(summary = "Get expired secrets", 
-               description = "Retrieves expired secrets. Admins see all, regular users see only their accessible secrets. Requires READ permission.")
-    public ResponseEntity<List<SecretResponse>> getExpiredSecrets(
+    @Operation(summary = "Get expired secrets (DEPRECATED)",
+               description = "DEPRECATED: Retrieves expired secrets. Use project-scoped expiration queries instead.")
+    public ResponseEntity<Map<String, String>> getExpiredSecrets(
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        String username = userDetails.getUsername();
-        boolean isAdmin = permissionEvaluator.isAdmin(authentication);
-        
-        log.debug("Getting expired secrets for user {} (admin: {})", username, isAdmin);
-        
-        // Check permission
-        if (!isAdmin && 
-            !permissionEvaluator.hasPermission(authentication, com.secrets.security.Permission.READ)) {
-            throw new org.springframework.security.access.AccessDeniedException("User does not have READ permission");
-        }
-        
-        var expiredSecrets = secretExpirationService.getExpiredSecrets(username, isAdmin);
-        List<SecretResponse> response = expiredSecrets.stream()
-            .map(secret -> {
-                String createdByStr = "Unknown";
-                if (secret.getCreator() != null) {
-                    createdByStr = secret.getCreator().getEmail();
-                } else if (secret.getCreatedBy() != null) {
-                    createdByStr = secret.getCreatedBy().toString();
-                }
-                return SecretResponse.builder()
-                    .key(secret.getSecretKey())
-                    .value("***REDACTED***")
-                    .createdBy(createdByStr)
-                    .createdAt(secret.getCreatedAt())
-                    .updatedAt(secret.getUpdatedAt())
-                    .build();
-            })
-            .toList();
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("GET /api/secrets/expired");
     }
 
     @GetMapping("/expiring-soon")
-    @Operation(summary = "Get secrets expiring soon", 
-               description = "Retrieves secrets that will expire within the specified number of days. Admins see all, regular users see only their accessible secrets. Requires READ permission.")
-    public ResponseEntity<List<SecretResponse>> getSecretsExpiringSoon(
+    @Operation(summary = "Get secrets expiring soon (DEPRECATED)",
+               description = "DEPRECATED: Retrieves secrets expiring soon. Use project-scoped expiration queries instead.")
+    public ResponseEntity<Map<String, String>> getSecretsExpiringSoon(
             @RequestParam(defaultValue = "7") int days,
             @AuthenticationPrincipal UserDetails userDetails,
             Authentication authentication) {
-        
-        String username = userDetails.getUsername();
-        boolean isAdmin = permissionEvaluator.isAdmin(authentication);
-        
-        log.debug("Getting secrets expiring within {} days for user {} (admin: {})", days, username, isAdmin);
-        
-        // Check permission
-        if (!isAdmin && 
-            !permissionEvaluator.hasPermission(authentication, com.secrets.security.Permission.READ)) {
-            throw new org.springframework.security.access.AccessDeniedException("User does not have READ permission");
-        }
-        
-        var expiringSecrets = secretExpirationService.getSecretsExpiringSoon(days, username, isAdmin);
-        List<SecretResponse> response = expiringSecrets.stream()
-            .map(secret -> {
-                String createdByStr = "Unknown";
-                if (secret.getCreator() != null) {
-                    createdByStr = secret.getCreator().getEmail();
-                } else if (secret.getCreatedBy() != null) {
-                    createdByStr = secret.getCreatedBy().toString();
-                }
-                return SecretResponse.builder()
-                    .key(secret.getSecretKey())
-                    .value("***REDACTED***")
-                    .createdBy(createdByStr)
-                    .createdAt(secret.getCreatedAt())
-                    .updatedAt(secret.getUpdatedAt())
-                    .build();
-            })
-            .toList();
-        
-        return ResponseEntity.ok(response);
+        return deprecatedResponse("GET /api/secrets/expiring-soon");
     }
 }
 
