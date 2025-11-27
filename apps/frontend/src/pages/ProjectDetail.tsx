@@ -126,13 +126,18 @@ export const ProjectDetailPage: React.FC = () => {
   });
 
   // Fetch all activity logs for analytics (larger size, with date filter)
-  const { data: analyticsData, isLoading: isAnalyticsLoading } = useQuery<AuditLogsResponse>({
+  const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery<AuditLogsResponse>({
     queryKey: ['project-activity-analytics', projectId, dateRange],
-    queryFn: () => auditService.getProjectAuditLogs(projectId!, { 
-      size: 1000, // Fetch more for analytics
-      ...getDateRangeParams(),
-    }),
+    queryFn: () => {
+      const dateParams = getDateRangeParams();
+      console.log('Fetching analytics data with params:', { projectId, dateRange, dateParams });
+      return auditService.getProjectAuditLogs(projectId!, { 
+        size: 1000, // Fetch more for analytics
+        ...dateParams,
+      });
+    },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
+    retry: false,
   });
 
   // Calculate analytics stats
@@ -688,6 +693,13 @@ export const ProjectDetailPage: React.FC = () => {
                 <div className="flex justify-center py-12">
                   <Spinner size="lg" />
                 </div>
+              ) : analyticsError ? (
+                <Card className="p-6">
+                  <div className="text-center">
+                    <p className="text-red-600 mb-2">Error loading analytics data</p>
+                    <p className="text-sm text-gray-500">{String(analyticsError)}</p>
+                  </div>
+                </Card>
               ) : !analyticsData || analyticsData.content.length === 0 ? (
                 <Card className="p-6">
                   <EmptyState
