@@ -108,7 +108,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActive
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActive
                       ? 'bg-neutral-100 text-neutral-900'
                       : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
                       }`}
