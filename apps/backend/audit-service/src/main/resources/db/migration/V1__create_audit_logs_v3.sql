@@ -92,9 +92,10 @@ BEGIN
         AND column_name = 'user_id'
         AND table_schema = 'public'
     ) THEN
-        ALTER TABLE audit_logs ADD COLUMN user_id UUID NOT NULL DEFAULT gen_random_uuid();
-        ALTER TABLE audit_logs ALTER COLUMN user_id DROP DEFAULT;
-        RAISE NOTICE 'Added user_id column';
+        ALTER TABLE audit_logs ADD COLUMN user_id UUID;
+        -- For existing rows, we'll need to set a default or handle separately
+        -- Since this is a migration, we'll allow NULL initially and handle in application
+        RAISE NOTICE 'Added user_id column (nullable for migration)';
     END IF;
     
     IF NOT EXISTS (
@@ -103,7 +104,11 @@ BEGIN
         AND column_name = 'resource_type'
         AND table_schema = 'public'
     ) THEN
-        ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(50) NOT NULL DEFAULT 'SECRET';
+        ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(50) DEFAULT 'SECRET';
+        -- Update existing rows
+        UPDATE audit_logs SET resource_type = 'SECRET' WHERE resource_type IS NULL;
+        -- Now make it NOT NULL
+        ALTER TABLE audit_logs ALTER COLUMN resource_type SET NOT NULL;
         ALTER TABLE audit_logs ALTER COLUMN resource_type DROP DEFAULT;
         RAISE NOTICE 'Added resource_type column';
     END IF;
