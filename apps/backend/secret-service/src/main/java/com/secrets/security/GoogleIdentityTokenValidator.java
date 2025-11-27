@@ -70,28 +70,28 @@ public class GoogleIdentityTokenValidator {
     }
 
     /**
-     * Extract roles and permissions from custom claims in the Firebase token
-     * Custom claims are set via Admin SDK (see GoogleIdentityService)
+     * Extract ONLY platform roles from custom claims in the Firebase token
+     * Permissions are now handled via project membership, not global claims
+     * Only ROLE_PLATFORM_ADMIN is preserved as a platform-level authority
      */
     private Collection<? extends GrantedAuthority> extractAuthorities(FirebaseToken token) {
         List<String> roles = extractRolesFromToken(token);
-        List<String> permissions = extractPermissionsFromToken(token);
-        
+
         // Default to USER role if no roles specified
         if (roles.isEmpty()) {
             roles = List.of("USER");
             log.debug("No roles found in token, defaulting to USER role");
         }
 
-        // Build authorities list with both roles and permissions
+        // Build authorities list with ONLY platform roles
+        // Note: PERMISSION_* authorities are removed - permissions are now project-scoped
         List<GrantedAuthority> authorities = roles.stream()
             .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
             .collect(Collectors.toList());
 
-        // Add permissions as authorities
-        permissions.forEach(permission -> 
-            authorities.add(new SimpleGrantedAuthority("PERMISSION_" + permission.toUpperCase()))
-        );
+        log.debug("Extracted authorities: {}", authorities.stream()
+            .map(GrantedAuthority::getAuthority)
+            .collect(Collectors.toList()));
 
         return authorities;
     }
@@ -116,24 +116,5 @@ public class GoogleIdentityTokenValidator {
         return List.of();
     }
 
-    /**
-     * Extract permissions from custom claims
-     * Permissions are stored in the token when set via Admin SDK
-     */
-    @SuppressWarnings("unchecked")
-    private List<String> extractPermissionsFromToken(FirebaseToken token) {
-        Object permissionsClaim = token.getClaims().get("permissions");
-        
-        if (permissionsClaim instanceof List) {
-            return (List<String>) permissionsClaim;
-        }
-        
-        // Also check for single permission string
-        if (permissionsClaim instanceof String) {
-            return List.of((String) permissionsClaim);
-        }
-        
-        return List.of();
-    }
 }
 
