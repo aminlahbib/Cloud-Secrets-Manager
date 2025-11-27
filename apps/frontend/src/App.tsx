@@ -15,11 +15,10 @@ import { AdminPage } from './pages/Admin';
 import { InvitationAcceptPage } from './pages/InvitationAccept';
 import { WorkflowFormPage } from './pages/WorkflowForm';
 import { WorkflowDetailPage } from './pages/WorkflowDetail';
+import { SecretFormPage } from './pages/SecretForm';
+import { SecretDetailPage } from './pages/SecretDetail';
 
 // Legacy pages (for backwards compatibility during migration)
-import { SecretsListPage } from './pages/SecretsList';
-import { SecretDetailPage } from './pages/SecretDetail';
-import { SecretFormPage } from './pages/SecretForm';
 import { AuditLogsPage } from './pages/AuditLogs';
 
 // Protected Route component
@@ -188,38 +187,6 @@ const App: React.FC = () => {
           Legacy Routes (for backwards compatibility)
           These will be deprecated once v3 migration is complete
           ================================================================ */}
-      <Route
-        path="/secrets"
-        element={
-          <ProtectedRoute>
-            <SecretsListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/new"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/:key"
-        element={
-          <ProtectedRoute>
-            <SecretDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/:key/edit"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/audit"
         element={

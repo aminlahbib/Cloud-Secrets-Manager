@@ -35,8 +35,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Fetch user's workflows
   const { data: workflows } = useQuery<Workflow[]>({
-    queryKey: ['workflows'],
+    queryKey: ['workflows', user?.id],
     queryFn: () => workflowsService.listWorkflows(),
+    enabled: !!user?.id,
     staleTime: 30000, // Cache for 30 seconds
   });
 

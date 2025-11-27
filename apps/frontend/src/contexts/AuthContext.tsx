@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
 import type { User, PlatformRole, LoginRequest } from '@/types';
@@ -34,6 +35,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isFirebaseEnabled] = useState(firebaseAuthService.isFirebaseEnabled());
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Track previous user ID to detect user changes
+  const [previousUserId, setPreviousUserId] = useState<string | null>(null);
+
+  // Clear query cache when user changes (logout or different user login)
+  useEffect(() => {
+    const currentUserId = user?.id || null;
+
+    // Only clear cache when user actually changes (not during initial loading)
+    if (previousUserId !== null && currentUserId !== previousUserId) {
+      console.log('User changed from', previousUserId, 'to', currentUserId, '- clearing query cache');
+      queryClient.clear();
+    }
+
+    setPreviousUserId(currentUserId);
+  }, [user?.id, queryClient]);
 
   // Initialize auth state
   useEffect(() => {
@@ -201,9 +219,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       authService.logout().catch(console.error);
     }
-    
+
     setUser(null);
     sessionStorage.clear();
+    // Clear query cache on logout
+    queryClient.clear();
     navigate('/login');
   };
 
