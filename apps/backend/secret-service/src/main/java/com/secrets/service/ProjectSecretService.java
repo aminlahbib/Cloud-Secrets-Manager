@@ -10,6 +10,8 @@ import com.secrets.entity.User;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
 import com.secrets.repository.SecretVersionRepository;
+import com.secrets.service.rotation.DefaultRotationStrategy;
+import com.secrets.service.rotation.SecretRotationStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -19,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Service for project-scoped secret operations (v3 architecture)
@@ -37,6 +41,7 @@ public class ProjectSecretService {
     private final ProjectPermissionService permissionService;
     private final AuditClient auditClient;
     private final UserService userService;
+    private final List<SecretRotationStrategy> rotationStrategies;
 
     public ProjectSecretService(SecretRepository secretRepository,
                                ProjectRepository projectRepository,
@@ -45,7 +50,8 @@ public class ProjectSecretService {
                                SecretVersionRepository secretVersionRepository,
                                ProjectPermissionService permissionService,
                                AuditClient auditClient,
-                               UserService userService) {
+                               UserService userService,
+                               List<SecretRotationStrategy> rotationStrategies) {
         this.secretRepository = secretRepository;
         this.projectRepository = projectRepository;
         this.encryptionService = encryptionService;
@@ -54,6 +60,7 @@ public class ProjectSecretService {
         this.permissionService = permissionService;
         this.auditClient = auditClient;
         this.userService = userService;
+        this.rotationStrategies = rotationStrategies;
     }
 
     /**
@@ -206,9 +213,10 @@ public class ProjectSecretService {
         Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
             .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
-        // Generate new value (simple rotation - in production, use rotation strategies)
+        // Generate new value using context-aware rotation strategy
         String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
-        String newValue = generateRotatedValue(currentValue);
+        SecretRotationStrategy strategy = resolveRotationStrategy(secret);
+        String newValue = strategy.rotate(currentValue);
         String encryptedValue = encryptionService.encrypt(newValue);
 
         secret.setEncryptedValue(encryptedValue);
@@ -383,13 +391,74 @@ public class ProjectSecretService {
         return saved;
     }
 
-    /**
-     * Simple value rotation (in production, use rotation strategies)
-     */
-    private String generateRotatedValue(String currentValue) {
-        // Simple implementation - append timestamp
-        // In production, use SecretRotationStrategy implementations
-        return currentValue + "_rotated_" + System.currentTimeMillis();
+    private SecretRotationStrategy resolveRotationStrategy(Secret secret) {
+        String explicitStrategy = extractStrategyToken(secret.getDescription());
+        if (explicitStrategy != null) {
+            return getStrategyByType(explicitStrategy);
+        }
+
+        String key = secret.getSecretKey() != null ? secret.getSecretKey().toUpperCase(Locale.ROOT) : "";
+        if (key.contains("POSTGRES") || key.contains("PG_") || key.contains("DATABASE")) {
+            return getStrategyByType("POSTGRES");
+        }
+        if (key.contains("SENDGRID") || key.contains("SG.")) {
+            return getStrategyByType("SENDGRID");
+        }
+
+        return getStrategyByType("DEFAULT");
+    }
+
+    private String extractStrategyToken(String description) {
+        if (description == null) {
+            return null;
+        }
+        String normalized = description.toUpperCase(Locale.ROOT);
+        String token = findToken(normalized, "ROTATION=");
+        if (token != null) {
+            return token;
+        }
+        return findToken(normalized, "STRATEGY=");
+    }
+
+    private String findToken(String source, String marker) {
+        int idx = source.indexOf(marker);
+        if (idx < 0) {
+            return null;
+        }
+        int start = idx + marker.length();
+        int end = findDelimiter(source, start);
+        if (start >= end) {
+            return null;
+        }
+        return source.substring(start, end).trim();
+    }
+
+    private int findDelimiter(String source, int start) {
+        for (int i = start; i < source.length(); i++) {
+            char c = source.charAt(i);
+            if (c == ']' || c == ')' || Character.isWhitespace(c)) {
+                return i;
+            }
+        }
+        return source.length();
+    }
+
+    private SecretRotationStrategy getStrategyByType(String type) {
+        if (rotationStrategies != null) {
+            for (SecretRotationStrategy strategy : rotationStrategies) {
+                if (strategy.getStrategyType().equalsIgnoreCase(type)) {
+                    return strategy;
+                }
+            }
+        }
+        // Fallback to the default implementation if available
+        if (rotationStrategies != null && !rotationStrategies.isEmpty()) {
+            return rotationStrategies.stream()
+                .filter(strategy -> "DEFAULT".equalsIgnoreCase(strategy.getStrategyType()))
+                .findFirst()
+                .orElse(rotationStrategies.get(0));
+        }
+        return new DefaultRotationStrategy();
     }
 }
 
