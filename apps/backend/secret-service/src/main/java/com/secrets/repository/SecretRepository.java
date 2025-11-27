@@ -33,7 +33,7 @@ public interface SecretRepository extends JpaRepository<Secret, UUID> {
         Pageable pageable
     );
     
-    @Query("SELECT COUNT(s) FROM Secret s WHERE s.projectId = :projectId")
+    @Query(value = "SELECT COUNT(*) FROM secrets WHERE project_id = :projectId", nativeQuery = true)
     Long countByProjectId(@Param("projectId") UUID projectId);
     
     // ============================================================================
