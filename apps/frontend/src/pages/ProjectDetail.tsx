@@ -16,10 +16,12 @@ import {
   Crown,
   UserPlus,
   Mail,
+  Clock,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
 import { membersService } from '../services/members';
+import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -29,7 +31,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
-import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
+import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -66,6 +68,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string>('');
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
+  const [activityPage, setActivityPage] = useState(1);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -86,6 +89,13 @@ export const ProjectDetailPage: React.FC = () => {
     queryKey: ['project-members', projectId],
     queryFn: () => membersService.listMembers(projectId!),
     enabled: !!projectId,
+  });
+
+  // Fetch project activity logs
+  const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
+    queryKey: ['project-activity', projectId, activityPage],
+    queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
+    enabled: !!projectId && activeTab === 'activity',
   });
 
   // Delete secret mutation
@@ -574,13 +584,123 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'activity' && (
-        <Card className="p-6">
-          <EmptyState
-            icon={<Activity className="h-16 w-16 text-gray-400" />}
-            title="Activity Log"
-            description="Recent activity for this project will appear here"
-          />
-        </Card>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
+            {activityData && activityData.totalElements > 0 && (
+              <span className="text-sm text-gray-500">
+                {activityData.totalElements} {activityData.totalElements === 1 ? 'event' : 'events'}
+              </span>
+            )}
+          </div>
+
+          {isActivityLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner size="lg" />
+            </div>
+          ) : !activityData || activityData.content.length === 0 ? (
+            <Card className="p-6">
+              <EmptyState
+                icon={<Activity className="h-16 w-16 text-gray-400" />}
+                title="No Activity"
+                description="Activity for this project will appear here as actions are performed"
+              />
+            </Card>
+          ) : (
+            <>
+              <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+                {activityData.content.map((log: AuditLog) => {
+                  const getTimeAgo = (timestamp: string) => {
+                    const date = new Date(timestamp);
+                    const now = new Date();
+                    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+                    
+                    if (diffInSeconds < 60) return 'just now';
+                    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                    return date.toLocaleDateString();
+                  };
+
+                  const formatAction = (action: string) => {
+                    return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                  };
+
+                  const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
+                    if (action.includes('CREATE')) return 'success';
+                    if (action.includes('DELETE')) return 'danger';
+                    if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
+                    if (action.includes('READ')) return 'info';
+                    return 'default';
+                  };
+
+                  return (
+                    <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className={`p-2 rounded-lg ${
+                          getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
+                          getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
+                          getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                          getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          <Activity className="h-4 w-4" />
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={getActionColor(log.action)}>
+                              {formatAction(log.action)}
+                            </Badge>
+                            {(log.resourceId || log.secretKey) && (
+                              <span className="text-sm font-medium text-gray-900">
+                                {log.resourceName || log.resourceId || log.secretKey}
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm text-gray-500">
+                            by {log.user?.email || log.username || 'Unknown'}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-gray-400">
+                          <Clock className="h-4 w-4 mr-1" />
+                          {getTimeAgo(log.createdAt || log.timestamp || '')}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {activityData.totalPages > 1 && (
+                <div className="flex justify-center">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setActivityPage(p => Math.max(1, p - 1))}
+                      disabled={activityPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="flex items-center px-4 text-sm text-gray-600">
+                      Page {activityPage} of {activityData.totalPages}
+                    </span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setActivityPage(p => Math.min(activityData.totalPages, p + 1))}
+                      disabled={activityPage >= activityData.totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       )}
 
       {activeTab === 'settings' && (
