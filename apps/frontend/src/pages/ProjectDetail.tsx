@@ -84,6 +84,11 @@ export const ProjectDetailPage: React.FC = () => {
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
+  // Debug: Log tab changes
+  useEffect(() => {
+    console.log('Active tab changed to:', activeTab);
+  }, [activeTab]);
+
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
     queryKey: ['project', projectId],
@@ -119,10 +124,14 @@ export const ProjectDetailPage: React.FC = () => {
   };
 
   // Fetch project activity logs for list view (paginated)
-  const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
+  const { data: activityData, isLoading: isActivityLoading, error: activityError } = useQuery<AuditLogsResponse>({
     queryKey: ['project-activity', projectId, activityPage],
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
     enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
+    retry: false,
+    onError: (error) => {
+      console.error('Activity list query error:', error);
+    },
   });
 
   // Fetch all activity logs for analytics (larger size, with date filter)
@@ -138,6 +147,9 @@ export const ProjectDetailPage: React.FC = () => {
     },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
+    onError: (error) => {
+      console.error('Analytics query error:', error);
+    },
   });
 
   // Calculate analytics stats
@@ -788,6 +800,13 @@ export const ProjectDetailPage: React.FC = () => {
                 <div className="flex justify-center py-8">
                   <Spinner size="lg" />
                 </div>
+              ) : activityError ? (
+                <Card className="p-6">
+                  <div className="text-center">
+                    <p className="text-red-600 mb-2">Error loading activity data</p>
+                    <p className="text-sm text-gray-500">{String(activityError)}</p>
+                  </div>
+                </Card>
               ) : !activityData || activityData.content.length === 0 ? (
                 <Card className="p-6">
                   <EmptyState
