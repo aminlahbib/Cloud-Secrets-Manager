@@ -19,19 +19,19 @@ export const auditService = {
   // Returns empty result if user doesn't have permission (403 is expected for non-admin users)
   async listAuditLogs(params: AuditLogsParams = {}): Promise<AuditLogsResponse> {
     try {
-      const { data } = await api.get('/api/audit', { params });
-      // Normalize response to match PaginatedResponse interface
-      // Backend might return nested page object or flat structure
-      if (data.page && typeof data.page === 'object') {
-        return {
-          content: data.content || [],
-          page: data.page.number ?? 0,
-          size: data.page.size ?? params.size ?? 20,
-          totalElements: data.page.totalElements ?? 0,
-          totalPages: data.page.totalPages ?? 0,
-        };
-      }
-      return data;
+    const { data } = await api.get('/api/audit', { params });
+    // Normalize response to match PaginatedResponse interface
+    // Backend might return nested page object or flat structure
+    if (data.page && typeof data.page === 'object') {
+      return {
+        content: data.content || [],
+        page: data.page.number ?? 0,
+        size: data.page.size ?? params.size ?? 20,
+        totalElements: data.page.totalElements ?? 0,
+        totalPages: data.page.totalPages ?? 0,
+      };
+    }
+    return data;
     } catch (error: any) {
       // 403 Forbidden is expected for users without ADMIN/MANAGER roles
       // Return empty result instead of throwing error

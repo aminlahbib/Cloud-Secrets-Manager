@@ -107,21 +107,21 @@ export const SecretDetailPage: React.FC = () => {
         </Button>
 
         <div className="flex space-x-2">
-          <Button
-            variant="secondary"
+              <Button
+                variant="secondary"
             onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}/edit`)}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
           <Button
             variant="secondary"
             onClick={() => rotateMutation.mutate()}
             disabled={rotateMutation.isPending}
           >
             <RotateCcw className={`h-4 w-4 mr-2 ${rotateMutation.isPending ? 'animate-spin' : ''}`} />
-            Rotate
-          </Button>
+                Rotate
+              </Button>
           <Button
             variant="danger"
             onClick={() => {
@@ -131,9 +131,9 @@ export const SecretDetailPage: React.FC = () => {
             }}
             disabled={deleteMutation.isPending}
           >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete
-          </Button>
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
         </div>
       </div>
 
@@ -180,7 +180,7 @@ export const SecretDetailPage: React.FC = () => {
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
-                </div>
+        </div>
               </div>
 
               {secret.expiresAt && (
@@ -191,7 +191,7 @@ export const SecretDetailPage: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-gray-400" />
                     <span className={isExpired ? 'text-red-600' : 'text-gray-900'}>
-                      {new Date(secret.expiresAt).toLocaleString()}
+                  {new Date(secret.expiresAt).toLocaleString()}
                     </span>
                   </div>
                 </div>

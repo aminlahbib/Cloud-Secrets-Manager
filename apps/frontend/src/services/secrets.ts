@@ -62,7 +62,13 @@ export const secretsService = {
    * Update a secret in a project
    */
   async updateProjectSecret(projectId: string, key: string, request: UpdateSecretRequest): Promise<Secret> {
-    const { data } = await api.put(buildProjectSecretPath(projectId, key), request);
+    const payload = {
+      key,
+      value: request.value,
+      description: request.description,
+      expiresAt: request.expiresAt,
+    };
+    const { data } = await api.put(buildProjectSecretPath(projectId, key), payload);
     return normalizeSecret(data);
   },
 

@@ -50,10 +50,10 @@ export const firebaseAuthService = {
       const restoreWarn = suppressCOOPWarnings();
       
       try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const idToken = await result.user.getIdToken();
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
         restoreWarn();
-        return idToken;
+      return idToken;
       } catch (popupError) {
         restoreWarn();
         throw popupError;

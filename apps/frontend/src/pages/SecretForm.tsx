@@ -74,6 +74,10 @@ export const SecretFormPage: React.FC = () => {
       expiresAt: formData.get('expiresAt') ? new Date(formData.get('expiresAt') as string) : undefined,
     };
 
+    if (isEditMode) {
+      payload.key = secretKey;
+    }
+
     if (!payload.key || !payload.value) {
       alert('Key and value are required');
       return;
