@@ -241,6 +241,9 @@ export interface AuditLog {
   action: AuditAction;
   resourceType: ResourceType;
   resourceId?: string;
+  resourceName?: string;
+  oldValue?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
