@@ -58,11 +58,15 @@ public class GoogleIdentityTokenValidator {
                 authorities
             );
 
-        return new UsernamePasswordAuthenticationToken(
+        // Store FirebaseToken in authentication details for later use (e.g., user creation)
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
             principal,
             idToken,
             authorities
         );
+        authentication.setDetails(decodedToken); // Store FirebaseToken for user creation
+        
+        return authentication;
     }
 
     /**

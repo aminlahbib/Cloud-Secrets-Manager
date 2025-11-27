@@ -34,6 +34,22 @@ export const firebaseAuthService = {
       return idToken;
     } catch (error: any) {
       console.error('Google sign-in error:', error);
+      
+      // Handle popup-blocked error specifically
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups for this site and try again.');
+      }
+      
+      // Handle popup-closed-by-user error
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      }
+      
+      // Handle other Firebase auth errors
+      if (error.code && error.code.startsWith('auth/')) {
+        throw new Error(error.message || 'Authentication failed. Please try again.');
+      }
+      
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   },

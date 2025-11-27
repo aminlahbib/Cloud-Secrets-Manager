@@ -1,6 +1,8 @@
 package com.secrets.security;
 
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.secrets.service.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,6 +34,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired(required = false)
     private GoogleIdentityTokenValidator firebaseTokenValidator;
     
+    @Autowired(required = false)
+    private UserService userService;
+    
     @Value("${google.cloud.identity.enabled:false}")
     private boolean firebaseEnabled;
 
@@ -55,6 +60,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     try {
                         authentication = firebaseTokenValidator.validateToken(jwt);
                         log.debug("Successfully validated Firebase ID token");
+                        
+                        // Auto-create user in local database if they don't exist
+                        if (authentication != null && authentication.getDetails() instanceof FirebaseToken && userService != null) {
+                            try {
+                                FirebaseToken firebaseToken = (FirebaseToken) authentication.getDetails();
+                                String uid = firebaseToken.getUid();
+                                String email = firebaseToken.getEmail();
+                                String displayName = firebaseToken.getName();
+                                String photoUrl = firebaseToken.getPicture();
+                                
+                                // Ensure user exists in local database
+                                userService.getOrCreateUser(uid, email, displayName, photoUrl);
+                                log.debug("Ensured user exists in local database: {}", email);
+                            } catch (Exception e) {
+                                log.warn("Failed to create/update user in local database, continuing with authentication: {}", e.getMessage());
+                                // Don't fail authentication if user creation fails
+                            }
+                        }
                     } catch (FirebaseAuthException e) {
                         log.debug("Token is not a valid Firebase token, trying local JWT: {}", e.getMessage());
                         // Fall through to local JWT validation
