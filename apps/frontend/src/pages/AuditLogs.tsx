@@ -150,7 +150,7 @@ export const AuditLogsPage: React.FC = () => {
                 value={filters.username}
                 onChange={(e) => handleFilterChange('username', e.target.value)}
                 placeholder="user@example.com"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               />
             </div>
             <div>
@@ -160,7 +160,7 @@ export const AuditLogsPage: React.FC = () => {
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               >
                 <option value="">All</option>
                 <option value="CREATE">Create</option>
@@ -181,7 +181,7 @@ export const AuditLogsPage: React.FC = () => {
                 value={filters.secretKey}
                 onChange={(e) => handleFilterChange('secretKey', e.target.value)}
                 placeholder="api-key-prod"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               />
             </div>
             <div>
@@ -192,7 +192,7 @@ export const AuditLogsPage: React.FC = () => {
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               />
             </div>
             <div>
@@ -203,7 +203,7 @@ export const AuditLogsPage: React.FC = () => {
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               />
             </div>
           </div>

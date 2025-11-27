@@ -74,29 +74,30 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+      <div className="bg-white border border-neutral-200 rounded-3xl p-8 shadow-sm">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Welcome back, {user?.displayName || user?.email?.split('@')[0]}! 👋
+            <p className="text-sm uppercase tracking-[0.3em] text-neutral-400">Dashboard</p>
+            <h1 className="text-3xl font-semibold mt-2 text-neutral-900">
+              Welcome back, {user?.displayName || user?.email?.split('@')[0]}
             </h1>
-            <p className="text-purple-100 text-lg">
-              Manage your cloud secrets securely and efficiently.
+            <p className="text-neutral-500 mt-2 max-w-2xl">
+              Everything you need to organise secrets, workflows and teams now lives in one calm, focused surface.
             </p>
             {isPlatformAdmin && (
-              <div className="mt-3 flex items-center text-purple-200">
-                <Shield className="h-4 w-4 mr-2" />
-                <span className="text-sm">Platform Administrator</span>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-neutral-200 px-3 py-1 text-xs font-medium text-neutral-600">
+                <Shield className="h-3.5 w-3.5" />
+                Platform administrator
               </div>
             )}
           </div>
-          <div className="mt-6 md:mt-0">
-            <Button
-              onClick={() => navigate('/projects')}
-              className="bg-white text-purple-600 hover:bg-purple-50"
-            >
-              <Plus className="w-5 h-5 mr-2" />
+          <div className="flex flex-col gap-3 w-full md:w-auto">
+            <Button onClick={() => navigate('/projects')} className="w-full md:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
               New Project
+            </Button>
+            <Button variant="secondary" onClick={() => navigate('/projects')} className="w-full md:w-auto">
+              Browse Projects
             </Button>
           </div>
         </div>
@@ -104,59 +105,59 @@ export const HomePage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Projects</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-neutral-500">Total Projects</p>
+              <p className="text-3xl font-semibold text-neutral-900 mt-1">
                 {isProjectsLoading ? '...' : projectsData?.totalElements ?? 0}
               </p>
             </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Folder className="h-6 w-6 text-purple-600" />
+            <div className="p-3 rounded-2xl border border-neutral-200 text-neutral-500">
+              <Folder className="h-5 w-5" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Total Secrets</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-neutral-500">Total Secrets</p>
+              <p className="text-3xl font-semibold text-neutral-900 mt-1">
                 {isProjectsLoading ? '...' : totalSecrets}
               </p>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Key className="h-6 w-6 text-green-600" />
+            <div className="p-3 rounded-2xl border border-neutral-200 text-neutral-500">
+              <Key className="h-5 w-5" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Team Members</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
+              <p className="text-sm font-medium text-neutral-500">Team Members</p>
+              <p className="text-3xl font-semibold text-neutral-900 mt-1">
                 {isProjectsLoading ? '...' : totalMembers}
               </p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className="p-3 rounded-2xl border border-neutral-200 text-neutral-500">
+              <Users className="h-5 w-5" />
             </div>
           </div>
         </div>
 
         {isPlatformAdmin && (
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Recent Activity</p>
-                <p className="text-3xl font-bold text-gray-900 mt-1">
+                <p className="text-sm font-medium text-neutral-500">Recent Activity</p>
+                <p className="text-3xl font-semibold text-neutral-900 mt-1">
                   {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
                 </p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Activity className="h-6 w-6 text-orange-600" />
+              <div className="p-3 rounded-2xl border border-neutral-200 text-neutral-500">
+                <Activity className="h-5 w-5" />
               </div>
             </div>
           </div>
@@ -171,7 +172,7 @@ export const HomePage: React.FC = () => {
               <h2 className="text-lg font-bold text-gray-900">Workflows</h2>
               <Link
                 to="/workflows/new"
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center"
               >
                 New <Plus className="w-4 h-4 ml-1" />
               </Link>
@@ -194,14 +195,14 @@ export const HomePage: React.FC = () => {
                   className="block p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-purple-100 rounded">
-                      <Folder className="h-4 w-4 text-purple-600" />
+                    <div className="p-1.5 bg-neutral-100 rounded">
+                      <Folder className="h-4 w-4 text-neutral-600" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {workflow.name}
                         {workflow.isDefault && (
-                          <span className="ml-2 text-xs text-purple-500">(Default)</span>
+                          <span className="ml-2 text-xs text-neutral-500">(Default)</span>
                         )}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
@@ -223,7 +224,7 @@ export const HomePage: React.FC = () => {
               <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
               <Link 
                 to="/activity" 
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center"
               >
                 View all <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
@@ -271,7 +272,7 @@ export const HomePage: React.FC = () => {
               <h2 className="text-lg font-bold text-gray-900">Your Projects</h2>
               <Link 
                 to="/projects" 
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+                className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center"
               >
                 View all <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
@@ -298,14 +299,14 @@ export const HomePage: React.FC = () => {
                 <Link
                   key={project.id}
                   to={`/projects/${project.id}`}
-                  className="group block p-4 rounded-lg border border-gray-100 hover:border-purple-200 hover:shadow-sm transition-all"
+                  className="group block p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:shadow-md transition-all"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-purple-50 rounded-lg group-hover:bg-purple-100 transition-colors">
-                      <Folder className="h-5 w-5 text-purple-600" />
+                    <div className="p-2 bg-neutral-100 rounded-xl group-hover:bg-neutral-900 group-hover:text-white transition-colors text-neutral-600">
+                      <Folder className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate group-hover:text-purple-700 transition-colors">
+                      <h3 className="font-semibold text-neutral-900 truncate group-hover:text-neutral-900">
                         {project.name}
                       </h3>
                       <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
@@ -340,60 +341,60 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6">
+        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => navigate('/projects')}
-            className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
+            className="flex items-center p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left"
           >
-            <div className="p-2 bg-purple-100 rounded-lg mr-4">
-              <Plus className="h-5 w-5 text-purple-600" />
+            <div className="p-2 bg-neutral-100 rounded-xl mr-4 text-neutral-600">
+              <Plus className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">New Project</p>
-              <p className="text-sm text-gray-500">Create a new project</p>
+              <p className="font-medium text-neutral-900">New Project</p>
+              <p className="text-sm text-neutral-500">Create a new project</p>
             </div>
           </button>
 
           {isPlatformAdmin && (
             <button
               onClick={() => navigate('/activity')}
-              className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
+              className="flex items-center p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left"
             >
-              <div className="p-2 bg-orange-100 rounded-lg mr-4">
-                <Activity className="h-5 w-5 text-orange-600" />
+              <div className="p-2 bg-neutral-100 rounded-xl mr-4 text-neutral-600">
+                <Activity className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">View Activity</p>
-                <p className="text-sm text-gray-500">See recent changes</p>
+                <p className="font-medium text-neutral-900">View Activity</p>
+                <p className="text-sm text-neutral-500">See recent changes</p>
               </div>
             </button>
           )}
 
           <button
             onClick={() => navigate('/teams')}
-            className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
+            className="flex items-center p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left"
           >
-            <div className="p-2 bg-blue-100 rounded-lg mr-4">
-              <Users className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-neutral-100 rounded-xl mr-4 text-neutral-600">
+              <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">Manage Team</p>
-              <p className="text-sm text-gray-500">Invite collaborators</p>
+              <p className="font-medium text-neutral-900">Manage Team</p>
+              <p className="text-sm text-neutral-500">Invite collaborators</p>
             </div>
           </button>
 
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
+            className="flex items-center p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left"
           >
-            <div className="p-2 bg-gray-100 rounded-lg mr-4">
-              <TrendingUp className="h-5 w-5 text-gray-600" />
+            <div className="p-2 bg-neutral-100 rounded-xl mr-4 text-neutral-600">
+              <TrendingUp className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">Settings</p>
-              <p className="text-sm text-gray-500">Configure preferences</p>
+              <p className="font-medium text-neutral-900">Settings</p>
+              <p className="text-sm text-neutral-500">Configure preferences</p>
             </div>
           </button>
         </div>
