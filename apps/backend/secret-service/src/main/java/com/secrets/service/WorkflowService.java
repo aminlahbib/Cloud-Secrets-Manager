@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +28,9 @@ public class WorkflowService {
     
     private final WorkflowRepository workflowRepository;
     private final WorkflowProjectRepository workflowProjectRepository;
+    
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public WorkflowService(WorkflowRepository workflowRepository,
                           WorkflowProjectRepository workflowProjectRepository) {
@@ -190,7 +195,38 @@ public class WorkflowService {
 
     private WorkflowResponse toResponse(Workflow workflow) {
         WorkflowResponse response = WorkflowResponse.from(workflow);
-        // Note: Projects can be loaded separately if needed via WorkflowProjectRepository
+        
+        // Load projects for this workflow with project details
+        List<WorkflowProject> workflowProjects = workflowProjectRepository.findByWorkflowIdOrderByDisplayOrderAsc(workflow.getId());
+        
+        // Eagerly fetch project details to avoid lazy loading issues
+        List<WorkflowResponse.WorkflowProjectResponse> projectResponses = workflowProjects.stream()
+            .map(wp -> {
+                WorkflowResponse.WorkflowProjectResponse wpResponse = new WorkflowResponse.WorkflowProjectResponse();
+                wpResponse.setId(wp.getId());
+                wpResponse.setProjectId(wp.getProjectId());
+                wpResponse.setDisplayOrder(wp.getDisplayOrder());
+                wpResponse.setAddedAt(wp.getAddedAt());
+                
+                // Eagerly fetch project entity
+                try {
+                    com.secrets.entity.Project project = entityManager.find(com.secrets.entity.Project.class, wp.getProjectId());
+                    if (project != null) {
+                        WorkflowResponse.ProjectSummary projectSummary = new WorkflowResponse.ProjectSummary();
+                        projectSummary.setId(project.getId());
+                        projectSummary.setName(project.getName());
+                        projectSummary.setDescription(project.getDescription());
+                        wpResponse.setProject(projectSummary);
+                    }
+                } catch (Exception e) {
+                    log.debug("Could not load project details for workflow project: {}", wp.getProjectId(), e);
+                }
+                
+                return wpResponse;
+            })
+            .collect(Collectors.toList());
+        
+        response.setProjects(projectResponses);
         return response;
     }
 }

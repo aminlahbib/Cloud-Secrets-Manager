@@ -13,6 +13,7 @@ import { TeamsPage } from './pages/Teams';
 import { SettingsPage } from './pages/Settings';
 import { AdminPage } from './pages/Admin';
 import { InvitationAcceptPage } from './pages/InvitationAccept';
+import { WorkflowFormPage } from './pages/WorkflowForm';
 
 // Legacy pages (for backwards compatibility during migration)
 import { SecretsListPage } from './pages/SecretsList';
@@ -150,6 +151,16 @@ const App: React.FC = () => {
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      
+      {/* Workflows */}
+      <Route
+        path="/workflows/new"
+        element={
+          <ProtectedRoute>
+            <WorkflowFormPage />
           </ProtectedRoute>
         }
       />
