@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
@@ -67,8 +67,13 @@ export const ActivityPage: React.FC = () => {
   const { isPlatformAdmin } = useAuth();
 
   // Redirect non-platform admins
+  useEffect(() => {
+    if (!isPlatformAdmin) {
+      navigate('/home');
+    }
+  }, [isPlatformAdmin, navigate]);
+
   if (!isPlatformAdmin) {
-    navigate('/home');
     return null;
   }
 

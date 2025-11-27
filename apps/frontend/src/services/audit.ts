@@ -60,7 +60,25 @@ export const auditService = {
   // Get project-scoped audit logs
   async getProjectAuditLogs(projectId: string, params: Omit<AuditLogsParams, 'projectId'> = {}): Promise<AuditLogsResponse> {
     try {
-      const { data } = await api.get(`/api/audit/project/${projectId}`, { params });
+      let url = `/api/audit/project/${projectId}`;
+      let requestParams: any = {
+        page: params.page ?? 0,
+        size: params.size ?? 20,
+      };
+
+      // If date range is provided, use the date-range endpoint
+      // Backend expects 'start' and 'end' parameters with ISO 8601 format
+      if (params.startDate && params.endDate) {
+        url = `/api/audit/project/${projectId}/date-range`;
+        requestParams = {
+          start: params.startDate, // Already in ISO format from getDateRangeParams
+          end: params.endDate,     // Already in ISO format from getDateRangeParams
+          page: params.page ?? 0,
+          size: params.size ?? 20,
+        };
+      }
+
+      const { data } = await api.get(url, { params: requestParams });
       // Normalize response to match PaginatedResponse interface
       if (data.page && typeof data.page === 'object') {
         return {
@@ -73,6 +91,8 @@ export const auditService = {
       }
       return data;
     } catch (error: any) {
+      console.error('Error fetching project audit logs:', error);
+      console.error('URL:', `/api/audit/project/${projectId}`, 'Params:', params);
       // 403 Forbidden is expected for users without access
       // Return empty result instead of throwing error
       if (error.response?.status === 403 || error.response?.status === 404) {
