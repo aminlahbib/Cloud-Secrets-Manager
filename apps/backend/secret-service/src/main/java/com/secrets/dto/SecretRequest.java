@@ -13,6 +13,14 @@ public class SecretRequest {
     @Size(max = 5000, message = "Secret value must not exceed 5000 characters")
     private String value;
 
+    @Size(max = 2000, message = "Description must not exceed 2000 characters")
+    private String description;
+
+    /**
+     * ISO-8601 date string (e.g., 2025-11-27T10:00:00Z)
+     */
+    private String expiresAt;
+
     public SecretRequest() {
     }
 
@@ -35,5 +43,21 @@ public class SecretRequest {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(String expiresAt) {
+        this.expiresAt = expiresAt;
     }
 }
