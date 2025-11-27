@@ -382,11 +382,11 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-4 text-sm text-neutral-600">
             <p>
               Need help?{' '}
-              <button className="underline" type="button" onClick={() => navigate('/activity')}>
+              <button className="underline" type="button" onClick={() => setActiveTab('activity')}>
                 View project activity
               </button>{' '}
               or visit{' '}
-              <button className="underline" type="button" onClick={() => navigate('/settings')}>
+              <button className="underline" type="button" onClick={() => setActiveTab('settings')}>
                 project settings
               </button>{' '}
               for more tools.
