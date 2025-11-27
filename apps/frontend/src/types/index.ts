@@ -167,6 +167,7 @@ export interface Secret {
   description?: string;
   tags?: string[];
   version?: number;
+  secretVersions?: SecretVersion[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
