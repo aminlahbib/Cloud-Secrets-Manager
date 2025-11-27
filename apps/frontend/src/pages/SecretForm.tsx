@@ -46,8 +46,6 @@ export const SecretFormPage: React.FC = () => {
       return;
     }
 
-    console.log('DEBUG: Submitting secret payload:', payload);
-
     mutation.mutate(payload, {
       onSuccess: (result) => {
         const targetKey = result.key || result.secretKey || payload.key;
