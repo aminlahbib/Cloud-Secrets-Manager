@@ -23,4 +23,11 @@ public class EncryptionUtil {
     public String decryptSecretValue(Secret secret) {
         return encryptionService.decrypt(secret.getEncryptedValue());
     }
+
+    /**
+     * Decrypt an arbitrary encrypted payload
+     */
+    public String decrypt(String encryptedValue) {
+        return encryptionService.decrypt(encryptedValue);
+    }
 }
