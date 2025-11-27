@@ -23,11 +23,12 @@ import { Input } from '../components/ui/Input';
 import { useAuth } from '../contexts/AuthContext';
 
 export const SecretDetailPage: React.FC = () => {
-  const { key: keyParam } = useParams<{ key: string }>();
+  const { key: keyParam, projectId } = useParams<{ key: string; projectId?: string }>();
   const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   useAuth(); // For authentication check
+  const isProjectScoped = !!projectId;
 
   const [showValue, setShowValue] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -49,15 +50,18 @@ export const SecretDetailPage: React.FC = () => {
   });
 
   const { data: secret, isLoading, error } = useQuery({
-    queryKey: ['secret', secretKey],
-    queryFn: () => secretsService.getSecret(secretKey),
+    queryKey: isProjectScoped ? ['project-secret', projectId, secretKey] : ['secret', secretKey],
+    queryFn: () => isProjectScoped && projectId
+      ? secretsService.getProjectSecret(projectId, secretKey)
+      : secretsService.getSecret(secretKey),
     enabled: !!secretKey,
   });
 
+  // Versions and sharing are not available for project-scoped secrets yet
   const { data: versions, isLoading: isVersionsLoading } = useQuery({
     queryKey: ['secret', secretKey, 'versions'],
     queryFn: () => secretsService.getSecretVersions(secretKey),
-    enabled: !!secretKey,
+    enabled: !!secretKey && !isProjectScoped,
   });
 
   const {
@@ -67,7 +71,7 @@ export const SecretDetailPage: React.FC = () => {
   } = useQuery({
     queryKey: ['secret', secretKey, 'shared-users'],
     queryFn: () => secretsService.getSharedUsers(secretKey),
-    enabled: !!secretKey,
+    enabled: !!secretKey && !isProjectScoped,
   });
 
   // Legacy permission checks - these pages will be deprecated in v3
@@ -78,10 +82,17 @@ export const SecretDetailPage: React.FC = () => {
   const canRotate = true;
 
   const deleteMutation = useMutation({
-    mutationFn: () => secretsService.deleteSecret(secretKey),
+    mutationFn: () => isProjectScoped && projectId
+      ? secretsService.deleteProjectSecret(projectId, secretKey)
+      : secretsService.deleteSecret(secretKey),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['secrets'] });
-      navigate('/secrets');
+      if (isProjectScoped && projectId) {
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+        navigate(`/projects/${projectId}`);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['secrets'] });
+        navigate('/secrets');
+      }
     },
   });
 
@@ -187,11 +198,17 @@ export const SecretDetailPage: React.FC = () => {
       <div className="mb-6">
         <Button
           variant="ghost"
-          onClick={() => navigate('/secrets')}
+          onClick={() => {
+            if (isProjectScoped && projectId) {
+              navigate(`/projects/${projectId}`);
+            } else {
+              navigate('/secrets');
+            }
+          }}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Secrets
+          {isProjectScoped ? 'Back to Project' : 'Back to Secrets'}
         </Button>
 
         <div className="sm:flex sm:items-center sm:justify-between">
@@ -209,7 +226,13 @@ export const SecretDetailPage: React.FC = () => {
             {canWrite && (
               <Button
                 variant="secondary"
-                onClick={() => navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`)}
+                onClick={() => {
+                  if (isProjectScoped && projectId) {
+                    navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}/edit`);
+                  } else {
+                    navigate(`/secrets/${encodeURIComponent(secretKey)}/edit`);
+                  }
+                }}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit
