@@ -55,19 +55,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize auth state
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     const initAuth = async () => {
       // If Firebase is enabled, listen to Firebase auth state
       if (isFirebaseEnabled) {
-        const unsubscribe = firebaseAuthService.onAuthStateChanged(async (firebaseUser) => {
+        unsubscribe = firebaseAuthService.onAuthStateChanged(async (firebaseUser) => {
           if (firebaseUser) {
             try {
               const idTokenResult = await firebaseUser.getIdTokenResult();
-              
+
               // Extract platform role from claims (v3 architecture)
               const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
-              
+
               sessionStorage.setItem('accessToken', idTokenResult.token);
-              
+
               // Construct user object from Firebase user and claims
               setUser({
                 id: firebaseUser.uid,
@@ -90,8 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }
           setIsLoading(false);
         });
-
-        return unsubscribe;
       } else {
         // Local authentication mode
         const token = sessionStorage.getItem('accessToken');
@@ -109,7 +109,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     void initAuth();
-    // No cleanup needed since Firebase handles unsubscribe internally
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [isFirebaseEnabled]);
 
   // Auto-refresh token before expiration
@@ -230,16 +234,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isPlatformAdmin = user?.platformRole === 'PLATFORM_ADMIN';
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isAuthenticated: !!user, 
-        isLoading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
         isFirebaseEnabled,
         isPlatformAdmin,
-        login, 
+        login,
         loginWithGoogle,
-        logout 
+        logout
       }}
     >
       {children}
