@@ -39,6 +39,7 @@ import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
 import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { SkeletonTable, SkeletonList, SkeletonStats } from '../components/ui/Skeleton';
 import {
   calculateActivityStats,
   getLastNDays,
@@ -485,9 +486,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {isSecretsLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
+            <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
             <EmptyState
               icon={<Key className="h-16 w-16 text-gray-400" />}
@@ -771,8 +770,18 @@ export const ProjectDetailPage: React.FC = () => {
           {activityView === 'analytics' && (
             <>
               {isAnalyticsLoading ? (
-                <div className="flex justify-center py-12">
-                  <Spinner size="lg" />
+                <div className="space-y-6">
+                  <SkeletonStats />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <Skeleton variant="text" width="40%" height={24} className="mb-4" />
+                      <Skeleton variant="rectangular" width="100%" height={300} />
+                    </div>
+                    <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <Skeleton variant="text" width="40%" height={24} className="mb-4" />
+                      <Skeleton variant="rectangular" width="100%" height={300} />
+                    </div>
+                  </div>
                 </div>
               ) : analyticsError ? (
                 <Card className="p-6">
