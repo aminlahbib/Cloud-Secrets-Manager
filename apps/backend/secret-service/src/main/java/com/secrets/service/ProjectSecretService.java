@@ -7,6 +7,8 @@ import com.secrets.entity.SecretVersion;
 import com.secrets.exception.SecretAlreadyExistsException;
 import com.secrets.exception.SecretNotFoundException;
 import com.secrets.entity.User;
+import com.secrets.metrics.SecretMetrics;
+import com.secrets.metrics.SecretMetrics.SecretOperation;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
 import com.secrets.repository.SecretVersionRepository;
@@ -45,6 +47,7 @@ public class ProjectSecretService {
     private final ProjectPermissionService permissionService;
     private final AuditClient auditClient;
     private final UserService userService;
+    private final SecretMetrics secretMetrics;
     private final List<SecretRotationStrategy> rotationStrategies;
 
     public ProjectSecretService(SecretRepository secretRepository,
@@ -55,7 +58,8 @@ public class ProjectSecretService {
                                ProjectPermissionService permissionService,
                                AuditClient auditClient,
                                UserService userService,
-                               List<SecretRotationStrategy> rotationStrategies) {
+                               List<SecretRotationStrategy> rotationStrategies,
+                               SecretMetrics secretMetrics) {
         this.secretRepository = secretRepository;
         this.projectRepository = projectRepository;
         this.encryptionService = encryptionService;
@@ -65,6 +69,7 @@ public class ProjectSecretService {
         this.auditClient = auditClient;
         this.userService = userService;
         this.rotationStrategies = rotationStrategies;
+        this.secretMetrics = secretMetrics;
     }
 
     /**
@@ -106,6 +111,7 @@ public class ProjectSecretService {
         String username = user != null ? user.getEmail() : userId.toString();
         auditClient.logEvent("SECRET_READ", secretKey, username);
 
+        secretMetrics.recordOperation(SecretOperation.READ);
         return secret;
     }
 
@@ -148,6 +154,7 @@ public class ProjectSecretService {
         auditClient.logEvent("SECRET_CREATE", request.getKey(), username);
 
         log.info("Created secret {} in project {}", request.getKey(), projectId);
+        secretMetrics.recordOperation(SecretOperation.CREATE);
         return saved;
     }
 
@@ -184,6 +191,7 @@ public class ProjectSecretService {
         auditClient.logEvent("SECRET_UPDATE", secretKey, username);
 
         log.info("Updated secret {} in project {}", secretKey, projectId);
+        secretMetrics.recordOperation(SecretOperation.UPDATE);
         return saved;
     }
 
@@ -211,42 +219,46 @@ public class ProjectSecretService {
         auditClient.logEvent("SECRET_DELETE", secretKey, username);
 
         log.info("Deleted secret {} from project {}", secretKey, projectId);
+        secretMetrics.recordOperation(SecretOperation.DELETE);
     }
 
     /**
      * Rotate a secret in a project
      */
     public Secret rotateProjectSecret(UUID projectId, String secretKey, UUID userId) {
-        // Check permission
-        if (!permissionService.canRotateSecrets(projectId, userId)) {
-            throw new AccessDeniedException("You don't have permission to rotate secrets in this project");
-        }
+        return secretMetrics.recordRotation(() -> {
+            // Check permission
+            if (!permissionService.canRotateSecrets(projectId, userId)) {
+                throw new AccessDeniedException("You don't have permission to rotate secrets in this project");
+            }
 
-        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
-            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+            Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+                .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
-        // Generate new value using context-aware rotation strategy
-        String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
-        SecretRotationStrategy strategy = resolveRotationStrategy(secret);
-        String newValue = strategy.rotate(currentValue);
-        String encryptedValue = encryptionService.encrypt(newValue);
+            // Generate new value using context-aware rotation strategy
+            String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
+            SecretRotationStrategy strategy = resolveRotationStrategy(secret);
+            String newValue = strategy.rotate(currentValue);
+            String encryptedValue = encryptionService.encrypt(newValue);
 
-        secret.setEncryptedValue(encryptedValue);
-        secret.setUpdatedBy(userId);
-        secret.setLastRotatedAt(java.time.LocalDateTime.now());
+            secret.setEncryptedValue(encryptedValue);
+            secret.setUpdatedBy(userId);
+            secret.setLastRotatedAt(java.time.LocalDateTime.now());
 
-        Secret saved = secretRepository.save(secret);
+            Secret saved = secretRepository.save(secret);
 
-        // Create new version
-        secretVersionService.createVersion(saved, userId, "Secret rotated");
+            // Create new version
+            secretVersionService.createVersion(saved, userId, "Secret rotated");
 
-        // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_ROTATE", secretKey, username);
+            // Audit log
+            User user = userService.findById(userId).orElse(null);
+            String username = user != null ? user.getEmail() : userId.toString();
+            auditClient.logEvent("SECRET_ROTATE", secretKey, username);
 
-        log.info("Rotated secret {} in project {}", secretKey, projectId);
-        return saved;
+            log.info("Rotated secret {} in project {}", secretKey, projectId);
+            secretMetrics.recordOperation(SecretOperation.ROTATE);
+            return saved;
+        });
     }
 
     /**
@@ -396,6 +408,7 @@ public class ProjectSecretService {
         auditClient.logEvent("SECRET_ROLLBACK", secretKey, username);
 
         log.info("Restored secret {} in project {} to version {}", secretKey, projectId, versionNumber);
+        secretMetrics.recordOperation(SecretOperation.UPDATE);
         return saved;
     }
 
