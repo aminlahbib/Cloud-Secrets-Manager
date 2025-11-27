@@ -32,6 +32,11 @@ spring:
       write-dates-as-timestamps: false
     time-zone: UTC
 
+  data:
+    redis:
+      repositories:
+        enabled: false
+
 server:
   port: 8080
   error:

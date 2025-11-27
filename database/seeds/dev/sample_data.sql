@@ -14,6 +14,7 @@
 
 -- Create test users
 INSERT INTO users (id, firebase_uid, email, display_name, platform_role) VALUES
+    ('00000000-0000-0000-0000-000000000001', 'Ft1Asf7Ct9SvSkvzWCzudeGHNcQ2', 'admin@example.com', 'Admin', 'PLATFORM_ADMIN'),
     ('11111111-1111-1111-1111-111111111111', 'firebase_uid_alice', 'alice@example.com', 'Alice Admin', 'PLATFORM_ADMIN'),
     ('22222222-2222-2222-2222-222222222222', 'firebase_uid_bob', 'bob@example.com', 'Bob Owner', 'USER'),
     ('33333333-3333-3333-3333-333333333333', 'firebase_uid_charlie', 'charlie@example.com', 'Charlie Member', 'USER'),
