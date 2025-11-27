@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
 import { auditService, type AuditLogsResponse } from '../services/audit';
@@ -7,6 +8,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { useAuth } from '../contexts/AuthContext';
 import type { AuditLog } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -61,6 +63,15 @@ interface FilterState {
 }
 
 export const ActivityPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { isPlatformAdmin } = useAuth();
+
+  // Redirect non-platform admins
+  if (!isPlatformAdmin) {
+    navigate('/home');
+    return null;
+  }
+
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FilterState>({
     action: '',
