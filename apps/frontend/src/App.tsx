@@ -13,11 +13,12 @@ import { TeamsPage } from './pages/Teams';
 import { SettingsPage } from './pages/Settings';
 import { AdminPage } from './pages/Admin';
 import { InvitationAcceptPage } from './pages/InvitationAccept';
+import { WorkflowFormPage } from './pages/WorkflowForm';
+import { WorkflowDetailPage } from './pages/WorkflowDetail';
+import { SecretFormPage } from './pages/SecretForm';
+import { SecretDetailPage } from './pages/SecretDetail';
 
 // Legacy pages (for backwards compatibility during migration)
-import { SecretsListPage } from './pages/SecretsList';
-import { SecretDetailPage } from './pages/SecretDetail';
-import { SecretFormPage } from './pages/SecretForm';
 import { AuditLogsPage } from './pages/AuditLogs';
 
 // Protected Route component
@@ -26,10 +27,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
-          <p className="text-gray-500 text-sm">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900" />
+          <p className="text-neutral-500 text-sm">Loading...</p>
         </div>
       </div>
     );
@@ -48,8 +49,8 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600" />
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900" />
       </div>
     );
   }
@@ -154,6 +155,24 @@ const App: React.FC = () => {
         }
       />
       
+      {/* Workflows */}
+      <Route
+        path="/workflows/new"
+        element={
+          <ProtectedRoute>
+            <WorkflowFormPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/workflows/:workflowId"
+        element={
+          <ProtectedRoute>
+            <WorkflowDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      
       {/* Platform Admin */}
       <Route
         path="/admin"
@@ -168,38 +187,6 @@ const App: React.FC = () => {
           Legacy Routes (for backwards compatibility)
           These will be deprecated once v3 migration is complete
           ================================================================ */}
-      <Route
-        path="/secrets"
-        element={
-          <ProtectedRoute>
-            <SecretsListPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/new"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/:key"
-        element={
-          <ProtectedRoute>
-            <SecretDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/secrets/:key/edit"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
       <Route
         path="/audit"
         element={

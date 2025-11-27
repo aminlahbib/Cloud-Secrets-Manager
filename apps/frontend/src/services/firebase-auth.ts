@@ -10,6 +10,22 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 
+// Suppress COOP warnings globally (harmless browser security warnings from Firebase)
+const suppressCOOPWarnings = () => {
+  const originalWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    const message = args.join(' ');
+    // Suppress COOP-related warnings from Firebase/Google OAuth
+    if (message.includes('Cross-Origin-Opener-Policy') || 
+        message.includes('window.closed') || 
+        message.includes('window.close')) {
+      return; // Suppress these warnings
+    }
+    originalWarn.apply(console, args);
+  };
+  return () => { console.warn = originalWarn; };
+};
+
 export const firebaseAuthService = {
   /**
    * Initialize auth persistence
@@ -29,11 +45,37 @@ export const firebaseAuthService = {
   async signInWithGoogle(): Promise<string> {
     try {
       await this.initPersistence();
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-      return idToken;
+      
+      // Suppress COOP warnings during sign-in
+      const restoreWarn = suppressCOOPWarnings();
+      
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const idToken = await result.user.getIdToken();
+        restoreWarn();
+        return idToken;
+      } catch (popupError) {
+        restoreWarn();
+        throw popupError;
+      }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
+      
+      // Handle popup-blocked error specifically
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('Popup was blocked by your browser. Please allow popups for this site and try again.');
+      }
+      
+      // Handle popup-closed-by-user error
+      if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('Sign-in was cancelled. Please try again.');
+      }
+      
+      // Handle other Firebase auth errors
+      if (error.code && error.code.startsWith('auth/')) {
+        throw new Error(error.message || 'Authentication failed. Please try again.');
+      }
+      
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   },

@@ -178,43 +178,7 @@ public class AdminController {
         }
     }
 
-    @PutMapping("/users/{uid}/permissions")
-    @Operation(summary = "Update user permissions", description = "Convenience endpoint to overwrite permissions list for a user")
-    public ResponseEntity<Map<String, Object>> updateUserPermissions(
-            @PathVariable String uid,
-            @RequestBody SetPermissionsRequest request) throws FirebaseAuthException {
-        googleIdentityService.setUserPermissions(uid, request.getPermissions());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("uid", uid);
-        response.put("permissions", request.getPermissions());
-        response.put("message", "Permissions updated successfully. User must re-authenticate for changes to take effect.");
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/users/{uid}/permissions")
-    @Operation(summary = "Set user permissions", description = "Sets permissions (custom claims) for a user. User must re-authenticate for changes to take effect.")
-    public ResponseEntity<Map<String, Object>> setUserPermissions(
-            @PathVariable String uid,
-            @RequestBody SetPermissionsRequest request) {
-        try {
-            log.info("Setting permissions {} for user {}", request.getPermissions(), uid);
-            
-            googleIdentityService.setUserPermissions(uid, request.getPermissions());
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("uid", uid);
-            response.put("permissions", request.getPermissions());
-            response.put("message", "Permissions set successfully. User must re-authenticate for changes to take effect.");
-
-            return ResponseEntity.ok(response);
-        } catch (FirebaseAuthException e) {
-            log.error("Failed to set permissions: {}", e.getMessage());
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Failed to set permissions: " + e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
 
     private AdminUserResponse mapToAdminResponse(UserRecord userRecord) {
         Map<String, Object> claims = userRecord.getCustomClaims();
@@ -298,17 +262,6 @@ public class AdminController {
         }
     }
 
-    public static class SetPermissionsRequest {
-        private List<String> permissions;
-
-        public List<String> getPermissions() {
-            return permissions;
-        }
-
-        public void setPermissions(List<String> permissions) {
-            this.permissions = permissions;
-        }
-    }
 
     public static class UpdateRoleRequest {
         private String role;

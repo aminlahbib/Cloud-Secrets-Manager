@@ -48,14 +48,14 @@ export const SettingsPage: React.FC = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg font-medium transition-colors
+                  w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium transition-colors
                   ${isActive 
-                    ? 'bg-purple-50 text-purple-700' 
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-neutral-100 text-neutral-900' 
+                    : 'text-neutral-500 hover:bg-neutral-50'
                   }
                 `}
               >
-                <Icon className={`w-5 h-5 ${isActive ? 'text-purple-600' : 'text-gray-400'}`} />
+                <Icon className={`w-5 h-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -66,7 +66,7 @@ export const SettingsPage: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'profile' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Profile Settings</h2>
+              <h2 className="text-xl font-semibold text-neutral-900 mb-6">Profile Settings</h2>
               
               <div className="space-y-6">
                 {/* Avatar */}
@@ -78,15 +78,15 @@ export const SettingsPage: React.FC = () => {
                       className="w-20 h-20 rounded-full"
                     />
                   ) : (
-                    <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-3xl font-bold text-purple-600">
+                    <div className="w-20 h-20 rounded-full bg-neutral-100 flex items-center justify-center">
+                      <span className="text-3xl font-bold text-neutral-700">
                         {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                   )}
                   <div>
                     <Button variant="secondary" size="sm">Change Avatar</Button>
-                    <p className="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max 2MB.</p>
+                    <p className="text-xs text-neutral-500 mt-2">JPG, PNG or GIF. Max 2MB.</p>
                   </div>
                 </div>
 
@@ -185,50 +185,50 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'notifications' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
+              <h2 className="text-xl font-semibold text-neutral-900 mb-6">Notification Preferences</h2>
               
               <div className="space-y-6 max-w-xl">
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between py-4 border-b border-neutral-100">
                   <div>
-                    <h3 className="font-medium text-gray-900">Email Notifications</h3>
-                    <p className="text-sm text-gray-500">Receive email updates about your projects</p>
+                    <h3 className="font-medium text-neutral-900">Email Notifications</h3>
+                    <p className="text-sm text-neutral-500">Receive email updates about your projects</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neutral-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900"></div>
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between py-4 border-b border-neutral-100">
                   <div>
-                    <h3 className="font-medium text-gray-900">Secret Expiration Alerts</h3>
-                    <p className="text-sm text-gray-500">Get notified before secrets expire</p>
+                    <h3 className="font-medium text-neutral-900">Secret Expiration Alerts</h3>
+                    <p className="text-sm text-neutral-500">Get notified before secrets expire</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neutral-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900"></div>
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div className="flex items-center justify-between py-4 border-b border-neutral-100">
                   <div>
-                    <h3 className="font-medium text-gray-900">Project Invitations</h3>
-                    <p className="text-sm text-gray-500">Notify when invited to new projects</p>
+                    <h3 className="font-medium text-neutral-900">Project Invitations</h3>
+                    <p className="text-sm text-neutral-500">Notify when invited to new projects</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    <div className="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-neutral-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-neutral-900"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between py-4">
                   <div>
-                    <h3 className="font-medium text-gray-900">Security Alerts</h3>
-                    <p className="text-sm text-gray-500">Important security notifications</p>
+                    <h3 className="font-medium text-neutral-900">Security Alerts</h3>
+                    <p className="text-sm text-neutral-500">Important security notifications</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked disabled />
-                    <div className="w-11 h-6 bg-purple-600 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all after:translate-x-full"></div>
+                    <div className="w-11 h-6 bg-neutral-900 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all after:translate-x-full"></div>
                   </label>
                 </div>
 
@@ -241,19 +241,19 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'preferences' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Application Preferences</h2>
+              <h2 className="text-xl font-semibold text-neutral-900 mb-6">Application Preferences</h2>
               
               <div className="space-y-6 max-w-xl">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Theme
                   </label>
                   <div className="flex gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 border-2 border-purple-500 rounded-lg bg-purple-50 text-purple-700">
+                    <button className="flex items-center gap-2 px-4 py-2 border-2 border-neutral-900 rounded-2xl bg-neutral-900 text-white">
                       <Sun className="h-4 w-4" />
                       Light
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+                    <button className="flex items-center gap-2 px-4 py-2 border border-neutral-300 rounded-2xl text-neutral-600 hover:bg-neutral-50">
                       <Moon className="h-4 w-4" />
                       Dark
                     </button>
@@ -261,20 +261,20 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Default Project View
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <select className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white">
                     <option>Grid View</option>
                     <option>List View</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Timezone
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <select className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white">
                     <option>UTC (Coordinated Universal Time)</option>
                     <option>America/New_York (Eastern Time)</option>
                     <option>America/Los_Angeles (Pacific Time)</option>
@@ -285,17 +285,17 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 mb-2">
                     Date Format
                   </label>
-                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <select className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white">
                     <option>MM/DD/YYYY</option>
                     <option>DD/MM/YYYY</option>
                     <option>YYYY-MM-DD</option>
                   </select>
                 </div>
 
-                <div className="pt-6 border-t border-gray-200">
+                <div className="pt-6 border-t border-neutral-200">
                   <Button>Save Preferences</Button>
                 </div>
               </div>

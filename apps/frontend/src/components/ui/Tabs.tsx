@@ -41,8 +41,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
                 className={`
                   py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors
                   ${isActive
-                    ? 'border-purple-600 text-purple-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-neutral-900 text-neutral-900'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-800 hover:border-neutral-300'
                   }
                 `}
               >
@@ -52,8 +52,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
                   <span className={`
                     px-2 py-0.5 rounded-full text-xs font-medium
                     ${isActive 
-                      ? 'bg-purple-100 text-purple-600' 
-                      : 'bg-gray-100 text-gray-500'
+                      ? 'bg-neutral-900 text-white' 
+                      : 'bg-neutral-100 text-neutral-600'
                     }
                   `}>
                     {tab.count}
