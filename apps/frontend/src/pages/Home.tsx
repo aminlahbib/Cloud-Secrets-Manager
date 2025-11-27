@@ -149,13 +149,13 @@ export const HomePage: React.FC = () => {
 
         {isPlatformAdmin && (
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="flex items-center justify-between">
+            <div>
                 <p className="text-sm font-medium text-neutral-500">Recent Activity</p>
                 <p className="text-3xl font-semibold text-neutral-900 mt-1">
-                  {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
-                </p>
-              </div>
+                {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
+              </p>
+            </div>
               <div className="p-3 rounded-2xl border border-neutral-200 text-neutral-500">
                 <Activity className="h-5 w-5" />
               </div>
@@ -218,7 +218,7 @@ export const HomePage: React.FC = () => {
 
         {/* Recent Activity - Only for Platform Admins */}
         {isPlatformAdmin && (
-          <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
@@ -358,18 +358,18 @@ export const HomePage: React.FC = () => {
           </button>
 
           {isPlatformAdmin && (
-            <button
-              onClick={() => navigate('/activity')}
+          <button
+            onClick={() => navigate('/activity')}
               className="flex items-center p-4 rounded-xl border border-neutral-200 hover:border-neutral-900 hover:bg-neutral-50 transition-all text-left"
-            >
+          >
               <div className="p-2 bg-neutral-100 rounded-xl mr-4 text-neutral-600">
                 <Activity className="h-5 w-5" />
-              </div>
-              <div>
+            </div>
+            <div>
                 <p className="font-medium text-neutral-900">View Activity</p>
                 <p className="text-sm text-neutral-500">See recent changes</p>
-              </div>
-            </button>
+            </div>
+          </button>
           )}
 
           <button

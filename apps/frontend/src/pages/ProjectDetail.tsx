@@ -415,7 +415,7 @@ export const ProjectDetailPage: React.FC = () => {
                     )}#versions`;
 
                     return (
-                      <tr key={secret.id} className="hover:bg-gray-50">
+                      <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Link
                             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
