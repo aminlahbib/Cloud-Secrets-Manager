@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 
@@ -21,8 +21,8 @@ import { SecretDetailPage } from './pages/SecretDetail';
 // Legacy pages (for backwards compatibility during migration)
 import { AuditLogsPage } from './pages/AuditLogs';
 
-// Protected Route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Protected Layout Wrapper
+const ProtectedLayout: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -40,30 +40,25 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" replace />;
   }
 
-  return <Layout>{children}</Layout>;
+  return (
+    <Layout>
+      <Outlet />
+    </Layout>
+  );
 };
 
-// Platform Admin Route
-const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading, isPlatformAdmin } = useAuth();
+// Platform Admin Route Wrapper
+// Note: This nests inside ProtectedLayout, so we only check admin role here
+const AdminRoute: React.FC = () => {
+  const { isPlatformAdmin, isLoading } = useAuth();
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900" />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
+  if (isLoading) return null; // Handled by parent
 
   if (!isPlatformAdmin) {
     return <Navigate to="/home" replace />;
   }
 
-  return <Layout>{children}</Layout>;
+  return <Outlet />;
 };
 
 const App: React.FC = () => {
@@ -72,133 +67,43 @@ const App: React.FC = () => {
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/invitations/:token" element={<InvitationAcceptPage />} />
-      
-      {/* Main Dashboard Routes */}
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Projects */}
-      <Route
-        path="/projects"
-        element={
-          <ProtectedRoute>
-            <ProjectsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId"
-        element={
-          <ProtectedRoute>
-            <ProjectDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/secrets/new"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/secrets/:key"
-        element={
-          <ProtectedRoute>
-            <SecretDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/secrets/:key/edit"
-        element={
-          <ProtectedRoute>
-            <SecretFormPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Activity */}
-      <Route
-        path="/activity"
-        element={
-          <ProtectedRoute>
-            <ActivityPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Teams (Future) */}
-      <Route
-        path="/teams"
-        element={
-          <ProtectedRoute>
-            <TeamsPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Settings */}
-      <Route
-        path="/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Workflows */}
-      <Route
-        path="/workflows/new"
-        element={
-          <ProtectedRoute>
-            <WorkflowFormPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/workflows/:workflowId"
-        element={
-          <ProtectedRoute>
-            <WorkflowDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      
-      {/* Platform Admin */}
-      <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <AdminPage />
-          </AdminRoute>
-        }
-      />
 
-      {/* ================================================================
-          Legacy Routes (for backwards compatibility)
-          These will be deprecated once v3 migration is complete
-          ================================================================ */}
-      <Route
-        path="/audit"
-        element={
-          <ProtectedRoute>
-            <AuditLogsPage />
-          </ProtectedRoute>
-        }
-      />
-      
+      {/* Protected Routes (Wrapped in Layout) */}
+      <Route element={<ProtectedLayout />}>
+        <Route path="/home" element={<HomePage />} />
+
+        {/* Projects */}
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/projects/:projectId/secrets/new" element={<SecretFormPage />} />
+        <Route path="/projects/:projectId/secrets/:key" element={<SecretDetailPage />} />
+        <Route path="/projects/:projectId/secrets/:key/edit" element={<SecretFormPage />} />
+
+        {/* Activity */}
+        <Route path="/activity" element={<ActivityPage />} />
+
+        {/* Teams (Future) */}
+        <Route path="/teams" element={<TeamsPage />} />
+
+        {/* Settings */}
+        <Route path="/settings" element={<SettingsPage />} />
+
+        {/* Workflows */}
+        <Route path="/workflows/new" element={<WorkflowFormPage />} />
+        <Route path="/workflows/:workflowId" element={<WorkflowDetailPage />} />
+
+        {/* Legacy Routes */}
+        <Route path="/audit" element={<AuditLogsPage />} />
+
+        {/* Platform Admin */}
+        <Route path="/admin" element={<AdminRoute />}>
+          <Route index element={<AdminPage />} />
+        </Route>
+      </Route>
+
       {/* Default Redirect */}
       <Route path="/" element={<Navigate to="/home" replace />} />
-      
+
       {/* 404 Fallback */}
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
