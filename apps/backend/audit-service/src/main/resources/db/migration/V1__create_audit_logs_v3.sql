@@ -4,22 +4,51 @@
 -- This migration creates/updates the audit_logs table to v3 schema
 -- =============================================================================
 
--- Check if table exists and has old schema (timestamp column)
+-- Check if table exists and needs migration
 DO $$
+DECLARE
+    v_has_old_schema BOOLEAN := FALSE;
+    v_has_bigint_id BOOLEAN := FALSE;
+    v_row_count INTEGER := 0;
 BEGIN
-    -- If table exists with old schema (has timestamp column)
+    -- Check if table exists
     IF EXISTS (
-        SELECT 1 FROM information_schema.columns 
+        SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'audit_logs' 
-        AND column_name = 'timestamp'
         AND table_schema = 'public'
     ) THEN
-        -- Rename timestamp to created_at
-        ALTER TABLE audit_logs RENAME COLUMN timestamp TO created_at;
-        RAISE NOTICE 'Renamed timestamp column to created_at';
+        -- Check if id column is BIGINT (old schema)
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'audit_logs' 
+            AND column_name = 'id'
+            AND data_type = 'bigint'
+            AND table_schema = 'public'
+        ) INTO v_has_bigint_id;
+        
+        -- Check if has old columns (timestamp, username, secret_key)
+        SELECT EXISTS (
+            SELECT 1 FROM information_schema.columns 
+            WHERE table_name = 'audit_logs' 
+            AND column_name IN ('timestamp', 'username', 'secret_key')
+            AND table_schema = 'public'
+        ) INTO v_has_old_schema;
+        
+        -- Get row count
+        SELECT COUNT(*) INTO v_row_count FROM audit_logs;
+        
+        -- If table has old schema (BIGINT id), we need to recreate it
+        IF v_has_bigint_id THEN
+            RAISE NOTICE 'Detected old schema with BIGINT id. Recreating table...';
+            
+            -- Drop the old table (data will be lost, but this is expected for migration)
+            -- In production, you might want to backup first
+            DROP TABLE IF EXISTS audit_logs CASCADE;
+            RAISE NOTICE 'Dropped old audit_logs table';
+        END IF;
     END IF;
     
-    -- If table doesn't exist, create it with v3 schema
+    -- Create table with v3 schema (if it doesn't exist)
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.tables 
         WHERE table_name = 'audit_logs' 
@@ -42,8 +71,23 @@ BEGIN
         );
         RAISE NOTICE 'Created audit_logs table with v3 schema';
     END IF;
+END $$;
     
-    -- Ensure created_at column exists (in case table exists but column doesn't)
+-- Ensure all required columns exist (for tables that were just created or partially migrated)
+DO $$
+BEGIN
+    -- Rename timestamp to created_at if exists
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'audit_logs' 
+        AND column_name = 'timestamp'
+        AND table_schema = 'public'
+    ) THEN
+        ALTER TABLE audit_logs RENAME COLUMN timestamp TO created_at;
+        RAISE NOTICE 'Renamed timestamp column to created_at';
+    END IF;
+    
+    -- Ensure created_at column exists
     IF NOT EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'audit_logs' 
@@ -54,7 +98,7 @@ BEGIN
         RAISE NOTICE 'Added created_at column';
     END IF;
     
-    -- Remove old columns if they exist (username, secret_key)
+    -- Remove old columns if they exist
     IF EXISTS (
         SELECT 1 FROM information_schema.columns 
         WHERE table_name = 'audit_logs' 
@@ -93,8 +137,6 @@ BEGIN
         AND table_schema = 'public'
     ) THEN
         ALTER TABLE audit_logs ADD COLUMN user_id UUID;
-        -- For existing rows, we'll need to set a default or handle separately
-        -- Since this is a migration, we'll allow NULL initially and handle in application
         RAISE NOTICE 'Added user_id column (nullable for migration)';
     END IF;
     
@@ -105,9 +147,7 @@ BEGIN
         AND table_schema = 'public'
     ) THEN
         ALTER TABLE audit_logs ADD COLUMN resource_type VARCHAR(50) DEFAULT 'SECRET';
-        -- Update existing rows
         UPDATE audit_logs SET resource_type = 'SECRET' WHERE resource_type IS NULL;
-        -- Now make it NOT NULL
         ALTER TABLE audit_logs ALTER COLUMN resource_type SET NOT NULL;
         ALTER TABLE audit_logs ALTER COLUMN resource_type DROP DEFAULT;
         RAISE NOTICE 'Added resource_type column';
