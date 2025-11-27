@@ -40,6 +40,7 @@ import { ActivityChart } from '../components/analytics/ActivityChart';
 import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
+import { SecretCard } from '../components/ui/SecretCard';
 import {
   calculateActivityStats,
   getLastNDays,
@@ -506,8 +507,10 @@ export const ProjectDetailPage: React.FC = () => {
               }
             />
           ) : (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
@@ -617,6 +620,23 @@ export const ProjectDetailPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {secrets.map((secret: Secret) => (
+                  <SecretCard
+                    key={secret.id || secret.secretKey}
+                    secret={secret}
+                    projectId={projectId!}
+                    canManageSecrets={canManageSecrets}
+                    canDeleteSecrets={canDeleteSecrets}
+                    onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                    onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                    onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
