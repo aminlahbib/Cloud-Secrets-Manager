@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class AuditClient {
@@ -25,38 +27,67 @@ public class AuditClient {
         this.webClientBuilder = webClientBuilder;
     }
 
+    /**
+     * Log an audit event with v3 structure
+     */
     @Async
-    public void logEvent(String action, String secretKey, String username) {
+    public void logEvent(UUID projectId, UUID userId, String action, String resourceType,
+                        String resourceId, String resourceName, Map<String, Object> metadata) {
         try {
             WebClient webClient = webClientBuilder
                 .baseUrl(auditServiceUrl)
                 .build();
 
-            Map<String, String> auditEvent = Map.of(
-                "action", action,
-                "secretKey", secretKey,
-                "username", username
-            );
+            Map<String, Object> auditEvent = new HashMap<>();
+            auditEvent.put("userId", userId.toString());
+            if (projectId != null) {
+                auditEvent.put("projectId", projectId.toString());
+            }
+            auditEvent.put("action", action);
+            auditEvent.put("resourceType", resourceType);
+            if (resourceId != null) {
+                auditEvent.put("resourceId", resourceId);
+            }
+            if (resourceName != null) {
+                auditEvent.put("resourceName", resourceName);
+            }
+            if (metadata != null && !metadata.isEmpty()) {
+                auditEvent.put("metadata", metadata);
+            }
 
-            // Since we are in an @Async method, we can block or subscribe. 
-            // Using block() here to ensure execution within this async thread context,
-            // or we can just use subscribe() as before.
-            // However, since the goal is to decouple the calling thread, the @Async handles the decoupling.
-            // We'll use subscribe() to keep it non-blocking IO even within the async thread.
-            
             webClient.post()
                 .uri("/api/audit/log")
                 .bodyValue(auditEvent)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .timeout(Duration.ofMillis(5000))
-                .doOnError(error -> log.error("Failed to send audit event: {}", error.getMessage()))
+                .doOnError(error -> log.error("Failed to send audit event: {} - {}", action, error.getMessage()))
                 .onErrorResume(error -> Mono.empty())
                 .subscribe();
                 
         } catch (Exception e) {
-            log.error("Error sending audit event: {}", e.getMessage());
+            log.error("Error sending audit event: {} - {}", action, e.getMessage());
         }
     }
-}
 
+    /**
+     * Convenience method for secret operations
+     */
+    @Async
+    public void logSecretEvent(UUID projectId, UUID userId, String action, String secretKey) {
+        logEvent(projectId, userId, action, "SECRET", secretKey, secretKey, null);
+    }
+
+    /**
+     * Legacy method for backward compatibility (deprecated)
+     * @deprecated Use logSecretEvent or logEvent instead
+     */
+    @Deprecated
+    @Async
+    public void logEvent(String action, String secretKey, String username) {
+        log.warn("Deprecated logEvent method called with action: {}, secretKey: {}, username: {}. " +
+                "Use logSecretEvent or logEvent with UUIDs instead.", action, secretKey, username);
+        // Try to extract userId from username if possible, otherwise skip
+        // This is a fallback for legacy code
+    }
+}

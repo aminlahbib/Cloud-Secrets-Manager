@@ -6,7 +6,6 @@ import com.secrets.entity.Secret;
 import com.secrets.entity.SecretVersion;
 import com.secrets.exception.SecretAlreadyExistsException;
 import com.secrets.exception.SecretNotFoundException;
-import com.secrets.entity.User;
 import com.secrets.metrics.SecretMetrics;
 import com.secrets.metrics.SecretMetrics.SecretOperation;
 import com.secrets.repository.ProjectRepository;
@@ -107,9 +106,7 @@ public class ProjectSecretService {
             .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
         // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_READ", secretKey, username);
+        auditClient.logSecretEvent(projectId, userId, "SECRET_READ", secretKey);
 
         secretMetrics.recordOperation(SecretOperation.READ);
         return secret;
@@ -149,9 +146,7 @@ public class ProjectSecretService {
         secretVersionService.createVersion(saved, userId, "Initial version");
 
         // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_CREATE", request.getKey(), username);
+        auditClient.logSecretEvent(projectId, userId, "SECRET_CREATE", request.getKey());
 
         log.info("Created secret {} in project {}", request.getKey(), projectId);
         secretMetrics.recordOperation(SecretOperation.CREATE);
@@ -186,9 +181,7 @@ public class ProjectSecretService {
         secretVersionService.createVersion(saved, userId, "Secret value updated");
 
         // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_UPDATE", secretKey, username);
+        auditClient.logSecretEvent(projectId, userId, "SECRET_UPDATE", secretKey);
 
         log.info("Updated secret {} in project {}", secretKey, projectId);
         secretMetrics.recordOperation(SecretOperation.UPDATE);
@@ -214,9 +207,7 @@ public class ProjectSecretService {
         secretRepository.delete(secret);
 
         // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_DELETE", secretKey, username);
+        auditClient.logSecretEvent(projectId, userId, "SECRET_DELETE", secretKey);
 
         log.info("Deleted secret {} from project {}", secretKey, projectId);
         secretMetrics.recordOperation(SecretOperation.DELETE);
@@ -251,9 +242,7 @@ public class ProjectSecretService {
             secretVersionService.createVersion(saved, userId, "Secret rotated");
 
             // Audit log
-            User user = userService.findById(userId).orElse(null);
-            String username = user != null ? user.getEmail() : userId.toString();
-            auditClient.logEvent("SECRET_ROTATE", secretKey, username);
+            auditClient.logSecretEvent(projectId, userId, "SECRET_ROTATE", secretKey);
 
             log.info("Rotated secret {} in project {}", secretKey, projectId);
             secretMetrics.recordOperation(SecretOperation.ROTATE);
@@ -288,10 +277,8 @@ public class ProjectSecretService {
         secret.setUpdatedBy(userId);
         Secret saved = secretRepository.save(secret);
 
-        // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_MOVE", secretKey, username);
+        // Audit log - use source project ID for move operation
+        auditClient.logSecretEvent(sourceProjectId, userId, "SECRET_MOVE", secretKey);
 
         log.info("Moved secret {} from project {} to {}", secretKey, sourceProjectId, targetProjectId);
         return saved;
@@ -336,10 +323,8 @@ public class ProjectSecretService {
         secretVersionService.createVersion(saved, userId, 
             String.format("Copied from project %s", sourceProjectId));
 
-        // Audit log
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_COPY", secretKey, username);
+        // Audit log - use source project ID for copy operation
+        auditClient.logSecretEvent(sourceProjectId, userId, "SECRET_COPY", secretKey);
 
         log.info("Copied secret {} from project {} to {} as {}", secretKey, sourceProjectId, targetProjectId, targetKey);
         return saved;
@@ -403,9 +388,8 @@ public class ProjectSecretService {
         secretVersionService.createVersion(saved, userId,
             String.format("Restored to version %d", versionNumber));
 
-        User user = userService.findById(userId).orElse(null);
-        String username = user != null ? user.getEmail() : userId.toString();
-        auditClient.logEvent("SECRET_ROLLBACK", secretKey, username);
+        // Audit log
+        auditClient.logSecretEvent(projectId, userId, "SECRET_ROLLBACK", secretKey);
 
         log.info("Restored secret {} in project {} to version {}", secretKey, projectId, versionNumber);
         secretMetrics.recordOperation(SecretOperation.UPDATE);
