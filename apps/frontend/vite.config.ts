@@ -17,6 +17,10 @@ export default defineConfig({
       'Cross-Origin-Embedder-Policy': 'unsafe-none',
     },
     proxy: {
+      '/api/audit': {
+        target: 'http://localhost:8081',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
