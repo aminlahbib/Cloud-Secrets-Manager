@@ -91,15 +91,6 @@ export const ProjectDetailPage: React.FC = () => {
     console.log('Activity view:', activityView);
   }, [activeTab, projectId, activityView]);
 
-  // Prevent tab from resetting on errors
-  useEffect(() => {
-    if (activeTab === 'activity') {
-      console.log('Activity tab is active, checking queries...');
-      console.log('Analytics loading:', isAnalyticsLoading, 'Error:', analyticsError);
-      console.log('Activity loading:', isActivityLoading, 'Error:', activityError);
-    }
-  }, [activeTab, isAnalyticsLoading, analyticsError, isActivityLoading, activityError]);
-
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
     queryKey: ['project', projectId],
@@ -142,13 +133,6 @@ export const ProjectDetailPage: React.FC = () => {
     retry: false,
   });
 
-  // Log activity errors
-  useEffect(() => {
-    if (activityError) {
-      console.error('Activity list query error:', activityError);
-    }
-  }, [activityError]);
-
   // Fetch all activity logs for analytics (larger size, with date filter)
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery<AuditLogsResponse>({
     queryKey: ['project-activity-analytics', projectId, dateRange],
@@ -164,12 +148,20 @@ export const ProjectDetailPage: React.FC = () => {
     retry: false,
   });
 
-  // Log analytics errors
+  // Log query errors and debug activity tab
   useEffect(() => {
+    if (activeTab === 'activity') {
+      console.log('Activity tab is active, checking queries...');
+      console.log('Analytics loading:', isAnalyticsLoading, 'Error:', analyticsError);
+      console.log('Activity loading:', isActivityLoading, 'Error:', activityError);
+    }
+    if (activityError) {
+      console.error('Activity list query error:', activityError);
+    }
     if (analyticsError) {
       console.error('Analytics query error:', analyticsError);
     }
-  }, [analyticsError]);
+  }, [activeTab, isAnalyticsLoading, analyticsError, isActivityLoading, activityError]);
 
   // Calculate analytics stats
   const analyticsStats = useMemo(() => {
