@@ -218,35 +218,35 @@ public class ProjectSecretService {
      */
     public Secret rotateProjectSecret(UUID projectId, String secretKey, UUID userId) {
         return secretMetrics.recordRotation(() -> {
-            // Check permission
-            if (!permissionService.canRotateSecrets(projectId, userId)) {
-                throw new AccessDeniedException("You don't have permission to rotate secrets in this project");
-            }
+        // Check permission
+        if (!permissionService.canRotateSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to rotate secrets in this project");
+        }
 
-            Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
-                .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
-            // Generate new value using context-aware rotation strategy
-            String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
-            SecretRotationStrategy strategy = resolveRotationStrategy(secret);
-            String newValue = strategy.rotate(currentValue);
-            String encryptedValue = encryptionService.encrypt(newValue);
+        // Generate new value using context-aware rotation strategy
+        String currentValue = encryptionService.decrypt(secret.getEncryptedValue());
+        SecretRotationStrategy strategy = resolveRotationStrategy(secret);
+        String newValue = strategy.rotate(currentValue);
+        String encryptedValue = encryptionService.encrypt(newValue);
 
-            secret.setEncryptedValue(encryptedValue);
-            secret.setUpdatedBy(userId);
-            secret.setLastRotatedAt(java.time.LocalDateTime.now());
+        secret.setEncryptedValue(encryptedValue);
+        secret.setUpdatedBy(userId);
+        secret.setLastRotatedAt(java.time.LocalDateTime.now());
 
-            Secret saved = secretRepository.save(secret);
+        Secret saved = secretRepository.save(secret);
 
-            // Create new version
-            secretVersionService.createVersion(saved, userId, "Secret rotated");
+        // Create new version
+        secretVersionService.createVersion(saved, userId, "Secret rotated");
 
-            // Audit log
+        // Audit log
             auditClient.logSecretEvent(projectId, userId, "SECRET_ROTATE", secretKey);
 
-            log.info("Rotated secret {} in project {}", secretKey, projectId);
+        log.info("Rotated secret {} in project {}", secretKey, projectId);
             secretMetrics.recordOperation(SecretOperation.ROTATE);
-            return saved;
+        return saved;
         });
     }
 
