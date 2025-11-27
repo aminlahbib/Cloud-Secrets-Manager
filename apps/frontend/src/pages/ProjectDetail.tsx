@@ -63,6 +63,8 @@ export const ProjectDetailPage: React.FC = () => {
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<string>('');
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
 
   // Fetch project details
@@ -122,12 +124,28 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
+  const transferOwnershipMutation = useMutation({
+    mutationFn: () => membersService.transferOwnership(projectId!, { newOwnerUserId: transferTarget }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      setShowTransferModal(false);
+      setTransferTarget('');
+    },
+  });
+
   useEffect(() => {
     if (project) {
       setProjectName(project.name);
       setProjectDescription(project.description || '');
     }
   }, [project]);
+
+  useEffect(() => {
+    if (!showTransferModal) {
+      setTransferTarget('');
+    }
+  }, [showTransferModal]);
 
   const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
   const currentUserRole = project?.currentUserRole;
@@ -140,6 +158,10 @@ export const ProjectDetailPage: React.FC = () => {
     !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secrets = secretsData?.content ?? [];
+  const transferableMembers = useMemo(
+    () => (members || []).filter((member) => member.userId !== user?.id),
+    [members, user?.id]
+  );
   const handleMemberRoleChange = (member: ProjectMember, newRole: ProjectRole) => {
     if (member.role === newRole) return;
     setRoleChangeTarget(member.userId);
@@ -593,6 +615,13 @@ export const ProjectDetailPage: React.FC = () => {
                   secrets and activity forever.
                 </p>
               </div>
+              {transferableMembers.length > 0 && (
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <Button variant="secondary" className="flex-1" onClick={() => setShowTransferModal(true)}>
+                    Transfer Ownership
+                  </Button>
+                </div>
+              )}
               <div className="flex flex-col gap-3 md:flex-row">
                 {!isArchived ? (
                   <>
@@ -661,6 +690,42 @@ export const ProjectDetailPage: React.FC = () => {
             </Button>
             <Button variant="danger" onClick={() => archiveProjectMutation.mutate()} isLoading={archiveProjectMutation.isPending}>
               Archive Project
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Transfer Ownership Modal */}
+      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Select new owner</label>
+            <select
+              value={transferTarget}
+              onChange={(e) => setTransferTarget(e.target.value)}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            >
+              <option value="">Choose member</option>
+              {transferableMembers.map((member) => (
+                <option key={member.id} value={member.userId}>
+                  {member.user?.displayName || member.user?.email}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowTransferModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => transferOwnershipMutation.mutate()}
+              disabled={!transferTarget}
+              isLoading={transferOwnershipMutation.isPending}
+            >
+              Confirm Transfer
             </Button>
           </div>
         </div>
