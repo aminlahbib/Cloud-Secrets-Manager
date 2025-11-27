@@ -68,7 +68,13 @@ export const secretsService = {
    * Create a secret in a project
    */
   async createProjectSecret(projectId: string, request: CreateSecretRequest): Promise<Secret> {
-    const { data } = await api.post(`/api/projects/${projectId}/secrets`, request);
+    // Backend expects 'key' not 'secretKey' in SecretRequest DTO
+    const backendRequest = {
+      key: request.secretKey,
+      value: request.value,
+      description: request.description,
+    };
+    const { data } = await api.post(`/api/projects/${projectId}/secrets`, backendRequest);
     return data;
   },
 
