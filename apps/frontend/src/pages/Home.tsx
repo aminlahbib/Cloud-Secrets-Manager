@@ -13,11 +13,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
+import { workflowsService } from '../services/workflows';
 import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import type { Project, AuditLog } from '../types';
+import type { Project, AuditLog, Workflow } from '../types';
 
 export const HomePage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
@@ -27,6 +28,12 @@ export const HomePage: React.FC = () => {
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
     queryKey: ['projects', 'recent'],
     queryFn: () => projectsService.listProjects({ size: 6 }),
+  });
+
+  // Fetch workflows
+  const { data: workflows, isLoading: isWorkflowsLoading } = useQuery<Workflow[]>({
+    queryKey: ['workflows'],
+    queryFn: () => workflowsService.listWorkflows(),
   });
 
   // Fetch recent activity (only if user has permission)
@@ -153,6 +160,57 @@ export const HomePage: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Workflows */}
+        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">Workflows</h2>
+              <Link 
+                to="/workflows/new" 
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
+              >
+                New <Plus className="w-4 h-4 ml-1" />
+              </Link>
+            </div>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {isWorkflowsLoading ? (
+              <div className="p-6 flex justify-center">
+                <Spinner size="sm" />
+              </div>
+            ) : !workflows || workflows.length === 0 ? (
+              <div className="p-6 text-center text-gray-500 text-sm">
+                No workflows yet
+              </div>
+            ) : (
+              workflows.map((workflow: Workflow) => (
+                <Link
+                  key={workflow.id}
+                  to={`/workflows/${workflow.id}`}
+                  className="block p-4 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-purple-100 rounded">
+                      <Folder className="h-4 w-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {workflow.name}
+                        {workflow.isDefault && (
+                          <span className="ml-2 text-xs text-purple-500">(Default)</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {workflow.projects?.length || 0} projects
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+
         {/* Recent Activity */}
         <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100">
