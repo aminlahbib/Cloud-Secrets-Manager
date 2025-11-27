@@ -39,7 +39,7 @@ import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
 import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
 import { ErrorBoundary } from '../components/ErrorBoundary';
-import { SkeletonTable, SkeletonList, SkeletonStats } from '../components/ui/Skeleton';
+import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
 import {
   calculateActivityStats,
   getLastNDays,
