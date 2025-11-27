@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -194,9 +194,33 @@ export const ProjectDetailPage: React.FC = () => {
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
   }, [analyticsStats, dateRange]);
 
-  // Delete secret mutation
+  // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
     mutationFn: (key: string) => secretsService.deleteProjectSecret(projectId!, key),
+    onMutate: async (key) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      
+      // Snapshot previous value
+      const previousSecrets = queryClient.getQueryData(['project-secrets', projectId]);
+      
+      // Optimistically update
+      queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
+        if (!old?.content) return old;
+        return {
+          ...old,
+          content: old.content.filter((secret: Secret) => secret.secretKey !== key),
+        };
+      });
+      
+      return { previousSecrets };
+    },
+    onError: (err, key, context) => {
+      // Rollback on error
+      if (context?.previousSecrets) {
+        queryClient.setQueryData(['project-secrets', projectId], context.previousSecrets);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
       setShowDeleteSecretModal(null);
@@ -268,7 +292,7 @@ export const ProjectDetailPage: React.FC = () => {
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
   );
-  const handleMemberRoleChange = (member: ProjectMember, newRole: ProjectRole) => {
+  const handleMemberRoleChange = useCallback((member: ProjectMember, newRole: ProjectRole) => {
     if (member.role === newRole) return;
     setRoleChangeTarget(member.userId);
     updateMemberRoleMutation.mutate(
@@ -277,7 +301,7 @@ export const ProjectDetailPage: React.FC = () => {
         onSettled: () => setRoleChangeTarget(null),
       }
     );
-  };
+  }, [updateMemberRoleMutation]);
   const availableRoleOptions: ProjectRole[] =
     currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
 

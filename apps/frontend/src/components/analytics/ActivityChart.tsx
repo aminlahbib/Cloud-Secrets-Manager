@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Card } from '../ui/Card';
 
@@ -8,7 +8,7 @@ interface ActivityChartProps {
   type?: 'line' | 'bar';
 }
 
-export const ActivityChart: React.FC<ActivityChartProps> = ({ 
+export const ActivityChart: React.FC<ActivityChartProps> = React.memo(({ 
   data, 
   title = 'Activity Over Time',
   type = 'line' 
@@ -24,8 +24,8 @@ export const ActivityChart: React.FC<ActivityChartProps> = ({
     );
   }
 
-  const ChartComponent = type === 'line' ? LineChart : BarChart;
-  const DataComponent = type === 'line' ? Line : Bar;
+  const ChartComponent = useMemo(() => type === 'line' ? LineChart : BarChart, [type]);
+  const DataComponent = useMemo(() => type === 'line' ? Line : Bar, [type]);
 
   return (
     <Card className="p-6">
@@ -60,5 +60,5 @@ export const ActivityChart: React.FC<ActivityChartProps> = ({
       </ResponsiveContainer>
     </Card>
   );
-};
+});
 

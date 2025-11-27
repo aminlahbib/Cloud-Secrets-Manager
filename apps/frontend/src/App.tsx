@@ -1,25 +1,34 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
+import { Spinner } from './components/ui/Spinner';
 
-// Pages
-import { LoginPage } from './pages/Login';
-import { HomePage } from './pages/Home';
-import { ProjectsPage } from './pages/Projects';
-import { ProjectDetailPage } from './pages/ProjectDetail';
-import { ActivityPage } from './pages/Activity';
-import { TeamsPage } from './pages/Teams';
-import { SettingsPage } from './pages/Settings';
-import { AdminPage } from './pages/Admin';
-import { InvitationAcceptPage } from './pages/InvitationAccept';
-import { WorkflowFormPage } from './pages/WorkflowForm';
-import { WorkflowDetailPage } from './pages/WorkflowDetail';
-import { SecretFormPage } from './pages/SecretForm';
-import { SecretDetailPage } from './pages/SecretDetail';
+// Lazy load pages for code splitting
+const LoginPage = lazy(() => import('./pages/Login').then(m => ({ default: m.LoginPage })));
+const HomePage = lazy(() => import('./pages/Home').then(m => ({ default: m.HomePage })));
+const ProjectsPage = lazy(() => import('./pages/Projects').then(m => ({ default: m.ProjectsPage })));
+const ProjectDetailPage = lazy(() => import('./pages/ProjectDetail').then(m => ({ default: m.ProjectDetailPage })));
+const ActivityPage = lazy(() => import('./pages/Activity').then(m => ({ default: m.ActivityPage })));
+const TeamsPage = lazy(() => import('./pages/Teams').then(m => ({ default: m.TeamsPage })));
+const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.SettingsPage })));
+const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
+const InvitationAcceptPage = lazy(() => import('./pages/InvitationAccept').then(m => ({ default: m.InvitationAcceptPage })));
+const WorkflowFormPage = lazy(() => import('./pages/WorkflowForm').then(m => ({ default: m.WorkflowFormPage })));
+const WorkflowDetailPage = lazy(() => import('./pages/WorkflowDetail').then(m => ({ default: m.WorkflowDetailPage })));
+const SecretFormPage = lazy(() => import('./pages/SecretForm').then(m => ({ default: m.SecretFormPage })));
+const SecretDetailPage = lazy(() => import('./pages/SecretDetail').then(m => ({ default: m.SecretDetailPage })));
+const AuditLogsPage = lazy(() => import('./pages/AuditLogs').then(m => ({ default: m.AuditLogsPage })));
 
-// Legacy pages (for backwards compatibility during migration)
-import { AuditLogsPage } from './pages/AuditLogs';
+// Loading fallback component
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+    <div className="flex flex-col items-center space-y-4">
+      <Spinner size="lg" />
+      <p className="text-neutral-500 text-sm">Loading...</p>
+    </div>
+  </div>
+);
 
 // Protected Layout Wrapper
 const ProtectedLayout: React.FC = () => {
@@ -63,50 +72,52 @@ const AdminRoute: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/invitations/:token" element={<InvitationAcceptPage />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/invitations/:token" element={<InvitationAcceptPage />} />
 
-      {/* Protected Routes (Wrapped in Layout) */}
-      <Route element={<ProtectedLayout />}>
-        <Route path="/home" element={<HomePage />} />
+        {/* Protected Routes (Wrapped in Layout) */}
+        <Route element={<ProtectedLayout />}>
+          <Route path="/home" element={<HomePage />} />
 
-        {/* Projects */}
-        <Route path="/projects" element={<ProjectsPage />} />
-        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-        <Route path="/projects/:projectId/secrets/new" element={<SecretFormPage />} />
-        <Route path="/projects/:projectId/secrets/:key" element={<SecretDetailPage />} />
-        <Route path="/projects/:projectId/secrets/:key/edit" element={<SecretFormPage />} />
+          {/* Projects */}
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+          <Route path="/projects/:projectId/secrets/new" element={<SecretFormPage />} />
+          <Route path="/projects/:projectId/secrets/:key" element={<SecretDetailPage />} />
+          <Route path="/projects/:projectId/secrets/:key/edit" element={<SecretFormPage />} />
 
-        {/* Activity */}
-        <Route path="/activity" element={<ActivityPage />} />
+          {/* Activity */}
+          <Route path="/activity" element={<ActivityPage />} />
 
-        {/* Teams (Future) */}
-        <Route path="/teams" element={<TeamsPage />} />
+          {/* Teams (Future) */}
+          <Route path="/teams" element={<TeamsPage />} />
 
-        {/* Settings */}
-        <Route path="/settings" element={<SettingsPage />} />
+          {/* Settings */}
+          <Route path="/settings" element={<SettingsPage />} />
 
-        {/* Workflows */}
-        <Route path="/workflows/new" element={<WorkflowFormPage />} />
-        <Route path="/workflows/:workflowId" element={<WorkflowDetailPage />} />
+          {/* Workflows */}
+          <Route path="/workflows/new" element={<WorkflowFormPage />} />
+          <Route path="/workflows/:workflowId" element={<WorkflowDetailPage />} />
 
-        {/* Legacy Routes */}
-        <Route path="/audit" element={<AuditLogsPage />} />
+          {/* Legacy Routes */}
+          <Route path="/audit" element={<AuditLogsPage />} />
 
-        {/* Platform Admin */}
-        <Route path="/admin" element={<AdminRoute />}>
-          <Route index element={<AdminPage />} />
+          {/* Platform Admin */}
+          <Route path="/admin" element={<AdminRoute />}>
+            <Route index element={<AdminPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Default Redirect */}
-      <Route path="/" element={<Navigate to="/home" replace />} />
+        {/* Default Redirect */}
+        <Route path="/" element={<Navigate to="/home" replace />} />
 
-      {/* 404 Fallback */}
-      <Route path="*" element={<Navigate to="/home" replace />} />
-    </Routes>
+        {/* 404 Fallback */}
+        <Route path="*" element={<Navigate to="/home" replace />} />
+      </Routes>
+    </Suspense>
   );
 };
 
