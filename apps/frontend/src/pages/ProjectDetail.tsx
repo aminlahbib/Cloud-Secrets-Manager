@@ -17,6 +17,9 @@ import {
   UserPlus,
   Mail,
   Clock,
+  BarChart3,
+  List,
+  Calendar,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
@@ -32,6 +35,15 @@ import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
+import { StatsCards } from '../components/analytics/StatsCards';
+import { ActivityChart } from '../components/analytics/ActivityChart';
+import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
+import {
+  calculateActivityStats,
+  getLastNDays,
+  prepareChartData,
+  formatActionName,
+} from '../utils/analytics';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -69,6 +81,8 @@ export const ProjectDetailPage: React.FC = () => {
   const [transferTarget, setTransferTarget] = useState<string>('');
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   const [activityPage, setActivityPage] = useState(1);
+  const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -91,12 +105,49 @@ export const ProjectDetailPage: React.FC = () => {
     enabled: !!projectId,
   });
 
-  // Fetch project activity logs
+  // Calculate date range for analytics
+  const getDateRangeParams = () => {
+    if (dateRange === 'all') return {};
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+  };
+
+  // Fetch project activity logs for list view (paginated)
   const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
     queryKey: ['project-activity', projectId, activityPage],
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
-    enabled: !!projectId && activeTab === 'activity',
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
   });
+
+  // Fetch all activity logs for analytics (larger size, with date filter)
+  const { data: analyticsData, isLoading: isAnalyticsLoading } = useQuery<AuditLogsResponse>({
+    queryKey: ['project-activity-analytics', projectId, dateRange],
+    queryFn: () => auditService.getProjectAuditLogs(projectId!, { 
+      size: 1000, // Fetch more for analytics
+      ...getDateRangeParams(),
+    }),
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
+  });
+
+  // Calculate analytics stats
+  const analyticsStats = useMemo(() => {
+    if (!analyticsData?.content) return null;
+    return calculateActivityStats(analyticsData.content);
+  }, [analyticsData]);
+
+  // Prepare chart data
+  const chartData = useMemo(() => {
+    if (!analyticsStats) return [];
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const dayKeys = getLastNDays(days);
+    return prepareChartData(analyticsStats.actionsByDay, dayKeys);
+  }, [analyticsStats, dateRange]);
 
   // Delete secret mutation
   const deleteSecretMutation = useMutation({
@@ -584,119 +635,248 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'activity' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="space-y-6">
+          {/* Header with view toggle and date filter */}
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
-            {activityData && activityData.totalElements > 0 && (
-              <span className="text-sm text-gray-500">
-                {activityData.totalElements} {activityData.totalElements === 1 ? 'event' : 'events'}
-              </span>
-            )}
+            <div className="flex items-center gap-3">
+              {/* Date Range Filter (only for analytics) */}
+              {activityView === 'analytics' && (
+                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <select
+                    value={dateRange}
+                    onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                    className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                  >
+                    <option value="7d">Last 7 days</option>
+                    <option value="30d">Last 30 days</option>
+                    <option value="90d">Last 90 days</option>
+                    <option value="all">All time</option>
+                  </select>
+                </div>
+              )}
+              
+              {/* View Toggle */}
+              <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                <Button
+                  variant={activityView === 'analytics' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setActivityView('analytics')}
+                  className="!m-0"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Analytics
+                </Button>
+                <Button
+                  variant={activityView === 'list' ? 'primary' : 'secondary'}
+                  size="sm"
+                  onClick={() => setActivityView('list')}
+                  className="!m-0"
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  List
+                </Button>
+              </div>
+            </div>
           </div>
 
-          {isActivityLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-          ) : !activityData || activityData.content.length === 0 ? (
-            <Card className="p-6">
-              <EmptyState
-                icon={<Activity className="h-16 w-16 text-gray-400" />}
-                title="No Activity"
-                description="Activity for this project will appear here as actions are performed"
-              />
-            </Card>
-          ) : (
+          {/* Analytics View */}
+          {activityView === 'analytics' && (
             <>
-              <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-                {activityData.content.map((log: AuditLog) => {
-                  const getTimeAgo = (timestamp: string) => {
-                    const date = new Date(timestamp);
-                    const now = new Date();
-                    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-                    
-                    if (diffInSeconds < 60) return 'just now';
-                    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-                    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-                    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-                    return date.toLocaleDateString();
-                  };
+              {isAnalyticsLoading ? (
+                <div className="flex justify-center py-12">
+                  <Spinner size="lg" />
+                </div>
+              ) : !analyticsData || analyticsData.content.length === 0 ? (
+                <Card className="p-6">
+                  <EmptyState
+                    icon={<Activity className="h-16 w-16 text-gray-400" />}
+                    title="No Activity"
+                    description="Activity for this project will appear here as actions are performed"
+                  />
+                </Card>
+              ) : analyticsStats ? (
+                <div className="space-y-6">
+                  {/* Stats Cards */}
+                  <StatsCards stats={analyticsStats} />
 
-                  const formatAction = (action: string) => {
-                    return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-                  };
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ActivityChart data={chartData} title="Activity Over Time" type="line" />
+                    <ActionDistributionChart 
+                      actionsByType={analyticsStats.actionsByType} 
+                      title="Actions Distribution" 
+                    />
+                  </div>
 
-                  const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
-                    if (action.includes('CREATE')) return 'success';
-                    if (action.includes('DELETE')) return 'danger';
-                    if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
-                    if (action.includes('READ')) return 'info';
-                    return 'default';
-                  };
-
-                  return (
-                    <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-                      <div className="flex items-start gap-4">
-                        <div className={`p-2 rounded-lg ${
-                          getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
-                          getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
-                          getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                          getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
-                          'bg-gray-100 text-gray-600'
-                        }`}>
-                          <Activity className="h-4 w-4" />
+                  {/* Top Users and Actions */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Top Users */}
+                    <Card className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Contributors</h3>
+                      {analyticsStats.topUsers.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No user data available</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {analyticsStats.topUsers.map((user, index) => (
+                            <div key={user.userId} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {user.email || 'Unknown User'}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{user.count} actions</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <Badge variant={getActionColor(log.action)}>
-                              {formatAction(log.action)}
-                            </Badge>
-                            {(log.resourceId || log.secretKey) && (
-                              <span className="text-sm font-medium text-gray-900">
-                                {log.resourceName || log.resourceId || log.secretKey}
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-1 text-sm text-gray-500">
-                            by {log.user?.email || log.username || 'Unknown'}
-                          </p>
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-400">
-                          <Clock className="h-4 w-4 mr-1" />
-                          {getTimeAgo(log.createdAt || log.timestamp || '')}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      )}
+                    </Card>
 
-              {activityData.totalPages > 1 && (
-                <div className="flex justify-center">
-                  <div className="flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setActivityPage(p => Math.max(1, p - 1))}
-                      disabled={activityPage === 1}
-                    >
-                      Previous
-                    </Button>
-                    <span className="flex items-center px-4 text-sm text-gray-600">
-                      Page {activityPage} of {activityData.totalPages}
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setActivityPage(p => Math.min(activityData.totalPages, p + 1))}
-                      disabled={activityPage >= activityData.totalPages}
-                    >
-                      Next
-                    </Button>
+                    {/* Top Actions */}
+                    <Card className="p-6">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Actions</h3>
+                      {analyticsStats.topActions.length === 0 ? (
+                        <p className="text-gray-500 text-sm">No action data available</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {analyticsStats.topActions.map((action, index) => (
+                            <div key={action.action} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">
+                                    {formatActionName(action.action)}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{action.count} occurrences</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </Card>
                   </div>
                 </div>
+              ) : null}
+            </>
+          )}
+
+          {/* List View */}
+          {activityView === 'list' && (
+            <>
+              {isActivityLoading ? (
+                <div className="flex justify-center py-8">
+                  <Spinner size="lg" />
+                </div>
+              ) : !activityData || activityData.content.length === 0 ? (
+                <Card className="p-6">
+                  <EmptyState
+                    icon={<Activity className="h-16 w-16 text-gray-400" />}
+                    title="No Activity"
+                    description="Activity for this project will appear here as actions are performed"
+                  />
+                </Card>
+              ) : (
+                <>
+                  <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+                    {activityData.content.map((log: AuditLog) => {
+                      const getTimeAgo = (timestamp: string) => {
+                        const date = new Date(timestamp);
+                        const now = new Date();
+                        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+                        
+                        if (diffInSeconds < 60) return 'just now';
+                        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                        return date.toLocaleDateString();
+                      };
+
+                      const formatAction = (action: string) => {
+                        return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                      };
+
+                      const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
+                        if (action.includes('CREATE')) return 'success';
+                        if (action.includes('DELETE')) return 'danger';
+                        if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
+                        if (action.includes('READ')) return 'info';
+                        return 'default';
+                      };
+
+                      return (
+                        <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start gap-4">
+                            <div className={`p-2 rounded-lg ${
+                              getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
+                              getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
+                              getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                              getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              <Activity className="h-4 w-4" />
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant={getActionColor(log.action)}>
+                                  {formatAction(log.action)}
+                                </Badge>
+                                {(log.resourceId || log.secretKey) && (
+                                  <span className="text-sm font-medium text-gray-900">
+                                    {log.resourceName || log.resourceId || log.secretKey}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="mt-1 text-sm text-gray-500">
+                                by {log.user?.email || log.username || 'Unknown'}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center text-sm text-gray-400">
+                              <Clock className="h-4 w-4 mr-1" />
+                              {getTimeAgo(log.createdAt || log.timestamp || '')}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {activityData.totalPages > 1 && (
+                    <div className="flex justify-center">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setActivityPage(p => Math.max(1, p - 1))}
+                          disabled={activityPage === 1}
+                        >
+                          Previous
+                        </Button>
+                        <span className="flex items-center px-4 text-sm text-gray-600">
+                          Page {activityPage} of {activityData.totalPages}
+                        </span>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => setActivityPage(p => Math.min(activityData.totalPages, p + 1))}
+                          disabled={activityPage >= activityData.totalPages}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
