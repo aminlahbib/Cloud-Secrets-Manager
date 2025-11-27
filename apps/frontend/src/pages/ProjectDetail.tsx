@@ -38,6 +38,7 @@ import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../t
 import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
 import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import {
   calculateActivityStats,
   getLastNDays,
@@ -65,7 +66,18 @@ export const ProjectDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   
-  const [activeTab, setActiveTab] = useState('secrets');
+  // Persist activeTab in sessionStorage to prevent reset on errors
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = sessionStorage.getItem(`project-${projectId}-activeTab`);
+    return saved || 'secrets';
+  });
+
+  // Update sessionStorage when tab changes
+  useEffect(() => {
+    if (projectId) {
+      sessionStorage.setItem(`project-${projectId}-activeTab`, activeTab);
+    }
+  }, [activeTab, projectId]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
@@ -427,7 +439,10 @@ export const ProjectDetailPage: React.FC = () => {
       <Tabs
         tabs={tabs}
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onChange={(tabId) => {
+          console.log('Tab change requested:', tabId, 'Current:', activeTab);
+          setActiveTab(tabId);
+        }}
       />
 
       {/* Tab Content */}
@@ -668,7 +683,21 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'activity' && (
-        <div className="space-y-6">
+        <ErrorBoundary
+          resetKeys={[projectId || '', activityView]}
+          fallback={
+            <Card className="p-6">
+              <div className="text-center">
+                <p className="text-red-600 mb-2">Error loading activity tab</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  There was an error displaying the activity tab. Please try refreshing the page.
+                </p>
+                <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+              </div>
+            </Card>
+          }
+        >
+          <div className="space-y-6">
           {/* Header with view toggle and date filter */}
           <div className="flex items-center justify-between flex-wrap gap-4">
             <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
@@ -952,7 +981,8 @@ export const ProjectDetailPage: React.FC = () => {
               )}
             </>
           )}
-        </div>
+          </div>
+        </ErrorBoundary>
       )}
 
       {activeTab === 'settings' && (
