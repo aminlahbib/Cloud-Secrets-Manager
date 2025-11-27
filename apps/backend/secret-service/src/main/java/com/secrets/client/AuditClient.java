@@ -54,7 +54,7 @@ public class AuditClient {
             if (metadata != null && !metadata.isEmpty()) {
                 auditEvent.put("metadata", metadata);
             }
-
+            
             webClient.post()
                 .uri("/api/audit/log")
                 .bodyValue(auditEvent)

@@ -510,7 +510,7 @@ export const ProjectDetailPage: React.FC = () => {
             <>
               {/* Desktop Table View */}
               <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
@@ -811,13 +811,13 @@ export const ProjectDetailPage: React.FC = () => {
                   </div>
                 </Card>
               ) : !analyticsData || !('content' in analyticsData) || analyticsData.content.length === 0 ? (
-                <Card className="p-6">
-                  <EmptyState
-                    icon={<Activity className="h-16 w-16 text-gray-400" />}
+        <Card className="p-6">
+          <EmptyState
+            icon={<Activity className="h-16 w-16 text-gray-400" />}
                     title="No Activity"
                     description="Activity for this project will appear here as actions are performed"
-                  />
-                </Card>
+          />
+        </Card>
               ) : (() => {
                 try {
                   if (!analyticsStats) {
