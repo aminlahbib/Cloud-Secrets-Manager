@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { tokenStorage } from '@/utils/tokenStorage';
 import type { ApiError } from '@/types';
 
 const api = axios.create({
@@ -10,7 +11,7 @@ const api = axios.create({
 
 // Request interceptor - Add auth token
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -29,7 +30,7 @@ api.interceptors.response.use(
 
       try {
         // Attempt token refresh
-        const refreshToken = sessionStorage.getItem('refreshToken');
+        const refreshToken = tokenStorage.getRefreshToken();
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
@@ -39,13 +40,17 @@ api.interceptors.response.use(
           { refreshToken }
         );
 
-        sessionStorage.setItem('accessToken', data.accessToken);
+        tokenStorage.setAccessToken(data.accessToken);
+        if (data.refreshToken) {
+          tokenStorage.setRefreshToken(data.refreshToken);
+        }
+
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
 
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, clear storage and redirect
-        sessionStorage.clear();
+        tokenStorage.clearAll();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
