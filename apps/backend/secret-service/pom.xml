@@ -114,6 +114,13 @@
             <artifactId>google-api-client</artifactId>
         </dependency>
 
+        <!-- SendGrid for email notifications -->
+        <dependency>
+            <groupId>com.sendgrid</groupId>
+            <artifactId>sendgrid-java</artifactId>
+            <version>4.10.2</version>
+        </dependency>
+
         <!-- Distributed Tracing -->
         <dependency>
             <groupId>io.micrometer</groupId>
