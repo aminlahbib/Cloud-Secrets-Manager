@@ -3,6 +3,7 @@ package com.secrets.service;
 import com.secrets.client.AuditClient;
 import com.secrets.dto.SecretRequest;
 import com.secrets.entity.Secret;
+import com.secrets.entity.SecretVersion;
 import com.secrets.exception.SecretAlreadyExistsException;
 import com.secrets.exception.SecretNotFoundException;
 import com.secrets.entity.User;
@@ -326,6 +327,60 @@ public class ProjectSecretService {
             .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
         return secretVersionRepository.findBySecretIdOrderByVersionNumberDesc(secret.getId());
+    }
+
+    /**
+     * Get a specific version of a secret
+     */
+    @Transactional(readOnly = true)
+    public com.secrets.entity.SecretVersion getSecretVersion(UUID projectId, String secretKey, Integer versionNumber, UUID userId) {
+        if (!permissionService.canViewProject(projectId, userId)) {
+            throw new AccessDeniedException("Access denied to project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        return secretVersionRepository.findBySecretIdAndVersionNumber(secret.getId(), versionNumber)
+            .orElseThrow(() -> new SecretNotFoundException(
+                String.format("Version %d of secret %s not found", versionNumber, secretKey)
+            ));
+    }
+
+    /**
+     * Restore a secret to a previous version
+     */
+    @Transactional
+    public Secret restoreSecretVersion(UUID projectId, String secretKey, Integer versionNumber, UUID userId) {
+        if (!permissionService.canUpdateSecrets(projectId, userId)) {
+            throw new AccessDeniedException("You don't have permission to restore versions in this project");
+        }
+
+        Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
+            .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
+
+        SecretVersion targetVersion = secretVersionRepository.findBySecretIdAndVersionNumber(secret.getId(), versionNumber)
+            .orElseThrow(() -> new SecretNotFoundException(
+                String.format("Version %d of secret %s not found", versionNumber, secretKey)
+            ));
+
+        // Snapshot current value before restoring
+        secretVersionService.createVersion(secret, userId,
+            String.format("Snapshot before restoring to version %d", versionNumber));
+
+        secret.setEncryptedValue(targetVersion.getEncryptedValue());
+        secret.setUpdatedBy(userId);
+        Secret saved = secretRepository.save(secret);
+
+        secretVersionService.createVersion(saved, userId,
+            String.format("Restored to version %d", versionNumber));
+
+        User user = userService.findById(userId).orElse(null);
+        String username = user != null ? user.getEmail() : userId.toString();
+        auditClient.logEvent("SECRET_ROLLBACK", secretKey, username);
+
+        log.info("Restored secret {} in project {} to version {}", secretKey, projectId, versionNumber);
+        return saved;
     }
 
     /**

@@ -8,6 +8,7 @@ import type {
   CopySecretRequest,
   SecretsListParams,
   SecretsListResponse,
+  SecretVersionDetail,
 } from '../types';
 
 const buildProjectSecretPath = (projectId: string, key: string, suffix: string = '') =>
@@ -109,6 +110,18 @@ export const secretsService = {
   async getProjectSecretVersions(projectId: string, key: string): Promise<SecretVersion[]> {
     const { data } = await api.get(buildProjectSecretPath(projectId, key, '/versions'));
     return data;
+  },
+
+  async getProjectSecretVersion(projectId: string, key: string, versionNumber: number): Promise<SecretVersionDetail> {
+    const { data } = await api.get(
+      buildProjectSecretPath(projectId, key, `/versions/${versionNumber}`)
+    );
+    return data;
+  },
+
+  async restoreProjectSecretVersion(projectId: string, key: string, versionNumber: number): Promise<Secret> {
+    const { data } = await api.post(buildProjectSecretPath(projectId, key, `/versions/${versionNumber}/restore`));
+    return normalizeSecret(data);
   },
 
 };
