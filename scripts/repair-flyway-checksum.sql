@@ -7,9 +7,10 @@
 -- =============================================================================
 
 -- Update the checksum for version 1 to match the current file
--- The new checksum for the updated V1 migration is: 1842592871
+-- The checksum changes when the migration file is modified
+-- Current checksum (after INET -> VARCHAR change): 1855800724
 UPDATE flyway_schema_history 
-SET checksum = 1842592871 
+SET checksum = 1855800724 
 WHERE version = '1' AND description LIKE '%create audit logs v3%';
 
 -- Verify the update
