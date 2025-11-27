@@ -29,10 +29,12 @@ export const HomePage: React.FC = () => {
     queryFn: () => projectsService.listProjects({ size: 6 }),
   });
 
-  // Fetch recent activity
+  // Fetch recent activity (only if user has permission)
+  // 403 errors are handled gracefully by the service
   const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
     queryKey: ['activity', 'recent'],
     queryFn: () => auditService.listAuditLogs({ size: 5 }),
+    retry: false, // Don't retry on 403 (expected for non-admin users)
   });
 
   const projects = projectsData?.content ?? [];

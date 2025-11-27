@@ -29,9 +29,33 @@ export const firebaseAuthService = {
   async signInWithGoogle(): Promise<string> {
     try {
       await this.initPersistence();
-      const result = await signInWithPopup(auth, googleProvider);
-      const idToken = await result.user.getIdToken();
-      return idToken;
+      
+      // Suppress COOP warnings from Firebase (harmless browser security warnings)
+      const originalWarn = console.warn;
+      const suppressedWarnings: string[] = [];
+      console.warn = (...args: any[]) => {
+        const message = args.join(' ');
+        // Suppress COOP-related warnings from Firebase/Google OAuth
+        if (message.includes('Cross-Origin-Opener-Policy') || 
+            message.includes('window.closed') || 
+            message.includes('window.close')) {
+          suppressedWarnings.push(message);
+          return; // Suppress these warnings
+        }
+        originalWarn.apply(console, args);
+      };
+      
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const idToken = await result.user.getIdToken();
+        // Restore console.warn
+        console.warn = originalWarn;
+        return idToken;
+      } catch (popupError) {
+        // Restore console.warn before handling error
+        console.warn = originalWarn;
+        throw popupError;
+      }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       
