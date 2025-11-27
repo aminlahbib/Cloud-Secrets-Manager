@@ -215,7 +215,7 @@ export const ProjectDetailPage: React.FC = () => {
       
       return { previousSecrets };
     },
-    onError: (err, key, context) => {
+    onError: (_err, _key, context) => {
       // Rollback on error
       if (context?.previousSecrets) {
         queryClient.setQueryData(['project-secrets', projectId], context.previousSecrets);
