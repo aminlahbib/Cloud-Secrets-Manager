@@ -276,47 +276,56 @@ export const ProjectDetailPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/projects')}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate('/projects')} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-              {currentUserRole && (
-                <Badge variant={ROLE_COLORS[currentUserRole]}>
-                  {ROLE_ICONS[currentUserRole]}
-                  {currentUserRole}
-                </Badge>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+                {currentUserRole && (
+                  <Badge variant={ROLE_COLORS[currentUserRole]}>
+                    {ROLE_ICONS[currentUserRole]}
+                    {currentUserRole}
+                  </Badge>
+                )}
+                {project.isArchived && <Badge variant="warning">Archived</Badge>}
+              </div>
+              {project.description && <p className="mt-1 text-gray-500">{project.description}</p>}
+            </div>
+
+            <div className="flex gap-2">
+              {activeTab === 'secrets' && canManageSecrets && (
+                <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Secret
+                </Button>
               )}
-              {project.isArchived && (
-                <Badge variant="warning">Archived</Badge>
+
+              {activeTab === 'members' && canManageMembers && (
+                <Button onClick={() => setShowInviteModal(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite Member
+                </Button>
               )}
             </div>
-            {project.description && (
-              <p className="mt-1 text-gray-500">{project.description}</p>
-            )}
           </div>
-          
-          {activeTab === 'secrets' && canManageSecrets && (
-            <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Secret
-            </Button>
-          )}
-          
-          {activeTab === 'members' && canManageMembers && (
-            <Button onClick={() => setShowInviteModal(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Invite Member
-            </Button>
-          )}
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-4 text-sm text-neutral-600">
+            <p>
+              Need help?{' '}
+              <button className="underline" type="button" onClick={() => navigate('/activity')}>
+                View project activity
+              </button>{' '}
+              or visit{' '}
+              <button className="underline" type="button" onClick={() => navigate('/settings')}>
+                project settings
+              </button>{' '}
+              for more tools.
+            </p>
+          </div>
         </div>
       </div>
 
