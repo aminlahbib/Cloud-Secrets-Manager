@@ -63,6 +63,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -82,7 +83,7 @@ export const ProjectDetailPage: React.FC = () => {
   const { data: members, isLoading: isMembersLoading } = useQuery<ProjectMember[]>({
     queryKey: ['project-members', projectId],
     queryFn: () => membersService.listMembers(projectId!),
-    enabled: !!projectId && activeTab === 'members',
+    enabled: !!projectId,
   });
 
   // Delete secret mutation
@@ -113,6 +114,14 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: ProjectRole }) =>
+      membersService.updateMemberRole(projectId!, userId, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+    },
+  });
+
   useEffect(() => {
     if (project) {
       setProjectName(project.name);
@@ -120,14 +129,36 @@ export const ProjectDetailPage: React.FC = () => {
     }
   }, [project]);
 
+  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
   const currentUserRole = project?.currentUserRole;
   const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
   const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
   const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
   const canManageProject = currentUserRole === 'OWNER';
-  const canLeaveProject = currentUserRole !== 'OWNER';
+  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
+  const canLeaveProject =
+    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secrets = secretsData?.content ?? [];
+  const handleMemberRoleChange = (member: ProjectMember, newRole: ProjectRole) => {
+    if (member.role === newRole) return;
+    setRoleChangeTarget(member.userId);
+    updateMemberRoleMutation.mutate(
+      { userId: member.userId, role: newRole },
+      {
+        onSettled: () => setRoleChangeTarget(null),
+      }
+    );
+  };
+  const availableRoleOptions: ProjectRole[] =
+    currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
+
+  const canEditMemberRole = (member: ProjectMember) => {
+    if (!canManageMembers) return false;
+    if (member.userId === user?.id) return false;
+    if (member.role === 'OWNER' && (currentUserRole !== 'OWNER' || ownerCount <= 1)) return false;
+    return true;
+  };
 
   const isArchived = project?.isArchived || Boolean(project?.deletedAt);
   const metaPairs = useMemo(() => {
@@ -404,7 +435,7 @@ export const ProjectDetailPage: React.FC = () => {
 
       {activeTab === 'members' && (
         <div className="space-y-4">
-          {isMembersLoading ? (
+          {isMembersLoading && activeTab === 'members' ? (
             <div className="flex justify-center py-8">
               <Spinner size="lg" />
             </div>
@@ -449,10 +480,25 @@ export const ProjectDetailPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Badge variant={ROLE_COLORS[member.role]}>
-                      {ROLE_ICONS[member.role]}
-                      {member.role}
-                    </Badge>
+                    {canEditMemberRole(member) ? (
+                      <select
+                        value={member.role}
+                        onChange={(e) => handleMemberRoleChange(member, e.target.value as ProjectRole)}
+                        className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                        disabled={roleChangeTarget === member.userId && updateMemberRoleMutation.isPending}
+                      >
+                        {availableRoleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {role.charAt(0) + role.slice(1).toLowerCase()}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Badge variant={ROLE_COLORS[member.role]}>
+                        {ROLE_ICONS[member.role]}
+                        {member.role}
+                      </Badge>
+                    )}
                     {canManageMembers && member.userId !== user?.id && member.role !== 'OWNER' && (
                       <Button
                         variant="ghost"
@@ -581,11 +627,20 @@ export const ProjectDetailPage: React.FC = () => {
           ) : (
             <div className="bg-white border border-neutral-200 rounded-3xl p-6">
               <p className="text-sm font-semibold text-neutral-900 mb-2">Leave Project</p>
-              <p className="text-sm text-neutral-500 mb-4">
+              <p className="text-sm text-neutral-500 mb-2">
                 Remove your access to this project. You will need to be re-invited to regain access.
               </p>
+              {isSoleOwner && (
+                <p className="text-xs text-red-600 mb-4">
+                  Promote another member to Owner before leaving. Projects require at least one active owner.
+                </p>
+              )}
               {canLeaveProject && (
-                <Button variant="secondary" onClick={() => setShowLeaveModal(true)} isLoading={leaveProjectMutation.isPending}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowLeaveModal(true)}
+                  isLoading={leaveProjectMutation.isPending}
+                >
                   Leave Project
                 </Button>
               )}
@@ -594,7 +649,7 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       )}
       {/* Archive Modal */}
-      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Archive Project">
+      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
         <div className="space-y-4">
           <p className="text-neutral-700">
             Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
@@ -612,7 +667,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Delete Project Modal */}
-      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Delete Project">
+      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
         <div className="space-y-4">
           <p className="text-neutral-700">
             Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
@@ -647,7 +702,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Leave Modal */}
-      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Leave Project">
+      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
         <div className="space-y-4">
           <p className="text-neutral-700">
             Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
