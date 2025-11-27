@@ -378,20 +378,18 @@ export const ProjectDetailPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Key
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Updated
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
+                      Last Change
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Version
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -403,9 +401,18 @@ export const ProjectDetailPage: React.FC = () => {
                     const isExpired =
                       secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
                     const versionList = secret.secretVersions;
-                    const lastVersion =
-                      versionList && versionList.length > 0 ? versionList[versionList.length - 1]?.versionNumber : undefined;
-                    const versionNumber = secret.version ?? lastVersion ?? 1;
+                    const lastVersionEntry =
+                      versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
+                    const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
+                    const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
+                    const lastChangeUser =
+                      lastVersionEntry?.creator?.displayName ||
+                      lastVersionEntry?.creator?.email ||
+                      secret.creator?.displayName ||
+                      secret.creator?.email;
+                    const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(
+                      secret.secretKey
+                    )}#versions`;
 
                     return (
                       <tr key={secret.id} className="hover:bg-gray-50">
@@ -420,8 +427,15 @@ export const ProjectDetailPage: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(secret.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(secret.updatedAt).toLocaleDateString()}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{new Date(lastChangeDate).toLocaleDateString()}</div>
+                          {lastChangeUser && <div className="text-xs text-gray-500">by {lastChangeUser}</div>}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">v{versionNumber}</div>
+                          <Link to={historyLink} className="text-xs text-neutral-500 hover:text-neutral-900">
+                            View history
+                          </Link>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {isExpired ? (
@@ -434,12 +448,13 @@ export const ProjectDetailPage: React.FC = () => {
                             <Badge variant="default">Active</Badge>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v{versionNumber}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                            onClick={() =>
+                              navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)
+                            }
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -447,7 +462,9 @@ export const ProjectDetailPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                              onClick={() =>
+                                navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)
+                              }
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
