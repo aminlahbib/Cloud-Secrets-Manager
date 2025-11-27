@@ -191,29 +191,38 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   
                   return (
                     <div key={workflow.id}>
-                      <button
-                        onClick={() => hasProjects && toggleWorkflow(workflow.id)}
-                        className={`
-                          w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
-                          ${hasProjects ? 'cursor-pointer hover:bg-gray-50' : 'cursor-default'}
-                          text-gray-600
-                        `}
-                      >
-                        {hasProjects ? (
-                          isExpanded ? (
-                            <ChevronDown className="h-4 w-4 mr-2 text-gray-400" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 mr-2 text-gray-400" />
-                          )
-                        ) : (
-                          <span className="w-4 mr-2" />
+                      <div className="flex items-center">
+                        {hasProjects && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWorkflow(workflow.id);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded mr-1"
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-gray-400" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-gray-400" />
+                            )}
+                          </button>
                         )}
-                        <FolderOpen className="h-4 w-4 mr-2 text-gray-400" />
-                        <span className="truncate flex-1 text-left">{workflow.name}</span>
-                        {workflow.isDefault && (
-                          <span className="text-xs text-purple-500 ml-2">Default</span>
-                        )}
-                      </button>
+                        {!hasProjects && <span className="w-4 mr-2" />}
+                        <button
+                          onClick={() => navigate(`/workflows/${workflow.id}`)}
+                          className={`
+                            flex-1 flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
+                            cursor-pointer hover:bg-gray-50
+                            text-gray-600
+                          `}
+                        >
+                          <FolderOpen className="h-4 w-4 mr-2 text-gray-400" />
+                          <span className="truncate flex-1 text-left">{workflow.name}</span>
+                          {workflow.isDefault && (
+                            <span className="text-xs text-purple-500 ml-2">Default</span>
+                          )}
+                        </button>
+                      </div>
                       
                       {/* Projects under workflow */}
                       {isExpanded && workflow.projects && (
