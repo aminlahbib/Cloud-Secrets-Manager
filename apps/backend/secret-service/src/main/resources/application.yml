@@ -59,6 +59,13 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${ENVIRONMENT:dev}
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   health:
     redis:
       enabled: false
@@ -118,8 +125,8 @@ logging:
     com.secrets: DEBUG
     org.springframework.security: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{traceId:-}/%X{spanId:-}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-}/%X{spanId:-}] %-5level %logger{36} - %msg%n"
 
 ---
 spring:
