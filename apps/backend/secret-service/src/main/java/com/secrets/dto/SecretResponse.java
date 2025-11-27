@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public class SecretResponse {
     private String key;
     private String value;
+    private String description;
     private String createdBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -16,10 +17,11 @@ public class SecretResponse {
     public SecretResponse() {
     }
 
-    public SecretResponse(String key, String value, String createdBy, LocalDateTime createdAt, 
+    public SecretResponse(String key, String value, String description, String createdBy, LocalDateTime createdAt, 
                          LocalDateTime updatedAt, LocalDateTime expiresAt, Boolean expired) {
         this.key = key;
         this.value = value;
+        this.description = description;
         this.createdBy = createdBy;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -38,6 +40,14 @@ public class SecretResponse {
     public String getValue() {
         return value;
     }
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
 
     public void setValue(String value) {
         this.value = value;
@@ -99,6 +109,7 @@ public class SecretResponse {
         return SecretResponse.builder()
             .key(secret.getSecretKey())
             .value(decryptedValue)
+            .description(secret.getDescription())
             .createdBy(createdByStr)
             .createdAt(secret.getCreatedAt())
             .updatedAt(secret.getUpdatedAt())
@@ -110,6 +121,7 @@ public class SecretResponse {
     public static class SecretResponseBuilder {
         private String key;
         private String value;
+        private String description;
         private String createdBy;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -123,6 +135,11 @@ public class SecretResponse {
 
         public SecretResponseBuilder value(String value) {
             this.value = value;
+            return this;
+        }
+
+        public SecretResponseBuilder description(String description) {
+            this.description = description;
             return this;
         }
 
@@ -152,7 +169,7 @@ public class SecretResponse {
         }
 
         public SecretResponse build() {
-            return new SecretResponse(key, value, createdBy, createdAt, updatedAt, expiresAt, expired);
+            return new SecretResponse(key, value, description, createdBy, createdAt, updatedAt, expiresAt, expired);
         }
     }
 }

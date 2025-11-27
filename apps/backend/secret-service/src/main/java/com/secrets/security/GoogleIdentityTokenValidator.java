@@ -76,7 +76,7 @@ public class GoogleIdentityTokenValidator {
      */
     private Collection<? extends GrantedAuthority> extractAuthorities(FirebaseToken token) {
         List<String> roles = extractRolesFromToken(token);
-
+        
         // Default to USER role if no roles specified
         if (roles.isEmpty()) {
             roles = List.of("USER");

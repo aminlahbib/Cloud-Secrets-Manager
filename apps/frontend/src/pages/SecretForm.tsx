@@ -6,7 +6,6 @@ import { secretsService } from '../services/secrets';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
-import { Card } from '../components/ui/Card';
 import { queryClient } from '../main';
 import type { SecretFormValues } from '../types';
 
@@ -75,6 +74,10 @@ export const SecretFormPage: React.FC = () => {
       expiresAt: formData.get('expiresAt') ? new Date(formData.get('expiresAt') as string) : undefined,
     };
 
+    if (isEditMode) {
+      payload.key = secretKey;
+    }
+
     if (!payload.key || !payload.value) {
       alert('Key and value are required');
       return;
@@ -96,26 +99,26 @@ export const SecretFormPage: React.FC = () => {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <Button
-          variant="ghost"
+    <div className="bg-neutral-50 min-h-screen py-10 px-4">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <button
           onClick={() => navigate(`/projects/${projectId}`)}
-          className="mb-4"
+          className="inline-flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Project
-        </Button>
+        </button>
 
-        <h1 className="text-3xl font-bold text-gray-900">
-          {isEditMode ? 'Edit Secret' : 'Create New Secret'}
-        </h1>
-      </div>
-
-      <Card className="max-w-2xl">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white border border-neutral-200 rounded-[24px] shadow-sm p-8 space-y-6">
           <div>
-            <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-2">
+            <h1 className="text-3xl font-semibold text-neutral-900">
+              {isEditMode ? 'Edit Secret' : 'Create New Secret'}
+            </h1>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="key" className="block text-sm font-medium text-neutral-800 mb-2">
               Secret Key *
             </label>
             <Input
@@ -146,7 +149,7 @@ export const SecretFormPage: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-medium text-neutral-800 mb-2">
               Description (Optional)
             </label>
             <Textarea
@@ -159,7 +162,7 @@ export const SecretFormPage: React.FC = () => {
           </div>
 
           <div>
-            <label htmlFor="expiresAt" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="expiresAt" className="block text-sm font-medium text-neutral-800 mb-2">
               Expires At (Optional)
             </label>
             <Input
@@ -170,15 +173,16 @@ export const SecretFormPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-3 pt-2">
             <Button
               type="button"
               variant="secondary"
               onClick={() => navigate(`/projects/${projectId}`)}
+              className="px-6"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={mutation.isPending} className="px-6">
               {mutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -193,7 +197,8 @@ export const SecretFormPage: React.FC = () => {
             </Button>
           </div>
         </form>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };

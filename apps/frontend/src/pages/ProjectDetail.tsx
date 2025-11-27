@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -23,10 +23,10 @@ import { membersService } from '../services/members';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { EmptyState } from '../components/ui/EmptyState';
+import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
@@ -57,6 +57,15 @@ export const ProjectDetailPage: React.FC = () => {
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
+  const [projectName, setProjectName] = useState('');
+  const [projectDescription, setProjectDescription] = useState('');
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState<string>('');
+  const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -76,7 +85,7 @@ export const ProjectDetailPage: React.FC = () => {
   const { data: members, isLoading: isMembersLoading } = useQuery<ProjectMember[]>({
     queryKey: ['project-members', projectId],
     queryFn: () => membersService.listMembers(projectId!),
-    enabled: !!projectId && activeTab === 'members',
+    enabled: !!projectId,
   });
 
   // Delete secret mutation
@@ -107,13 +116,130 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: ({ userId, role }: { userId: string; role: ProjectRole }) =>
+      membersService.updateMemberRole(projectId!, userId, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+    },
+  });
+
+  const transferOwnershipMutation = useMutation({
+    mutationFn: () => membersService.transferOwnership(projectId!, { newOwnerUserId: transferTarget }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      setShowTransferModal(false);
+      setTransferTarget('');
+    },
+  });
+
+  useEffect(() => {
+    if (project) {
+      setProjectName(project.name);
+      setProjectDescription(project.description || '');
+    }
+  }, [project]);
+
+  useEffect(() => {
+    if (!showTransferModal) {
+      setTransferTarget('');
+    }
+  }, [showTransferModal]);
+
+  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
   const currentUserRole = project?.currentUserRole;
   const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
   const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
   const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
   const canManageProject = currentUserRole === 'OWNER';
+  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
+  const canLeaveProject =
+    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secrets = secretsData?.content ?? [];
+  const transferableMembers = useMemo(
+    () => (members || []).filter((member) => member.userId !== user?.id),
+    [members, user?.id]
+  );
+  const handleMemberRoleChange = (member: ProjectMember, newRole: ProjectRole) => {
+    if (member.role === newRole) return;
+    setRoleChangeTarget(member.userId);
+    updateMemberRoleMutation.mutate(
+      { userId: member.userId, role: newRole },
+      {
+        onSettled: () => setRoleChangeTarget(null),
+      }
+    );
+  };
+  const availableRoleOptions: ProjectRole[] =
+    currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
+
+  const canEditMemberRole = (member: ProjectMember) => {
+    if (!canManageMembers) return false;
+    if (member.userId === user?.id) return false;
+    if (member.role === 'OWNER' && (currentUserRole !== 'OWNER' || ownerCount <= 1)) return false;
+    return true;
+  };
+
+  const isArchived = project?.isArchived || Boolean(project?.deletedAt);
+  const metaPairs = useMemo(() => {
+    if (!project) return [];
+    return [
+      { label: 'Created', value: new Date(project.createdAt).toLocaleDateString() },
+      { label: 'Updated', value: new Date(project.updatedAt).toLocaleDateString() },
+      { label: 'Secrets', value: project.secretCount ?? 0 },
+      { label: 'Members', value: project.memberCount ?? 0 },
+    ];
+  }, [project]);
+
+  const hasFormChanges =
+    canManageProject &&
+    project &&
+    (projectName.trim() !== project.name || (projectDescription || '').trim() !== (project.description || ''));
+
+  const updateProjectMutation = useMutation({
+    mutationFn: () =>
+      projectsService.updateProject(projectId!, {
+        name: projectName.trim(),
+        description: projectDescription.trim() || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+    },
+  });
+
+  const archiveProjectMutation = useMutation({
+    mutationFn: () => projectsService.archiveProject(projectId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      setShowArchiveModal(false);
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: () => projectsService.deleteProjectPermanently(projectId!),
+    onSuccess: () => {
+      setShowDeleteProjectModal(false);
+      navigate('/projects');
+    },
+  });
+
+  const restoreProjectMutation = useMutation({
+    mutationFn: () => projectsService.restoreProject(projectId!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      setShowRestoreModal(false);
+    },
+  });
+
+  const leaveProjectMutation = useMutation({
+    mutationFn: () => projectsService.leaveProject(projectId!),
+    onSuccess: () => {
+      setShowLeaveModal(false);
+      navigate('/projects');
+    },
+  });
 
   if (isProjectLoading) {
     return (
@@ -150,47 +276,56 @@ export const ProjectDetailPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Button
-          variant="ghost"
-          onClick={() => navigate('/projects')}
-          className="mb-4"
-        >
+        <Button variant="ghost" onClick={() => navigate('/projects')} className="mb-4">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Projects
         </Button>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
-              {currentUserRole && (
-                <Badge variant={ROLE_COLORS[currentUserRole]}>
-                  {ROLE_ICONS[currentUserRole]}
-                  {currentUserRole}
-                </Badge>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+                {currentUserRole && (
+                  <Badge variant={ROLE_COLORS[currentUserRole]}>
+                    {ROLE_ICONS[currentUserRole]}
+                    {currentUserRole}
+                  </Badge>
+                )}
+                {project.isArchived && <Badge variant="warning">Archived</Badge>}
+              </div>
+              {project.description && <p className="mt-1 text-gray-500">{project.description}</p>}
+            </div>
+
+            <div className="flex gap-2">
+              {activeTab === 'secrets' && canManageSecrets && (
+                <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Secret
+                </Button>
               )}
-              {project.isArchived && (
-                <Badge variant="warning">Archived</Badge>
+
+              {activeTab === 'members' && canManageMembers && (
+                <Button onClick={() => setShowInviteModal(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Invite Member
+                </Button>
               )}
             </div>
-            {project.description && (
-              <p className="mt-1 text-gray-500">{project.description}</p>
-            )}
           </div>
-          
-          {activeTab === 'secrets' && canManageSecrets && (
-            <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Secret
-            </Button>
-          )}
-          
-          {activeTab === 'members' && canManageMembers && (
-            <Button onClick={() => setShowInviteModal(true)}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Invite Member
-            </Button>
-          )}
+          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-4 text-sm text-neutral-600">
+            <p>
+              Need help?{' '}
+              <button className="underline" type="button" onClick={() => navigate('/activity')}>
+                View project activity
+              </button>{' '}
+              or visit{' '}
+              <button className="underline" type="button" onClick={() => navigate('/settings')}>
+                project settings
+              </button>{' '}
+              for more tools.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -243,14 +378,15 @@ export const ProjectDetailPage: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Key
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Created
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Updated
+                      Last Change
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Version
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -262,11 +398,24 @@ export const ProjectDetailPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {secrets.map((secret: Secret) => {
-                    const isExpired = secret.expired || 
-                      (secret.expiresAt && new Date(secret.expiresAt) < new Date());
-                    
+                    const isExpired =
+                      secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
+                    const versionList = secret.secretVersions;
+                    const lastVersionEntry =
+                      versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
+                    const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
+                    const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
+                    const lastChangeUser =
+                      lastVersionEntry?.creator?.displayName ||
+                      lastVersionEntry?.creator?.email ||
+                      secret.creator?.displayName ||
+                      secret.creator?.email;
+                    const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(
+                      secret.secretKey
+                    )}#versions`;
+
                     return (
-                      <tr key={secret.id} className="hover:bg-gray-50">
+                      <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Link
                             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
@@ -278,8 +427,15 @@ export const ProjectDetailPage: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {new Date(secret.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(secret.updatedAt).toLocaleDateString()}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{new Date(lastChangeDate).toLocaleDateString()}</div>
+                          {lastChangeUser && <div className="text-xs text-gray-500">by {lastChangeUser}</div>}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">v{versionNumber}</div>
+                          <Link to={historyLink} className="text-xs text-neutral-500 hover:text-neutral-900">
+                            View history
+                          </Link>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {isExpired ? (
@@ -296,7 +452,9 @@ export const ProjectDetailPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                            onClick={() =>
+                              navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)
+                            }
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -304,7 +462,9 @@ export const ProjectDetailPage: React.FC = () => {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                              onClick={() =>
+                                navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)
+                              }
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -331,7 +491,7 @@ export const ProjectDetailPage: React.FC = () => {
 
       {activeTab === 'members' && (
         <div className="space-y-4">
-          {isMembersLoading ? (
+          {isMembersLoading && activeTab === 'members' ? (
             <div className="flex justify-center py-8">
               <Spinner size="lg" />
             </div>
@@ -376,10 +536,25 @@ export const ProjectDetailPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Badge variant={ROLE_COLORS[member.role]}>
-                      {ROLE_ICONS[member.role]}
-                      {member.role}
-                    </Badge>
+                    {canEditMemberRole(member) ? (
+                      <select
+                        value={member.role}
+                        onChange={(e) => handleMemberRoleChange(member, e.target.value as ProjectRole)}
+                        className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                        disabled={roleChangeTarget === member.userId && updateMemberRoleMutation.isPending}
+                      >
+                        {availableRoleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {role.charAt(0) + role.slice(1).toLowerCase()}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Badge variant={ROLE_COLORS[member.role]}>
+                        {ROLE_ICONS[member.role]}
+                        {member.role}
+                      </Badge>
+                    )}
                     {canManageMembers && member.userId !== user?.id && member.role !== 'OWNER' && (
                       <Button
                         variant="ghost"
@@ -409,45 +584,239 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'settings' && (
-        <Card className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Project Settings</h2>
-          
-          <div className="space-y-6 max-w-xl">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Project Name
-              </label>
-              <Input value={project.name} disabled={!canManageProject} readOnly />
+        <div className="space-y-6">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
+            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Project Overview</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {metaPairs.map((item) => (
+                <div key={item.label} className="rounded-2xl border border-neutral-100 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-neutral-900">{item.value}</p>
+                </div>
+              ))}
+              <div className="rounded-2xl border border-neutral-100 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">Status</p>
+                <p className="mt-2 text-lg font-semibold text-neutral-900">
+                  {isArchived ? 'Archived' : 'Active'}
+                </p>
+              </div>
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
-                rows={3}
-                defaultValue={project.description || ''}
-                disabled={!canManageProject}
-              />
+          </div>
+
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-neutral-900">General Settings</h2>
+              {canManageProject && (
+                <Button
+                  onClick={() => updateProjectMutation.mutate()}
+                  disabled={!hasFormChanges || updateProjectMutation.isPending}
+                >
+                  {updateProjectMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              )}
             </div>
 
-            {canManageProject && (
-              <div className="pt-6 border-t border-gray-200">
-                <h3 className="text-sm font-medium text-red-600 mb-4">Danger Zone</h3>
-                <div className="space-y-3">
-                  <Button variant="secondary" className="mr-3">
-                    Archive Project
-                  </Button>
-                  <Button variant="danger">
-                    Delete Project
+            <div className="space-y-5 max-w-2xl">
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Project Name</label>
+                <Input
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  disabled={!canManageProject}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
+                <textarea
+                  className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+                  rows={4}
+                  value={projectDescription}
+                  onChange={(e) => setProjectDescription(e.target.value)}
+                  placeholder="Describe the scope, environments, or use cases for this project."
+                  disabled={!canManageProject}
+                />
+              </div>
+            </div>
+          </div>
+
+          {canManageProject ? (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 space-y-6">
+              <div>
+                <p className="text-sm font-semibold text-neutral-900">Project Lifecycle</p>
+                <p className="text-sm text-neutral-500 mt-1">
+                  Archive projects you no longer need but may want to restore later. Permanently deleting removes all
+                  secrets and activity forever.
+                </p>
+              </div>
+              {transferableMembers.length > 0 && (
+                <div className="flex flex-col gap-3 md:flex-row">
+                  <Button variant="secondary" className="flex-1" onClick={() => setShowTransferModal(true)}>
+                    Transfer Ownership
                   </Button>
                 </div>
+              )}
+              <div className="flex flex-col gap-3 md:flex-row">
+                {!isArchived ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      className="flex-1"
+                      onClick={() => setShowArchiveModal(true)}
+                      isLoading={archiveProjectMutation.isPending}
+                    >
+                      Archive Project
+                    </Button>
+                    <Button variant="danger" className="flex-1" onClick={() => setShowDeleteProjectModal(true)}>
+                      Delete Project
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      className="flex-1"
+                      onClick={() => setShowRestoreModal(true)}
+                      isLoading={restoreProjectMutation.isPending}
+                    >
+                      Restore Project
+                    </Button>
+                    <Button variant="danger" className="flex-1" onClick={() => setShowDeleteProjectModal(true)}>
+                      Delete Permanently
+                    </Button>
+                  </>
+                )}
               </div>
-            )}
-          </div>
-        </Card>
+            </div>
+          ) : (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6">
+              <p className="text-sm font-semibold text-neutral-900 mb-2">Leave Project</p>
+              <p className="text-sm text-neutral-500 mb-2">
+                Remove your access to this project. You will need to be re-invited to regain access.
+              </p>
+              {isSoleOwner && (
+                <p className="text-xs text-red-600 mb-4">
+                  Promote another member to Owner before leaving. Projects require at least one active owner.
+                </p>
+              )}
+              {canLeaveProject && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowLeaveModal(true)}
+                  isLoading={leaveProjectMutation.isPending}
+                >
+                  Leave Project
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       )}
+      {/* Archive Modal */}
+      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
+            the archived projects view.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowArchiveModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => archiveProjectMutation.mutate()} isLoading={archiveProjectMutation.isPending}>
+              Archive Project
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Transfer Ownership Modal */}
+      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Select new owner</label>
+            <select
+              value={transferTarget}
+              onChange={(e) => setTransferTarget(e.target.value)}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            >
+              <option value="">Choose member</option>
+              {transferableMembers.map((member) => (
+                <option key={member.id} value={member.userId}>
+                  {member.user?.displayName || member.user?.email}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowTransferModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => transferOwnershipMutation.mutate()}
+              disabled={!transferTarget}
+              isLoading={transferOwnershipMutation.isPending}
+            >
+              Confirm Transfer
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Project Modal */}
+      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
+            action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowDeleteProjectModal(false)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => deleteProjectMutation.mutate()} isLoading={deleteProjectMutation.isPending}>
+              Delete Permanently
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Restore Modal */}
+      <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title="Restore Project">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Restore <strong>{project?.name}</strong> to make it active again.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowRestoreModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={() => restoreProjectMutation.mutate()} isLoading={restoreProjectMutation.isPending}>
+              Restore Project
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Leave Modal */}
+      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
+            access.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowLeaveModal(false)}>
+              Stay
+            </Button>
+            <Button variant="danger" onClick={() => leaveProjectMutation.mutate()} isLoading={leaveProjectMutation.isPending}>
+              Leave Project
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Delete Secret Modal */}
       <Modal

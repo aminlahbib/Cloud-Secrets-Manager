@@ -167,6 +167,7 @@ export interface Secret {
   description?: string;
   tags?: string[];
   version?: number;
+  secretVersions?: SecretVersion[];
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -212,6 +213,10 @@ export interface SecretVersion {
   changeNote?: string;
   changeDescription?: string; // Legacy alias for changeNote
   creator?: User;
+}
+
+export interface SecretVersionDetail extends SecretVersion {
+  value: string;
 }
 
 // ----------------------------------------------------------------------------
