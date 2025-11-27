@@ -390,6 +390,9 @@ export const ProjectDetailPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
                     </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Version
+                    </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
@@ -397,9 +400,13 @@ export const ProjectDetailPage: React.FC = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {secrets.map((secret: Secret) => {
-                    const isExpired = secret.expired || 
-                      (secret.expiresAt && new Date(secret.expiresAt) < new Date());
-                    
+                    const isExpired =
+                      secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
+                    const versionList = secret.secretVersions;
+                    const lastVersion =
+                      versionList && versionList.length > 0 ? versionList[versionList.length - 1]?.versionNumber : undefined;
+                    const versionNumber = secret.version ?? lastVersion ?? 1;
+
                     return (
                       <tr key={secret.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -427,6 +434,7 @@ export const ProjectDetailPage: React.FC = () => {
                             <Badge variant="default">Active</Badge>
                           )}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">v{versionNumber}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
                           <Button
                             variant="ghost"
