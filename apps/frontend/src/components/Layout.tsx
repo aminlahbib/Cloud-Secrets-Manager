@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../contexts/AuthContext';
-import { workflowsService } from '../services/workflows';
+import { useWorkflows } from '../hooks/useWorkflows';
 import { Button } from './ui/Button';
 import {
   LayoutDashboard,
@@ -18,7 +17,7 @@ import {
   ChevronDown,
   Shield
 } from 'lucide-react';
-import type { Workflow } from '../types';
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,12 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const workflowSelectorRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch user's workflows
-  const { data: workflows } = useQuery<Workflow[]>({
-    queryKey: ['workflows', user?.id],
-    queryFn: () => workflowsService.listWorkflows(),
-    enabled: !!user?.id,
-    staleTime: 30000, // Cache for 30 seconds
-  });
+  const { data: workflows } = useWorkflows(user?.id);
 
   useEffect(() => {
     if (!selectedWorkflowId && workflows && workflows.length > 0) {
@@ -114,11 +108,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                    }`}
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActive
+                      ? 'bg-neutral-100 text-neutral-900'
+                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      }`}
                   >
                     <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
                     {item.name}
@@ -157,9 +150,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                       </p>
                     </div>
                     <ChevronDown
-                      className={`h-4 w-4 text-neutral-400 transition-transform ${
-                        isWorkflowMenuOpen ? 'rotate-180' : ''
-                      }`}
+                      className={`h-4 w-4 text-neutral-400 transition-transform ${isWorkflowMenuOpen ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
 
@@ -172,9 +164,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <button
                               key={workflow.id}
                               onClick={() => handleWorkflowSelect(workflow.id)}
-                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${
-                                isSelected ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-50'
-                              }`}
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${isSelected ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-50'
+                                }`}
                             >
                               <div>
                                 <p className="font-medium">{workflow.name}</p>
@@ -222,11 +213,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-neutral-100 text-neutral-900'
-                        : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                    }`}
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActive
+                      ? 'bg-neutral-100 text-neutral-900'
+                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                      }`}
                   >
                     <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
                     {item.name}
@@ -241,11 +231,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/admin"
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    isActiveLink('/admin')
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
-                  }`}
+                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActiveLink('/admin')
+                    ? 'bg-neutral-100 text-neutral-900'
+                    : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    }`}
                 >
                   <Shield className={`mr-3 h-5 w-5 ${isActiveLink('/admin') ? 'text-neutral-900' : 'text-neutral-400'}`} />
                   Admin

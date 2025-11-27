@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  Folder, 
-  Plus, 
-  Search, 
-  Users, 
-  Key, 
+import {
+  Folder,
+  Plus,
+  Search,
+  Users,
+  Key,
   Archive,
   Crown,
   Shield,
   Clock
 } from 'lucide-react';
-import { projectsService } from '../services/projects';
+import { useProjects, useCreateProject } from '../hooks/useProjects';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
@@ -31,9 +30,8 @@ const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   useAuth(); // For authentication check
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
@@ -41,30 +39,31 @@ export const ProjectsPage: React.FC = () => {
   const [newProjectDescription, setNewProjectDescription] = useState('');
 
   // Fetch projects
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['projects', searchTerm, showArchived],
-    queryFn: () => projectsService.listProjects({ 
-      search: searchTerm || undefined,
-      includeArchived: showArchived,
-    }),
-    placeholderData: (previousData) => previousData,
+  const { data, isLoading, error } = useProjects({
+    search: searchTerm,
+    includeArchived: showArchived,
   });
 
   // Create project mutation
-  const createMutation = useMutation({
-    mutationFn: () => projectsService.createProject({ 
-      name: newProjectName, 
-      description: newProjectDescription || undefined 
-    }),
-    onSuccess: (project) => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['workflows'] });
-      setShowCreateModal(false);
-      setNewProjectName('');
-      setNewProjectDescription('');
-      navigate(`/projects/${project.id}`);
-    },
-  });
+  const createMutation = useCreateProject();
+
+  const handleCreateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(
+      {
+        name: newProjectName,
+        description: newProjectDescription || undefined
+      },
+      {
+        onSuccess: (project) => {
+          setShowCreateModal(false);
+          setNewProjectName('');
+          setNewProjectDescription('');
+          navigate(`/projects/${project.id}`);
+        },
+      }
+    );
+  };
 
   const projects = data?.content ?? [];
 
@@ -151,16 +150,16 @@ export const ProjectsPage: React.FC = () => {
             >
               <div className={`
                 bg-white rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
-                ${project.isArchived 
-                  ? 'border-gray-200 opacity-75' 
+                ${project.isArchived
+                  ? 'border-gray-200 opacity-75'
                   : 'border-neutral-200 hover:shadow-md hover:border-neutral-900'
                 }
               `}>
                 <div className="flex justify-between items-start mb-4">
                   <div className={`
                     p-3 rounded-lg transition-colors
-                    ${project.isArchived 
-                      ? 'bg-gray-100' 
+                    ${project.isArchived
+                      ? 'bg-gray-100'
                       : 'bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white transition-colors'
                     }
                   `}>
@@ -183,7 +182,7 @@ export const ProjectsPage: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-neutral-900">
                     {project.name}
@@ -240,10 +239,7 @@ export const ProjectsPage: React.FC = () => {
         title="Create New Project"
       >
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            createMutation.mutate();
-          }}
+          onSubmit={handleCreateProject}
           className="space-y-4"
         >
           <Input
@@ -253,7 +249,7 @@ export const ProjectsPage: React.FC = () => {
             placeholder="e.g., Backend Services"
             required
           />
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Description (optional)
