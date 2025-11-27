@@ -30,6 +30,32 @@ export const SecretDetailPage: React.FC = () => {
   useAuth(); // For authentication check
   const isProjectScoped = !!projectId;
 
+  // Early return if secret key is missing
+  if (!secretKey) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-800">
+            Invalid secret URL. Missing secret key.
+          </p>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              if (projectId) {
+                navigate(`/projects/${projectId}`);
+              } else {
+                navigate('/secrets');
+              }
+            }}
+            className="mt-4"
+          >
+            {projectId ? 'Back to Project' : 'Back to Secrets'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   const [showValue, setShowValue] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -183,10 +209,16 @@ export const SecretDetailPage: React.FC = () => {
           </p>
           <Button
             variant="secondary"
-            onClick={() => navigate('/secrets')}
+            onClick={() => {
+              if (isProjectScoped && projectId) {
+                navigate(`/projects/${projectId}`);
+              } else {
+                navigate('/secrets');
+              }
+            }}
             className="mt-4"
           >
-            Back to Secrets
+            {isProjectScoped ? 'Back to Project' : 'Back to Secrets'}
           </Button>
         </div>
       </div>
@@ -214,7 +246,7 @@ export const SecretDetailPage: React.FC = () => {
         <div className="sm:flex sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-gray-900">{secret.key}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">{secret.key || secret.secretKey}</h1>
               {statusBadge}
             </div>
             <p className="mt-2 text-sm text-gray-600">
