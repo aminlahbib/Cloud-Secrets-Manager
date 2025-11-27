@@ -4,6 +4,8 @@ import com.secrets.entity.User;
 import com.secrets.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class UserService {
      * Get or create user from Firebase UID
      * This is called during login to ensure user exists in our database
      */
+    @CacheEvict(cacheNames = "userIdsByEmail", key = "#email", condition = "#email != null")
     public User getOrCreateUser(String firebaseUid, String email, String displayName, String avatarUrl) {
         Optional<User> existing = userRepository.findByFirebaseUid(firebaseUid);
         
@@ -91,6 +94,7 @@ public class UserService {
     /**
      * Update user
      */
+    @CacheEvict(cacheNames = "userIdsByEmail", key = "#user.email", condition = "#user != null && #user.email != null")
     public User updateUser(User user) {
         return userRepository.save(user);
     }
@@ -100,6 +104,7 @@ public class UserService {
      * This is a helper method to extract user ID from authentication
      */
     @Transactional(readOnly = true)
+    @Cacheable(cacheNames = "userIdsByEmail", key = "#email")
     public UUID getCurrentUserId(String email) {
         return findByEmail(email)
             .map(User::getId)

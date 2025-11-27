@@ -104,6 +104,13 @@ email:
 # Application URLs
 app:
   base-url: ${APP_BASE_URL:http://localhost:5173}
+  cache:
+    project-memberships:
+      ttl: PT2M
+      maximum-size: 10000
+    user-ids:
+      ttl: PT5M
+      maximum-size: 20000
 
 logging:
   level:
