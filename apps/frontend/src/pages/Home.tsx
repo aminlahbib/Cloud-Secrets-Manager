@@ -36,12 +36,12 @@ export const HomePage: React.FC = () => {
     queryFn: () => workflowsService.listWorkflows(),
   });
 
-  // Fetch recent activity (only if user has permission)
-  // 403 errors are handled gracefully by the service
+  // Fetch recent activity (only for platform admins)
   const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
     queryKey: ['activity', 'recent'],
     queryFn: () => auditService.listAuditLogs({ size: 5 }),
-    retry: false, // Don't retry on 403 (expected for non-admin users)
+    enabled: isPlatformAdmin, // Only fetch for platform admins
+    retry: false,
   });
 
   const projects = projectsData?.content ?? [];
@@ -144,19 +144,21 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Recent Activity</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">
-                {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
-              </p>
-            </div>
-            <div className="p-3 bg-orange-100 rounded-lg">
-              <Activity className="h-6 w-6 text-orange-600" />
+        {isPlatformAdmin && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Recent Activity</p>
+                <p className="text-3xl font-bold text-gray-900 mt-1">
+                  {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
+                </p>
+              </div>
+              <div className="p-3 bg-orange-100 rounded-lg">
+                <Activity className="h-6 w-6 text-orange-600" />
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -165,8 +167,8 @@ export const HomePage: React.FC = () => {
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">Workflows</h2>
-              <Link 
-                to="/workflows/new" 
+              <Link
+                to="/workflows/new"
                 className="text-purple-600 hover:text-purple-700 text-sm font-medium flex items-center"
               >
                 New <Plus className="w-4 h-4 ml-1" />
@@ -211,8 +213,9 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
+        {/* Recent Activity - Only for Platform Admins */}
+        {isPlatformAdmin && (
+          <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
@@ -257,6 +260,7 @@ export const HomePage: React.FC = () => {
             )}
           </div>
         </div>
+        )}
 
         {/* Projects Overview */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -350,18 +354,20 @@ export const HomePage: React.FC = () => {
             </div>
           </button>
 
-          <button
-            onClick={() => navigate('/activity')}
-            className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
-          >
-            <div className="p-2 bg-orange-100 rounded-lg mr-4">
-              <Activity className="h-5 w-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">View Activity</p>
-              <p className="text-sm text-gray-500">See recent changes</p>
-            </div>
-          </button>
+          {isPlatformAdmin && (
+            <button
+              onClick={() => navigate('/activity')}
+              className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-purple-200 hover:bg-purple-50 transition-all text-left"
+            >
+              <div className="p-2 bg-orange-100 rounded-lg mr-4">
+                <Activity className="h-5 w-5 text-orange-600" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">View Activity</p>
+                <p className="text-sm text-gray-500">See recent changes</p>
+              </div>
+            </button>
+          )}
 
           <button
             onClick={() => navigate('/teams')}
