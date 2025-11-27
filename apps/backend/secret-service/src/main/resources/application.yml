@@ -89,7 +89,7 @@ google:
 
 # Setup endpoint (disable after creating first admin user)
 setup:
-  enabled: ${SETUP_ENABLED:true}  # Set to false after initial setup
+  enabled: ${SETUP_ENABLED:false}  # Disabled by default for security. Set SETUP_ENABLED=true only during initial setup.
 
 logging:
   level:
