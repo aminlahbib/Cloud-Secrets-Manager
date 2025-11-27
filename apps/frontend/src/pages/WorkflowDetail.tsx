@@ -59,12 +59,12 @@ export const WorkflowDetailPage: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{workflow.name}</h1>
+            <h1 className="text-2xl font-bold text-neutral-900">{workflow.name}</h1>
             {workflow.description && (
-              <p className="mt-1 text-gray-500">{workflow.description}</p>
+              <p className="mt-1 text-neutral-500">{workflow.description}</p>
             )}
             {workflow.isDefault && (
-              <span className="inline-block mt-2 px-2 py-1 text-xs font-medium text-purple-600 bg-purple-50 rounded">
+              <span className="inline-block mt-2 px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full">
                 Default Workflow
               </span>
             )}
@@ -73,10 +73,10 @@ export const WorkflowDetailPage: React.FC = () => {
       </div>
 
       {/* Projects List */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
+      <div className="bg-white rounded-2xl border border-neutral-200">
+        <div className="p-6 border-b border-neutral-200">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-neutral-900">
               Projects ({projects.length})
             </h2>
             <Button onClick={() => navigate('/projects')}>
@@ -89,7 +89,7 @@ export const WorkflowDetailPage: React.FC = () => {
         {projects.length === 0 ? (
           <div className="p-12">
             <EmptyState
-              icon={<Folder className="h-16 w-16 text-gray-400" />}
+              icon={<Folder className="h-16 w-16 text-neutral-300" />}
               title="No projects in this workflow"
               description="Create a new project and add it to this workflow"
               action={{
@@ -107,8 +107,8 @@ export const WorkflowDetailPage: React.FC = () => {
                 className="block p-6 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-purple-50 rounded-lg">
-                    <Folder className="h-6 w-6 text-purple-600" />
+              <div className="p-3 bg-neutral-100 rounded-lg text-neutral-600">
+                <Folder className="h-6 w-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">

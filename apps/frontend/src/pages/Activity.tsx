@@ -192,16 +192,16 @@ export const ActivityPage: React.FC = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-white border border-neutral-200 rounded-2xl p-4">
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Action Type
               </label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
               >
                 <option value="">All Actions</option>
                 <optgroup label="Secrets">
@@ -224,25 +224,25 @@ export const ActivityPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 Start Date
               </label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-neutral-700 mb-1">
                 End Date
               </label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
               />
             </div>
             {hasActiveFilters && (

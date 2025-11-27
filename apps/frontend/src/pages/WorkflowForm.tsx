@@ -78,7 +78,7 @@ export const WorkflowFormPage: React.FC = () => {
               {...register('description')}
               rows={3}
               placeholder="Describe what this workflow is for..."
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm"
+              className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
             />
           </div>
         </Card>

@@ -212,7 +212,7 @@ export const ProjectDetailPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search secrets..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
             />
           </div>
 
@@ -270,7 +270,7 @@ export const ProjectDetailPage: React.FC = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <Link
                             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-                            className="text-sm font-medium text-purple-700 hover:underline"
+                            className="text-sm font-medium text-neutral-900 hover:underline"
                           >
                             {secret.secretKey}
                           </Link>
@@ -357,8 +357,8 @@ export const ProjectDetailPage: React.FC = () => {
                   className="p-4 flex items-center justify-between hover:bg-gray-50"
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-purple-600 font-medium">
+                    <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
+                      <span className="text-neutral-700 font-medium">
                         {(member.user?.displayName || member.user?.email || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -425,7 +425,7 @@ export const ProjectDetailPage: React.FC = () => {
                 Description
               </label>
               <textarea
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
                 rows={3}
                 defaultValue={project.description || ''}
                 disabled={!canManageProject}
@@ -497,7 +497,7 @@ export const ProjectDetailPage: React.FC = () => {
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
             >
               <option value="VIEWER">Viewer - Read-only access</option>
               <option value="MEMBER">Member - Can create and update secrets</option>
