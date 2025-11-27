@@ -417,7 +417,7 @@ export const ProjectDetailPage: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Project Name
               </label>
-              <Input value={project.name} disabled={!canManageProject} />
+              <Input value={project.name} disabled={!canManageProject} readOnly />
             </div>
             
             <div>
