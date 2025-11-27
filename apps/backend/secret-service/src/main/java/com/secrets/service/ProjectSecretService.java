@@ -19,7 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.List;
 import java.util.Locale;
@@ -129,6 +133,8 @@ public class ProjectSecretService {
         secret.setProjectId(projectId);
         secret.setSecretKey(request.getKey());
         secret.setEncryptedValue(encryptedValue);
+        secret.setDescription(normalizeDescription(request.getDescription()));
+        secret.setExpiresAt(parseTimestamp(request.getExpiresAt()));
         secret.setCreatedBy(userId);
 
         Secret saved = secretRepository.save(secret);
@@ -160,6 +166,12 @@ public class ProjectSecretService {
         String encryptedValue = encryptionService.encrypt(request.getValue());
         secret.setEncryptedValue(encryptedValue);
         secret.setUpdatedBy(userId);
+        if (request.getDescription() != null) {
+            secret.setDescription(normalizeDescription(request.getDescription()));
+        }
+        if (request.getExpiresAt() != null) {
+            secret.setExpiresAt(parseTimestamp(request.getExpiresAt()));
+        }
 
         Secret saved = secretRepository.save(secret);
 
@@ -372,10 +384,6 @@ public class ProjectSecretService {
                 String.format("Version %d of secret %s not found", versionNumber, secretKey)
             ));
 
-        // Snapshot current value before restoring
-        secretVersionService.createVersion(secret, userId,
-            String.format("Snapshot before restoring to version %d", versionNumber));
-
         secret.setEncryptedValue(targetVersion.getEncryptedValue());
         secret.setUpdatedBy(userId);
         Secret saved = secretRepository.save(secret);
@@ -459,6 +467,25 @@ public class ProjectSecretService {
                 .orElse(rotationStrategies.get(0));
         }
         return new DefaultRotationStrategy();
+    }
+
+    private LocalDateTime parseTimestamp(String value) {
+        if (!StringUtils.hasText(value)) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(value).toLocalDateTime();
+        } catch (DateTimeParseException ex) {
+            return LocalDateTime.parse(value);
+        }
+    }
+
+    private String normalizeDescription(String description) {
+        if (description == null) {
+            return null;
+        }
+        String trimmed = description.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }
 
