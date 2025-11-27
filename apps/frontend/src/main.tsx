@@ -16,7 +16,27 @@ export const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+type RootInstance = ReturnType<typeof ReactDOM.createRoot>;
+
+declare global {
+  interface Window {
+    __CSM_ROOT__?: RootInstance;
+  }
+}
+
+const container = document.getElementById('root');
+
+if (!container) {
+  throw new Error('Root element #root not found');
+}
+
+if (!window.__CSM_ROOT__) {
+  window.__CSM_ROOT__ = ReactDOM.createRoot(container);
+}
+
+const root = window.__CSM_ROOT__;
+
+root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter
