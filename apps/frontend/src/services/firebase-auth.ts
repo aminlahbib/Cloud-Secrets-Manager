@@ -10,6 +10,22 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 
+// Suppress COOP warnings globally (harmless browser security warnings from Firebase)
+const suppressCOOPWarnings = () => {
+  const originalWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    const message = args.join(' ');
+    // Suppress COOP-related warnings from Firebase/Google OAuth
+    if (message.includes('Cross-Origin-Opener-Policy') || 
+        message.includes('window.closed') || 
+        message.includes('window.close')) {
+      return; // Suppress these warnings
+    }
+    originalWarn.apply(console, args);
+  };
+  return () => { console.warn = originalWarn; };
+};
+
 export const firebaseAuthService = {
   /**
    * Initialize auth persistence
@@ -30,30 +46,16 @@ export const firebaseAuthService = {
     try {
       await this.initPersistence();
       
-      // Suppress COOP warnings from Firebase (harmless browser security warnings)
-      const originalWarn = console.warn;
-      const suppressedWarnings: string[] = [];
-      console.warn = (...args: any[]) => {
-        const message = args.join(' ');
-        // Suppress COOP-related warnings from Firebase/Google OAuth
-        if (message.includes('Cross-Origin-Opener-Policy') || 
-            message.includes('window.closed') || 
-            message.includes('window.close')) {
-          suppressedWarnings.push(message);
-          return; // Suppress these warnings
-        }
-        originalWarn.apply(console, args);
-      };
+      // Suppress COOP warnings during sign-in
+      const restoreWarn = suppressCOOPWarnings();
       
       try {
         const result = await signInWithPopup(auth, googleProvider);
         const idToken = await result.user.getIdToken();
-        // Restore console.warn
-        console.warn = originalWarn;
+        restoreWarn();
         return idToken;
       } catch (popupError) {
-        // Restore console.warn before handling error
-        console.warn = originalWarn;
+        restoreWarn();
         throw popupError;
       }
     } catch (error: any) {
