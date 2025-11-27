@@ -65,7 +65,7 @@ BEGIN
             old_value JSONB,
             new_value JSONB,
             metadata JSONB,
-            ip_address INET,
+            ip_address VARCHAR(255),
             user_agent TEXT,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
