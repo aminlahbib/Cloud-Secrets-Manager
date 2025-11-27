@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Card } from '../ui/Card';
 import { formatActionName } from '../../utils/analytics';
@@ -10,17 +10,20 @@ interface ActionDistributionChartProps {
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
-export const ActionDistributionChart: React.FC<ActionDistributionChartProps> = ({
+export const ActionDistributionChart: React.FC<ActionDistributionChartProps> = React.memo(({
   actionsByType,
   title = 'Actions Distribution',
 }) => {
-  const data = Object.entries(actionsByType)
-    .map(([action, count]) => ({
-      name: formatActionName(action),
-      value: count,
-    }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6);
+  const data = useMemo(() => 
+    Object.entries(actionsByType)
+      .map(([action, count]) => ({
+        name: formatActionName(action),
+        value: count,
+      }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 6),
+    [actionsByType]
+  );
 
   if (data.length === 0) {
     return (
@@ -64,5 +67,5 @@ export const ActionDistributionChart: React.FC<ActionDistributionChartProps> = (
       </ResponsiveContainer>
     </Card>
   );
-};
+});
 

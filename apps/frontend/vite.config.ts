@@ -28,9 +28,31 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'query-vendor': ['@tanstack/react-query'],
+        manualChunks: (id) => {
+          // React and core dependencies
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+            return 'react-vendor';
+          }
+          // React Query
+          if (id.includes('node_modules/@tanstack/react-query')) {
+            return 'query-vendor';
+          }
+          // Recharts (large charting library)
+          if (id.includes('node_modules/recharts')) {
+            return 'charts-vendor';
+          }
+          // Firebase (if used)
+          if (id.includes('node_modules/firebase')) {
+            return 'firebase-vendor';
+          }
+          // Axios
+          if (id.includes('node_modules/axios')) {
+            return 'axios-vendor';
+          }
+          // Other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         },
       },
     },

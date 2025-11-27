@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card } from '../ui/Card';
 import { Activity, Users, TrendingUp, Clock } from 'lucide-react';
 import type { ActivityStats } from '../../utils/analytics';
@@ -7,17 +7,19 @@ interface StatsCardsProps {
   stats: ActivityStats;
 }
 
-export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
-  const uniqueUsers = Object.keys(stats.actionsByUser).length;
-  const uniqueActions = Object.keys(stats.actionsByType).length;
+export const StatsCards: React.FC<StatsCardsProps> = React.memo(({ stats }) => {
+  const uniqueUsers = useMemo(() => Object.keys(stats.actionsByUser).length, [stats.actionsByUser]);
+  const uniqueActions = useMemo(() => Object.keys(stats.actionsByType).length, [stats.actionsByType]);
   
   // Calculate average per day (last 7 days)
-  const last7Days = Object.values(stats.actionsByDay).slice(-7);
-  const avgPerDay = last7Days.length > 0
-    ? Math.round(last7Days.reduce((a, b) => a + b, 0) / last7Days.length)
-    : 0;
+  const avgPerDay = useMemo(() => {
+    const last7Days = Object.values(stats.actionsByDay).slice(-7);
+    return last7Days.length > 0
+      ? Math.round(last7Days.reduce((a, b) => a + b, 0) / last7Days.length)
+      : 0;
+  }, [stats.actionsByDay]);
 
-  const statItems = [
+  const statItems = useMemo(() => [
     {
       label: 'Total Actions',
       value: stats.totalActions.toLocaleString(),
@@ -46,7 +48,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
       color: 'text-orange-600',
       bgColor: 'bg-orange-100',
     },
-  ];
+  ], [stats.totalActions, uniqueUsers, uniqueActions, avgPerDay]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -65,5 +67,5 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
       ))}
     </div>
   );
-};
+});
 
