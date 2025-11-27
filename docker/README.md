@@ -5,10 +5,10 @@
 ```bash
 # 1. Setup environment
 cp env.example .env.local
-# Edit .env.local with your Firebase credentials
+# Copy your Firebase service account JSON to infrastructure/gcp/keys/firebase-admin-key.json
 
-# 2. Start all services
-docker-compose up
+# 2. Start all services (first run seeds the DB automatically)
+docker-compose --env-file .env.local up
 
 # 3. Access the app
 open http://localhost:3000
@@ -76,7 +76,15 @@ docker-compose down
 
 # Reset database (delete volumes)
 docker-compose down -v
-docker-compose up
+docker-compose --env-file .env.local up
+```
+
+## Troubleshooting
+
+- **Database seeded automatically** – the first `docker-compose up` run creates the schema and inserts mock users/projects/secrets. If you need to reapply seeds, run `docker-compose down -v` (or `scripts/dev/reset-db.sh`) before starting again.
+- **Firebase key missing** – backend will fail if `GOOGLE_IDENTITY_ENABLED=true` but `infrastructure/gcp/keys/firebase-admin-key.json` isn’t present. Either add the key or set the variable to `false`.
+- **Database drift** – run `scripts/dev/reset-db.sh` or `docker-compose down -v` when schema changes. Migrations live in `infrastructure/database/migrations`.
+- **Frontend ↔ Backend proxy** – the nginx config proxies `/api` to the `backend` service inside Docker. Ensure the compose stack is up so `backend` resolves.
 ```
 
 ## Database Access
