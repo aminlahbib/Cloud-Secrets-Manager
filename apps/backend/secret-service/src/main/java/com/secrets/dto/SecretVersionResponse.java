@@ -15,8 +15,8 @@ public class SecretVersionResponse {
     public SecretVersionResponse() {
     }
 
-    public SecretVersionResponse(String id, String secretKey, Integer versionNumber, String changedBy, 
-                                String changeDescription, LocalDateTime createdAt) {
+    public SecretVersionResponse(String id, String secretKey, Integer versionNumber, String changedBy,
+            String changeDescription, LocalDateTime createdAt) {
         this.id = id;
         this.secretKey = secretKey;
         this.versionNumber = versionNumber;
@@ -77,18 +77,15 @@ public class SecretVersionResponse {
         return new SecretVersionResponseBuilder();
     }
 
-    @SuppressWarnings("deprecation")
     public static SecretVersionResponse from(SecretVersion version) {
         return SecretVersionResponse.builder()
-            .id(version.getId() != null ? version.getId().toString() : null)
-            .secretKey(version.getSecret() != null ? version.getSecret().getSecretKey() : null)
-            .versionNumber(version.getVersionNumber())
-            .changedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : 
-                      (version.getChangedBy() != null ? version.getChangedBy() : "Unknown"))
-            .changeDescription(version.getChangeNote() != null ? version.getChangeNote() : 
-                             (version.getChangeDescription() != null ? version.getChangeDescription() : ""))
-            .createdAt(version.getCreatedAt())
-            .build();
+                .id(version.getId() != null ? version.getId().toString() : null)
+                .secretKey(version.getSecret() != null ? version.getSecret().getSecretKey() : null)
+                .versionNumber(version.getVersionNumber())
+                .changedBy(version.getCreatedBy() != null ? version.getCreatedBy().toString() : "Unknown")
+                .changeDescription(version.getChangeNote() != null ? version.getChangeNote() : "")
+                .createdAt(version.getCreatedAt())
+                .build();
     }
 
     public static class SecretVersionResponseBuilder {

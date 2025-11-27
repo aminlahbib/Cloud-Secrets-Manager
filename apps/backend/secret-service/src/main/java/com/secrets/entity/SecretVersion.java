@@ -9,10 +9,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "secret_versions", indexes = {
-    @Index(name = "idx_versions_secret", columnList = "secretId"),
-    @Index(name = "idx_versions_number", columnList = "secretId,versionNumber")
+        @Index(name = "idx_versions_secret", columnList = "secretId"),
+        @Index(name = "idx_versions_number", columnList = "secretId,versionNumber")
 }, uniqueConstraints = {
-    @UniqueConstraint(name = "uq_secret_versions", columnNames = {"secretId", "versionNumber"})
+        @UniqueConstraint(name = "uq_secret_versions", columnNames = { "secretId", "versionNumber" })
 })
 @EntityListeners(AuditingEntityListener.class)
 public class SecretVersion {
@@ -128,16 +128,5 @@ public class SecretVersion {
 
     public void setChangeNote(String changeNote) {
         this.changeNote = changeNote;
-    }
-
-    // Legacy getters for backwards compatibility
-    @Deprecated
-    public String getChangedBy() {
-        return createdBy != null ? createdBy.toString() : null;
-    }
-
-    @Deprecated
-    public String getChangeDescription() {
-        return changeNote;
     }
 }
