@@ -23,6 +23,19 @@
   background-size: 1000px 100%;
 }
 
+/* Mobile touch optimization */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Improve mobile scrolling */
+@media (max-width: 768px) {
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900 antialiased;

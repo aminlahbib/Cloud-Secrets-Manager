@@ -213,7 +213,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActive
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActive
                       ? 'bg-neutral-100 text-neutral-900'
                       : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
                       }`}
@@ -231,7 +231,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/admin"
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors ${isActiveLink('/admin')
+                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActiveLink('/admin')
                     ? 'bg-neutral-100 text-neutral-900'
                     : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
                     }`}
@@ -269,7 +269,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
         <div className="flex-1 flex flex-col md:ml-72">
           <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 bg-white">
-            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200">
+            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <span className="text-sm font-semibold tracking-tight uppercase">Cloud Secrets</span>
