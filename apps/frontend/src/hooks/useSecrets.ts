@@ -24,14 +24,15 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
                 result = await secretsService.updateProjectSecret(projectId, key, {
                     value,
                     description,
-                    expiresAt: expiresAt ? expiresAt.toISOString() : undefined,
+                    // Format as ISO string without milliseconds to ensure backend compatibility
+                    expiresAt: expiresAt ? expiresAt.toISOString().split('.')[0] + 'Z' : undefined,
                 });
             } else {
                 result = await secretsService.createProjectSecret(projectId, {
                     secretKey: key,
                     value,
                     description,
-                    expiresAt: expiresAt ? expiresAt.toISOString() : undefined,
+                    expiresAt: expiresAt ? expiresAt.toISOString().split('.')[0] + 'Z' : undefined,
                 });
             }
 

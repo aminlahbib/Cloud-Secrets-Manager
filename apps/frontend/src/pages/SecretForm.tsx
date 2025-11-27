@@ -33,7 +33,7 @@ export const SecretFormPage: React.FC = () => {
     const payload: SecretFormValues = {
       key: formData.get('key') as string,
       value: formData.get('value') as string,
-      description: formData.get('description') as string || undefined,
+      description: (formData.get('description') as string) || '', // Send empty string if empty
       expiresAt: formData.get('expiresAt') ? new Date(formData.get('expiresAt') as string) : undefined,
     };
 
