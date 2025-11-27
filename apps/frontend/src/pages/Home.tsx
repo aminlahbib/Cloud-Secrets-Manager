@@ -18,7 +18,6 @@ import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
-import { SkeletonCard, SkeletonList } from '../components/ui/Skeleton';
 import type { Project, AuditLog, Workflow } from '../types';
 
 export const HomePage: React.FC = () => {
