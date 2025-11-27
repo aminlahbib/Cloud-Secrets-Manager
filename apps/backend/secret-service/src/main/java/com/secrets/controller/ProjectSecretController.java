@@ -3,6 +3,7 @@ package com.secrets.controller;
 import com.secrets.dto.SecretRequest;
 import com.secrets.dto.SecretResponse;
 import com.secrets.dto.SecretVersionResponse;
+import com.secrets.dto.SecretVersionDetailResponse;
 import com.secrets.entity.Secret;
 import com.secrets.entity.SecretVersion;
 import com.secrets.service.ProjectSecretService;
@@ -183,6 +184,36 @@ public class ProjectSecretController {
             .collect(Collectors.toList());
         
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{key}/versions/{versionNumber}")
+    @Operation(summary = "Get secret version detail", description = "View a specific secret version")
+    public ResponseEntity<SecretVersionDetailResponse> getSecretVersionDetail(
+            @PathVariable UUID projectId,
+            @PathVariable String key,
+            @PathVariable Integer versionNumber,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+
+        var version = projectSecretService.getSecretVersion(projectId, key, versionNumber, userId);
+        String decryptedValue = encryptionUtil.decrypt(version.getEncryptedValue());
+
+        return ResponseEntity.ok(SecretVersionDetailResponse.from(version, decryptedValue));
+    }
+
+    @PostMapping("/{key}/versions/{versionNumber}/restore")
+    @Operation(summary = "Restore secret version", description = "Restore a secret to a previous version")
+    public ResponseEntity<SecretResponse> restoreSecretVersion(
+            @PathVariable UUID projectId,
+            @PathVariable String key,
+            @PathVariable Integer versionNumber,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+
+        Secret secret = projectSecretService.restoreSecretVersion(projectId, key, versionNumber, userId);
+        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
+
+        return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
 
     private SecretVersionResponse toVersionResponse(SecretVersion version) {

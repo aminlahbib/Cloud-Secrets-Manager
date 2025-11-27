@@ -215,6 +215,10 @@ export interface SecretVersion {
   creator?: User;
 }
 
+export interface SecretVersionDetail extends SecretVersion {
+  value: string;
+}
+
 // ----------------------------------------------------------------------------
 // Audit Logs
 // ----------------------------------------------------------------------------
