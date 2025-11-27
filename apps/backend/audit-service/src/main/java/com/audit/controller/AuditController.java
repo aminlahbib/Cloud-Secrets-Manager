@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/audit")
@@ -56,7 +57,7 @@ public class AuditController {
     public ResponseEntity<Page<AuditLogResponse>> getAllLogs(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "timestamp") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
@@ -64,15 +65,102 @@ public class AuditController {
         return ResponseEntity.ok(logs);
     }
 
-    @GetMapping("/username/{username}")
-    @Operation(summary = "Get logs by username", description = "Retrieves audit logs for a specific user")
-    public ResponseEntity<List<AuditLogResponse>> getLogsByUsername(@PathVariable String username) {
-        List<AuditLogResponse> logs = auditService.getLogsByUsername(username);
+    // Project-scoped endpoints
+    @GetMapping("/project/{projectId}")
+    @Operation(summary = "Get logs by project ID", description = "Retrieves audit logs for a specific project")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByProjectId(
+            @PathVariable UUID projectId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
+        Page<AuditLogResponse> logs = auditService.getLogsByProjectId(projectId, pageable);
         return ResponseEntity.ok(logs);
     }
 
+    @GetMapping("/project/{projectId}/action/{action}")
+    @Operation(summary = "Get logs by project and action", description = "Retrieves audit logs for a project filtered by action")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByProjectIdAndAction(
+            @PathVariable UUID projectId,
+            @PathVariable String action,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AuditLogResponse> logs = auditService.getLogsByProjectIdAndAction(projectId, action, pageable);
+        return ResponseEntity.ok(logs);
+    }
+
+    @GetMapping("/project/{projectId}/resource-type/{resourceType}")
+    @Operation(summary = "Get logs by project and resource type", description = "Retrieves audit logs for a project filtered by resource type")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByProjectIdAndResourceType(
+            @PathVariable UUID projectId,
+            @PathVariable String resourceType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AuditLogResponse> logs = auditService.getLogsByProjectIdAndResourceType(projectId, resourceType, pageable);
+        return ResponseEntity.ok(logs);
+    }
+
+    @GetMapping("/project/{projectId}/date-range")
+    @Operation(summary = "Get logs by project and date range", description = "Retrieves audit logs for a project within a date range")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByProjectIdAndDateRange(
+            @PathVariable UUID projectId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AuditLogResponse> logs = auditService.getLogsByProjectIdAndDateRange(projectId, start, end, pageable);
+        return ResponseEntity.ok(logs);
+    }
+
+    // User-scoped endpoints
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get logs by user ID", description = "Retrieves audit logs for a specific user")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByUserId(
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
+        Page<AuditLogResponse> logs = auditService.getLogsByUserId(userId, pageable);
+        return ResponseEntity.ok(logs);
+    }
+
+    // Resource-scoped endpoints
+    @GetMapping("/resource/{resourceType}/{resourceId}")
+    @Operation(summary = "Get logs by resource", description = "Retrieves audit logs for a specific resource")
+    public ResponseEntity<Page<AuditLogResponse>> getLogsByResource(
+            @PathVariable String resourceType,
+            @PathVariable String resourceId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<AuditLogResponse> logs = auditService.getLogsByResource(resourceType, resourceId, pageable);
+        return ResponseEntity.ok(logs);
+    }
+
+    // Legacy endpoints for backward compatibility
+    @GetMapping("/username/{username}")
+    @Operation(summary = "Get logs by username (legacy)", description = "Legacy endpoint - use /user/{userId} instead")
+    @Deprecated
+    public ResponseEntity<List<AuditLogResponse>> getLogsByUsername(@PathVariable String username) {
+        log.warn("Deprecated endpoint /username/{} called. Use /user/{{userId}} instead.", username);
+        // Return empty list as username lookup is no longer supported
+        return ResponseEntity.ok(List.of());
+    }
+
     @GetMapping("/secret/{secretKey}")
-    @Operation(summary = "Get logs by secret key", description = "Retrieves audit logs for a specific secret")
+    @Operation(summary = "Get logs by secret key (legacy)", description = "Retrieves audit logs for a specific secret (legacy endpoint)")
     public ResponseEntity<List<AuditLogResponse>> getLogsBySecretKey(@PathVariable String secretKey) {
         List<AuditLogResponse> logs = auditService.getLogsBySecretKey(secretKey);
         return ResponseEntity.ok(logs);
@@ -86,7 +174,7 @@ public class AuditController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "timestamp"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AuditLogResponse> logs = auditService.getLogsByDateRange(start, end, pageable);
         return ResponseEntity.ok(logs);
     }
