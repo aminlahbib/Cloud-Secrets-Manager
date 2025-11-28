@@ -1,6 +1,8 @@
 package com.secrets.service;
 
+import com.secrets.dto.audit.AuditLogDto;
 import com.secrets.dto.audit.AuditLogPageResponse;
+import com.secrets.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,7 +13,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AuditLogProxyService {
@@ -19,6 +25,7 @@ public class AuditLogProxyService {
     private static final Logger log = LoggerFactory.getLogger(AuditLogProxyService.class);
 
     private final WebClient.Builder webClientBuilder;
+    private final UserService userService;
 
     @Value("${audit.service.url}")
     private String auditServiceUrl;
@@ -26,8 +33,42 @@ public class AuditLogProxyService {
     @Value("${audit.service.api-key}")
     private String serviceApiKey;
 
-    public AuditLogProxyService(WebClient.Builder webClientBuilder) {
+    public AuditLogProxyService(WebClient.Builder webClientBuilder, UserService userService) {
         this.webClientBuilder = webClientBuilder;
+        this.userService = userService;
+    }
+    
+    /**
+     * Enrich audit log DTOs with user information (email, displayName)
+     */
+    private void enrichWithUserData(List<AuditLogDto> auditLogs) {
+        if (auditLogs == null || auditLogs.isEmpty()) {
+            return;
+        }
+        
+        // Collect unique user IDs
+        Set<UUID> userIds = auditLogs.stream()
+            .map(AuditLogDto::getUserId)
+            .filter(userId -> userId != null)
+            .collect(Collectors.toSet());
+        
+        // Batch fetch users
+        java.util.Map<UUID, User> userMap = userIds.stream()
+            .map(userService::findById)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toMap(User::getId, user -> user));
+        
+        // Enrich audit logs with user data
+        auditLogs.forEach(log -> {
+            if (log.getUserId() != null) {
+                User user = userMap.get(log.getUserId());
+                if (user != null) {
+                    log.setUserEmail(user.getEmail());
+                    log.setUserDisplayName(user.getDisplayName());
+                }
+            }
+        });
     }
 
     public AuditLogPageResponse fetchAuditLogs(
@@ -44,7 +85,7 @@ public class AuditLogProxyService {
                 .build();
 
         try {
-            return client.get()
+            AuditLogPageResponse response = client.get()
                     .uri(uriBuilder -> {
                         var builder = uriBuilder.path("/api/audit")
                                 .queryParam("page", page)
@@ -69,6 +110,13 @@ public class AuditLogProxyService {
                     .bodyToMono(AuditLogPageResponse.class)
                     .timeout(Duration.ofSeconds(5))
                     .block();
+            
+            // Enrich with user data
+            if (response != null && response.getContent() != null) {
+                enrichWithUserData(response.getContent());
+            }
+            
+            return response;
         } catch (WebClientResponseException ex) {
             if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 throw ex;
@@ -97,10 +145,12 @@ public class AuditLogProxyService {
                 .build();
 
         try {
+            AuditLogPageResponse response;
+            
             // If both startDate and endDate are provided, use the date-range endpoint
             if (startDate.isPresent() && endDate.isPresent() && 
                 !startDate.get().isBlank() && !endDate.get().isBlank()) {
-                return client.get()
+                response = client.get()
                         .uri(uriBuilder -> uriBuilder
                                 .path("/api/audit/project/" + projectId + "/date-range")
                                 .queryParam("start", startDate.get())
@@ -114,38 +164,45 @@ public class AuditLogProxyService {
                         .bodyToMono(AuditLogPageResponse.class)
                         .timeout(Duration.ofSeconds(5))
                         .block();
+            } else {
+                // Otherwise use the regular endpoint with optional filters
+                response = client.get()
+                        .uri(uriBuilder -> {
+                            var builder = uriBuilder.path("/api/audit/project/" + projectId)
+                                    .queryParam("page", page)
+                                    .queryParam("size", size);
+
+                            action.filter(value -> !value.isBlank())
+                                    .ifPresent(value -> builder.queryParam("action", value));
+
+                            userId.filter(value -> !value.isBlank())
+                                    .ifPresent(value -> builder.queryParam("userId", value));
+
+                            resourceType.filter(value -> !value.isBlank())
+                                    .ifPresent(value -> builder.queryParam("resourceType", value));
+
+                            startDate.filter(value -> !value.isBlank())
+                                    .ifPresent(value -> builder.queryParam("startDate", value));
+
+                            endDate.filter(value -> !value.isBlank())
+                                    .ifPresent(value -> builder.queryParam("endDate", value));
+
+                            return builder.build();
+                        })
+                        .header("X-Service-API-Key", serviceApiKey)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .bodyToMono(AuditLogPageResponse.class)
+                        .timeout(Duration.ofSeconds(5))
+                        .block();
             }
             
-            // Otherwise use the regular endpoint with optional filters
-            return client.get()
-                    .uri(uriBuilder -> {
-                        var builder = uriBuilder.path("/api/audit/project/" + projectId)
-                                .queryParam("page", page)
-                                .queryParam("size", size);
-
-                        action.filter(value -> !value.isBlank())
-                                .ifPresent(value -> builder.queryParam("action", value));
-
-                        userId.filter(value -> !value.isBlank())
-                                .ifPresent(value -> builder.queryParam("userId", value));
-
-                        resourceType.filter(value -> !value.isBlank())
-                                .ifPresent(value -> builder.queryParam("resourceType", value));
-
-                        startDate.filter(value -> !value.isBlank())
-                                .ifPresent(value -> builder.queryParam("startDate", value));
-
-                        endDate.filter(value -> !value.isBlank())
-                                .ifPresent(value -> builder.queryParam("endDate", value));
-
-                        return builder.build();
-                    })
-                    .header("X-Service-API-Key", serviceApiKey)
-                    .accept(MediaType.APPLICATION_JSON)
-                    .retrieve()
-                    .bodyToMono(AuditLogPageResponse.class)
-                    .timeout(Duration.ofSeconds(5))
-                    .block();
+            // Enrich with user data
+            if (response != null && response.getContent() != null) {
+                enrichWithUserData(response.getContent());
+            }
+            
+            return response;
         } catch (WebClientResponseException ex) {
             if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 throw ex;
@@ -169,7 +226,7 @@ public class AuditLogProxyService {
                 .build();
 
         try {
-            return client.get()
+            com.secrets.dto.audit.AnalyticsResponse response = client.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/api/audit/project/" + projectId + "/analytics")
                             .queryParam("start", startDate)
@@ -181,6 +238,25 @@ public class AuditLogProxyService {
                     .bodyToMono(com.secrets.dto.audit.AnalyticsResponse.class)
                     .timeout(Duration.ofSeconds(5))
                     .block();
+            
+            // Enrich topUsers with email/displayName
+            if (response != null && response.getTopUsers() != null) {
+                response.getTopUsers().forEach(topUser -> {
+                    if (topUser.getUserId() != null) {
+                        try {
+                            UUID userId = UUID.fromString(topUser.getUserId());
+                            userService.findById(userId).ifPresent(user -> {
+                                topUser.setEmail(user.getEmail());
+                                // Note: displayName could be added to TopUser if needed
+                            });
+                        } catch (IllegalArgumentException e) {
+                            log.warn("Invalid user ID in analytics: {}", topUser.getUserId());
+                        }
+                    }
+                });
+            }
+            
+            return response;
         } catch (WebClientResponseException ex) {
             if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 throw ex;

@@ -20,6 +20,7 @@ import {
   BarChart3,
   List,
   Calendar,
+  AlertTriangle,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
@@ -791,11 +792,30 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : analyticsError ? (
                   <Card className="p-6">
                     <div className="text-center">
-                      <p className="text-red-600 mb-2">Error loading analytics data</p>
-                      <p className="text-sm text-gray-500">{String(analyticsError)}</p>
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Analytics</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {analyticsError instanceof Error 
+                          ? analyticsError.message 
+                          : 'An error occurred while loading analytics. Please try again.'}
+                      </p>
+                      {(analyticsError as any)?.isPermissionError && (
+                        <p className="text-xs text-gray-500 mb-4">
+                          You may not have permission to view analytics for this project.
+                        </p>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </Button>
                     </div>
                   </Card>
-                ) : !analyticsData || !('content' in analyticsData) || analyticsData.content.length === 0 ? (
+                ) : !analyticsStats ? (
                   <Card className="p-6">
                     <EmptyState
                       icon={<Activity className="h-16 w-16 text-gray-400" />}
@@ -912,8 +932,27 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : activityError ? (
                   <Card className="p-6">
                     <div className="text-center">
-                      <p className="text-red-600 mb-2">Error loading activity data</p>
-                      <p className="text-sm text-gray-500">{String(activityError)}</p>
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Activity</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {activityError instanceof Error 
+                          ? activityError.message 
+                          : 'An error occurred while loading activity data. Please try again.'}
+                      </p>
+                      {(activityError as any)?.isPermissionError && (
+                        <p className="text-xs text-gray-500 mb-4">
+                          You may not have permission to view audit logs for this project.
+                        </p>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </Button>
                     </div>
                   </Card>
                 ) : !activityData || !('content' in activityData) || activityData.content.length === 0 ? (
@@ -969,20 +1008,20 @@ export const ProjectDetailPage: React.FC = () => {
                                   <Badge variant={getActionColor(log.action)}>
                                     {formatAction(log.action)}
                                   </Badge>
-                                  {(log.resourceId || log.secretKey) && (
+                                  {log.resourceName && (
                                     <span className="text-sm font-medium text-gray-900">
-                                      {log.resourceName || log.resourceId || log.secretKey}
+                                      {log.resourceName}
                                     </span>
                                   )}
                                 </div>
                                 <p className="mt-1 text-sm text-gray-500">
-                                  by {log.user?.email || log.username || 'Unknown'}
+                                  by {log.userEmail || log.user?.email || 'Unknown'}
                                 </p>
                               </div>
 
                               <div className="flex items-center text-sm text-gray-400">
                                 <Clock className="h-4 w-4 mr-1" />
-                                {getTimeAgo(log.createdAt || log.timestamp || '')}
+                                {getTimeAgo(log.createdAt || '')}
                               </div>
                             </div>
                           </div>

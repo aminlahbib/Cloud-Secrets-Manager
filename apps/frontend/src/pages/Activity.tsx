@@ -118,8 +118,8 @@ export const ActivityPage: React.FC = () => {
     const rows = data.content.map((log: AuditLog) => [
       new Date(log.createdAt || log.timestamp || '').toISOString(),
       log.action,
-      log.resourceId || log.secretKey || '',
-      log.user?.email || log.username || '',
+      log.resourceName || log.resourceId || '',
+      log.userEmail || log.user?.email || '',
       log.ipAddress ?? '',
     ]);
 
@@ -302,14 +302,14 @@ export const ActivityPage: React.FC = () => {
                       <Badge variant={ACTION_COLORS[log.action] || 'default'}>
                         {formatAction(log.action)}
                       </Badge>
-                      {(log.resourceId || log.secretKey) && (
+                      {log.resourceName && (
                         <span className="text-sm font-medium text-gray-900">
-                          {log.resourceId || log.secretKey}
+                          {log.resourceName}
                         </span>
                       )}
                     </div>
                     <p className="mt-1 text-sm text-gray-500">
-                      by {log.user?.email || log.username || 'Unknown'}
+                      by {log.userEmail || log.user?.email || 'Unknown'}
                       {log.project && (
                         <span className="text-gray-400"> in {log.project.name}</span>
                       )}
@@ -318,7 +318,7 @@ export const ActivityPage: React.FC = () => {
                   
                   <div className="flex items-center text-sm text-gray-400">
                     <Clock className="h-4 w-4 mr-1" />
-                    {getTimeAgo(log.createdAt || log.timestamp || '')}
+                    {getTimeAgo(log.createdAt || '')}
                   </div>
                 </div>
               </div>

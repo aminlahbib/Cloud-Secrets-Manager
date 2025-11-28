@@ -4,13 +4,12 @@ import type { AuditLog, PaginatedResponse } from '../types';
 export interface AuditLogsParams {
   page?: number;
   size?: number;
-  username?: string;
   action?: string;
-  secretKey?: string;
   startDate?: string;
   endDate?: string;
   projectId?: string;
   resourceType?: string;
+  userId?: string;
 }
 
 // Use the standard PaginatedResponse type
@@ -91,21 +90,23 @@ export const auditService = {
       }
       return data;
     } catch (error: any) {
-      console.error('Error fetching project audit logs:', error);
-      console.error('URL:', `/api/audit/project/${projectId}`, 'Params:', params);
-      // 403 Forbidden is expected for users without access
-      // Return empty result instead of throwing error
-      if (error.response?.status === 403 || error.response?.status === 404) {
-        return {
-          content: [],
-          page: 0,
-          size: params.size ?? 20,
-          totalElements: 0,
-          totalPages: 0,
-        };
+      // 403 Forbidden: User doesn't have access to this project
+      if (error.response?.status === 403) {
+        const apiError = new Error('You do not have permission to view audit logs for this project.');
+        (apiError as any).statusCode = 403;
+        (apiError as any).isPermissionError = true;
+        throw apiError;
       }
-      // Re-throw other errors
-      throw error;
+      // 404 Not Found: Project doesn't exist
+      if (error.response?.status === 404) {
+        const apiError = new Error('Project not found or you do not have access.');
+        (apiError as any).statusCode = 404;
+        throw apiError;
+      }
+      // Re-throw other errors with context
+      const apiError = new Error(`Failed to load audit logs: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      (apiError as any).statusCode = error.response?.status;
+      throw apiError;
     }
   },
 
@@ -120,20 +121,23 @@ export const auditService = {
       });
       return data;
     } catch (error: any) {
-      console.error('Error fetching project analytics:', error);
-      // 403 Forbidden is expected for users without access
-      if (error.response?.status === 403 || error.response?.status === 404) {
-        // Return empty analytics structure
-        return {
-          totalActions: 0,
-          actionsByType: {},
-          actionsByUser: {},
-          actionsByDay: {},
-          topActions: [],
-          topUsers: [],
-        };
+      // 403 Forbidden: User doesn't have access to this project
+      if (error.response?.status === 403) {
+        const apiError = new Error('You do not have permission to view analytics for this project.');
+        (apiError as any).statusCode = 403;
+        (apiError as any).isPermissionError = true;
+        throw apiError;
       }
-      throw error;
+      // 404 Not Found: Project doesn't exist
+      if (error.response?.status === 404) {
+        const apiError = new Error('Project not found or you do not have access.');
+        (apiError as any).statusCode = 404;
+        throw apiError;
+      }
+      // Re-throw other errors with context
+      const apiError = new Error(`Failed to load analytics: ${error.response?.data?.message || error.message || 'Unknown error'}`);
+      (apiError as any).statusCode = error.response?.status;
+      throw apiError;
     }
   },
 };
