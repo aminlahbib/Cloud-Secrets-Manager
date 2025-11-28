@@ -147,4 +147,35 @@ public class AuditLogProxyController {
 
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/project/{projectId}/analytics")
+    @Operation(summary = "Get project analytics", description = "Retrieves aggregated analytics for a project. Requires project membership.")
+    public ResponseEntity<com.secrets.dto.audit.AnalyticsResponse> getProjectAnalytics(
+            @PathVariable String projectId,
+            @RequestParam String start,
+            @RequestParam String end,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        // Get current user ID
+        UUID currentUserId = userService.getCurrentUserId(userDetails.getUsername());
+        
+        // Check if user has access to the project
+        UUID projectUuid;
+        try {
+            projectUuid = UUID.fromString(projectId);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        
+        if (!permissionService.canViewProject(projectUuid, currentUserId)) {
+            throw new AccessDeniedException("Access denied to project");
+        }
+
+        com.secrets.dto.audit.AnalyticsResponse response = auditLogProxyService.fetchProjectAnalytics(
+                projectId,
+                start,
+                end);
+
+        return ResponseEntity.ok(response);
+    }
 }

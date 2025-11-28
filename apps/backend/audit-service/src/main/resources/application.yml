@@ -67,6 +67,13 @@ management:
 audit:
   service:
     api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
+  cache:
+    project-logs:
+      ttl: PT5M  # 5 minutes
+      maximum-size: 1000
+    analytics:
+      ttl: PT1M  # 1 minute
+      maximum-size: 500
 
 logging:
   level:

@@ -66,4 +66,40 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     
     @Query("SELECT a FROM AuditLog a WHERE a.userId = :userId ORDER BY a.createdAt DESC")
     List<AuditLog> findByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId);
+    
+    // Analytics aggregation queries
+    @Query("SELECT COUNT(a) FROM AuditLog a WHERE a.projectId = :projectId " +
+           "AND a.createdAt >= :start AND a.createdAt <= :end")
+    long countByProjectIdAndDateRange(
+        @Param("projectId") UUID projectId,
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
+    
+    @Query("SELECT a.action, COUNT(a) as count FROM AuditLog a " +
+           "WHERE a.projectId = :projectId AND a.createdAt >= :start AND a.createdAt <= :end " +
+           "GROUP BY a.action ORDER BY count DESC")
+    List<Object[]> countActionsByType(
+        @Param("projectId") UUID projectId,
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
+    
+    @Query("SELECT a.userId, COUNT(a) as count FROM AuditLog a " +
+           "WHERE a.projectId = :projectId AND a.createdAt >= :start AND a.createdAt <= :end " +
+           "GROUP BY a.userId ORDER BY count DESC")
+    List<Object[]> countActionsByUser(
+        @Param("projectId") UUID projectId,
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
+    
+    @Query("SELECT DATE(a.createdAt) as day, COUNT(a) as count FROM AuditLog a " +
+           "WHERE a.projectId = :projectId AND a.createdAt >= :start AND a.createdAt <= :end " +
+           "GROUP BY DATE(a.createdAt) ORDER BY day ASC")
+    List<Object[]> countActionsByDay(
+        @Param("projectId") UUID projectId,
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
 }

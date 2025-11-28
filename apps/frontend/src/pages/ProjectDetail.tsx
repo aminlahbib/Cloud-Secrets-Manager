@@ -140,28 +140,36 @@ export const ProjectDetailPage: React.FC = () => {
     retry: false,
   });
 
-  // Fetch all activity logs for analytics (larger size, with date filter)
-  const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery<AuditLogsResponse>({
+  // Fetch analytics using server-side aggregation
+  const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['project-activity-analytics', projectId, dateRange],
     queryFn: () => {
       const dateParams = getDateRangeParams();
-      return auditService.getProjectAuditLogs(projectId!, {
-        size: 100, // Reduced from 1000 for performance (temporary fix - server-side aggregation recommended)
-        ...dateParams,
-      });
+      if (!dateParams.startDate || !dateParams.endDate) {
+        throw new Error('Date range is required for analytics');
+      }
+      return auditService.getProjectAnalytics(projectId!, dateParams.startDate, dateParams.endDate);
     },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
   });
 
-  // Calculate analytics stats
+  // Transform server-side analytics to match frontend format
   const analyticsStats = useMemo(() => {
-    if (!analyticsData || !('content' in analyticsData) || !analyticsData.content) return null;
+    if (!analyticsData) return null;
     try {
-      return calculateActivityStats(analyticsData.content);
+      // Server returns data in the same format as calculateActivityStats
+      // Just need to ensure topUsers has the right structure
+      return {
+        totalActions: analyticsData.totalActions || 0,
+        actionsByType: analyticsData.actionsByType || {},
+        actionsByUser: analyticsData.actionsByUser || {},
+        actionsByDay: analyticsData.actionsByDay || {},
+        topActions: analyticsData.topActions || [],
+        topUsers: analyticsData.topUsers || [],
+      };
     } catch (error) {
-      // console.error('Error calculating analytics stats:', error);
-
+      console.error('Error processing analytics stats:', error);
       return null;
     }
   }, [analyticsData]);

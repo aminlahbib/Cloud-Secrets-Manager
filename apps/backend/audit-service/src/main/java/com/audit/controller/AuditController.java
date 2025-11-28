@@ -1,5 +1,6 @@
 package com.audit.controller;
 
+import com.audit.dto.AnalyticsResponse;
 import com.audit.dto.AuditLogRequest;
 import com.audit.dto.AuditLogResponse;
 import com.audit.service.AuditService;
@@ -133,6 +134,28 @@ public class AuditController {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<AuditLogResponse> logs = auditService.getLogsByProjectIdAndDateRange(projectId, start, end, pageable);
         return ResponseEntity.ok(logs);
+    }
+
+    @GetMapping("/project/{projectId}/analytics")
+    @Operation(summary = "Get project analytics", description = "Retrieves aggregated analytics for a project within a date range")
+    public ResponseEntity<AnalyticsResponse> getProjectAnalytics(
+            @PathVariable UUID projectId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+
+        // Validate date range (max 1 year)
+        if (start != null && end != null) {
+            long daysBetween = ChronoUnit.DAYS.between(start, end);
+            if (daysBetween > 365) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            if (start.isAfter(end)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+        }
+
+        AnalyticsResponse analytics = auditService.calculateAnalytics(projectId, start, end);
+        return ResponseEntity.ok(analytics);
     }
 
     // User-scoped endpoints
