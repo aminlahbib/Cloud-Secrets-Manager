@@ -28,13 +28,13 @@ export function calculateActivityStats(logs: AuditLog[]): ActivityStats {
     if (!userMap[userId]) {
       userMap[userId] = {
         userId,
-        email: log.user?.email || log.username,
+        email: log.userEmail || log.user?.email,
       };
     }
 
     // Count by day
-    if (log.createdAt || log.timestamp) {
-      const date = new Date(log.createdAt || log.timestamp!);
+    if (log.createdAt) {
+      const date = new Date(log.createdAt);
       const dayKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
       actionsByDay[dayKey] = (actionsByDay[dayKey] || 0) + 1;
     }
