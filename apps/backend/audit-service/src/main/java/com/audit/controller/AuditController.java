@@ -90,16 +90,25 @@ public class AuditController {
 
     // Project-scoped endpoints
     @GetMapping("/project/{projectId}")
-    @Operation(summary = "Get logs by project ID", description = "Retrieves audit logs for a specific project")
+    @Operation(summary = "Get logs by project ID", description = "Retrieves audit logs for a specific project with optional filtering")
     public ResponseEntity<Page<AuditLogResponse>> getLogsByProjectId(
             @PathVariable UUID projectId,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) String resourceType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
-        Page<AuditLogResponse> logs = auditService.getLogsByProjectId(projectId, pageable);
+
+        // Use searchLogs with the projectId fixed
+        Page<AuditLogResponse> logs = auditService.searchLogs(
+                action, projectId, userId, resourceType, startDate, endDate, pageable);
+
         return ResponseEntity.ok(logs);
     }
 
