@@ -22,7 +22,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+            CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.corsConfigurationSource = corsConfigurationSource;
     }
@@ -30,20 +31,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))  // Enable CORS with configuration from CorsConfig
-            .sessionManagement(session -> 
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/setup/**").permitAll()  // Setup endpoint (temporary, disable after setup)
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")  // Admin endpoints require ADMIN role
-                .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
-            )
-            // No need for DaoAuthenticationProvider - authentication handled by Google Identity Platform
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Enable CORS with configuration from
+                                                                                 // CorsConfig
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        // Setup endpoint removed from public access - now requires authentication and
+                        // is disabled by default
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN") // Admin endpoints require ADMIN role
+                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .anyRequest().authenticated())
+                // No need for DaoAuthenticationProvider - authentication handled by Google
+                // Identity Platform
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -53,4 +55,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-

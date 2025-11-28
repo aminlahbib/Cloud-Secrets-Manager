@@ -377,7 +377,12 @@ export const SecretDetailPage: React.FC = () => {
                 {canRestoreVersions && versionDetail.versionNumber !== latestVersionNumber && (
                   <Button
                     variant="danger"
-                    onClick={() => activeVersionNumber && restoreVersionMutation.mutate(activeVersionNumber)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (activeVersionNumber) {
+                        restoreVersionMutation.mutate(activeVersionNumber);
+                      }
+                    }}
                     isLoading={restoreVersionMutation.isPending}
                   >
                     Restore Version

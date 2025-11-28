@@ -251,11 +251,11 @@ export const HomePage: React.FC = () => {
                         {formatAction(log.action)}
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {log.resourceId || log.secretKey || 'System'}
+                        {log.resourceName || log.resourceId || 'System'}
                       </p>
                     </div>
                     <span className="text-xs text-gray-400 whitespace-nowrap">
-                      {getTimeAgo(log.createdAt || log.timestamp || '')}
+                      {getTimeAgo(log.createdAt || '')}
                     </span>
                   </div>
                 </div>

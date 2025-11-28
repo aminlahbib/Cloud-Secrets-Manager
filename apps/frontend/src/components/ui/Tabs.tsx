@@ -39,7 +39,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
                 key={tab.id}
                 onClick={() => handleChange(tab.id)}
                 className={`
-                  py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors
+                  py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors min-h-[44px] touch-manipulation
                   ${isActive
                     ? 'border-neutral-900 text-neutral-900'
                     : 'border-transparent text-neutral-500 hover:text-neutral-800 hover:border-neutral-300'

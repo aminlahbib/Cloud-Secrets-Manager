@@ -59,6 +59,13 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${ENVIRONMENT:dev}
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   health:
     redis:
       enabled: false
@@ -78,6 +85,7 @@ audit:
   service:
     url: ${AUDIT_SERVICE_URL:http://localhost:8081}
     timeout: 5000
+    api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
 
 # Google Cloud Identity Platform Configuration
 google:
@@ -89,7 +97,28 @@ google:
 
 # Setup endpoint (disable after creating first admin user)
 setup:
-  enabled: ${SETUP_ENABLED:true}  # Set to false after initial setup
+  enabled: ${SETUP_ENABLED:false}  # Disabled by default for security. Set SETUP_ENABLED=true only during initial setup.
+
+# Email notifications
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  provider: sendgrid
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY:}
+  from:
+    address: ${EMAIL_FROM_ADDRESS:noreply@cloudsecrets.com}
+    name: ${EMAIL_FROM_NAME:Cloud Secrets Manager}
+
+# Application URLs
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+  cache:
+    project-memberships:
+      ttl: PT2M
+      maximum-size: 10000
+    user-ids:
+      ttl: PT5M
+      maximum-size: 20000
 
 logging:
   level:
@@ -97,8 +126,8 @@ logging:
     com.secrets: DEBUG
     org.springframework.security: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{traceId:-}/%X{spanId:-}] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] [%X{traceId:-}/%X{spanId:-}] %-5level %logger{36} - %msg%n"
 
 ---
 spring:
