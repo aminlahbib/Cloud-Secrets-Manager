@@ -22,6 +22,9 @@ public class AuditLogProxyService {
 
     @Value("${audit.service.url}")
     private String auditServiceUrl;
+    
+    @Value("${audit.service.api-key}")
+    private String serviceApiKey;
 
     public AuditLogProxyService(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
@@ -60,6 +63,7 @@ public class AuditLogProxyService {
 
                         return builder.build();
                     })
+                    .header("X-Service-API-Key", serviceApiKey)
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
                     .bodyToMono(AuditLogPageResponse.class)
@@ -104,6 +108,7 @@ public class AuditLogProxyService {
                                 .queryParam("page", page)
                                 .queryParam("size", size)
                                 .build())
+                        .header("X-Service-API-Key", serviceApiKey)
                         .accept(MediaType.APPLICATION_JSON)
                         .retrieve()
                         .bodyToMono(AuditLogPageResponse.class)
@@ -135,6 +140,7 @@ public class AuditLogProxyService {
 
                         return builder.build();
                     })
+                    .header("X-Service-API-Key", serviceApiKey)
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
                     .bodyToMono(AuditLogPageResponse.class)

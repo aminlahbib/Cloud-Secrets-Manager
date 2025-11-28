@@ -52,8 +52,10 @@ public class AuditLogProxyController {
             @RequestParam(required = false) String endDate,
             @AuthenticationPrincipal UserDetails userDetails) {
         
-        // TODO: Implement platform admin check
-        // This endpoint should only be accessible to platform admins
+        // Check if user is a platform admin
+        if (!userService.isPlatformAdmin(userDetails.getUsername())) {
+            throw new AccessDeniedException("Access denied. Platform admin role required.");
+        }
         
         AuditLogPageResponse response = auditLogProxyService.fetchAuditLogs(
                 page,

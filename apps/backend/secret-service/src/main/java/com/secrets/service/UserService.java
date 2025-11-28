@@ -110,5 +110,29 @@ public class UserService {
             .map(User::getId)
             .orElseThrow(() -> new IllegalStateException("User not found: " + email));
     }
+
+    /**
+     * Check if a user is a platform admin
+     * @param email User's email address
+     * @return true if user is a platform admin, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean isPlatformAdmin(String email) {
+        return findByEmail(email)
+            .map(user -> user.getPlatformRole() == User.PlatformRole.PLATFORM_ADMIN)
+            .orElse(false);
+    }
+
+    /**
+     * Check if a user is a platform admin by user ID
+     * @param userId User's UUID
+     * @return true if user is a platform admin, false otherwise
+     */
+    @Transactional(readOnly = true)
+    public boolean isPlatformAdmin(UUID userId) {
+        return findById(userId)
+            .map(user -> user.getPlatformRole() == User.PlatformRole.PLATFORM_ADMIN)
+            .orElse(false);
+    }
 }
 
