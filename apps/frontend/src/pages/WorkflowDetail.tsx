@@ -6,11 +6,13 @@ import { workflowsService } from '../services/workflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
+import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import type { Workflow } from '../types';
 
 export const WorkflowDetailPage: React.FC = () => {
   const { workflowId } = useParams<{ workflowId: string }>();
   const navigate = useNavigate();
+  const [showCreateModal, setShowCreateModal] = React.useState(false);
 
   const { data: workflow, isLoading, error } = useQuery<Workflow>({
     queryKey: ['workflow', workflowId],
@@ -79,7 +81,7 @@ export const WorkflowDetailPage: React.FC = () => {
             <h2 className="text-lg font-semibold text-neutral-900">
               Projects ({projects.length})
             </h2>
-            <Button onClick={() => navigate('/projects')}>
+            <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Project
             </Button>
@@ -94,7 +96,7 @@ export const WorkflowDetailPage: React.FC = () => {
               description="Create a new project and add it to this workflow"
               action={{
                 label: 'Create Project',
-                onClick: () => navigate('/projects'),
+                onClick: () => setShowCreateModal(true),
               }}
             />
           </div>
@@ -107,8 +109,8 @@ export const WorkflowDetailPage: React.FC = () => {
                 className="block p-6 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-              <div className="p-3 bg-neutral-100 rounded-lg text-neutral-600">
-                <Folder className="h-6 w-6" />
+                  <div className="p-3 bg-neutral-100 rounded-lg text-neutral-600">
+                    <Folder className="h-6 w-6" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-lg font-semibold text-gray-900 truncate">
@@ -129,6 +131,12 @@ export const WorkflowDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        initialWorkflowId={workflowId}
+      />
     </div>
   );
 };
