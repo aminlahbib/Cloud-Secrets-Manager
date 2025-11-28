@@ -107,7 +107,7 @@ export const handleApiError = (error: unknown): string => {
     // Network errors
     if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
       return 'Network error. Please check your connection and try again.';
-    }
+  }
   }
 
   // Handle non-Axios errors

@@ -50,7 +50,7 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
-        
+
         <!-- Flyway for database migrations -->
         <dependency>
             <groupId>org.flywaydb</groupId>

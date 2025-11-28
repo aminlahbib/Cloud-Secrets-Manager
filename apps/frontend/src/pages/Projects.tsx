@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Folder,
   Plus,
@@ -9,17 +9,16 @@ import {
   Archive,
   Crown,
   Shield,
-  Clock,
-  LayoutGrid
+  Clock
 } from 'lucide-react';
-import { useProjects } from '../hooks/useProjects';
-import { useWorkflows } from '../hooks/useWorkflows';
+import { useProjects, useCreateProject } from '../hooks/useProjects';
 import { Button } from '../components/ui/Button';
+import { Modal } from '../components/ui/Modal';
+import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { useAuth } from '../contexts/AuthContext';
-import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import type { Project, ProjectRole } from '../types';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
@@ -30,58 +29,43 @@ const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'
 };
 
 export const ProjectsPage: React.FC = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  useAuth(); // For authentication check
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
 
   // Fetch projects
-  const { data: projectsData, isLoading: isProjectsLoading, error: projectsError } = useProjects({
+  const { data, isLoading, error } = useProjects({
     search: searchTerm,
     includeArchived: showArchived,
   });
 
-  // Fetch workflows
-  const { data: workflows, isLoading: isWorkflowsLoading } = useWorkflows(user?.id);
+  // Create project mutation
+  const createMutation = useCreateProject();
 
-  const projects = projectsData?.content ?? [];
-
-  // Group projects by workflow
-  const groupedProjects = useMemo(() => {
-    if (!projects || !workflows) return { unassigned: projects, groups: [] };
-
-    const workflowMap = new Map<string, Project[]>();
-    const unassigned: Project[] = [];
-
-    // Initialize map with empty arrays for all workflows to ensure they show up
-    workflows.forEach(w => workflowMap.set(w.id, []));
-
-    // Helper to find which workflow a project belongs to
-    const projectWorkflowIdMap = new Map<string, string>();
-    workflows.forEach(w => {
-      w.projects?.forEach(wp => {
-        projectWorkflowIdMap.set(wp.projectId, w.id);
-      });
-    });
-
-    projects.forEach(p => {
-      const wId = projectWorkflowIdMap.get(p.id);
-      if (wId && workflowMap.has(wId)) {
-        workflowMap.get(wId)?.push(p);
-      } else {
-        unassigned.push(p);
+  const handleCreateProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(
+      {
+        name: newProjectName,
+        description: newProjectDescription || undefined
+      },
+      {
+        onSuccess: (project) => {
+          setShowCreateModal(false);
+          setNewProjectName('');
+          setNewProjectDescription('');
+          navigate(`/projects/${project.id}`);
+        },
       }
-    });
+    );
+  };
 
-    return {
-      unassigned,
-      groups: workflows.map(w => ({
-        workflow: w,
-        projects: workflowMap.get(w.id) || []
-      }))
-    };
-  }, [projects, workflows]);
+  const projects = data?.content ?? [];
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -96,79 +80,8 @@ export const ProjectsPage: React.FC = () => {
     return then.toLocaleDateString();
   };
 
-  const ProjectCard = ({ project }: { project: Project }) => (
-    <Link
-      to={`/projects/${project.id}`}
-      className="block group"
-    >
-      <div className={`
-        bg-white rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
-        ${project.isArchived
-          ? 'border-gray-200 opacity-75'
-          : 'border-neutral-200 hover:shadow-md hover:border-neutral-900'
-        }
-      `}>
-        <div className="flex justify-between items-start mb-4">
-          <div className={`
-            p-3 rounded-lg transition-colors
-            ${project.isArchived
-              ? 'bg-gray-100'
-              : 'bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white transition-colors'
-            }
-          `}>
-            {project.isArchived ? (
-              <Archive className="w-8 h-8 text-gray-400" />
-            ) : (
-              <Folder className="w-8 h-8" />
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {project.currentUserRole && (
-              <Badge variant={ROLE_COLORS[project.currentUserRole]}>
-                {project.currentUserRole === 'OWNER' && <Crown className="h-3 w-3 mr-1" />}
-                {project.currentUserRole === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
-                {project.currentUserRole}
-              </Badge>
-            )}
-            {project.isArchived && (
-              <Badge variant="warning">Archived</Badge>
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1">
-          <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-neutral-900">
-            {project.name}
-          </h3>
-          {project.description && (
-            <p className="text-gray-500 text-sm line-clamp-2 mb-4">
-              {project.description}
-            </p>
-          )}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-          <div className="flex items-center gap-4 text-gray-400">
-            <span className="flex items-center" title="Secrets">
-              <Key className="h-4 w-4 mr-1" />
-              {project.secretCount ?? 0}
-            </span>
-            <span className="flex items-center" title="Members">
-              <Users className="h-4 w-4 mr-1" />
-              {project.memberCount ?? 1}
-            </span>
-          </div>
-          <span className="flex items-center text-gray-400" title="Last updated">
-            <Clock className="h-4 w-4 mr-1" />
-            {getTimeAgo(project.updatedAt)}
-          </span>
-        </div>
-      </div>
-    </Link>
-  );
-
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -204,14 +117,14 @@ export const ProjectsPage: React.FC = () => {
         </label>
       </div>
 
-      {/* Content */}
-      {isProjectsLoading || isWorkflowsLoading ? (
+      {/* Projects Grid */}
+      {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : projectsError ? (
+      ) : error ? (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <p className="text-sm text-red-800">Failed to load projects. Please try again.</p>
         </div>
@@ -230,59 +143,152 @@ export const ProjectsPage: React.FC = () => {
           }}
         />
       ) : (
-        <div className="space-y-10">
-          {/* Workflows Groups */}
-          {groupedProjects.groups.map(({ workflow, projects }) => (
-            <div key={workflow.id} className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                <LayoutGrid className="h-5 w-5 text-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-900">{workflow.name}</h2>
-                <span className="text-sm text-gray-500">({projects.length})</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {projects.map((project: Project) => (
+            <Link
+              key={project.id}
+              to={`/projects/${project.id}`}
+              className="block group"
+            >
+              <div className={`
+                bg-white rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
+                ${project.isArchived
+                  ? 'border-gray-200 opacity-75'
+                  : 'border-neutral-200 hover:shadow-md hover:border-neutral-900'
+                }
+              `}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`
+                    p-3 rounded-lg transition-colors
+                    ${project.isArchived
+                      ? 'bg-gray-100'
+                      : 'bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white transition-colors'
+                    }
+                  `}>
+                    {project.isArchived ? (
+                      <Archive className="w-8 h-8 text-gray-400" />
+                    ) : (
+                      <Folder className="w-8 h-8" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {project.currentUserRole && (
+                      <Badge variant={ROLE_COLORS[project.currentUserRole]}>
+                        {project.currentUserRole === 'OWNER' && <Crown className="h-3 w-3 mr-1" />}
+                        {project.currentUserRole === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
+                        {project.currentUserRole}
+                      </Badge>
+                    )}
+                    {project.isArchived && (
+                      <Badge variant="warning">Archived</Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-neutral-900">
+                    {project.name}
+                  </h3>
+                  {project.description && (
+                    <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+                      {project.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4 text-gray-400">
+                    <span className="flex items-center" title="Secrets">
+                      <Key className="h-4 w-4 mr-1" />
+                      {project.secretCount ?? 0}
+                    </span>
+                    <span className="flex items-center" title="Members">
+                      <Users className="h-4 w-4 mr-1" />
+                      {project.memberCount ?? 1}
+                    </span>
+                  </div>
+                  <span className="flex items-center text-gray-400" title="Last updated">
+                    <Clock className="h-4 w-4 mr-1" />
+                    {getTimeAgo(project.updatedAt)}
+                  </span>
+                </div>
               </div>
-              {projects.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.map(project => (
-                    <ProjectCard key={project.id} project={project} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-sm text-gray-400 italic py-4">
-                  No projects in this workflow
-                </div>
-              )}
-            </div>
+            </Link>
           ))}
 
-          {/* Unassigned Projects */}
-          {groupedProjects.unassigned.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 border-b border-gray-100 pb-2">
-                <Folder className="h-5 w-5 text-gray-400" />
-                <h2 className="text-lg font-semibold text-gray-900">Unassigned Projects</h2>
-                <span className="text-sm text-gray-500">({groupedProjects.unassigned.length})</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {groupedProjects.unassigned.map(project => (
-                  <ProjectCard key={project.id} project={project} />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Create New Project Card */}
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="border-2 border-dashed border-neutral-300 rounded-xl p-6 flex flex-col items-center justify-center text-neutral-400 hover:border-neutral-900 hover:text-neutral-900 transition-colors min-h-[200px]"
+          >
+            <Plus className="w-12 h-12 mb-3 opacity-50" />
+            <span className="font-medium">Create new project</span>
+          </button>
         </div>
       )}
 
       {/* Pagination info */}
-      {projectsData && projectsData.totalElements > 0 && (
+      {data && data.totalElements > 0 && (
         <div className="text-center text-sm text-gray-500">
-          Showing {projects.length} of {projectsData.totalElements} projects
+          Showing {projects.length} of {data.totalElements} projects
         </div>
       )}
 
       {/* Create Project Modal */}
-      <CreateProjectModal
+      <Modal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-      />
+        title="Create New Project"
+      >
+        <form
+          onSubmit={handleCreateProject}
+          className="space-y-4"
+        >
+          <Input
+            label="Project Name"
+            value={newProjectName}
+            onChange={(e) => setNewProjectName(e.target.value)}
+            placeholder="e.g., Backend Services"
+            required
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              value={newProjectDescription}
+              onChange={(e) => setNewProjectDescription(e.target.value)}
+              placeholder="Brief description of this project..."
+              rows={3}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowCreateModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              isLoading={createMutation.isPending}
+              disabled={!newProjectName.trim()}
+            >
+              Create Project
+            </Button>
+          </div>
+
+          {createMutation.isError && (
+            <p className="text-sm text-red-600">
+              Failed to create project. Please try again.
+            </p>
+          )}
+        </form>
+      </Modal>
     </div>
   );
 };

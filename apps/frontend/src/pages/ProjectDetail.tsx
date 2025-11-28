@@ -98,8 +98,6 @@ export const ProjectDetailPage: React.FC = () => {
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
-
-
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
     queryKey: ['project', projectId],
@@ -147,8 +145,6 @@ export const ProjectDetailPage: React.FC = () => {
     queryKey: ['project-activity-analytics', projectId, dateRange],
     queryFn: () => {
       const dateParams = getDateRangeParams();
-
-
       return auditService.getProjectAuditLogs(projectId!, {
         size: 1000, // Fetch more for analytics
         ...dateParams,
@@ -157,8 +153,6 @@ export const ProjectDetailPage: React.FC = () => {
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
   });
-
-
 
   // Calculate analytics stats
   const analyticsStats = useMemo(() => {
