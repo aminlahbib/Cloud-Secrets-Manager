@@ -108,4 +108,32 @@ export const auditService = {
       throw error;
     }
   },
+
+  // Get project analytics (server-side aggregated)
+  async getProjectAnalytics(projectId: string, startDate: string, endDate: string): Promise<any> {
+    try {
+      const { data } = await api.get(`/api/audit/project/${projectId}/analytics`, {
+        params: {
+          start: startDate,
+          end: endDate,
+        },
+      });
+      return data;
+    } catch (error: any) {
+      console.error('Error fetching project analytics:', error);
+      // 403 Forbidden is expected for users without access
+      if (error.response?.status === 403 || error.response?.status === 404) {
+        // Return empty analytics structure
+        return {
+          totalActions: 0,
+          actionsByType: {},
+          actionsByUser: {},
+          actionsByDay: {},
+          topActions: [],
+          topUsers: [],
+        };
+      }
+      throw error;
+    }
+  },
 };

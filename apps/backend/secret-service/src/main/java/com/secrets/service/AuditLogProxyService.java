@@ -158,4 +158,39 @@ public class AuditLogProxyService {
             throw ex;
         }
     }
+
+    public com.secrets.dto.audit.AnalyticsResponse fetchProjectAnalytics(
+            String projectId,
+            String startDate,
+            String endDate) {
+
+        WebClient client = webClientBuilder
+                .baseUrl(auditServiceUrl)
+                .build();
+
+        try {
+            return client.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .path("/api/audit/project/" + projectId + "/analytics")
+                            .queryParam("start", startDate)
+                            .queryParam("end", endDate)
+                            .build())
+                    .header("X-Service-API-Key", serviceApiKey)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(com.secrets.dto.audit.AnalyticsResponse.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
+        } catch (WebClientResponseException ex) {
+            if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw ex;
+            }
+            log.error("Audit service responded with error: status={}, body={}", ex.getStatusCode(),
+                    ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Failed to fetch project analytics: {}", ex.getMessage(), ex);
+            throw ex;
+        }
+    }
 }
