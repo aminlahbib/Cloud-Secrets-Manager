@@ -78,16 +78,4 @@ public class AuditClient {
         logEvent(projectId, userId, action, "SECRET", secretKey, secretKey, null);
     }
 
-    /**
-     * Legacy method for backward compatibility (deprecated)
-     * @deprecated Use logSecretEvent or logEvent instead
-     */
-    @Deprecated
-    @Async
-    public void logEvent(String action, String secretKey, String username) {
-        log.warn("Deprecated logEvent method called with action: {}, secretKey: {}, username: {}. " +
-                "Use logSecretEvent or logEvent with UUIDs instead.", action, secretKey, username);
-        // Try to extract userId from username if possible, otherwise skip
-        // This is a fallback for legacy code
-    }
 }

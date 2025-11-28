@@ -32,57 +32,124 @@ public class AuditLogProxyService {
             int size,
             String sortBy,
             String sortDir,
-            Optional<String> username,
             Optional<String> action,
-            Optional<String> secretKey,
             Optional<String> startDate,
             Optional<String> endDate) {
 
         WebClient client = webClientBuilder
-            .baseUrl(auditServiceUrl)
-            .build();
+                .baseUrl(auditServiceUrl)
+                .build();
 
         try {
             return client.get()
-                .uri(uriBuilder -> {
-                    var builder = uriBuilder.path("/api/audit")
-                        .queryParam("page", page)
-                        .queryParam("size", size)
-                        .queryParam("sortBy", sortBy)
-                        .queryParam("sortDir", sortDir);
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/api/audit")
+                                .queryParam("page", page)
+                                .queryParam("size", size)
+                                .queryParam("sortBy", sortBy)
+                                .queryParam("sortDir", sortDir);
 
-                    username.filter(value -> !value.isBlank())
-                        .ifPresent(value -> builder.queryParam("username", value));
+                        action.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("action", value));
 
-                    action.filter(value -> !value.isBlank())
-                        .ifPresent(value -> builder.queryParam("action", value));
+                        startDate.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("startDate", value));
 
-                    secretKey.filter(value -> !value.isBlank())
-                        .ifPresent(value -> builder.queryParam("secretKey", value));
+                        endDate.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("endDate", value));
 
-                    startDate.filter(value -> !value.isBlank())
-                        .ifPresent(value -> builder.queryParam("startDate", value));
-
-                    endDate.filter(value -> !value.isBlank())
-                        .ifPresent(value -> builder.queryParam("endDate", value));
-
-                    return builder.build();
-                })
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(AuditLogPageResponse.class)
-                .timeout(Duration.ofSeconds(5))
-                .block();
+                        return builder.build();
+                    })
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(AuditLogPageResponse.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
         } catch (WebClientResponseException ex) {
             if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 throw ex;
             }
-            log.error("Audit service responded with error: status={}, body={}", ex.getStatusCode(), ex.getResponseBodyAsString());
+            log.error("Audit service responded with error: status={}, body={}", ex.getStatusCode(),
+                    ex.getResponseBodyAsString());
             throw ex;
         } catch (Exception ex) {
             log.error("Failed to fetch audit logs: {}", ex.getMessage());
             throw ex;
         }
     }
-}
 
+    public AuditLogPageResponse fetchProjectAuditLogs(
+            String projectId,
+            int page,
+            int size,
+            Optional<String> action,
+            Optional<String> userId,
+            Optional<String> resourceType,
+            Optional<String> startDate,
+            Optional<String> endDate) {
+
+        WebClient client = webClientBuilder
+                .baseUrl(auditServiceUrl)
+                .build();
+
+        try {
+            // If both startDate and endDate are provided, use the date-range endpoint
+            if (startDate.isPresent() && endDate.isPresent() && 
+                !startDate.get().isBlank() && !endDate.get().isBlank()) {
+                return client.get()
+                        .uri(uriBuilder -> uriBuilder
+                                .path("/api/audit/project/" + projectId + "/date-range")
+                                .queryParam("start", startDate.get())
+                                .queryParam("end", endDate.get())
+                                .queryParam("page", page)
+                                .queryParam("size", size)
+                                .build())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .retrieve()
+                        .bodyToMono(AuditLogPageResponse.class)
+                        .timeout(Duration.ofSeconds(5))
+                        .block();
+            }
+            
+            // Otherwise use the regular endpoint with optional filters
+            return client.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/api/audit/project/" + projectId)
+                                .queryParam("page", page)
+                                .queryParam("size", size);
+
+                        action.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("action", value));
+
+                        userId.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("userId", value));
+
+                        resourceType.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("resourceType", value));
+
+                        startDate.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("startDate", value));
+
+                        endDate.filter(value -> !value.isBlank())
+                                .ifPresent(value -> builder.queryParam("endDate", value));
+
+                        return builder.build();
+                    })
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(AuditLogPageResponse.class)
+                    .timeout(Duration.ofSeconds(5))
+                    .block();
+        } catch (WebClientResponseException ex) {
+            if (ex.getStatusCode() == HttpStatus.FORBIDDEN || ex.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw ex;
+            }
+            log.error("Audit service responded with error: status={}, body={}", ex.getStatusCode(),
+                    ex.getResponseBodyAsString());
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Failed to fetch project audit logs: {}", ex.getMessage(), ex);
+            throw ex;
+        }
+    }
+}

@@ -21,11 +21,6 @@ public class AuditLogResponse {
     private String userAgent;
     private LocalDateTime createdAt;
 
-    // Legacy fields for backward compatibility during migration
-    private String username;
-    private String secretKey;
-    private LocalDateTime timestamp;
-
     public AuditLogResponse() {
     }
 
@@ -64,12 +59,6 @@ public class AuditLogResponse {
             .userAgent(auditLog.getUserAgent())
             .createdAt(auditLog.getCreatedAt())
             .build();
-
-        // Set legacy fields for backward compatibility
-        response.setTimestamp(auditLog.getCreatedAt());
-        if ("SECRET".equals(auditLog.getResourceType())) {
-            response.setSecretKey(auditLog.getResourceId());
-        }
 
         return response;
     }
@@ -181,31 +170,6 @@ public class AuditLogResponse {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
-    }
-
-    // Legacy getters/setters for backward compatibility
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getSecretKey() {
-        return secretKey;
-    }
-
-    public void setSecretKey(String secretKey) {
-        this.secretKey = secretKey;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp != null ? timestamp : createdAt;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
     }
 
     public static final class Builder {
