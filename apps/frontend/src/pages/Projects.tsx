@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   Folder,
   Plus,
@@ -12,16 +12,15 @@ import {
   Clock,
   LayoutGrid
 } from 'lucide-react';
-import { useProjects, useCreateProject } from '../hooks/useProjects';
+import { useProjects } from '../hooks/useProjects';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { useAuth } from '../contexts/AuthContext';
-import type { Project, ProjectRole, Workflow } from '../types';
+import { CreateProjectModal } from '../components/projects/CreateProjectModal';
+import type { Project, ProjectRole } from '../types';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -31,15 +30,11 @@ const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'
 };
 
 export const ProjectsPage: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
 
   // Fetch projects
   const { data: projectsData, isLoading: isProjectsLoading, error: projectsError } = useProjects({
@@ -49,29 +44,6 @@ export const ProjectsPage: React.FC = () => {
 
   // Fetch workflows
   const { data: workflows, isLoading: isWorkflowsLoading } = useWorkflows(user?.id);
-
-  // Create project mutation
-  const createMutation = useCreateProject();
-
-  const handleCreateProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(
-      {
-        name: newProjectName,
-        description: newProjectDescription || undefined,
-        workflowId: selectedWorkflowId || undefined,
-      },
-      {
-        onSuccess: (project) => {
-          setShowCreateModal(false);
-          setNewProjectName('');
-          setNewProjectDescription('');
-          setSelectedWorkflowId('');
-          navigate(`/projects/${project.id}`);
-        },
-      }
-    );
-  };
 
   const projects = projectsData?.content ?? [];
 
@@ -86,11 +58,6 @@ export const ProjectsPage: React.FC = () => {
     workflows.forEach(w => workflowMap.set(w.id, []));
 
     // Helper to find which workflow a project belongs to
-    // Since Project entity doesn't strictly have workflowId on it in the frontend type yet (maybe),
-    // we might need to rely on the workflow's project list if available, OR assume the backend returns it.
-    // However, the Workflow type has `projects: WorkflowProject[]`.
-    // So we iterate workflows and their projects to build the map.
-
     const projectWorkflowIdMap = new Map<string, string>();
     workflows.forEach(w => {
       w.projects?.forEach(wp => {
@@ -312,79 +279,10 @@ export const ProjectsPage: React.FC = () => {
       )}
 
       {/* Create Project Modal */}
-      <Modal
+      <CreateProjectModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create New Project"
-      >
-        <form
-          onSubmit={handleCreateProject}
-          className="space-y-4"
-        >
-          <Input
-            label="Project Name"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="e.g., Backend Services"
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (optional)
-            </label>
-            <textarea
-              value={newProjectDescription}
-              onChange={(e) => setNewProjectDescription(e.target.value)}
-              placeholder="Brief description of this project..."
-              rows={3}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Workflow (optional)
-            </label>
-            <select
-              value={selectedWorkflowId}
-              onChange={(e) => setSelectedWorkflowId(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
-            >
-              <option value="">No Workflow (Unassigned)</option>
-              {workflows?.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs text-gray-500">
-              Group this project under a specific workflow for better organization.
-            </p>
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowCreateModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              isLoading={createMutation.isPending}
-              disabled={!newProjectName.trim()}
-            >
-              Create Project
-            </Button>
-          </div>
-
-          {createMutation.isError && (
-            <p className="text-sm text-red-600">
-              Failed to create project. Please try again.
-            </p>
-          )}
-        </form>
-      </Modal>
+      />
     </div>
   );
 };
