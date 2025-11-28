@@ -116,7 +116,7 @@ export const ActivityPage: React.FC = () => {
     if (!data?.content?.length) return;
     const header = ['Timestamp', 'Action', 'Resource', 'User', 'IP Address'];
     const rows = data.content.map((log: AuditLog) => [
-      new Date(log.createdAt || log.timestamp || '').toISOString(),
+      new Date(log.createdAt || '').toISOString(),
       log.action,
       log.resourceName || log.resourceId || '',
       log.userEmail || log.user?.email || '',
