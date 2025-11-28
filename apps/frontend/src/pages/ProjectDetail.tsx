@@ -43,7 +43,6 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
 import { SecretCard } from '../components/ui/SecretCard';
 import {
-  calculateActivityStats,
   getLastNDays,
   prepareChartData,
   formatActionName,
@@ -859,7 +858,7 @@ export const ProjectDetailPage: React.FC = () => {
                               <p className="text-gray-500 text-sm">No user data available</p>
                             ) : (
                               <div className="space-y-3">
-                                {analyticsStats.topUsers.map((user, index) => (
+                                {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
                                   <div key={user.userId} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
@@ -885,7 +884,7 @@ export const ProjectDetailPage: React.FC = () => {
                               <p className="text-gray-500 text-sm">No action data available</p>
                             ) : (
                               <div className="space-y-3">
-                                {analyticsStats.topActions.map((action, index) => (
+                                {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (
                                   <div key={action.action} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
