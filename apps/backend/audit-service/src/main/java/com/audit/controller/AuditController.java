@@ -53,16 +53,39 @@ public class AuditController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all audit logs", description = "Retrieves all audit logs with optional pagination")
+    @Operation(summary = "Get all audit logs", description = "Retrieves all audit logs with optional filtering and pagination")
     public ResponseEntity<Page<AuditLogResponse>> getAllLogs(
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) UUID projectId,
+            @RequestParam(required = false) UUID userId,
+            @RequestParam(required = false) String resourceType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") Sort.Direction sortDir) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDir, sortBy));
+
+        // If any filter is provided, use the search method
+        if (action != null || projectId != null || userId != null || resourceType != null || startDate != null
+                || endDate != null) {
+            Page<AuditLogResponse> logs = auditService.searchLogs(action, projectId, userId, resourceType, startDate,
+                    endDate, pageable);
+            return ResponseEntity.ok(logs);
+        }
+
+        // Otherwise use the standard findAll
         Page<AuditLogResponse> logs = auditService.getLogs(pageable);
         return ResponseEntity.ok(logs);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get audit log by ID", description = "Retrieves a single audit log by its ID")
+    public ResponseEntity<AuditLogResponse> getLogById(@PathVariable UUID id) {
+        AuditLogResponse log = auditService.getLogById(id);
+        return ResponseEntity.ok(log);
     }
 
     // Project-scoped endpoints
