@@ -64,6 +64,10 @@ management:
       application: ${spring.application.name}
       environment: ${ENVIRONMENT:dev}
 
+audit:
+  service:
+    api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
+
 logging:
   level:
     root: INFO

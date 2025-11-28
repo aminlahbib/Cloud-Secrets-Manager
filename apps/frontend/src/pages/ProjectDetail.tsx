@@ -146,7 +146,7 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => {
       const dateParams = getDateRangeParams();
       return auditService.getProjectAuditLogs(projectId!, {
-        size: 1000, // Fetch more for analytics
+        size: 100, // Reduced from 1000 for performance (temporary fix - server-side aggregation recommended)
         ...dateParams,
       });
     },

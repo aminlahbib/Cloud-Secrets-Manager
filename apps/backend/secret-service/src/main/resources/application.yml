@@ -85,6 +85,7 @@ audit:
   service:
     url: ${AUDIT_SERVICE_URL:http://localhost:8081}
     timeout: 5000
+    api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
 
 # Google Cloud Identity Platform Configuration
 google:
