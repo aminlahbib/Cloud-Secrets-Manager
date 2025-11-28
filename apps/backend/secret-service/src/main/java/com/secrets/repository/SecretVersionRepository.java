@@ -15,18 +15,14 @@ public interface SecretVersionRepository extends JpaRepository<SecretVersion, UU
 
     // v3 queries
     List<SecretVersion> findBySecretIdOrderByVersionNumberDesc(UUID secretId);
+
     Optional<SecretVersion> findBySecretIdAndVersionNumber(UUID secretId, Integer versionNumber);
-    
+
     @Query("SELECT MAX(sv.versionNumber) FROM SecretVersion sv WHERE sv.secretId = :secretId")
     Optional<Integer> findMaxVersionNumberBySecretId(@Param("secretId") UUID secretId);
-    
+
     @Query("SELECT COUNT(sv) FROM SecretVersion sv WHERE sv.secretId = :secretId")
     Long countBySecretId(@Param("secretId") UUID secretId);
-    
+
     void deleteBySecretId(UUID secretId);
-    
-    // Legacy queries (deprecated)
-    @Deprecated
-    @Query("SELECT sv FROM SecretVersion sv JOIN Secret s ON sv.secretId = s.id WHERE s.secretKey = :secretKey ORDER BY sv.versionNumber DESC")
-    List<SecretVersion> findBySecretKeyOrderByVersionNumberDesc(@Param("secretKey") String secretKey);
 }

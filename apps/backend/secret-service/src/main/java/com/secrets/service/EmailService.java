@@ -1,0 +1,183 @@
+package com.secrets.service;
+
+import com.sendgrid.*;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * Service for sending email notifications using SendGrid
+ */
+@Service
+public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
+
+    @Value("${email.enabled:true}")
+    private boolean emailEnabled;
+
+    @Value("${email.sendgrid.api-key:}")
+    private String sendGridApiKey;
+
+    @Value("${email.from.address:noreply@cloudsecrets.com}")
+    private String fromAddress;
+
+    @Value("${email.from.name:Cloud Secrets Manager}")
+    private String fromName;
+
+    @Value("${app.base-url:http://localhost:5173}")
+    private String appBaseUrl;
+
+    /**
+     * Send project invitation email
+     */
+    public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
+        if (!emailEnabled) {
+            log.debug("Email notifications disabled, skipping invitation email to {}", recipientEmail);
+            return;
+        }
+
+        String subject = String.format("You've been invited to %s", projectName);
+        String acceptLink = String.format("%s/accept-invite?token=%s", appBaseUrl, token);
+
+        String body = String.format("""
+                Hi,
+
+                %s has invited you to collaborate on the project "%s" in Cloud Secrets Manager.
+
+                Click the link below to accept the invitation:
+                %s
+
+                This invitation will expire in 7 days.
+
+                If you didn't expect this invitation, you can safely ignore this email.
+
+                ---
+                Cloud Secrets Manager
+                Secure secret management for teams
+                """, inviterName, projectName, acceptLink);
+
+        sendEmail(recipientEmail, subject, body);
+        log.info("Sent invitation email to {} for project {}", recipientEmail, projectName);
+    }
+
+    /**
+     * Send secret expiration warning email
+     */
+    public void sendExpirationWarning(String recipientEmail, String secretKey, String projectName,
+            LocalDateTime expiresAt) {
+        if (!emailEnabled) {
+            log.debug("Email notifications disabled, skipping expiration warning to {}", recipientEmail);
+            return;
+        }
+
+        String subject = String.format("Secret Expiration Warning: %s", secretKey);
+        String formattedDate = expiresAt.format(DATE_FORMATTER);
+        String projectLink = String.format("%s/projects", appBaseUrl);
+
+        String body = String.format("""
+                Hi,
+
+                This is a reminder that your secret "%s" in project "%s" will expire soon.
+
+                Expiration Date: %s
+
+                To prevent service disruptions, please:
+                1. Rotate the secret before it expires
+                2. Update the expiration date
+                3. Or remove the expiration if no longer needed
+
+                Manage your secrets: %s
+
+                ---
+                Cloud Secrets Manager
+                Secure secret management for teams
+                """, secretKey, projectName, formattedDate, projectLink);
+
+        sendEmail(recipientEmail, subject, body);
+        log.info("Sent expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
+    }
+
+    /**
+     * Send membership role change notification
+     */
+    public void sendMembershipChangeEmail(String recipientEmail, String projectName, String oldRole, String newRole) {
+        if (!emailEnabled) {
+            log.debug("Email notifications disabled, skipping membership change email to {}", recipientEmail);
+            return;
+        }
+
+        String subject = String.format("Your role in %s has changed", projectName);
+        String projectLink = String.format("%s/projects", appBaseUrl);
+
+        String body = String.format("""
+                Hi,
+
+                Your role in the project "%s" has been updated.
+
+                Previous Role: %s
+                New Role: %s
+
+                View project: %s
+
+                If you have questions about this change, please contact the project owner.
+
+                ---
+                Cloud Secrets Manager
+                Secure secret management for teams
+                """, projectName, oldRole, newRole, projectLink);
+
+        sendEmail(recipientEmail, subject, body);
+        log.info("Sent membership change email to {} for project {} ({} -> {})",
+                recipientEmail, projectName, oldRole, newRole);
+    }
+
+    /**
+     * Core email sending logic using SendGrid
+     */
+    private void sendEmail(String to, String subject, String body) {
+        if (!emailEnabled) {
+            return;
+        }
+
+        if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
+            log.warn(
+                    "SendGrid API key not configured. Email to {} not sent. Set SENDGRID_API_KEY environment variable.",
+                    to);
+            return;
+        }
+
+        try {
+            Email from = new Email(fromAddress, fromName);
+            Email toEmail = new Email(to);
+            Content content = new Content("text/plain", body);
+            Mail mail = new Mail(from, subject, toEmail, content);
+
+            SendGrid sg = new SendGrid(sendGridApiKey);
+            Request request = new Request();
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
+
+            Response response = sg.api(request);
+
+            if (response.getStatusCode() >= 400) {
+                log.error("Failed to send email to {}: HTTP {} - {}",
+                        to, response.getStatusCode(), response.getBody());
+            } else {
+                log.debug("Email sent successfully to {}: HTTP {}", to, response.getStatusCode());
+            }
+        } catch (IOException ex) {
+            log.error("Failed to send email to {}: {}", to, ex.getMessage(), ex);
+        }
+    }
+}

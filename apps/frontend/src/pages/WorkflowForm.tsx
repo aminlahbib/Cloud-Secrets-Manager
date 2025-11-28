@@ -1,9 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
-import { workflowsService } from '../services/workflows';
+import { useCreateWorkflow } from '../hooks/useWorkflows';
 import type { CreateWorkflowRequest } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -11,7 +10,6 @@ import { Card } from '../components/ui/Card';
 
 export const WorkflowFormPage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const {
     register,
@@ -24,16 +22,14 @@ export const WorkflowFormPage: React.FC = () => {
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (request: CreateWorkflowRequest) => workflowsService.createWorkflow(request),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflows'] });
-      navigate('/home');
-    },
-  });
+  const mutation = useCreateWorkflow();
 
   const onSubmit = (data: CreateWorkflowRequest) => {
-    mutation.mutate(data);
+    mutation.mutate(data, {
+      onSuccess: () => {
+        navigate('/home');
+      },
+    });
   };
 
   return (

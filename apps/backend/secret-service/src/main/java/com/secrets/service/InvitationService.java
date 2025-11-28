@@ -27,33 +27,36 @@ import java.util.stream.Collectors;
 public class InvitationService {
 
     private static final Logger log = LoggerFactory.getLogger(InvitationService.class);
-    
+
     private final ProjectInvitationRepository invitationRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ProjectMembershipRepository membershipRepository;
     private final WorkflowService workflowService;
+    private final EmailService emailService;
 
     public InvitationService(ProjectInvitationRepository invitationRepository,
-                            ProjectRepository projectRepository,
-                            UserRepository userRepository,
-                            ProjectMembershipRepository membershipRepository,
-                            WorkflowService workflowService) {
+            ProjectRepository projectRepository,
+            UserRepository userRepository,
+            ProjectMembershipRepository membershipRepository,
+            WorkflowService workflowService,
+            EmailService emailService) {
         this.invitationRepository = invitationRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.membershipRepository = membershipRepository;
         this.workflowService = workflowService;
+        this.emailService = emailService;
     }
 
     /**
      * Create an invitation for a user who doesn't exist yet
      */
-    public ProjectInvitation createInvitation(UUID projectId, String email, 
-                                             ProjectMembership.ProjectRole role, UUID invitedBy) {
+    public ProjectInvitation createInvitation(UUID projectId, String email,
+            ProjectMembership.ProjectRole role, UUID invitedBy) {
         // Verify project exists
         projectRepository.findById(projectId)
-            .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
         // Check if user already exists
         if (userRepository.existsByEmail(email)) {
@@ -61,7 +64,8 @@ public class InvitationService {
         }
 
         // Check if invitation already exists
-        List<ProjectInvitation> existing = invitationRepository.findByEmailAndStatus(email, ProjectInvitation.InvitationStatus.PENDING);
+        List<ProjectInvitation> existing = invitationRepository.findByEmailAndStatus(email,
+                ProjectInvitation.InvitationStatus.PENDING);
         if (existing.stream().anyMatch(inv -> inv.getProjectId().equals(projectId) && inv.isValid())) {
             throw new IllegalArgumentException("Invitation already sent to this email");
         }
@@ -80,9 +84,24 @@ public class InvitationService {
 
         ProjectInvitation saved = invitationRepository.save(invitation);
         log.info("Created invitation for {} to project {} with role {}", email, projectId, role);
-        
-        // TODO: Send email notification
-        
+
+        // Send email notification
+        try {
+            var project = projectRepository.findById(projectId).orElse(null);
+            var inviter = userRepository.findById(invitedBy).orElse(null);
+
+            if (project != null && inviter != null) {
+                emailService.sendInvitationEmail(
+                        email,
+                        token,
+                        project.getName(),
+                        inviter.getEmail());
+            }
+        } catch (Exception e) {
+            log.error("Failed to send invitation email to {}: {}", email, e.getMessage());
+            // Don't fail the invitation creation if email fails
+        }
+
         return saved;
     }
 
@@ -91,10 +110,11 @@ public class InvitationService {
      */
     @Transactional(readOnly = true)
     public List<InvitationResponse> listPendingInvitations(String email) {
-        List<ProjectInvitation> invitations = invitationRepository.findPendingInvitationsByEmail(email, LocalDateTime.now());
+        List<ProjectInvitation> invitations = invitationRepository.findPendingInvitationsByEmail(email,
+                LocalDateTime.now());
         return invitations.stream()
-            .map(InvitationResponse::from)
-            .collect(Collectors.toList());
+                .map(InvitationResponse::from)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -103,11 +123,11 @@ public class InvitationService {
     @Transactional(readOnly = true)
     public List<InvitationResponse> listProjectInvitations(UUID projectId) {
         List<ProjectInvitation> invitations = invitationRepository.findByProjectId(projectId).stream()
-            .filter(inv -> inv.getStatus() == ProjectInvitation.InvitationStatus.PENDING)
-            .collect(Collectors.toList());
+                .filter(inv -> inv.getStatus() == ProjectInvitation.InvitationStatus.PENDING)
+                .collect(Collectors.toList());
         return invitations.stream()
-            .map(InvitationResponse::from)
-            .collect(Collectors.toList());
+                .map(InvitationResponse::from)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -115,14 +135,14 @@ public class InvitationService {
      */
     public void acceptInvitation(String token, UUID userId) {
         ProjectInvitation invitation = invitationRepository.findByToken(token)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
 
         if (!invitation.isValid()) {
             throw new IllegalStateException("Invitation is expired or already used");
         }
 
         User user = userRepository.findById(userId)
-            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         // Verify email matches
         if (!user.getEmail().equalsIgnoreCase(invitation.getEmail())) {
@@ -162,7 +182,7 @@ public class InvitationService {
      */
     public void declineInvitation(String token) {
         ProjectInvitation invitation = invitationRepository.findByToken(token)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
+                .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
 
         if (invitation.getStatus() != ProjectInvitation.InvitationStatus.PENDING) {
             throw new IllegalStateException("Invitation is not pending");
@@ -178,26 +198,27 @@ public class InvitationService {
      */
     public void revokeInvitation(UUID projectId, UUID invitationId, UUID userId) {
         ProjectInvitation invitation = invitationRepository.findById(invitationId)
-            .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Invitation not found"));
 
         if (!invitation.getProjectId().equals(projectId)) {
             throw new IllegalArgumentException("Invitation does not belong to this project");
         }
 
         // Check permission (admin or owner)
-        // Note: This would need ProjectPermissionService check, but to avoid circular dependency,
+        // Note: This would need ProjectPermissionService check, but to avoid circular
+        // dependency,
         // we'll check membership directly
         ProjectMembership membership = membershipRepository.findByProjectIdAndUserId(projectId, userId)
-            .orElseThrow(() -> new SecurityException("Access denied"));
+                .orElseThrow(() -> new SecurityException("Access denied"));
 
-        if (membership.getRole() != ProjectMembership.ProjectRole.OWNER && 
-            membership.getRole() != ProjectMembership.ProjectRole.ADMIN) {
+        if (membership.getRole() != ProjectMembership.ProjectRole.OWNER &&
+                membership.getRole() != ProjectMembership.ProjectRole.ADMIN) {
             throw new SecurityException("Only admins and owners can revoke invitations");
         }
 
         invitation.setStatus(ProjectInvitation.InvitationStatus.REVOKED);
         invitationRepository.save(invitation);
-        
+
         log.info("Revoked invitation {} for project {}", invitationId, projectId);
     }
 
@@ -215,4 +236,3 @@ public class InvitationService {
         log.info("Cleaned up {} expired invitations", expired.size());
     }
 }
-

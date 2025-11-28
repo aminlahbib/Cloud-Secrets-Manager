@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { tokenStorage } from '@/utils/tokenStorage';
 import type { ApiError } from '@/types';
 
 const api = axios.create({
@@ -10,7 +11,7 @@ const api = axios.create({
 
 // Request interceptor - Add auth token
 api.interceptors.request.use((config) => {
-  const token = sessionStorage.getItem('accessToken');
+  const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -29,7 +30,7 @@ api.interceptors.response.use(
 
       try {
         // Attempt token refresh
-        const refreshToken = sessionStorage.getItem('refreshToken');
+        const refreshToken = tokenStorage.getRefreshToken();
         if (!refreshToken) {
           throw new Error('No refresh token available');
         }
@@ -39,13 +40,17 @@ api.interceptors.response.use(
           { refreshToken }
         );
 
-        sessionStorage.setItem('accessToken', data.accessToken);
+        tokenStorage.setAccessToken(data.accessToken);
+        if (data.refreshToken) {
+          tokenStorage.setRefreshToken(data.refreshToken);
+        }
+
         originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
 
         return api(originalRequest);
       } catch (refreshError) {
         // Refresh failed, clear storage and redirect
-        sessionStorage.clear();
+        tokenStorage.clearAll();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -57,12 +62,59 @@ api.interceptors.response.use(
 
 export default api;
 
-// Helper to handle API errors
+// Helper to handle API errors with user-friendly messages
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
     const apiError = error.response?.data as ApiError;
-    return apiError?.message || error.message || 'An unexpected error occurred';
+
+    // Handle specific HTTP status codes
+    if (status === 401) {
+      return 'Your session has expired. Please log in again.';
+    }
+    if (status === 403) {
+      return 'You do not have permission to perform this action.';
+    }
+    if (status === 404) {
+      return 'The requested resource was not found.';
+    }
+    if (status === 409) {
+      return 'This action conflicts with the current state. Please refresh and try again.';
+    }
+    if (status === 422) {
+      return apiError?.message || 'The provided data is invalid. Please check your input.';
+    }
+    if (status === 429) {
+      return 'Too many requests. Please wait a moment and try again.';
+    }
+    if (status === 500) {
+      return 'A server error occurred. Please try again later or contact support.';
+    }
+    if (status === 503) {
+      return 'The service is temporarily unavailable. Please try again later.';
+    }
+
+    // Use API error message if available
+    if (apiError?.message) {
+      return apiError.message;
+    }
+
+    // Use HTTP error message
+    if (error.message) {
+      return error.message;
+    }
+
+    // Network errors
+    if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+      return 'Network error. Please check your connection and try again.';
   }
-  return 'An unexpected error occurred';
+  }
+
+  // Handle non-Axios errors
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'An unexpected error occurred. Please try again or contact support if the problem persists.';
 };
 

@@ -2,6 +2,7 @@ package com.secrets.service;
 
 import com.secrets.entity.ProjectMembership;
 import com.secrets.repository.ProjectMembershipRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class ProjectPermissionService {
     /**
      * Get user's role in a project
      */
+    @Cacheable(cacheNames = "projectMemberships", key = "T(java.lang.String).format('%s:%s', #projectId, #userId)")
     public Optional<ProjectMembership.ProjectRole> getUserRole(UUID projectId, UUID userId) {
         return membershipRepository.findByProjectIdAndUserId(projectId, userId)
             .map(ProjectMembership::getRole);

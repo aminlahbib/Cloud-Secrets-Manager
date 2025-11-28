@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
+import { tokenStorage } from '@/utils/tokenStorage';
 import type { User, PlatformRole, LoginRequest } from '@/types';
 
 interface AuthContextType {
@@ -55,19 +56,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize auth state
   useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+
     const initAuth = async () => {
       // If Firebase is enabled, listen to Firebase auth state
       if (isFirebaseEnabled) {
-        const unsubscribe = firebaseAuthService.onAuthStateChanged(async (firebaseUser) => {
+        unsubscribe = firebaseAuthService.onAuthStateChanged(async (firebaseUser) => {
           if (firebaseUser) {
             try {
               const idTokenResult = await firebaseUser.getIdTokenResult();
-              
+
               // Extract platform role from claims (v3 architecture)
               const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
-              
-              sessionStorage.setItem('accessToken', idTokenResult.token);
-              
+
+              // Store access token in memory
+              tokenStorage.setAccessToken(idTokenResult.token);
+
               // Construct user object from Firebase user and claims
               setUser({
                 id: firebaseUser.uid,
@@ -81,45 +85,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               });
             } catch (error) {
               console.error('Failed to get Firebase ID token:', error);
-              sessionStorage.clear();
+              tokenStorage.clearAll();
               setUser(null);
             }
           } else {
-            sessionStorage.clear();
+            tokenStorage.clearAll();
             setUser(null);
           }
           setIsLoading(false);
         });
-
-        return unsubscribe;
       } else {
         // Local authentication mode
-        const token = sessionStorage.getItem('accessToken');
+        // 1. Check if we have an access token in memory (unlikely on refresh)
+        let token = tokenStorage.getAccessToken();
+
+        // 2. If no access token, try to restore session using refresh token (Silent Refresh)
+        if (!token) {
+          const refreshToken = tokenStorage.getRefreshToken();
+          if (refreshToken) {
+            try {
+              const response = await authService.refreshToken(refreshToken);
+              tokenStorage.setAccessToken(response.accessToken);
+              token = response.accessToken;
+              // Update refresh token if a new one was returned
+              if (response.refreshToken) {
+                tokenStorage.setRefreshToken(response.refreshToken);
+              }
+            } catch (error) {
+              console.error('Silent refresh failed:', error);
+              tokenStorage.clearAll();
+            }
+          }
+        }
+
+        // 3. If we have a valid token (either from memory or fresh refresh), fetch user
         if (token) {
           try {
             const currentUser = await authService.getCurrentUser();
             setUser(currentUser);
           } catch (error) {
             console.error('Failed to get current user:', error);
-            sessionStorage.clear();
+            tokenStorage.clearAll();
+            setUser(null);
           }
+        } else {
+          // No token available
+          setUser(null);
         }
         setIsLoading(false);
       }
     };
 
     void initAuth();
-    // No cleanup needed since Firebase handles unsubscribe internally
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [isFirebaseEnabled]);
 
-  // Auto-refresh token before expiration
+  // Auto-refresh token before expiration (Local Auth Only)
   useEffect(() => {
     if (!user) return;
-
-    // Firebase tokens auto-refresh, so we only need this for local auth
     if (isFirebaseEnabled) return;
 
-    const token = sessionStorage.getItem('accessToken');
+    const token = tokenStorage.getAccessToken();
     if (!token) return;
 
     // Parse JWT to get expiration
@@ -149,11 +179,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const timer = setTimeout(async () => {
       try {
-        const refreshToken = sessionStorage.getItem('refreshToken');
+        const refreshToken = tokenStorage.getRefreshToken();
         if (!refreshToken) return;
 
-        const { accessToken } = await authService.refreshToken(refreshToken);
-        sessionStorage.setItem('accessToken', accessToken);
+        const { accessToken, refreshToken: newRefreshToken } = await authService.refreshToken(refreshToken);
+        tokenStorage.setAccessToken(accessToken);
+        if (newRefreshToken) {
+          tokenStorage.setRefreshToken(newRefreshToken);
+        }
       } catch (error) {
         console.error('Token refresh failed:', error);
         logout();
@@ -175,7 +208,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           credentials.password
         );
         if (idToken) {
-          sessionStorage.setItem('accessToken', idToken);
+          tokenStorage.setAccessToken(idToken);
         }
         // User state will be set by onAuthStateChanged listener
         navigate('/home');
@@ -185,9 +218,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } else {
       // Local authentication
       const response = await authService.login(credentials);
-      sessionStorage.setItem('accessToken', response.accessToken);
+      tokenStorage.setAccessToken(response.accessToken);
       if (response.refreshToken) {
-        sessionStorage.setItem('refreshToken', response.refreshToken);
+        tokenStorage.setRefreshToken(response.refreshToken);
       }
       setUser(response.user);
       navigate('/home');
@@ -201,7 +234,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       const idToken = await firebaseAuthService.signInWithGoogle();
-      sessionStorage.setItem('accessToken', idToken);
+      tokenStorage.setAccessToken(idToken);
       // User state will be set by onAuthStateChanged listener
       navigate('/home');
     } catch (error) {
@@ -221,7 +254,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     setUser(null);
-    sessionStorage.clear();
+    tokenStorage.clearAll();
     // Clear query cache on logout
     queryClient.clear();
     navigate('/login');
@@ -230,16 +263,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const isPlatformAdmin = user?.platformRole === 'PLATFORM_ADMIN';
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isAuthenticated: !!user, 
-        isLoading, 
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
         isFirebaseEnabled,
         isPlatformAdmin,
-        login, 
+        login,
         loginWithGoogle,
-        logout 
+        logout
       }}
     >
       {children}

@@ -54,6 +54,7 @@ export const secretsService = {
       key: request.secretKey,
       value: request.value,
       description: request.description,
+      expiresAt: request.expiresAt,
     };
     const { data } = await api.post(`/api/projects/${projectId}/secrets`, backendRequest);
     return normalizeSecret(data);

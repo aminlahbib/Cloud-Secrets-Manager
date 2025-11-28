@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,10 +16,16 @@ import {
   Crown,
   UserPlus,
   Mail,
+  Clock,
+  BarChart3,
+  List,
+  Calendar,
+  AlertTriangle,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
 import { membersService } from '../services/members';
+import { auditService, type AuditLogsResponse } from '../services/audit';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -29,7 +35,18 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
-import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
+import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
+import { StatsCards } from '../components/analytics/StatsCards';
+import { ActivityChart } from '../components/analytics/ActivityChart';
+import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
+import { ErrorBoundary } from '../components/ErrorBoundary';
+import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
+import { SecretCard } from '../components/ui/SecretCard';
+import {
+  getLastNDays,
+  prepareChartData,
+  formatActionName,
+} from '../utils/analytics';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -50,8 +67,19 @@ export const ProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  
-  const [activeTab, setActiveTab] = useState('secrets');
+
+  // Persist activeTab in sessionStorage to prevent reset on errors
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = sessionStorage.getItem(`project-${projectId}-activeTab`);
+    return saved || 'secrets';
+  });
+
+  // Update sessionStorage when tab changes
+  useEffect(() => {
+    if (projectId) {
+      sessionStorage.setItem(`project-${projectId}-activeTab`, activeTab);
+    }
+  }, [activeTab, projectId]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
@@ -66,6 +94,9 @@ export const ProjectDetailPage: React.FC = () => {
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string>('');
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
+  const [activityPage, setActivityPage] = useState(1);
+  const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
+  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -88,9 +119,96 @@ export const ProjectDetailPage: React.FC = () => {
     enabled: !!projectId,
   });
 
-  // Delete secret mutation
+  // Calculate date range for analytics
+  const getDateRangeParams = () => {
+    if (dateRange === 'all') return {};
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    return {
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
+    };
+  };
+
+  // Fetch project activity logs for list view (paginated)
+  const { data: activityData, isLoading: isActivityLoading, error: activityError } = useQuery<AuditLogsResponse>({
+    queryKey: ['project-activity', projectId, activityPage],
+    queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
+    retry: false,
+  });
+
+  // Fetch analytics using server-side aggregation
+  const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
+    queryKey: ['project-activity-analytics', projectId, dateRange],
+    queryFn: () => {
+      const dateParams = getDateRangeParams();
+      if (!dateParams.startDate || !dateParams.endDate) {
+        throw new Error('Date range is required for analytics');
+      }
+      return auditService.getProjectAnalytics(projectId!, dateParams.startDate, dateParams.endDate);
+    },
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
+    retry: false,
+  });
+
+  // Transform server-side analytics to match frontend format
+  const analyticsStats = useMemo(() => {
+    if (!analyticsData) return null;
+    try {
+      // Server returns data in the same format as calculateActivityStats
+      // Just need to ensure topUsers has the right structure
+      return {
+        totalActions: analyticsData.totalActions || 0,
+        actionsByType: analyticsData.actionsByType || {},
+        actionsByUser: analyticsData.actionsByUser || {},
+        actionsByDay: analyticsData.actionsByDay || {},
+        topActions: analyticsData.topActions || [],
+        topUsers: analyticsData.topUsers || [],
+      };
+    } catch (error) {
+      console.error('Error processing analytics stats:', error);
+      return null;
+    }
+  }, [analyticsData]);
+
+  // Prepare chart data
+  const chartData = useMemo(() => {
+    if (!analyticsStats) return [];
+    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    const dayKeys = getLastNDays(days);
+    return prepareChartData(analyticsStats.actionsByDay, dayKeys);
+  }, [analyticsStats, dateRange]);
+
+  // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
     mutationFn: (key: string) => secretsService.deleteProjectSecret(projectId!, key),
+    onMutate: async (key) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+
+      // Snapshot previous value
+      const previousSecrets = queryClient.getQueryData(['project-secrets', projectId]);
+
+      // Optimistically update
+      queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
+        if (!old?.content) return old;
+        return {
+          ...old,
+          content: old.content.filter((secret: Secret) => secret.secretKey !== key),
+        };
+      });
+
+      return { previousSecrets };
+    },
+    onError: (_err, _key, context) => {
+      // Rollback on error
+      if (context?.previousSecrets) {
+        queryClient.setQueryData(['project-secrets', projectId], context.previousSecrets);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
       setShowDeleteSecretModal(null);
@@ -162,7 +280,7 @@ export const ProjectDetailPage: React.FC = () => {
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
   );
-  const handleMemberRoleChange = (member: ProjectMember, newRole: ProjectRole) => {
+  const handleMemberRoleChange = useCallback((member: ProjectMember, newRole: ProjectRole) => {
     if (member.role === newRole) return;
     setRoleChangeTarget(member.userId);
     updateMemberRoleMutation.mutate(
@@ -171,7 +289,7 @@ export const ProjectDetailPage: React.FC = () => {
         onSettled: () => setRoleChangeTarget(null),
       }
     );
-  };
+  }, [updateMemberRoleMutation]);
   const availableRoleOptions: ProjectRole[] =
     currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
 
@@ -316,11 +434,11 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-4 text-sm text-neutral-600">
             <p>
               Need help?{' '}
-              <button className="underline" type="button" onClick={() => navigate('/activity')}>
+              <button className="underline" type="button" onClick={() => setActiveTab('activity')}>
                 View project activity
               </button>{' '}
               or visit{' '}
-              <button className="underline" type="button" onClick={() => navigate('/settings')}>
+              <button className="underline" type="button" onClick={() => setActiveTab('settings')}>
                 project settings
               </button>{' '}
               for more tools.
@@ -333,7 +451,9 @@ export const ProjectDetailPage: React.FC = () => {
       <Tabs
         tabs={tabs}
         activeTab={activeTab}
-        onChange={setActiveTab}
+        onChange={(tabId) => {
+          setActiveTab(tabId);
+        }}
       />
 
       {/* Tab Content */}
@@ -352,9 +472,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {isSecretsLoading ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
+            <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
             <EmptyState
               icon={<Key className="h-16 w-16 text-gray-400" />}
@@ -367,124 +485,143 @@ export const ProjectDetailPage: React.FC = () => {
               action={
                 canManageSecrets
                   ? {
-                      label: 'Add Secret',
-                      onClick: () => navigate(`/projects/${projectId}/secrets/new`),
-                    }
+                    label: 'Add Secret',
+                    onClick: () => navigate(`/projects/${projectId}/secrets/new`),
+                  }
                   : undefined
               }
             />
           ) : (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Change
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Version
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {secrets.map((secret: Secret) => {
-                    const isExpired =
-                      secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
-                    const versionList = secret.secretVersions;
-                    const lastVersionEntry =
-                      versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
-                    const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
-                    const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
-                    const lastChangeUser =
-                      lastVersionEntry?.creator?.displayName ||
-                      lastVersionEntry?.creator?.email ||
-                      secret.creator?.displayName ||
-                      secret.creator?.email;
-                    const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(
-                      secret.secretKey
-                    )}#versions`;
+            <>
+              {/* Desktop Table View */}
+              <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Created
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Last Change
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Version
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {secrets.map((secret: Secret) => {
+                      const isExpired =
+                        secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
+                      const versionList = secret.secretVersions;
+                      const lastVersionEntry =
+                        versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
+                      const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
+                      const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
+                      const lastChangeUser =
+                        lastVersionEntry?.creator?.displayName ||
+                        lastVersionEntry?.creator?.email ||
+                        secret.creator?.displayName ||
+                        secret.creator?.email;
+                      const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(
+                        secret.secretKey
+                      )}#versions`;
 
-                    return (
-                      <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <Link
-                            to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-                            className="text-sm font-medium text-neutral-900 hover:underline"
-                          >
-                            {secret.secretKey}
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {new Date(secret.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{new Date(lastChangeDate).toLocaleDateString()}</div>
-                          {lastChangeUser && <div className="text-xs text-gray-500">by {lastChangeUser}</div>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">v{versionNumber}</div>
-                          <Link to={historyLink} className="text-xs text-neutral-500 hover:text-neutral-900">
-                            View history
-                          </Link>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {isExpired ? (
-                            <Badge variant="danger">Expired</Badge>
-                          ) : secret.expiresAt ? (
-                            <Badge variant="warning">
-                              Expires {new Date(secret.expiresAt).toLocaleDateString()}
-                            </Badge>
-                          ) : (
-                            <Badge variant="default">Active</Badge>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)
-                            }
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          {canManageSecrets && (
+                      return (
+                        <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <Link
+                              to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
+                              className="text-sm font-medium text-neutral-900 hover:underline"
+                            >
+                              {secret.secretKey}
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {new Date(secret.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{new Date(lastChangeDate).toLocaleDateString()}</div>
+                            {lastChangeUser && <div className="text-xs text-gray-500">by {lastChangeUser}</div>}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">v{versionNumber}</div>
+                            <Link to={historyLink} className="text-xs text-neutral-500 hover:text-neutral-900">
+                              View history
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {isExpired ? (
+                              <Badge variant="danger">Expired</Badge>
+                            ) : secret.expiresAt ? (
+                              <Badge variant="warning">
+                                Expires {new Date(secret.expiresAt).toLocaleDateString()}
+                              </Badge>
+                            ) : (
+                              <Badge variant="default">Active</Badge>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() =>
-                                navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)
+                                navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)
                               }
                             >
-                              <Edit className="h-4 w-4" />
+                              <Eye className="h-4 w-4" />
                             </Button>
-                          )}
-                          {canDeleteSecrets && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setShowDeleteSecretModal(secret.secretKey)}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                            {canManageSecrets && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)
+                                }
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {canDeleteSecrets && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setShowDeleteSecretModal(secret.secretKey)}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {secrets.map((secret: Secret) => (
+                  <SecretCard
+                    key={secret.id || secret.secretKey}
+                    secret={secret}
+                    projectId={projectId!}
+                    canManageSecrets={canManageSecrets}
+                    canDeleteSecrets={canDeleteSecrets}
+                    onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                    onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                    onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
+                  />
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -503,9 +640,9 @@ export const ProjectDetailPage: React.FC = () => {
               action={
                 canManageMembers
                   ? {
-                      label: 'Invite Member',
-                      onClick: () => setShowInviteModal(true),
-                    }
+                    label: 'Invite Member',
+                    onClick: () => setShowInviteModal(true),
+                  }
                   : undefined
               }
             />
@@ -574,13 +711,354 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'activity' && (
-        <Card className="p-6">
-          <EmptyState
-            icon={<Activity className="h-16 w-16 text-gray-400" />}
-            title="Activity Log"
-            description="Recent activity for this project will appear here"
-          />
-        </Card>
+        <ErrorBoundary
+          resetKeys={[projectId || '', activityView]}
+          fallback={
+            <Card className="p-6">
+              <div className="text-center">
+                <p className="text-red-600 mb-2">Error loading activity tab</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  There was an error displaying the activity tab. Please try refreshing the page.
+                </p>
+                <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+              </div>
+            </Card>
+          }
+        >
+          <div className="space-y-6">
+            {/* Header with view toggle and date filter */}
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
+              <div className="flex items-center gap-3">
+                {/* Date Range Filter (only for analytics) */}
+                {activityView === 'analytics' && (
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <select
+                      value={dateRange}
+                      onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                      className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="7d">Last 7 days</option>
+                      <option value="30d">Last 30 days</option>
+                      <option value="90d">Last 90 days</option>
+                      <option value="all">All time</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* View Toggle */}
+                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                  <Button
+                    variant={activityView === 'analytics' ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => setActivityView('analytics')}
+                    className="!m-0"
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </Button>
+                  <Button
+                    variant={activityView === 'list' ? 'primary' : 'secondary'}
+                    size="sm"
+                    onClick={() => setActivityView('list')}
+                    className="!m-0"
+                  >
+                    <List className="h-4 w-4 mr-2" />
+                    List
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Analytics View */}
+            {activityView === 'analytics' && (
+              <>
+                {isAnalyticsLoading ? (
+                  <div className="space-y-6">
+                    <SkeletonStats />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <Skeleton variant="text" width="40%" height={24} className="mb-4" />
+                        <Skeleton variant="rectangular" width="100%" height={300} />
+                      </div>
+                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                        <Skeleton variant="text" width="40%" height={24} className="mb-4" />
+                        <Skeleton variant="rectangular" width="100%" height={300} />
+                      </div>
+                    </div>
+                  </div>
+                ) : analyticsError ? (
+                  <Card className="p-6">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Analytics</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {analyticsError instanceof Error 
+                          ? analyticsError.message 
+                          : 'An error occurred while loading analytics. Please try again.'}
+                      </p>
+                      {(analyticsError as any)?.isPermissionError && (
+                        <p className="text-xs text-gray-500 mb-4">
+                          You may not have permission to view analytics for this project.
+                        </p>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </Button>
+                    </div>
+                  </Card>
+                ) : !analyticsStats ? (
+                  <Card className="p-6">
+                    <EmptyState
+                      icon={<Activity className="h-16 w-16 text-gray-400" />}
+                      title="No Activity"
+                      description="Activity for this project will appear here as actions are performed"
+                    />
+                  </Card>
+                ) : (() => {
+                  try {
+                    if (!analyticsStats) {
+                      return (
+                        <Card className="p-6">
+                          <EmptyState
+                            icon={<Activity className="h-16 w-16 text-gray-400" />}
+                            title="No Activity"
+                            description="Activity for this project will appear here as actions are performed"
+                          />
+                        </Card>
+                      );
+                    }
+                    return (
+                      <div className="space-y-6">
+                        {/* Stats Cards */}
+                        <StatsCards stats={analyticsStats} />
+
+                        {/* Charts */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          <ActivityChart data={chartData} title="Activity Over Time" type="line" />
+                          <ActionDistributionChart
+                            actionsByType={analyticsStats.actionsByType}
+                            title="Actions Distribution"
+                          />
+                        </div>
+
+                        {/* Top Users and Actions */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Top Users */}
+                          <Card className="p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Contributors</h3>
+                            {analyticsStats.topUsers.length === 0 ? (
+                              <p className="text-gray-500 text-sm">No user data available</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
+                                  <div key={user.userId} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
+                                        {index + 1}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {user.email || 'Unknown User'}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{user.count} actions</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </Card>
+
+                          {/* Top Actions */}
+                          <Card className="p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Actions</h3>
+                            {analyticsStats.topActions.length === 0 ? (
+                              <p className="text-gray-500 text-sm">No action data available</p>
+                            ) : (
+                              <div className="space-y-3">
+                                {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (
+                                  <div key={action.action} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
+                                        {index + 1}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-900">
+                                          {formatActionName(action.action)}
+                                        </p>
+                                        <p className="text-xs text-gray-500">{action.count} occurrences</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </Card>
+                        </div>
+                      </div>
+                    );
+                  } catch (error) {
+                    // console.error('Error rendering analytics:', error);
+
+                    return (
+                      <Card className="p-6">
+                        <div className="text-center">
+                          <p className="text-red-600 mb-2">Error rendering analytics</p>
+                          <p className="text-sm text-gray-500">{String(error)}</p>
+                        </div>
+                      </Card>
+                    );
+                  }
+                })()}
+              </>
+            )}
+
+            {/* List View */}
+            {activityView === 'list' && (
+              <>
+                {isActivityLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner size="lg" />
+                  </div>
+                ) : activityError ? (
+                  <Card className="p-6">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Activity</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {activityError instanceof Error 
+                          ? activityError.message 
+                          : 'An error occurred while loading activity data. Please try again.'}
+                      </p>
+                      {(activityError as any)?.isPermissionError && (
+                        <p className="text-xs text-gray-500 mb-4">
+                          You may not have permission to view audit logs for this project.
+                        </p>
+                      )}
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => window.location.reload()}
+                      >
+                        Refresh Page
+                      </Button>
+                    </div>
+                  </Card>
+                ) : !activityData || !('content' in activityData) || activityData.content.length === 0 ? (
+                  <Card className="p-6">
+                    <EmptyState
+                      icon={<Activity className="h-16 w-16 text-gray-400" />}
+                      title="No Activity"
+                      description="Activity for this project will appear here as actions are performed"
+                    />
+                  </Card>
+                ) : (
+                  <>
+                    <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+                      {activityData.content.map((log: AuditLog) => {
+                        const getTimeAgo = (timestamp: string) => {
+                          const date = new Date(timestamp);
+                          const now = new Date();
+                          const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+                          if (diffInSeconds < 60) return 'just now';
+                          if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+                          if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+                          if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+                          return date.toLocaleDateString();
+                        };
+
+                        const formatAction = (action: string) => {
+                          return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                        };
+
+                        const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
+                          if (action.includes('CREATE')) return 'success';
+                          if (action.includes('DELETE')) return 'danger';
+                          if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
+                          if (action.includes('READ')) return 'info';
+                          return 'default';
+                        };
+
+                        return (
+                          <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
+                            <div className="flex items-start gap-4">
+                              <div className={`p-2 rounded-lg ${getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
+                                  getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
+                                    getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                                      getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
+                                        'bg-gray-100 text-gray-600'
+                                }`}>
+                                <Activity className="h-4 w-4" />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant={getActionColor(log.action)}>
+                                    {formatAction(log.action)}
+                                  </Badge>
+                                  {log.resourceName && (
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {log.resourceName}
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-sm text-gray-500">
+                                  by {log.userEmail || log.user?.email || 'Unknown'}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center text-sm text-gray-400">
+                                <Clock className="h-4 w-4 mr-1" />
+                                {getTimeAgo(log.createdAt || '')}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {activityData.totalPages > 1 && (
+                      <div className="flex justify-center">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setActivityPage(p => Math.max(1, p - 1))}
+                            disabled={activityPage === 1}
+                          >
+                            Previous
+                          </Button>
+                          <span className="flex items-center px-4 text-sm text-gray-600">
+                            Page {activityPage} of {activityData.totalPages}
+                          </span>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setActivityPage(p => Math.min(activityData.totalPages, p + 1))}
+                            disabled={activityPage >= activityData.totalPages}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </ErrorBoundary>
       )}
 
       {activeTab === 'settings' && (
@@ -858,7 +1336,7 @@ export const ProjectDetailPage: React.FC = () => {
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="colleague@example.com"
           />
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Role

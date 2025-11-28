@@ -20,9 +20,8 @@ const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger'
 };
 
 interface FilterState {
-  username: string;
   action: string;
-  secretKey: string;
+  resourceType: string;
   startDate: string;
   endDate: string;
 }
@@ -30,9 +29,8 @@ interface FilterState {
 export const AuditLogsPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FilterState>({
-    username: '',
     action: '',
-    secretKey: '',
+    resourceType: '',
     startDate: '',
     endDate: '',
   });
@@ -44,9 +42,8 @@ export const AuditLogsPage: React.FC = () => {
       auditService.listAuditLogs({
         page: page - 1,
         size: 50,
-        username: filters.username || undefined,
         action: filters.action || undefined,
-        secretKey: filters.secretKey || undefined,
+        resourceType: filters.resourceType || undefined,
         startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
         endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
       }),
@@ -60,9 +57,8 @@ export const AuditLogsPage: React.FC = () => {
 
   const handleClearFilters = () => {
     setFilters({
-      username: '',
       action: '',
-      secretKey: '',
+      resourceType: '',
       startDate: '',
       endDate: '',
     });
@@ -71,14 +67,14 @@ export const AuditLogsPage: React.FC = () => {
 
   const handleExport = () => {
     if (!data?.content?.length) return;
-    const header = ['Timestamp', 'Action', 'Secret Key', 'User', 'IP Address', 'Details'];
+    const header = ['Timestamp', 'Action', 'Resource Type', 'Resource Name', 'User', 'IP Address'];
     const rows = data.content.map((log: AuditLog) => [
-      new Date(log.timestamp || log.createdAt || '').toISOString(),
+      new Date(log.createdAt || '').toISOString(),
       log.action,
-      log.secretKey ?? '',
-      log.username || '',
+      log.resourceType || '',
+      log.resourceName || log.resourceId || '',
+      log.userEmail || log.user?.email || '',
       log.ipAddress ?? '',
-      log.details ?? '',
     ]);
 
     const csv = [header, ...rows]
@@ -103,9 +99,8 @@ export const AuditLogsPage: React.FC = () => {
 
   const hasActiveFilters = useMemo(
     () =>
-      filters.username ||
       filters.action ||
-      filters.secretKey ||
+      filters.resourceType ||
       filters.startDate ||
       filters.endDate,
     [filters]
@@ -140,19 +135,7 @@ export const AuditLogsPage: React.FC = () => {
 
       {showFilters && (
         <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-          <div className="grid gap-4 md:grid-cols-5">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                User Email
-              </label>
-              <input
-                type="email"
-                value={filters.username}
-                onChange={(e) => handleFilterChange('username', e.target.value)}
-                placeholder="user@example.com"
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
-              />
-            </div>
+          <div className="grid gap-4 md:grid-cols-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Action
@@ -163,26 +146,32 @@ export const AuditLogsPage: React.FC = () => {
                 className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
               >
                 <option value="">All</option>
-                <option value="CREATE">Create</option>
-                <option value="READ">Read</option>
-                <option value="UPDATE">Update</option>
-                <option value="DELETE">Delete</option>
-                <option value="SHARE">Share</option>
-                <option value="UNSHARE">Unshare</option>
-                <option value="ROTATE">Rotate</option>
+                <option value="SECRET_CREATE">Secret Create</option>
+                <option value="SECRET_READ">Secret Read</option>
+                <option value="SECRET_UPDATE">Secret Update</option>
+                <option value="SECRET_DELETE">Secret Delete</option>
+                <option value="SECRET_ROTATE">Secret Rotate</option>
+                <option value="PROJECT_CREATE">Project Create</option>
+                <option value="PROJECT_UPDATE">Project Update</option>
+                <option value="MEMBER_INVITE">Member Invite</option>
+                <option value="MEMBER_REMOVE">Member Remove</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Secret Key
+                Resource Type
               </label>
-              <input
-                type="text"
-                value={filters.secretKey}
-                onChange={(e) => handleFilterChange('secretKey', e.target.value)}
-                placeholder="api-key-prod"
+              <select
+                value={filters.resourceType}
+                onChange={(e) => handleFilterChange('resourceType', e.target.value)}
                 className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
-              />
+              >
+                <option value="">All</option>
+                <option value="SECRET">Secret</option>
+                <option value="PROJECT">Project</option>
+                <option value="MEMBER">Member</option>
+                <option value="WORKFLOW">Workflow</option>
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -250,7 +239,10 @@ export const AuditLogsPage: React.FC = () => {
                       Action
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Secret Key
+                      Resource Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Resource Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       User
@@ -258,28 +250,23 @@ export const AuditLogsPage: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       IP Address
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Details
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {logs.map((log: AuditLog) => (
                     <tr key={log.id}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(log.timestamp || log.createdAt || '').toLocaleString()}
+                        {new Date(log.createdAt || '').toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <Badge variant={ACTION_COLORS[log.action] || 'default'}>
                           {log.action}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{log.secretKey || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{log.username}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{log.resourceType || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{log.resourceName || log.resourceId || '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-900">{log.userEmail || log.user?.email || 'Unknown'}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{log.ipAddress || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {log.details || '—'}
-                      </td>
                     </tr>
                   ))}
                 </tbody>

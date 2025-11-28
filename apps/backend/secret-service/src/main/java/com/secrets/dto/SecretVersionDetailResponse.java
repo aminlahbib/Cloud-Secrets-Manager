@@ -17,11 +17,11 @@ public class SecretVersionDetailResponse {
     }
 
     public SecretVersionDetailResponse(Integer versionNumber,
-                                       String secretKey,
-                                       String changedBy,
-                                       String changeDescription,
-                                       LocalDateTime createdAt,
-                                       String value) {
+            String secretKey,
+            String changedBy,
+            String changeDescription,
+            LocalDateTime createdAt,
+            String value) {
         this.versionNumber = versionNumber;
         this.secretKey = secretKey;
         this.changedBy = changedBy;
@@ -80,15 +80,11 @@ public class SecretVersionDetailResponse {
 
     public static SecretVersionDetailResponse from(SecretVersion version, String decryptedValue) {
         return new SecretVersionDetailResponse(
-            version.getVersionNumber(),
-            version.getSecret() != null ? version.getSecret().getSecretKey() : null,
-            version.getCreatedBy() != null ? version.getCreatedBy().toString()
-                : (version.getChangedBy() != null ? version.getChangedBy() : "Unknown"),
-            version.getChangeNote() != null ? version.getChangeNote()
-                : (version.getChangeDescription() != null ? version.getChangeDescription() : ""),
-            version.getCreatedAt(),
-            decryptedValue
-        );
+                version.getVersionNumber(),
+                version.getSecret() != null ? version.getSecret().getSecretKey() : null,
+                version.getCreatedBy() != null ? version.getCreatedBy().toString() : "Unknown",
+                version.getChangeNote() != null ? version.getChangeNote() : "",
+                version.getCreatedAt(),
+                decryptedValue);
     }
 }
-

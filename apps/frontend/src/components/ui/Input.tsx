@@ -1,14 +1,15 @@
 import { InputHTMLAttributes, forwardRef } from 'react';
 import { clsx } from 'clsx';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   helperText?: string;
+  icon?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, helperText, className, ...props }, ref) => {
+  ({ label, error, helperText, className, icon, ...props }, ref) => {
     return (
       <div className="w-full">
         {label && (
@@ -17,17 +18,25 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {props.required && <span className="text-red-500 ml-1">*</span>}
           </label>
         )}
-        <input
-          ref={ref}
-          className={clsx(
-            'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-white',
-            error
-              ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-              : 'border-neutral-300 focus:ring-neutral-900 focus:border-neutral-900',
-            className
+        <div className="relative">
+          {icon && (
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              {icon}
+            </div>
           )}
-          {...props}
-        />
+          <input
+            ref={ref}
+            className={clsx(
+              'w-full py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-white',
+              icon ? 'pl-10 pr-3' : 'px-3',
+              error
+                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                : 'border-neutral-300 focus:ring-neutral-900 focus:border-neutral-900',
+              className
+            )}
+            {...props}
+          />
+        </div>
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
         {helperText && !error && <p className="mt-1 text-sm text-neutral-500">{helperText}</p>}
       </div>

@@ -241,18 +241,19 @@ export interface AuditLog {
   action: AuditAction;
   resourceType: ResourceType;
   resourceId?: string;
+  resourceName?: string;
+  oldValue?: Record<string, unknown>;
+  newValue?: Record<string, unknown>;
   metadata?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: string;
-  // Computed/joined fields
+  // Enriched user data (added by proxy service)
+  userEmail?: string;
+  userDisplayName?: string;
+  // Computed/joined fields (for backward compatibility)
   user?: User;
   project?: Project;
-  // Legacy field mapping
-  username?: string;
-  secretKey?: string;
-  timestamp?: string;
-  details?: string;
 }
 
 // ----------------------------------------------------------------------------
