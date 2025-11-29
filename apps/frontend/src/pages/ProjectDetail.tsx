@@ -418,6 +418,12 @@ export const ProjectDetailPage: React.FC = () => {
   const leaveProjectMutation = useMutation({
     mutationFn: () => projectsService.leaveProject(projectId!),
     onSuccess: () => {
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
       setShowLeaveModal(false);
       navigate('/projects');
     },
