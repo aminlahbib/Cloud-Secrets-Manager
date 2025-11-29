@@ -183,10 +183,10 @@ export const SecretDetailPage: React.FC = () => {
             <Card className="p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-neutral-500 mb-1">Secret</p>
-                  <h1 className="text-3xl font-semibold text-neutral-900 break-all">{secret.secretKey}</h1>
+                  <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-1">Secret</p>
+                  <h1 className="text-3xl font-semibold text-neutral-900 dark:text-white break-all">{secret.secretKey}</h1>
                   {secret.description && (
-                    <p className="text-neutral-600 mt-2 max-w-2xl">{secret.description}</p>
+                    <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-2xl">{secret.description}</p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -230,7 +230,7 @@ export const SecretDetailPage: React.FC = () => {
 
               <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium text-neutral-700">Value</p>
+                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Value</p>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -266,7 +266,7 @@ export const SecretDetailPage: React.FC = () => {
                     type={showValue ? 'text' : 'password'}
                     value={secret.value || ''}
                     readOnly
-                    className="w-full px-4 py-3 border border-neutral-200 rounded-lg bg-white font-mono text-sm"
+                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-[#111111] font-mono text-sm text-neutral-900 dark:text-white transition-colors"
                   />
                 </div>
               </div>
@@ -314,10 +314,10 @@ export const SecretDetailPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-neutral-900">Version {version.versionNumber}</p>
-                          <p className="text-xs text-neutral-500">{formatDateTime(version.createdAt)}</p>
+                          <p className="text-sm font-semibold text-neutral-900 dark:text-white">Version {version.versionNumber}</p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDateTime(version.createdAt)}</p>
                           {version.changeNote && (
-                            <p className="text-xs text-neutral-500 mt-1 truncate">{version.changeNote}</p>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 truncate">{version.changeNote}</p>
                           )}
                         </div>
                         <div className="flex gap-3 text-xs font-medium text-neutral-700">
