@@ -138,6 +138,7 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
     enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
     retry: false,
+    refetchInterval: 5000, // Poll every 5 seconds
   });
 
   // Fetch analytics using server-side aggregation
@@ -152,6 +153,7 @@ export const ProjectDetailPage: React.FC = () => {
     },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
+    refetchInterval: 5000, // Poll every 5 seconds
   });
 
   // Transform server-side analytics to match frontend format
@@ -211,6 +213,8 @@ export const ProjectDetailPage: React.FC = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       setShowDeleteSecretModal(null);
     },
   });
@@ -220,6 +224,8 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: () => membersService.inviteMember(projectId!, { email: inviteEmail, role: inviteRole }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('MEMBER');
@@ -231,6 +237,8 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: (userId: string) => membersService.removeMember(projectId!, userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
     },
   });
 
@@ -239,6 +247,8 @@ export const ProjectDetailPage: React.FC = () => {
       membersService.updateMemberRole(projectId!, userId, { role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
     },
   });
 
@@ -247,6 +257,8 @@ export const ProjectDetailPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       setShowTransferModal(false);
       setTransferTarget('');
     },
@@ -324,6 +336,8 @@ export const ProjectDetailPage: React.FC = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
     },
   });
 
@@ -331,6 +345,8 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: () => projectsService.archiveProject(projectId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       setShowArchiveModal(false);
     },
   });
@@ -347,6 +363,8 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: () => projectsService.restoreProject(projectId!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       setShowRestoreModal(false);
     },
   });
@@ -796,8 +814,8 @@ export const ProjectDetailPage: React.FC = () => {
                       </div>
                       <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Analytics</h3>
                       <p className="text-sm text-gray-600 mb-4">
-                        {analyticsError instanceof Error 
-                          ? analyticsError.message 
+                        {analyticsError instanceof Error
+                          ? analyticsError.message
                           : 'An error occurred while loading analytics. Please try again.'}
                       </p>
                       {(analyticsError as any)?.isPermissionError && (
@@ -936,8 +954,8 @@ export const ProjectDetailPage: React.FC = () => {
                       </div>
                       <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Activity</h3>
                       <p className="text-sm text-gray-600 mb-4">
-                        {activityError instanceof Error 
-                          ? activityError.message 
+                        {activityError instanceof Error
+                          ? activityError.message
                           : 'An error occurred while loading activity data. Please try again.'}
                       </p>
                       {(activityError as any)?.isPermissionError && (
@@ -994,10 +1012,10 @@ export const ProjectDetailPage: React.FC = () => {
                           <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
                             <div className="flex items-start gap-4">
                               <div className={`p-2 rounded-lg ${getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
-                                  getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
-                                    getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                      getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
-                                        'bg-gray-100 text-gray-600'
+                                getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
+                                  getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
+                                    getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
+                                      'bg-gray-100 text-gray-600'
                                 }`}>
                                 <Activity className="h-4 w-4" />
                               </div>
