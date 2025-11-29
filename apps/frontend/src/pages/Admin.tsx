@@ -54,21 +54,21 @@ export const AdminPage: React.FC = () => {
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>User Management</h1>
+        <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
           Manage user roles and permissions
         </p>
       </div>
 
       {/* Warning Banner */}
-      <Card className="p-4 mb-6 bg-yellow-50 border-yellow-200">
+      <Card className="p-4 mb-6" style={{ backgroundColor: 'var(--status-warning-bg)', border: '1px solid var(--status-warning)' }}>
         <div className="flex items-start">
-          <Shield className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+          <Shield className="h-5 w-5 mt-0.5 mr-3 flex-shrink-0" style={{ color: 'var(--status-warning)' }} />
           <div>
-            <h3 className="text-sm font-medium text-yellow-800">
+            <h3 className="text-sm font-medium" style={{ color: 'var(--status-warning)' }}>
               Admin Access Required
             </h3>
-            <p className="mt-1 text-sm text-yellow-700">
+            <p className="mt-1 text-sm" style={{ color: 'var(--status-warning)' }}>
               Only administrators can view and modify user roles. Changes take
               effect immediately.
             </p>
@@ -85,11 +85,11 @@ export const AdminPage: React.FC = () => {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-sm font-medium text-red-800 mb-2">
+        <div className="rounded-lg p-4 mb-6" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+          <p className="text-sm font-medium mb-2" style={{ color: 'var(--status-danger)' }}>
             Failed to load users
           </p>
-          <p className="text-sm text-red-700 mb-2">
+          <p className="text-sm mb-2" style={{ color: 'var(--status-danger)' }}>
             {error instanceof Error ? error.message : 'You may not have admin permissions or the service account may lack required permissions.'}
           </p>
           {(() => {
@@ -110,7 +110,7 @@ export const AdminPage: React.FC = () => {
             const responseData = errorWithResponse.response.data as Record<string, unknown>;
             
             return (
-              <div className="mt-2 text-xs text-red-600 space-y-1">
+              <div className="mt-2 text-xs space-y-1" style={{ color: 'var(--status-danger)' }}>
                 {('details' in responseData) && (
                   <p className="font-medium">Details: {String(responseData.details)}</p>
                 )}
@@ -126,9 +126,9 @@ export const AdminPage: React.FC = () => {
               </div>
             );
           })()}
-          <div className="mt-3 pt-3 border-t border-red-200">
-            <p className="text-xs text-red-600 font-medium">Troubleshooting:</p>
-            <ul className="text-xs text-red-600 mt-1 list-disc list-inside space-y-1">
+          <div className="mt-3 pt-3 border-t" style={{ borderTopColor: 'var(--status-danger)' }}>
+            <p className="text-xs font-medium" style={{ color: 'var(--status-danger)' }}>Troubleshooting:</p>
+            <ul className="text-xs mt-1 list-disc list-inside space-y-1" style={{ color: 'var(--status-danger)' }}>
               <li>Ensure your Firebase service account has "Firebase Admin" role</li>
               <li>Check backend logs for detailed error information</li>
               <li>Verify Firebase Admin SDK is properly initialized</li>
@@ -140,7 +140,7 @@ export const AdminPage: React.FC = () => {
       {/* Empty State */}
       {!isLoading && !error && (!users || users.length === 0) && (
         <EmptyState
-          icon={<Users className="h-16 w-16 text-gray-400" />}
+          icon={<Users className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title="No users found"
           description="No users are registered in the system yet."
         />
@@ -154,7 +154,7 @@ export const AdminPage: React.FC = () => {
               <div className="sm:flex sm:items-center sm:justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                       {user.email}
                     </h3>
                     <Badge variant={ROLE_COLORS[user.primaryRole] || 'default'}>
@@ -175,7 +175,7 @@ export const AdminPage: React.FC = () => {
                   )}
 
                   {/* Metadata */}
-                  <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <div className="flex items-center space-x-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     {user.lastLoginAt && (
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-1" />
@@ -217,20 +217,20 @@ export const AdminPage: React.FC = () => {
         {selectedUser && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 User
               </label>
-              <p className="text-sm text-gray-900">{selectedUser.email}</p>
+              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>{selectedUser.email}</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Role
               </label>
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value)}
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
+                className="input-theme"
               >
                 {ROLES.map((role) => (
                   <option key={role} value={role}>
@@ -240,11 +240,11 @@ export const AdminPage: React.FC = () => {
               </select>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">
+            <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--status-info-bg)', border: '1px solid var(--status-info)' }}>
+              <h4 className="text-sm font-medium mb-2" style={{ color: 'var(--status-info)' }}>
                 Role Descriptions
               </h4>
-              <ul className="text-sm text-blue-700 space-y-1">
+              <ul className="text-sm space-y-1" style={{ color: 'var(--status-info)' }}>
                 <li>
                   <strong>USER:</strong> Can create and manage their own secrets
                 </li>
@@ -275,8 +275,8 @@ export const AdminPage: React.FC = () => {
             </div>
 
             {updateRoleMutation.isError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-800">
+              <div className="rounded-lg p-3" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+                <p className="text-sm" style={{ color: 'var(--status-danger)' }}>
                   Failed to update role. Please try again.
                 </p>
               </div>

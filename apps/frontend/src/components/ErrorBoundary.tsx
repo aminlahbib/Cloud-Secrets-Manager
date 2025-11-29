@@ -94,33 +94,33 @@ export class ErrorBoundary extends Component<Props, State> {
 
       // Default error UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-4">
+        <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'var(--page-bg)' }}>
           <Card className="max-w-2xl w-full p-8">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--status-danger-bg)' }}>
+                  <AlertTriangle className="h-6 w-6" style={{ color: 'var(--status-danger)' }} />
                 </div>
               </div>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h1>
-                <p className="text-gray-600 mb-4">
+                <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Something went wrong</h1>
+                <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
                   We're sorry, but something unexpected happened. Please try refreshing the page or
                   return to the home page.
                 </p>
 
                 {process.env.NODE_ENV === 'development' && this.state.error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm font-semibold text-red-800 mb-2">Error Details:</p>
-                    <p className="text-sm text-red-700 font-mono mb-2">
+                  <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+                    <p className="text-sm font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Error Details:</p>
+                    <p className="text-sm font-mono mb-2" style={{ color: 'var(--status-danger)' }}>
                       {this.state.error.toString()}
                     </p>
                     {this.state.errorInfo && (
                       <details className="mt-2">
-                        <summary className="text-sm text-red-700 cursor-pointer hover:text-red-800">
+                        <summary className="text-sm cursor-pointer" style={{ color: 'var(--status-danger)' }}>
                           Stack Trace
                         </summary>
-                        <pre className="mt-2 text-xs text-red-600 overflow-auto max-h-48 p-2 bg-red-100 rounded">
+                        <pre className="mt-2 text-xs overflow-auto max-h-48 p-2 rounded" style={{ color: 'var(--status-danger)', backgroundColor: 'var(--elevation-1)' }}>
                           {this.state.errorInfo.componentStack}
                         </pre>
                       </details>

@@ -131,7 +131,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   if (fallback) fallback.style.display = 'flex';
                 }}
               />
-              <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold hidden">
+              <div 
+                className="h-12 w-12 rounded-2xl flex items-center justify-center text-xl font-semibold hidden"
+                style={{ backgroundColor: 'var(--elevation-1)', color: 'var(--text-primary)' }}
+              >
                 CSM
               </div>
               <span className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Cloud Secrets</span>
@@ -193,7 +196,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </button>
 
                   {isWorkflowMenuOpen && (
-                    <div className="mt-2 rounded-2xl border overflow-hidden glass" style={{ borderColor: 'var(--border-subtle)', boxShadow: 'var(--shadow-lg)' }}>
+                    <div 
+                      className="mt-2 rounded-2xl border overflow-hidden" 
+                      style={{ 
+                        borderColor: 'var(--border-subtle)', 
+                        boxShadow: 'var(--shadow-lg)',
+                        backgroundColor: 'var(--elevation-2)',
+                        backdropFilter: 'blur(12px)',
+                      }}
+                    >
                       <div className="max-h-64 overflow-y-auto">
                         {workflows.map((workflow) => {
                           const isSelected = workflow.id === selectedWorkflowId;
@@ -249,8 +260,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   )}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-neutral-200 p-6 text-center">
-                  <p className="text-sm text-neutral-500 mb-3">No workflows yet</p>
+                <div 
+                  className="rounded-2xl border border-dashed p-6 text-center"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
+                  <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>No workflows yet</p>
                   <Button onClick={() => navigate('/workflows/new')} size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Workflow
@@ -373,7 +387,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <span className="text-body-sm font-semibold tracking-tight uppercase text-primary">Cloud Secrets</span>
-            <div className="h-8 w-8 rounded-full bg-neutral-900 text-white flex items-center justify-center">
+            <div 
+              className="h-8 w-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: 'var(--elevation-2)', color: 'var(--text-primary)' }}
+            >
               {user?.displayName?.[0] || user?.email?.[0] || 'U'}
             </div>
           </header>
@@ -385,7 +402,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
 
       {isSidebarOpen && (
-        <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setIsSidebarOpen(false)} />
+        <div 
+          className="fixed inset-0 z-30 md:hidden" 
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+          onClick={() => setIsSidebarOpen(false)} 
+        />
       )}
     </div>
   );

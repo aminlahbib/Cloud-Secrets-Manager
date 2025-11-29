@@ -56,7 +56,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
                     className="px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300"
                     style={{
                       backgroundColor: isActive ? 'var(--tab-active-border)' : 'var(--tab-hover-bg)',
-                      color: isActive ? '#ffffff' : 'var(--tab-text-muted)',
+                      color: isActive ? 'var(--text-inverse)' : 'var(--tab-text-muted)',
                     }}
                   >
                     {tab.count}
