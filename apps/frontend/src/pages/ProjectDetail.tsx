@@ -21,11 +21,14 @@ import {
   List,
   Calendar,
   AlertTriangle,
+  LayoutGrid,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
 import { membersService } from '../services/members';
 import { auditService, type AuditLogsResponse } from '../services/audit';
+import { workflowsService } from '../services/workflows';
+import { useWorkflows } from '../hooks/useWorkflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -87,6 +90,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showDeleteProjectModal, setShowDeleteProjectModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -104,6 +108,29 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => projectsService.getProject(projectId!),
     enabled: !!projectId,
   });
+
+  // Fetch workflows to find current workflow and allow selection
+  const { data: workflows } = useWorkflows(user?.id);
+
+  // Find current workflow for this project
+  const currentWorkflow = useMemo(() => {
+    if (!workflows || !projectId) return null;
+    for (const workflow of workflows) {
+      if (workflow.projects?.some(wp => wp.projectId === projectId)) {
+        return workflow;
+      }
+    }
+    return null;
+  }, [workflows, projectId]);
+
+  // Initialize selected workflow when current workflow is found
+  useEffect(() => {
+    if (currentWorkflow) {
+      setSelectedWorkflowId(currentWorkflow.id);
+    } else {
+      setSelectedWorkflowId('');
+    }
+  }, [currentWorkflow]);
 
   // Fetch secrets
   const { data: secretsData, isLoading: isSecretsLoading } = useQuery({
@@ -296,6 +323,30 @@ export const ProjectDetailPage: React.FC = () => {
       setProjectDescription(project.description || '');
     }
   }, [project]);
+
+  // Mutation to move project between workflows
+  const moveProjectToWorkflowMutation = useMutation({
+    mutationFn: async ({ fromWorkflowId, toWorkflowId }: { fromWorkflowId: string | null; toWorkflowId: string | null }) => {
+      if (fromWorkflowId && toWorkflowId && fromWorkflowId !== toWorkflowId) {
+        // Move from one workflow to another
+        await workflowsService.moveProjectToWorkflow(projectId!, fromWorkflowId, toWorkflowId);
+      } else if (fromWorkflowId && !toWorkflowId) {
+        // Remove from workflow
+        await workflowsService.removeProjectFromWorkflow(fromWorkflowId, projectId!);
+      } else if (!fromWorkflowId && toWorkflowId) {
+        // Add to workflow
+        await workflowsService.addProjectToWorkflow(toWorkflowId, projectId!);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflows'] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+      }
+    },
+  });
 
   useEffect(() => {
     if (!showTransferModal) {
@@ -1184,6 +1235,51 @@ export const ProjectDetailPage: React.FC = () => {
                   placeholder="Describe the scope, environments, or use cases for this project."
                   disabled={!canManageProject}
                 />
+              </div>
+
+              {/* Workflow Selection */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  Workflow
+                  <span className="text-gray-400 font-normal ml-1">(optional)</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none">
+                    <LayoutGrid className="h-4 w-4 text-gray-400" />
+                  </div>
+                  <select
+                    value={selectedWorkflowId}
+                    onChange={(e) => {
+                      const newWorkflowId = e.target.value || null;
+                      const oldWorkflowId = currentWorkflow?.id || null;
+                      setSelectedWorkflowId(newWorkflowId || '');
+                      moveProjectToWorkflowMutation.mutate({
+                        fromWorkflowId: oldWorkflowId,
+                        toWorkflowId: newWorkflowId,
+                      });
+                    }}
+                    disabled={!canManageProject || moveProjectToWorkflowMutation.isPending}
+                    className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <option value="">No Workflow (Unassigned)</option>
+                    {workflows?.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name} {w.isDefault && '(Default)'}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Organize this project by assigning it to a workflow. Projects can be moved between workflows at any time.
+                </p>
+                {moveProjectToWorkflowMutation.isPending && (
+                  <p className="mt-1 text-xs text-blue-600">Moving project...</p>
+                )}
               </div>
             </div>
           </div>
