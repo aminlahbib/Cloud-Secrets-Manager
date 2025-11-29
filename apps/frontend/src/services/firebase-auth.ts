@@ -6,6 +6,7 @@ import {
   onAuthStateChanged,
   setPersistence,
   browserSessionPersistence,
+  browserLocalPersistence,
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
@@ -29,10 +30,14 @@ const suppressCOOPWarnings = () => {
 export const firebaseAuthService = {
   /**
    * Initialize auth persistence
+   * @param persistent - If true, use localStorage persistence (survives browser restarts)
+   *                     If false, use sessionStorage persistence (cleared when browser closes)
    */
-  async initPersistence(): Promise<void> {
+  async initPersistence(persistent: boolean = false): Promise<void> {
     try {
-      await setPersistence(auth, browserSessionPersistence);
+      const persistence = persistent ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
+      console.log('Firebase persistence set to:', persistent ? 'localStorage (persistent)' : 'sessionStorage (session)');
     } catch (error) {
       console.error('Failed to set auth persistence:', error);
     }
@@ -41,10 +46,11 @@ export const firebaseAuthService = {
   /**
    * Sign in with Google OAuth popup
    * Returns the Firebase ID token which can be sent to the backend
+   * @param persistent - If true, persist auth across browser restarts
    */
-  async signInWithGoogle(): Promise<string> {
+  async signInWithGoogle(persistent: boolean = false): Promise<string> {
     try {
-      await this.initPersistence();
+      await this.initPersistence(persistent);
       
       // Suppress COOP warnings during sign-in
       const restoreWarn = suppressCOOPWarnings();
@@ -83,10 +89,11 @@ export const firebaseAuthService = {
   /**
    * Sign in with email and password
    * Returns the Firebase ID token which can be sent to the backend
+   * @param persistent - If true, persist auth across browser restarts
    */
-  async signInWithEmail(email: string, password: string): Promise<string> {
+  async signInWithEmail(email: string, password: string, persistent: boolean = false): Promise<string> {
     try {
-      await this.initPersistence();
+      await this.initPersistence(persistent);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();
       return idToken;
