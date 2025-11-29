@@ -40,6 +40,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { useSaveSecret } from '../hooks/useSecrets';
 import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
 import { StatsCards } from '../components/analytics/StatsCards';
@@ -73,6 +74,7 @@ export const ProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showNotification } = useNotifications();
 
   // Persist activeTab in sessionStorage to prevent reset on errors
   const [activeTab, setActiveTab] = useState(() => {
