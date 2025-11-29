@@ -38,17 +38,44 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-neutral-100 antialiased transition-colors duration-200;
+    @apply bg-gray-50 dark:bg-[#0a0a0a] text-gray-900 dark:text-neutral-100 antialiased transition-colors duration-300;
   }
   
-  /* Enhanced dark mode contrast */
+  /* Theme-aware CSS custom properties */
   :root {
-    --dark-bg: #0a0a0a;
-    --dark-card: #1a1a1a;
-    --dark-border: rgba(255, 255, 255, 0.05);
-    --dark-hover: rgba(255, 255, 255, 0.08);
-    --accent-orange: #f97316;
-    --accent-amber: #f59e0b;
+    /* Light mode colors */
+    --tab-bg: #ffffff;
+    --tab-content-bg: #ffffff;
+    --tab-border: #e5e7eb;
+    --tab-active-border: #f97316;
+    --tab-text: #111827;
+    --tab-text-muted: #6b7280;
+    --tab-hover-bg: #f9fafb;
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --table-header-bg: #f9fafb;
+    --table-body-bg: #ffffff;
+    --table-divider: #e5e7eb;
+  }
+  
+  .dark {
+    /* Dark mode colors */
+    --tab-bg: #1a1a1a;
+    --tab-content-bg: #1a1a1a;
+    --tab-border: rgba(255, 255, 255, 0.05);
+    --tab-active-border: #f97316;
+    --tab-text: #ffffff;
+    --tab-text-muted: #9ca3af;
+    --tab-hover-bg: rgba(255, 255, 255, 0.08);
+    --card-bg: #0a0a0a;
+    --card-border: rgba(255, 255, 255, 0.05);
+    --input-bg: #0a0a0a;
+    --input-border: rgba(255, 255, 255, 0.05);
+    --table-header-bg: #1a1a1a;
+    --table-body-bg: #0a0a0a;
+    --table-divider: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -74,7 +101,56 @@
   }
 
   .card {
-    @apply bg-white dark:bg-[#1a1a1a] rounded-lg shadow-md p-6 border border-neutral-200 dark:border-[rgba(255,255,255,0.05)];
+    @apply rounded-lg shadow-md p-6 transition-colors duration-300;
+    background-color: var(--card-bg);
+    border-color: var(--card-border);
+    @apply border;
+  }
+  
+  /* Tab container utility classes */
+  .tab-container {
+    background-color: var(--tab-bg);
+    border-color: var(--tab-border);
+    @apply rounded-t-xl px-6 pt-2 border transition-colors duration-300;
+  }
+  
+  .tab-content-container {
+    background-color: var(--tab-content-bg);
+    border-color: var(--tab-border);
+    @apply border-x border-b rounded-b-xl p-6 transition-colors duration-300;
+  }
+  
+  .tab-button {
+    @apply py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 min-h-[44px] touch-manipulation;
+    color: var(--tab-text-muted);
+  }
+  
+  .tab-button-active {
+    border-color: var(--tab-active-border);
+    color: var(--tab-text);
+  }
+  
+  .tab-button:hover {
+    color: var(--tab-text);
+  }
+  
+  .input-theme {
+    background-color: var(--input-bg);
+    border-color: var(--input-border);
+    @apply w-full px-3 py-2 rounded-lg focus:ring-2 transition-colors duration-300;
+    color: var(--tab-text);
+  }
+  
+  .table-theme {
+    background-color: var(--table-body-bg);
+  }
+  
+  .table-header-theme {
+    background-color: var(--table-header-bg);
+  }
+  
+  .table-divider-theme {
+    border-color: var(--table-divider);
   }
   
   /* Glassmorphism effect */

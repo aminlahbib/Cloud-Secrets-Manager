@@ -835,17 +835,17 @@ export const ProjectDetailPage: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'secrets' && (
-        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-4">
+        <div className="tab-content-container space-y-4">
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }} />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search secrets..."
-                className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#0a0a0a] text-neutral-900 dark:text-white transition-colors"
+                className="input-theme pl-10 pr-4 py-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30"
               />
             </div>
             <FilterPanel
@@ -902,9 +902,9 @@ export const ProjectDetailPage: React.FC = () => {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block bg-white dark:bg-[#0a0a0a] rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.05)] overflow-hidden transition-colors">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)]">
-                  <thead className="bg-gray-50 dark:bg-[#1a1a1a]">
+              <div className="hidden md:block rounded-lg border overflow-hidden transition-colors duration-300" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+                <table className="min-w-full table-theme" style={{ borderColor: 'var(--table-divider)' }}>
+                  <thead className="table-header-theme">
                     <tr>
                       {canDeleteSecrets && (
                         <th className="px-6 py-3 text-left">
@@ -916,7 +916,7 @@ export const ProjectDetailPage: React.FC = () => {
                           />
                         </th>
                       )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider bg-white dark:bg-[#1a1a1a]">Key</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300" style={{ color: 'var(--tab-text-muted)', backgroundColor: 'var(--table-header-bg)' }}>Key</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
                       </th>
@@ -934,7 +934,7 @@ export const ProjectDetailPage: React.FC = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white dark:bg-[#0a0a0a] divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)]">
+                  <tbody className="table-theme table-divider-theme" style={{ borderColor: 'var(--table-divider)' }}>
                     {secrets.map((secret: Secret) => {
                       const isExpired =
                         secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
@@ -1066,7 +1066,7 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'members' && (
-        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-4">
+        <div className="tab-content-container space-y-4">
           {isMembersLoading && activeTab === 'members' ? (
             <div className="flex justify-center py-8">
               <Spinner size="lg" />
@@ -1086,26 +1086,40 @@ export const ProjectDetailPage: React.FC = () => {
               }
             />
           ) : (
-            <div className="bg-white dark:bg-[#0a0a0a] rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.05)] divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)] transition-colors">
+            <div className="rounded-lg border divide-y transition-colors duration-300" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--card-border)' }}>
+              <style>{`
+                .table-divider-theme > * {
+                  border-color: var(--table-divider);
+                }
+              `}</style>
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.08)] transition-colors"
+                  className="p-4 flex items-center justify-between transition-colors duration-300"
+                  style={{
+                    '--hover-bg': 'var(--tab-hover-bg)',
+                  } as React.CSSProperties}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--tab-hover-bg)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
                 >
                   <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
-                      <span className="text-neutral-700 font-medium">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)' }}>
+                      <span className="font-medium transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                         {(member.user?.displayName || member.user?.email || 'U').charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
                         {member.user?.displayName || member.user?.email}
                         {member.userId === user?.id && (
-                          <span className="ml-2 text-xs text-gray-400 dark:text-neutral-500">(You)</span>
+                          <span className="ml-2 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>(You)</span>
                         )}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-neutral-400 flex items-center">
+                      <p className="text-sm flex items-center transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                         <Mail className="h-3 w-3 mr-1" />
                         {member.user?.email}
                       </p>
@@ -1153,10 +1167,10 @@ export const ProjectDetailPage: React.FC = () => {
         <ErrorBoundary
           resetKeys={[projectId || '', activityView]}
           fallback={
-            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
+            <Card className="p-6">
               <div className="text-center">
                 <p className="text-red-600 dark:text-red-400 mb-2">Error loading activity tab</p>
-                <p className="text-sm text-gray-500 dark:text-neutral-400 mb-4">
+                <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                   There was an error displaying the activity tab. Please try refreshing the page.
                 </p>
                 <Button onClick={() => window.location.reload()}>Refresh Page</Button>
@@ -1164,7 +1178,7 @@ export const ProjectDetailPage: React.FC = () => {
             </Card>
           }
         >
-          <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-6">
+          <div className="tab-content-container space-y-6">
             {/* Header with view toggle and date filter */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Project Activity</h2>
@@ -1230,11 +1244,11 @@ export const ProjectDetailPage: React.FC = () => {
                   <div className="space-y-6">
                     <SkeletonStats />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[rgba(255,255,255,0.05)] rounded-lg p-6 transition-colors">
+                      <div className="card rounded-lg p-6">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
-                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[rgba(255,255,255,0.05)] rounded-lg p-6 transition-colors">
+                      <div className="card rounded-lg p-6">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
@@ -1514,28 +1528,28 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'settings' && (
-        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-6">
-          <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
-            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-6">Project Overview</h2>
+        <div className="tab-content-container space-y-6">
+          <div className="card rounded-3xl">
+            <h2 className="text-xl font-semibold mb-6 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Project Overview</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metaPairs.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-neutral-100 dark:border-[rgba(255,255,255,0.05)] p-4 bg-white dark:bg-[#1a1a1a]">
-                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">{item.value}</p>
+                <div key={item.label} className="rounded-2xl border p-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-bg)', borderColor: 'var(--tab-border)' }}>
+                  <p className="text-xs uppercase tracking-[0.2em] transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>{item.value}</p>
                 </div>
               ))}
-              <div className="rounded-2xl border border-neutral-100 dark:border-[rgba(255,255,255,0.05)] p-4 bg-white dark:bg-[#1a1a1a]">
-                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">Status</p>
-                <p className="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">
+              <div className="rounded-2xl border p-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-bg)', borderColor: 'var(--tab-border)' }}>
+                <p className="text-xs uppercase tracking-[0.2em] transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>Status</p>
+                <p className="mt-2 text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
                   {isArchived ? 'Archived' : 'Active'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
+          <div className="card rounded-3xl">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">General Settings</h2>
+              <h2 className="text-xl font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>General Settings</h2>
               {canManageProject && (
                 <Button
                   onClick={() => updateProjectMutation.mutate()}
@@ -1616,10 +1630,10 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {canManageProject ? (
-            <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6 space-y-6">
+            <div className="card rounded-3xl space-y-6">
               <div>
-                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Project Lifecycle</p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                <p className="text-sm font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Project Lifecycle</p>
+                <p className="text-sm mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                   Archive projects you no longer need but may want to restore later. Permanently deleting removes all
                   secrets and activity forever.
                 </p>
@@ -1663,9 +1677,9 @@ export const ProjectDetailPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
-              <p className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">Leave Project</p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
+            <div className="card rounded-3xl">
+              <p className="text-sm font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Leave Project</p>
+              <p className="text-sm mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                 Remove your access to this project. You will need to be re-invited to regain access.
               </p>
               {isSoleOwner && (

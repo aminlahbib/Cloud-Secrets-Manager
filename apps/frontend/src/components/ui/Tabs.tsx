@@ -28,7 +28,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
   return (
     <div>
       {/* Tab Headers */}
-      <div className="bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-t-xl px-6 pt-2">
+      <div className="tab-container">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -38,24 +38,27 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
               <button
                 key={tab.id}
                 onClick={() => handleChange(tab.id)}
-                className={`
-                  py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-all duration-300 min-h-[44px] touch-manipulation
-                  ${isActive
-                    ? 'border-orange-500 dark:border-orange-400 text-neutral-900 dark:text-white'
-                    : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-300 dark:hover:border-orange-500/30'
-                  }
-                `}
+                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent hover:border-neutral-300 dark:hover:border-orange-500/30'}`}
+                style={{
+                  borderBottomColor: isActive ? 'var(--tab-active-border)' : 'transparent',
+                  color: isActive ? 'var(--tab-text)' : 'var(--tab-text-muted)',
+                }}
               >
-                {Icon && <Icon className={`h-4 w-4 transition-colors ${isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 dark:text-neutral-500'}`} />}
+                {Icon && (
+                  <Icon 
+                    className="h-4 w-4 transition-colors duration-300" 
+                    style={{ color: isActive ? 'var(--tab-text)' : 'var(--tab-text-muted)' }}
+                  />
+                )}
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`
-                    px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300
-                    ${isActive 
-                      ? 'bg-orange-500 dark:bg-orange-400 text-white dark:text-neutral-900' 
-                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                    }
-                  `}>
+                  <span 
+                    className="px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300"
+                    style={{
+                      backgroundColor: isActive ? 'var(--tab-active-border)' : 'var(--tab-hover-bg)',
+                      color: isActive ? '#ffffff' : 'var(--tab-text-muted)',
+                    }}
+                  >
                     {tab.count}
                   </span>
                 )}
