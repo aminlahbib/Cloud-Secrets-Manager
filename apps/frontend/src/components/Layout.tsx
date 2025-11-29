@@ -97,11 +97,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-neutral-900 text-neutral-900 dark:text-neutral-100">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
       <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-neutral-800 border-r border-neutral-200 dark:border-neutral-700 flex flex-col justify-between px-6 py-8 transition-transform duration-300 md:translate-x-0
+            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#111111] border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-between px-6 py-8 transition-all duration-300 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
@@ -178,7 +178,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <button
                               key={workflow.id}
                               onClick={() => handleWorkflowSelect(workflow.id)}
-                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${isSelected ? 'bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700'
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm transition-colors ${isSelected ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                                 }`}
                             >
                               <div>
@@ -197,7 +197,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           setIsWorkflowMenuOpen(false);
                           navigate('/workflows/new');
                         }}
-                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 dark:text-neutral-300 border-t border-neutral-100 dark:border-neutral-700 text-left hover:bg-neutral-50 dark:hover:bg-neutral-700 flex items-center gap-2"
+                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 dark:text-neutral-300 border-t border-neutral-100 dark:border-neutral-800 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 flex items-center gap-2 transition-colors"
                       >
                         <Plus className="h-4 w-4" />
                         Create Workflow
@@ -256,11 +256,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-700 pt-6 space-y-3">
+            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-6 space-y-3">
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100"
+                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-white"
               >
                 {theme === 'dark' ? (
                   <>
@@ -300,8 +300,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
 
         <div className="flex-1 flex flex-col md:ml-72">
-          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800">
-            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-700 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-neutral-100">
+          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111111] transition-colors">
+            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-white transition-colors">
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <span className="text-sm font-semibold tracking-tight uppercase text-neutral-900 dark:text-neutral-100">Cloud Secrets</span>
