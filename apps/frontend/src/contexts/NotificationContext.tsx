@@ -112,7 +112,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onDis
 
   return (
     <div
-      className={`${bgColors[notification.type]} ${textColors[notification.type]} border rounded-lg shadow-lg p-4 flex items-start gap-3 animate-in slide-in-from-right`}
+      className={`${bgColors[notification.type]} ${textColors[notification.type]} border rounded-lg shadow-lg p-4 flex items-start gap-3 transition-all duration-300 ease-in-out`}
     >
       <div className="flex-shrink-0 mt-0.5">{icons[notification.type]}</div>
       <div className="flex-1 min-w-0">
