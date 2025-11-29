@@ -102,6 +102,8 @@ export const ProjectDetailPage: React.FC = () => {
   const [activityPage, setActivityPage] = useState(1);
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -246,6 +248,26 @@ export const ProjectDetailPage: React.FC = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [analyticsStats, project, dateRange, chartData]);
+
+  // Bulk delete secrets mutation
+  const bulkDeleteSecretsMutation = useMutation({
+    mutationFn: async (keys: string[]) => {
+      await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setSelectedSecrets(new Set());
+      setShowBulkDeleteModal(false);
+    },
+  });
 
   // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
@@ -401,6 +423,31 @@ export const ProjectDetailPage: React.FC = () => {
     !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secrets = secretsData?.content ?? [];
+
+  // Bulk selection handlers
+  const toggleSecretSelection = useCallback((secretKey: string) => {
+    setSelectedSecrets((prev) => {
+      const next = new Set(prev);
+      if (next.has(secretKey)) {
+        next.delete(secretKey);
+      } else {
+        next.add(secretKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAllSecrets = useCallback(() => {
+    if (selectedSecrets.size === secrets.length) {
+      setSelectedSecrets(new Set());
+    } else {
+      setSelectedSecrets(new Set(secrets.map((s: Secret) => s.secretKey)));
+    }
+  }, [secrets, selectedSecrets.size]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedSecrets(new Set());
+  }, []);
   const transferableMembers = useMemo(
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
@@ -628,6 +675,29 @@ export const ProjectDetailPage: React.FC = () => {
             />
           </div>
 
+          {/* Bulk Actions Toolbar */}
+          {selectedSecrets.size > 0 && canDeleteSecrets && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-blue-900">
+                  {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700">
+                  Clear
+                </Button>
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setShowBulkDeleteModal(true)}
+                disabled={bulkDeleteSecretsMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
+
           {isSecretsLoading ? (
             <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
@@ -655,6 +725,16 @@ export const ProjectDetailPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      {canDeleteSecrets && (
+                        <th className="px-6 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectedSecrets.size === secrets.length && secrets.length > 0}
+                            onChange={selectAllSecrets}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </th>
+                      )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
@@ -693,6 +773,16 @@ export const ProjectDetailPage: React.FC = () => {
 
                       return (
                         <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
+                          {canDeleteSecrets && (
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={selectedSecrets.has(secret.secretKey)}
+                                onChange={() => toggleSecretSelection(secret.secretKey)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                            </td>
+                          )}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Link
                               to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
@@ -766,16 +856,17 @@ export const ProjectDetailPage: React.FC = () => {
               {/* Mobile Card View */}
               <div className="md:hidden grid grid-cols-1 gap-4">
                 {secrets.map((secret: Secret) => (
-                  <SecretCard
-                    key={secret.id || secret.secretKey}
-                    secret={secret}
-                    projectId={projectId!}
-                    canManageSecrets={canManageSecrets}
-                    canDeleteSecrets={canDeleteSecrets}
-                    onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
-                    onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
-                    onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
-                  />
+                    <SecretCard
+                      key={secret.id || secret.secretKey}
+                      secret={secret}
+                      projectId={projectId!}
+                      canManageSecrets={canManageSecrets}
+                      canDeleteSecrets={canDeleteSecrets}
+                      onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                      onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                      onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
+                    />
+                  </div>
                 ))}
               </div>
             </>
@@ -1453,6 +1544,31 @@ export const ProjectDetailPage: React.FC = () => {
               isLoading={transferOwnershipMutation.isPending}
             >
               Confirm Transfer
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Bulk Delete Secrets Modal */}
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="Delete Selected Secrets"
+      >
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Are you sure you want to delete <strong>{selectedSecrets.size}</strong> secret{selectedSecrets.size !== 1 ? 's' : ''}? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowBulkDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => bulkDeleteSecretsMutation.mutate(Array.from(selectedSecrets))}
+              isLoading={bulkDeleteSecretsMutation.isPending}
+            >
+              Delete {selectedSecrets.size} Secret{selectedSecrets.size !== 1 ? 's' : ''}
             </Button>
           </div>
         </div>
