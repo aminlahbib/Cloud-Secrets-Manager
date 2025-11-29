@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useDebounce } from '../utils/debounce';
 import { Link } from 'react-router-dom';
 import {
   Folder,
@@ -34,6 +35,7 @@ export const ProjectsPage: React.FC = () => {
   const { user } = useAuth(); // For authentication check
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
   const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
@@ -43,7 +45,7 @@ export const ProjectsPage: React.FC = () => {
 
   // Fetch projects
   const { data, isLoading, error } = useProjects({
-    search: searchTerm,
+    search: debouncedSearchTerm,
     includeArchived: showArchived,
   });
 
