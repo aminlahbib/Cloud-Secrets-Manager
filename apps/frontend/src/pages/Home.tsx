@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -9,7 +9,8 @@ import {
   Users, 
   Activity,
   Shield,
-  TrendingUp
+  TrendingUp,
+  LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
@@ -46,8 +47,27 @@ export const HomePage: React.FC = () => {
     retry: false,
   });
 
-  const projects = projectsData?.content ?? [];
+  const projectsList = projectsData?.content ?? [];
   const recentActivity = activityData?.content ?? [];
+
+  // Enrich projects with workflow information
+  const projects = useMemo(() => {
+    if (!workflows || workflows.length === 0) return projectsList;
+
+    return projectsList.map((project: Project) => {
+      // Find which workflow contains this project
+      for (const workflow of workflows) {
+        if (workflow.projects?.some(wp => wp.projectId === project.id)) {
+          return {
+            ...project,
+            workflowId: workflow.id,
+            workflowName: workflow.name,
+          };
+        }
+      }
+      return project;
+    });
+  }, [projectsList, workflows]);
 
   const totalSecrets = projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0);
   const totalMembers = projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0);
@@ -309,6 +329,14 @@ export const HomePage: React.FC = () => {
                       <h3 className="font-semibold text-neutral-900 truncate group-hover:text-neutral-900">
                         {project.name}
                       </h3>
+                      {project.workflowName && (
+                        <div className="flex items-center gap-1.5 mt-1 mb-1.5">
+                          <LayoutGrid className="h-3 w-3 text-neutral-400" />
+                          <span className="text-xs text-neutral-500 font-medium truncate">
+                            {project.workflowName}
+                          </span>
+                        </div>
+                      )}
                       <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
                         <span className="flex items-center">
                           <Key className="h-3.5 w-3.5 mr-1" />

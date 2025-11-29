@@ -92,6 +92,8 @@ export interface Project {
   memberCount?: number;
   secretCount?: number;
   currentUserRole?: ProjectRole;
+  workflowId?: string; // Optional: ID of the workflow this project belongs to (computed on frontend)
+  workflowName?: string; // Optional: Name of the workflow (computed on frontend)
 }
 
 export interface CreateProjectRequest {

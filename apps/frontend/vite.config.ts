@@ -33,19 +33,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React and core dependencies
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
-            return 'react-vendor';
-          }
-          // React Query
-          if (id.includes('node_modules/@tanstack/react-query')) {
-            return 'query-vendor';
-          }
+          // Only split out large third-party libraries
+          // Let Vite handle React bundling automatically to prevent load order issues
+
           // Recharts (large charting library)
           if (id.includes('node_modules/recharts')) {
             return 'charts-vendor';
           }
-          // Firebase (if used)
+          // Firebase (large)
           if (id.includes('node_modules/firebase')) {
             return 'firebase-vendor';
           }
@@ -53,7 +48,8 @@ export default defineConfig({
           if (id.includes('node_modules/axios')) {
             return 'axios-vendor';
           }
-          // Other node_modules
+          // Everything else stays in main vendor chunk
+          // This ensures React and its ecosystem load together
           if (id.includes('node_modules')) {
             return 'vendor';
           }

@@ -26,8 +26,8 @@ export const WorkflowFormPage: React.FC = () => {
 
   const onSubmit = (data: CreateWorkflowRequest) => {
     mutation.mutate(data, {
-      onSuccess: () => {
-        navigate('/home');
+      onSuccess: (workflow) => {
+        navigate(`/workflows/${workflow.id}`);
       },
     });
   };

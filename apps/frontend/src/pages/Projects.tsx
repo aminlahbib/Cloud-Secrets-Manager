@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Folder,
   Plus,
@@ -9,15 +9,16 @@ import {
   Archive,
   Crown,
   Shield,
-  Clock
+  Clock,
+  LayoutGrid
 } from 'lucide-react';
-import { useProjects, useCreateProject } from '../hooks/useProjects';
+import { useProjects } from '../hooks/useProjects';
+import { useWorkflows } from '../hooks/useWorkflows';
 import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
+import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { useAuth } from '../contexts/AuthContext';
 import type { Project, ProjectRole } from '../types';
 
@@ -29,14 +30,11 @@ const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'
 };
 
 export const ProjectsPage: React.FC = () => {
-  const navigate = useNavigate();
-  useAuth(); // For authentication check
+  const { user } = useAuth(); // For authentication check
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
-  const [newProjectName, setNewProjectName] = useState('');
-  const [newProjectDescription, setNewProjectDescription] = useState('');
 
   // Fetch projects
   const { data, isLoading, error } = useProjects({
@@ -44,28 +42,28 @@ export const ProjectsPage: React.FC = () => {
     includeArchived: showArchived,
   });
 
-  // Create project mutation
-  const createMutation = useCreateProject();
+  // Fetch workflows to match with projects
+  const { data: workflows } = useWorkflows(user?.id);
 
-  const handleCreateProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate(
-      {
-        name: newProjectName,
-        description: newProjectDescription || undefined
-      },
-      {
-        onSuccess: (project) => {
-          setShowCreateModal(false);
-          setNewProjectName('');
-          setNewProjectDescription('');
-          navigate(`/projects/${project.id}`);
-        },
+  // Enrich projects with workflow information
+  const projects = useMemo(() => {
+    const projectList = data?.content ?? [];
+    if (!workflows || workflows.length === 0) return projectList;
+
+    return projectList.map((project: Project) => {
+      // Find which workflow contains this project
+      for (const workflow of workflows) {
+        if (workflow.projects?.some(wp => wp.projectId === project.id)) {
+          return {
+            ...project,
+            workflowId: workflow.id,
+            workflowName: workflow.name,
+          };
+        }
       }
-    );
-  };
-
-  const projects = data?.content ?? [];
+      return project;
+    });
+  }, [data?.content, workflows]);
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -190,9 +188,17 @@ export const ProjectsPage: React.FC = () => {
                     {project.name}
                   </h3>
                   {project.description && (
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-4">
+                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">
                       {project.description}
                     </p>
+                  )}
+                  {project.workflowName && (
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <LayoutGrid className="h-3.5 w-3.5 text-neutral-400" />
+                      <span className="text-xs text-neutral-500 font-medium">
+                        {project.workflowName}
+                      </span>
+                    </div>
                   )}
                 </div>
 
@@ -235,60 +241,10 @@ export const ProjectsPage: React.FC = () => {
       )}
 
       {/* Create Project Modal */}
-      <Modal
+      <CreateProjectModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Create New Project"
-      >
-        <form
-          onSubmit={handleCreateProject}
-          className="space-y-4"
-        >
-          <Input
-            label="Project Name"
-            value={newProjectName}
-            onChange={(e) => setNewProjectName(e.target.value)}
-            placeholder="e.g., Backend Services"
-            required
-          />
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (optional)
-            </label>
-            <textarea
-              value={newProjectDescription}
-              onChange={(e) => setNewProjectDescription(e.target.value)}
-              placeholder="Brief description of this project..."
-              rows={3}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-3 pt-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setShowCreateModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              isLoading={createMutation.isPending}
-              disabled={!newProjectName.trim()}
-            >
-              Create Project
-            </Button>
-          </div>
-
-          {createMutation.isError && (
-            <p className="text-sm text-red-600">
-              Failed to create project. Please try again.
-            </p>
-          )}
-        </form>
-      </Modal>
+      />
     </div>
   );
 };

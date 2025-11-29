@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle, XCircle, Loader2, Mail, ArrowRight } from 'lucide-react';
 import { invitationsService } from '../services/invitations';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,13 +9,23 @@ import { Button } from '../components/ui/Button';
 export const InvitationAcceptPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [status, setStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [errorMessage, setErrorMessage] = useState<string>('');
 
   const acceptMutation = useMutation({
     mutationFn: () => invitationsService.acceptInvitation(token!),
     onSuccess: () => {
+      // Invalidate all project-related queries since we don't know which project was joined
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['workflows', user.id] });
+      }
+      // Invalidate all project members queries (will refetch when needed)
+      queryClient.invalidateQueries({ queryKey: ['project-members'] });
+      queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
       setStatus('success');
     },
     onError: (error: any) => {

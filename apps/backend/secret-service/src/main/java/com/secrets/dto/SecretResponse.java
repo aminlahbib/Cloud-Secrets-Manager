@@ -13,12 +13,13 @@ public class SecretResponse {
     private LocalDateTime updatedAt;
     private LocalDateTime expiresAt;
     private Boolean expired;
+    private Integer version;
 
     public SecretResponse() {
     }
 
     public SecretResponse(String key, String value, String description, String createdBy, LocalDateTime createdAt, 
-                         LocalDateTime updatedAt, LocalDateTime expiresAt, Boolean expired) {
+                         LocalDateTime updatedAt, LocalDateTime expiresAt, Boolean expired, Integer version) {
         this.key = key;
         this.value = value;
         this.description = description;
@@ -27,6 +28,7 @@ public class SecretResponse {
         this.updatedAt = updatedAt;
         this.expiresAt = expiresAt;
         this.expired = expired;
+        this.version = version;
     }
 
     public String getKey() {
@@ -93,6 +95,14 @@ public class SecretResponse {
         this.expired = expired;
     }
 
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+
     public static SecretResponseBuilder builder() {
         return new SecretResponseBuilder();
     }
@@ -106,6 +116,9 @@ public class SecretResponse {
             createdByStr = secret.getCreatedBy().toString();
         }
         
+        // Version number will be set separately by the controller/service layer
+        // Do NOT access secret.getVersions() here as it's lazy-loaded and will cause LazyInitializationException
+        
         return SecretResponse.builder()
             .key(secret.getSecretKey())
             .value(decryptedValue)
@@ -115,6 +128,7 @@ public class SecretResponse {
             .updatedAt(secret.getUpdatedAt())
             .expiresAt(secret.getExpiresAt())
             .expired(secret.isExpired())
+            .version(null) // Will be set by controller/service
             .build();
     }
 
@@ -127,6 +141,7 @@ public class SecretResponse {
         private LocalDateTime updatedAt;
         private LocalDateTime expiresAt;
         private Boolean expired;
+        private Integer version;
 
         public SecretResponseBuilder key(String key) {
             this.key = key;
@@ -168,8 +183,13 @@ public class SecretResponse {
             return this;
         }
 
+        public SecretResponseBuilder version(Integer version) {
+            this.version = version;
+            return this;
+        }
+
         public SecretResponse build() {
-            return new SecretResponse(key, value, description, createdBy, createdAt, updatedAt, expiresAt, expired);
+            return new SecretResponse(key, value, description, createdBy, createdAt, updatedAt, expiresAt, expired, version);
         }
     }
 }

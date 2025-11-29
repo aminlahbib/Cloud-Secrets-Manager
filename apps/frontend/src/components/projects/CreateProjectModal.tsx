@@ -119,7 +119,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 <option value="">No Workflow (Unassigned)</option>
                                 {workflows?.map((w) => (
                                     <option key={w.id} value={w.id}>
-                                        {w.name}
+                                        {w.name} {w.isDefault && '(Default)'}
                                     </option>
                                 ))}
                             </select>

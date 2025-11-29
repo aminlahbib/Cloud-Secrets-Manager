@@ -62,9 +62,25 @@ public class ProjectSecretController {
         
         Page<Secret> secrets = projectSecretService.listProjectSecrets(projectId, userId, keyword, pageable);
         
+        // Fetch version numbers for all secrets in the page (within transaction)
+        java.util.Map<UUID, Integer> versionMap = new java.util.HashMap<>();
+        if (secrets.hasContent()) {
+            java.util.List<UUID> secretIds = secrets.getContent().stream()
+                .map(Secret::getId)
+                .filter(id -> id != null)
+                .collect(java.util.stream.Collectors.toList());
+            if (!secretIds.isEmpty()) {
+                versionMap = projectSecretService.getMaxVersionNumbersForSecrets(secretIds);
+            }
+        }
+        
+        final java.util.Map<UUID, Integer> finalVersionMap = versionMap;
         Page<SecretResponse> responses = secrets.map(secret -> {
             String decryptedValue = encryptionUtil.decryptSecretValue(secret);
-            return SecretResponse.from(secret, decryptedValue);
+            SecretResponse response = SecretResponse.from(secret, decryptedValue);
+            // Set version number from the map
+            response.setVersion(finalVersionMap.get(secret.getId()));
+            return response;
         });
         
         return ResponseEntity.ok(responses);

@@ -35,12 +35,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Fetch user's workflows
   const { data: workflows } = useWorkflows(user?.id);
 
+  // Extract workflow ID from route (e.g., /workflows/:workflowId)
   useEffect(() => {
-    if (!selectedWorkflowId && workflows && workflows.length > 0) {
+    const workflowMatch = location.pathname.match(/^\/workflows\/([^/]+)/);
+    if (workflowMatch && workflowMatch[1]) {
+      const workflowIdFromRoute = workflowMatch[1];
+      // Only update if it's different to avoid unnecessary re-renders
+      if (workflowIdFromRoute !== selectedWorkflowId) {
+        setSelectedWorkflowId(workflowIdFromRoute);
+      }
+    } else if (!selectedWorkflowId && workflows && workflows.length > 0) {
+      // If not on a workflow page and no workflow is selected, select default
       const defaultWorkflow = workflows.find((wf) => wf.isDefault) || workflows[0];
       setSelectedWorkflowId(defaultWorkflow.id);
     }
-  }, [workflows, selectedWorkflowId]);
+  }, [location.pathname, workflows, selectedWorkflowId]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -61,6 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const handleWorkflowSelect = (workflowId: string) => {
     setSelectedWorkflowId(workflowId);
     setIsWorkflowMenuOpen(false);
+    setIsSidebarOpen(false); // Close sidebar on mobile after selection
     navigate(`/workflows/${workflowId}`);
   };
 

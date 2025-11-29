@@ -3,7 +3,7 @@ package com.secrets.client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -30,13 +30,12 @@ public class AuditClient {
     /**
      * Log an audit event with v3 structure
      */
-    @Async
     public void logEvent(UUID projectId, UUID userId, String action, String resourceType,
-                        String resourceId, String resourceName, Map<String, Object> metadata) {
+            String resourceId, String resourceName, Map<String, Object> metadata) {
         try {
             WebClient webClient = webClientBuilder
-                .baseUrl(auditServiceUrl)
-                .build();
+                    .baseUrl(auditServiceUrl)
+                    .build();
 
             Map<String, Object> auditEvent = new HashMap<>();
             auditEvent.put("userId", userId.toString());
@@ -54,17 +53,17 @@ public class AuditClient {
             if (metadata != null && !metadata.isEmpty()) {
                 auditEvent.put("metadata", metadata);
             }
-            
+
             webClient.post()
-                .uri("/api/audit/log")
-                .bodyValue(auditEvent)
-                .retrieve()
-                .bodyToMono(Void.class)
-                .timeout(Duration.ofMillis(5000))
-                .doOnError(error -> log.error("Failed to send audit event: {} - {}", action, error.getMessage()))
-                .onErrorResume(error -> Mono.empty())
-                .subscribe();
-                
+                    .uri("/api/audit/log")
+                    .bodyValue(auditEvent)
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .timeout(Duration.ofMillis(5000))
+                    .doOnError(error -> log.error("Failed to send audit event: {} - {}", action, error.getMessage()))
+                    .onErrorResume(error -> Mono.empty())
+                    .block(); // Wait for completion
+
         } catch (Exception e) {
             log.error("Error sending audit event: {} - {}", action, e.getMessage());
         }
@@ -73,7 +72,6 @@ public class AuditClient {
     /**
      * Convenience method for secret operations
      */
-    @Async
     public void logSecretEvent(UUID projectId, UUID userId, String action, String secretKey) {
         logEvent(projectId, userId, action, "SECRET", secretKey, secretKey, null);
     }

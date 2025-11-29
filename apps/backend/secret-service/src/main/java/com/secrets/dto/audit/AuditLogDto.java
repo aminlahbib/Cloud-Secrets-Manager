@@ -3,7 +3,7 @@ package com.secrets.dto.audit;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -46,7 +46,7 @@ public class AuditLogDto {
     private String userAgent;
     
     @JsonProperty("createdAt")
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
     
     // Enriched user data (added by proxy service)
     private String userEmail;
@@ -149,11 +149,11 @@ public class AuditLogDto {
         this.userAgent = userAgent;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public ZonedDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(ZonedDateTime createdAt) {
         this.createdAt = createdAt;
     }
 

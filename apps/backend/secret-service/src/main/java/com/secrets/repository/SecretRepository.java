@@ -20,13 +20,16 @@ public interface SecretRepository extends JpaRepository<Secret, UUID> {
        // Project-Scoped Queries (v3)
        // ============================================================================
 
-       Optional<Secret> findByProjectIdAndSecretKey(UUID projectId, String secretKey);
+       @Query("SELECT s FROM Secret s LEFT JOIN FETCH s.creator WHERE s.projectId = :projectId AND s.secretKey = :secretKey")
+       Optional<Secret> findByProjectIdAndSecretKey(@Param("projectId") UUID projectId,
+                     @Param("secretKey") String secretKey);
 
        boolean existsByProjectIdAndSecretKey(UUID projectId, String secretKey);
 
-       Page<Secret> findByProjectId(UUID projectId, Pageable pageable);
+       @Query("SELECT s FROM Secret s LEFT JOIN FETCH s.creator WHERE s.projectId = :projectId")
+       Page<Secret> findByProjectId(@Param("projectId") UUID projectId, Pageable pageable);
 
-       @Query("SELECT s FROM Secret s WHERE s.projectId = :projectId " +
+       @Query("SELECT s FROM Secret s LEFT JOIN FETCH s.creator WHERE s.projectId = :projectId " +
                      "AND (LOWER(s.secretKey) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
                      "OR LOWER(s.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
        Page<Secret> findByProjectIdAndKeyword(

@@ -2,7 +2,8 @@ package com.audit.dto;
 
 import com.audit.entity.AuditLog;
 
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -19,15 +20,15 @@ public class AuditLogResponse {
     private Map<String, Object> metadata;
     private String ipAddress;
     private String userAgent;
-    private LocalDateTime createdAt;
+    private ZonedDateTime createdAt;
 
     public AuditLogResponse() {
     }
 
     public AuditLogResponse(UUID id, UUID projectId, UUID userId, String action, String resourceType,
-                           String resourceId, String resourceName, Map<String, Object> oldValue,
-                           Map<String, Object> newValue, Map<String, Object> metadata,
-                           String ipAddress, String userAgent, LocalDateTime createdAt) {
+            String resourceId, String resourceName, Map<String, Object> oldValue,
+            Map<String, Object> newValue, Map<String, Object> metadata,
+            String ipAddress, String userAgent, ZonedDateTime createdAt) {
         this.id = id;
         this.projectId = projectId;
         this.userId = userId;
@@ -45,20 +46,20 @@ public class AuditLogResponse {
 
     public static AuditLogResponse from(AuditLog auditLog) {
         AuditLogResponse response = AuditLogResponse.builder()
-            .id(auditLog.getId())
-            .projectId(auditLog.getProjectId())
-            .userId(auditLog.getUserId())
-            .action(auditLog.getAction())
-            .resourceType(auditLog.getResourceType())
-            .resourceId(auditLog.getResourceId())
-            .resourceName(auditLog.getResourceName())
-            .oldValue(auditLog.getOldValue())
-            .newValue(auditLog.getNewValue())
-            .metadata(auditLog.getMetadata())
-            .ipAddress(auditLog.getIpAddress())
-            .userAgent(auditLog.getUserAgent())
-            .createdAt(auditLog.getCreatedAt())
-            .build();
+                .id(auditLog.getId())
+                .projectId(auditLog.getProjectId())
+                .userId(auditLog.getUserId())
+                .action(auditLog.getAction())
+                .resourceType(auditLog.getResourceType())
+                .resourceId(auditLog.getResourceId())
+                .resourceName(auditLog.getResourceName())
+                .oldValue(auditLog.getOldValue())
+                .newValue(auditLog.getNewValue())
+                .metadata(auditLog.getMetadata())
+                .ipAddress(auditLog.getIpAddress())
+                .userAgent(auditLog.getUserAgent())
+                .createdAt(auditLog.getCreatedAt() != null ? auditLog.getCreatedAt().atZone(ZoneId.of("UTC")) : null)
+                .build();
 
         return response;
     }
@@ -164,11 +165,11 @@ public class AuditLogResponse {
         this.userAgent = userAgent;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public ZonedDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(ZonedDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -185,7 +186,7 @@ public class AuditLogResponse {
         private Map<String, Object> metadata;
         private String ipAddress;
         private String userAgent;
-        private LocalDateTime createdAt;
+        private ZonedDateTime createdAt;
 
         private Builder() {
         }
@@ -250,7 +251,7 @@ public class AuditLogResponse {
             return this;
         }
 
-        public Builder createdAt(LocalDateTime createdAt) {
+        public Builder createdAt(ZonedDateTime createdAt) {
             this.createdAt = createdAt;
             return this;
         }
