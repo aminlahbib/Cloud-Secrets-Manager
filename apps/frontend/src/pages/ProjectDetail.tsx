@@ -979,6 +979,7 @@ export const ProjectDetailPage: React.FC = () => {
                           className="transition-colors"
                           style={{
                             backgroundColor: 'transparent',
+                            borderTop: '1px solid var(--table-divider)',
                           }}
                           onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = 'var(--elevation-1)';

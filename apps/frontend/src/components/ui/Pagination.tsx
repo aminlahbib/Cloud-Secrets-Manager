@@ -43,7 +43,13 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-md border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 rounded-md border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        style={{ 
+          borderColor: 'var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+        onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = 'var(--elevation-1)')}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -54,16 +60,27 @@ export const Pagination: React.FC<PaginationProps> = ({
           {typeof page === 'number' ? (
             <button
               onClick={() => onPageChange(page)}
-              className={`px-4 py-2 rounded-md border ${
-                currentPage === page
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'border-neutral-300 hover:bg-neutral-50'
-              }`}
+              className="px-4 py-2 rounded-md border transition-colors"
+              style={{
+                backgroundColor: currentPage === page ? 'var(--accent-primary)' : 'transparent',
+                color: currentPage === page ? 'var(--text-inverse)' : 'var(--text-primary)',
+                borderColor: currentPage === page ? 'var(--accent-primary)' : 'var(--border-default)',
+              }}
+              onMouseEnter={(e) => {
+                if (currentPage !== page) {
+                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPage !== page) {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }
+              }}
             >
               {page}
             </button>
           ) : (
-            <span className="px-2">...</span>
+            <span className="px-2" style={{ color: 'var(--text-secondary)' }}>...</span>
           )}
         </React.Fragment>
       ))}
@@ -72,7 +89,13 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-md border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 rounded-md border disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        style={{ 
+          borderColor: 'var(--border-default)',
+          color: 'var(--text-primary)',
+        }}
+        onMouseEnter={(e) => !e.currentTarget.disabled && (e.currentTarget.style.backgroundColor = 'var(--elevation-1)')}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
         <ChevronRight className="h-5 w-5" />
       </button>

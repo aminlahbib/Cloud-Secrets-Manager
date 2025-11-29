@@ -22,10 +22,10 @@ const AuditLogsPage = lazy(() => import('./pages/AuditLogs').then(m => ({ defaul
 
 // Loading fallback component
 const PageLoader: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+  <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
     <div className="flex flex-col items-center space-y-4">
       <Spinner size="lg" />
-      <p className="text-neutral-500 text-sm">Loading...</p>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
     </div>
   </div>
 );
@@ -36,10 +36,10 @@ const ProtectedLayout: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
         <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-900" />
-          <p className="text-neutral-500 text-sm">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: 'var(--accent-primary)' }} />
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>
     );

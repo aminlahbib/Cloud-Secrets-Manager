@@ -180,7 +180,7 @@ export const WorkflowDetailPage: React.FC = () => {
         {projects.length === 0 ? (
           <div className="p-12">
             <EmptyState
-              icon={<Folder className="h-16 w-16 text-neutral-300" />}
+              icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
               title="No projects in this workflow"
               description="Create a new project and add it to this workflow"
               action={{

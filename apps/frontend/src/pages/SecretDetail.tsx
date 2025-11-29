@@ -392,22 +392,22 @@ export const SecretDetailPage: React.FC = () => {
           )}
           {!versionDetailMutation.isPending && versionDetail && (
             <div className="space-y-4">
-              <div className="text-sm text-neutral-600">
+              <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 Saved {formatDateTime(versionDetail.createdAt)}
                 {versionDetail.changedBy && <span className="ml-1">by {versionDetail.changedBy}</span>}
                 {versionDetail.changeNote && (
-                  <p className="text-xs text-neutral-500 mt-1">{versionDetail.changeNote}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{versionDetail.changeNote}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Value</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Value</label>
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
                     <input
                       type={showVersionValue ? 'text' : 'password'}
                       value={versionDetail.value}
                       readOnly
-                      className="w-full px-3 py-2 border border-neutral-200 rounded-md bg-neutral-50 font-mono text-sm"
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm input-theme"
                     />
                   </div>
                   <div className="flex flex-col gap-2">

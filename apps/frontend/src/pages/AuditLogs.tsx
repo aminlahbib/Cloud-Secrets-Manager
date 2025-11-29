@@ -112,8 +112,8 @@ export const AuditLogsPage: React.FC = () => {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center sm:justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Audit Logs</h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
             End-to-end trace of secret access, changes, and sharing events
           </p>
         </div>
@@ -134,16 +134,16 @@ export const AuditLogsPage: React.FC = () => {
       </div>
 
       {showFilters && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+        <div className="rounded-lg p-4 mb-6" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-subtle)' }}>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Action
               </label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
+                className="input-theme"
               >
                 <option value="">All</option>
                 <option value="SECRET_CREATE">Secret Create</option>
@@ -158,13 +158,13 @@ export const AuditLogsPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Resource Type
               </label>
               <select
                 value={filters.resourceType}
                 onChange={(e) => handleFilterChange('resourceType', e.target.value)}
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
+                className="input-theme"
               >
                 <option value="">All</option>
                 <option value="SECRET">Secret</option>
@@ -174,25 +174,25 @@ export const AuditLogsPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Start Date
               </label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
+                className="input-theme"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 End Date
               </label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm bg-white"
+                className="input-theme"
               />
             </div>
           </div>
@@ -212,12 +212,12 @@ export const AuditLogsPage: React.FC = () => {
           <Spinner size="lg" />
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-sm text-red-800">Failed to load audit logs. Please try again.</p>
+        <div className="rounded-lg p-4 mb-6" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+          <p className="text-sm" style={{ color: 'var(--status-danger)' }}>Failed to load audit logs. Please try again.</p>
         </div>
       ) : !logs.length ? (
         <EmptyState
-          icon={<FileText className="h-16 w-16 text-gray-400" />}
+          icon={<FileText className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title="No audit logs found"
           description={
             hasActiveFilters
@@ -227,35 +227,35 @@ export const AuditLogsPage: React.FC = () => {
         />
       ) : (
         <>
-          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+          <div className="rounded-lg overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-subtle)' }}>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full" style={{ borderColor: 'var(--border-subtle)' }}>
+                <thead style={{ backgroundColor: 'var(--table-header-bg)' }}>
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       Timestamp
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       Action
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       Resource Type
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       Resource Name
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)' }}>
                       IP Address
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody style={{ backgroundColor: 'var(--table-body-bg)' }}>
                   {logs.map((log: AuditLog) => (
-                    <tr key={log.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                    <tr key={log.id} style={{ borderTop: '1px solid var(--table-divider)' }}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm" style={{ color: 'var(--text-secondary)' }}>
                         {new Date(log.createdAt || '').toLocaleString()}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -263,10 +263,10 @@ export const AuditLogsPage: React.FC = () => {
                           {log.action}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{log.resourceType || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{log.resourceName || log.resourceId || '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{log.userEmail || log.user?.email || 'Unknown'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{log.ipAddress || '—'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceType || '—'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceName || log.resourceId || '—'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.userEmail || log.user?.email || 'Unknown'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{log.ipAddress || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -284,7 +284,7 @@ export const AuditLogsPage: React.FC = () => {
           )}
 
           {data && (
-            <div className="mt-4 text-center text-sm text-gray-600">
+            <div className="mt-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
               Showing {logs.length} of {data.totalElements || 0} logs
             </div>
           )}

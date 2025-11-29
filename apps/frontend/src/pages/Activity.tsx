@@ -174,8 +174,8 @@ export const ActivityPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activity</h1>
-          <p className="mt-1 text-gray-500">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Activity</h1>
+          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
             Track all actions across your projects and secrets
           </p>
         </div>
@@ -197,16 +197,16 @@ export const ActivityPage: React.FC = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white border border-neutral-200 rounded-2xl p-4">
+        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-subtle)' }}>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Action Type
               </label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               >
                 <option value="">All Actions</option>
                 <optgroup label="Secrets">
@@ -229,25 +229,25 @@ export const ActivityPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Start Date
               </label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 End Date
               </label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               />
             </div>
             {hasActiveFilters && (
@@ -268,12 +268,12 @@ export const ActivityPage: React.FC = () => {
           <Spinner size="lg" />
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">Failed to load activity. Please try again.</p>
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+          <p className="text-sm" style={{ color: 'var(--status-danger)' }}>Failed to load activity. Please try again.</p>
         </div>
       ) : !logs.length ? (
         <EmptyState
-          icon={<FileText className="h-16 w-16 text-gray-400" />}
+          icon={<FileText className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title="No activity yet"
           description={
             hasActiveFilters
@@ -283,46 +283,56 @@ export const ActivityPage: React.FC = () => {
         />
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-            {logs.map((log: AuditLog) => (
-              <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg ${
-                    ACTION_COLORS[log.action] === 'success' ? 'bg-green-100 text-green-600' :
-                    ACTION_COLORS[log.action] === 'danger' ? 'bg-red-100 text-red-600' :
-                    ACTION_COLORS[log.action] === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                    ACTION_COLORS[log.action] === 'info' ? 'bg-blue-100 text-blue-600' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant={ACTION_COLORS[log.action] || 'default'}>
-                        {formatAction(log.action)}
-                      </Badge>
-                      {log.resourceName && (
-                        <span className="text-sm font-medium text-gray-900">
-                          {log.resourceName}
-                        </span>
-                      )}
+          <div className="rounded-lg border divide-y" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-subtle)', borderTopColor: 'var(--border-subtle)' }}>
+            {logs.map((log: AuditLog) => {
+              const actionColor = ACTION_COLORS[log.action] || 'default';
+              const iconBgStyles = {
+                success: { backgroundColor: 'var(--status-success-bg)', color: 'var(--status-success)' },
+                danger: { backgroundColor: 'var(--status-danger-bg)', color: 'var(--status-danger)' },
+                warning: { backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)' },
+                info: { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' },
+                default: { backgroundColor: 'var(--elevation-1)', color: 'var(--text-secondary)' },
+              };
+              return (
+                <div 
+                  key={log.id} 
+                  className="p-4 transition-colors"
+                  style={{ borderTopColor: 'var(--border-subtle)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--elevation-1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-lg" style={iconBgStyles[actionColor]}>
+                      {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                      by {log.userEmail || log.user?.email || 'Unknown'}
-                      {log.project && (
-                        <span className="text-gray-400"> in {log.project.name}</span>
-                      )}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-400">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {getTimeAgo(log.createdAt || '')}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={actionColor}>
+                          {formatAction(log.action)}
+                        </Badge>
+                        {log.resourceName && (
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {log.resourceName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        by {log.userEmail || log.user?.email || 'Unknown'}
+                        {log.project && (
+                          <span style={{ color: 'var(--text-tertiary)' }}> in {log.project.name}</span>
+                        )}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                      <Clock className="h-4 w-4 mr-1" />
+                      {getTimeAgo(log.createdAt || '')}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {data?.totalPages && data.totalPages > 1 && (
@@ -335,7 +345,7 @@ export const ActivityPage: React.FC = () => {
           )}
 
           {data && (
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
               Showing {logs.length} of {data.totalElements || 0} activities
             </div>
           )}

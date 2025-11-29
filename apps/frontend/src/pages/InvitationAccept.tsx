@@ -48,10 +48,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // Show loading while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-          <Loader2 className="h-12 w-12 text-neutral-900 animate-spin mx-auto mb-4" />
-          <p className="text-neutral-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
+          <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>
     );
@@ -60,16 +60,16 @@ export const InvitationAcceptPage: React.FC = () => {
   // If not authenticated, prompt to login
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-            <Mail className="h-8 w-8 text-neutral-700" />
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+          <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
+            <Mail className="h-8 w-8" style={{ color: 'var(--text-secondary)' }} />
           </div>
           
-          <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
             You've Been Invited!
           </h1>
-          <p className="text-neutral-600 mb-8">
+          <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
             Sign in or create an account to accept this project invitation.
           </p>
           
@@ -80,7 +80,7 @@ export const InvitationAcceptPage: React.FC = () => {
             </Button>
           </Link>
           
-          <p className="mt-6 text-sm text-neutral-500">
+          <p className="mt-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>
             After signing in, you'll automatically join the project.
           </p>
         </div>
@@ -91,13 +91,13 @@ export const InvitationAcceptPage: React.FC = () => {
   // Processing state
   if (acceptMutation.isPending || status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center">
-          <Loader2 className="h-12 w-12 text-neutral-900 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-neutral-900 mb-2">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
             Accepting Invitation...
           </h2>
-          <p className="text-neutral-600">
+          <p style={{ color: 'var(--text-secondary)' }}>
             Please wait while we add you to the project.
           </p>
         </div>
@@ -108,16 +108,16 @@ export const InvitationAcceptPage: React.FC = () => {
   // Success state
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-          <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-            <CheckCircle className="h-8 w-8 text-neutral-700" />
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+          <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
+            <CheckCircle className="h-8 w-8" style={{ color: 'var(--status-success)' }} />
           </div>
           
-          <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
             Welcome to the Project!
           </h1>
-          <p className="text-neutral-600 mb-8">
+          <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
             You've successfully joined the project. You can now access its secrets and collaborate with your team.
           </p>
           
@@ -132,16 +132,16 @@ export const InvitationAcceptPage: React.FC = () => {
 
   // Error state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
-        <div className="bg-neutral-100 p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-          <XCircle className="h-8 w-8 text-neutral-700" />
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+        <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
+          <XCircle className="h-8 w-8" style={{ color: 'var(--status-danger)' }} />
         </div>
         
-        <h1 className="text-2xl font-bold text-neutral-900 mb-2">
+        <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           Invitation Failed
         </h1>
-        <p className="text-neutral-600 mb-8">
+        <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
           {errorMessage}
         </p>
         

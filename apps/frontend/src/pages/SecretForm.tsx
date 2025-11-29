@@ -101,7 +101,7 @@ export const SecretFormPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="key" className="block text-sm font-medium text-neutral-800 mb-2">
+              <label htmlFor="key" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Secret Key *
               </label>
               <Input
@@ -132,7 +132,7 @@ export const SecretFormPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-neutral-800 mb-2">
+              <label htmlFor="description" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Description (Optional)
               </label>
               <Textarea
@@ -145,7 +145,7 @@ export const SecretFormPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="expiresAt" className="block text-sm font-medium text-neutral-800 mb-2">
+              <label htmlFor="expiresAt" className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Expires At (Optional)
               </label>
               <Input

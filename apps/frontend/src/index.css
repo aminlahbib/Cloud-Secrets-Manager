@@ -46,6 +46,20 @@
     transition: background-color 200ms ease, color 200ms ease;
   }
   
+  /* Make all borders theme-aware by default */
+  * {
+    border-color: var(--border-subtle);
+  }
+  
+  /* Override Tailwind's default border colors for utility classes */
+  .border-t,
+  .border-b,
+  .border-l,
+  .border-r,
+  .border {
+    border-color: var(--border-subtle) !important;
+  }
+  
   /* ============================================
      MODERN THEME MANAGEMENT WITH CSS VARIABLES
      Single source of truth - No class duplication
@@ -218,9 +232,9 @@
     /* ============================================
        BORDERS & DIVIDERS
        ============================================ */
-    --border-subtle: rgba(255, 255, 255, 0.06);    /* Subtle borders */
-    --border-default: rgba(255, 255, 255, 0.10);   /* Default borders */
-    --border-strong: rgba(255, 255, 255, 0.15);    /* Strong borders */
+    --border-subtle: rgba(255, 255, 255, 0.03);    /* Subtle borders - very subtle for dark mode */
+    --border-default: rgba(255, 255, 255, 0.06);   /* Default borders */
+    --border-strong: rgba(255, 255, 255, 0.10);    /* Strong borders */
     --border-accent: rgba(255, 140, 66, 0.30);     /* Accent borders */
     
     /* ============================================
@@ -671,6 +685,16 @@
     border-color: var(--table-divider);
   }
   
+  /* Ensure table rows have subtle borders */
+  .table-theme tr {
+    border-color: var(--table-divider);
+  }
+  
+  .table-theme th,
+  .table-theme td {
+    border-color: var(--table-divider);
+  }
+  
   /* ============================================
      FOCUS STYLES (Keyboard Navigation)
      ============================================ */
@@ -744,8 +768,9 @@
   /* Glassmorphism effect */
   .glass {
     backdrop-filter: blur(12px);
-    background-color: rgba(15, 19, 22, 0.8);
+    background-color: var(--elevation-2);
     border: 1px solid var(--border-subtle);
+    opacity: 0.95;
   }
   
   /* Subtle gradient backgrounds */

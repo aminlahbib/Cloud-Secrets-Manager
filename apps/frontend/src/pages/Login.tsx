@@ -130,7 +130,8 @@ export const LoginPage: React.FC = () => {
                 type="checkbox"
                 checked={keepSignedIn}
                 onChange={(e) => setKeepSignedIn(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
+                className="h-4 w-4 rounded input-theme"
+                style={{ borderColor: 'var(--border-default)' }}
               />
               <label htmlFor="keep-signed-in" className="ml-2 block text-body-sm" style={{ color: 'var(--text-primary)' }}>
                 Keep me signed in

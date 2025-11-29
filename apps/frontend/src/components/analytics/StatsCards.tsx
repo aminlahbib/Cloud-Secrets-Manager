@@ -24,29 +24,29 @@ export const StatsCards: React.FC<StatsCardsProps> = React.memo(({ stats }) => {
       label: 'Total Actions',
       value: stats.totalActions.toLocaleString(),
       icon: <Activity className="h-5 w-5" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: 'var(--status-info)',
+      bgColor: 'var(--status-info-bg)',
     },
     {
       label: 'Active Users',
       value: uniqueUsers.toString(),
       icon: <Users className="h-5 w-5" />,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
+      color: 'var(--status-success)',
+      bgColor: 'var(--status-success-bg)',
     },
     {
       label: 'Action Types',
       value: uniqueActions.toString(),
       icon: <TrendingUp className="h-5 w-5" />,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
+      color: 'var(--accent-secondary)',
+      bgColor: 'var(--elevation-1)',
     },
     {
       label: 'Avg/Day (7d)',
       value: avgPerDay.toString(),
       icon: <Clock className="h-5 w-5" />,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
+      color: 'var(--accent-primary)',
+      bgColor: 'var(--accent-primary-glow)',
     },
   ], [stats.totalActions, uniqueUsers, uniqueActions, avgPerDay]);
 
@@ -56,10 +56,10 @@ export const StatsCards: React.FC<StatsCardsProps> = React.memo(({ stats }) => {
         <Card key={index} className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">{item.label}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{item.value}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{item.label}</p>
+              <p className="text-2xl font-bold mt-1" style={{ color: 'var(--text-primary)' }}>{item.value}</p>
             </div>
-            <div className={`${item.bgColor} ${item.color} p-3 rounded-lg`}>
+            <div className="p-3 rounded-lg" style={{ backgroundColor: item.bgColor, color: item.color }}>
               {item.icon}
             </div>
           </div>

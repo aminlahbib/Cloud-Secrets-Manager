@@ -89,41 +89,52 @@ interface NotificationItemProps {
 }
 
 const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onDismiss }) => {
+  const iconStyles = {
+    success: { color: 'var(--status-success)' },
+    error: { color: 'var(--status-danger)' },
+    warning: { color: 'var(--status-warning)' },
+    info: { color: 'var(--status-info)' },
+  };
+
+  const bgStyles = {
+    success: { backgroundColor: 'var(--status-success-bg)', borderColor: 'var(--status-success)' },
+    error: { backgroundColor: 'var(--status-danger-bg)', borderColor: 'var(--status-danger)' },
+    warning: { backgroundColor: 'var(--status-warning-bg)', borderColor: 'var(--status-warning)' },
+    info: { backgroundColor: 'var(--status-info-bg)', borderColor: 'var(--status-info)' },
+  };
+
+  const textStyles = {
+    success: { color: 'var(--status-success)' },
+    error: { color: 'var(--status-danger)' },
+    warning: { color: 'var(--status-warning)' },
+    info: { color: 'var(--status-info)' },
+  };
+
   const icons = {
-    success: <CheckCircle className="h-5 w-5 text-green-600" />,
-    error: <AlertCircle className="h-5 w-5 text-red-600" />,
-    warning: <AlertTriangle className="h-5 w-5 text-yellow-600" />,
-    info: <Info className="h-5 w-5 text-blue-600" />,
-  };
-
-  const bgColors = {
-    success: 'bg-green-50 border-green-200',
-    error: 'bg-red-50 border-red-200',
-    warning: 'bg-yellow-50 border-yellow-200',
-    info: 'bg-blue-50 border-blue-200',
-  };
-
-  const textColors = {
-    success: 'text-green-800',
-    error: 'text-red-800',
-    warning: 'text-yellow-800',
-    info: 'text-blue-800',
+    success: <CheckCircle className="h-5 w-5" style={iconStyles.success} />,
+    error: <AlertCircle className="h-5 w-5" style={iconStyles.error} />,
+    warning: <AlertTriangle className="h-5 w-5" style={iconStyles.warning} />,
+    info: <Info className="h-5 w-5" style={iconStyles.info} />,
   };
 
   return (
     <div
-      className={`${bgColors[notification.type]} ${textColors[notification.type]} border rounded-lg shadow-lg p-4 flex items-start gap-3 transition-all duration-300 ease-in-out`}
+      className="border rounded-lg shadow-lg p-4 flex items-start gap-3 transition-all duration-300 ease-in-out"
+      style={bgStyles[notification.type]}
     >
       <div className="flex-shrink-0 mt-0.5">{icons[notification.type]}</div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold">{notification.title}</h4>
+        <h4 className="text-sm font-semibold" style={textStyles[notification.type]}>{notification.title}</h4>
         {notification.message && (
-          <p className="text-sm mt-1 opacity-90">{notification.message}</p>
+          <p className="text-sm mt-1 opacity-90" style={textStyles[notification.type]}>{notification.message}</p>
         )}
       </div>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+        className="flex-shrink-0 transition-colors"
+        style={{ color: 'var(--text-tertiary)' }}
+        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
       >
         <X className="h-4 w-4" />
       </button>
