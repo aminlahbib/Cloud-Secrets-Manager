@@ -13,8 +13,8 @@ export const TeamsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">Teams</h1>
-          <p className="text-neutral-500 mt-1">Manage team members and access controls</p>
+          <h1 className="text-2xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Teams</h1>
+          <p className="mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>Manage team members and access controls</p>
         </div>
         <Button disabled>
           <UserPlus className="w-5 h-5 mr-2" />
@@ -24,14 +24,14 @@ export const TeamsPage: React.FC = () => {
       </div>
 
       {/* Coming Soon Banner */}
-      <div className="bg-white border border-neutral-200 rounded-3xl p-8">
+      <div className="card rounded-3xl p-8">
         <div className="flex items-start gap-4">
-          <div className="p-3 border border-neutral-200 rounded-2xl text-neutral-700">
+          <div className="p-3 border rounded-2xl transition-colors duration-300" style={{ borderColor: 'var(--tab-border)', color: 'var(--tab-text-muted)' }}>
             <Sparkles className="h-8 w-8" />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-neutral-900 mb-2">Teams feature coming soon</h2>
-            <p className="text-neutral-500 max-w-2xl">
+            <h2 className="text-2xl font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Teams feature coming soon</h2>
+            <p className="max-w-2xl transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
               We're building powerful team management features to help you collaborate more effectively. 
               Create teams, assign roles, and manage access across multiple projects with ease.
             </p>
@@ -42,31 +42,31 @@ export const TeamsPage: React.FC = () => {
       {/* Feature Preview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="p-6">
-          <div className="p-3 bg-neutral-100 rounded-2xl w-fit mb-4 text-neutral-600">
+          <div className="p-3 rounded-2xl w-fit mb-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)', color: 'var(--tab-text-muted)' }}>
             <Building2 className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-neutral-900 mb-2">Team Workspaces</h3>
-          <p className="text-neutral-500 text-sm">
+          <h3 className="text-lg font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Team Workspaces</h3>
+          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
             Create dedicated workspaces for your teams with shared projects and secrets.
           </p>
         </Card>
 
         <Card className="p-6">
-          <div className="p-3 bg-neutral-100 rounded-2xl w-fit mb-4 text-neutral-600">
+          <div className="p-3 rounded-2xl w-fit mb-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)', color: 'var(--tab-text-muted)' }}>
             <Users className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-neutral-900 mb-2">Role-Based Access</h3>
-          <p className="text-neutral-500 text-sm">
+          <h3 className="text-lg font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Role-Based Access</h3>
+          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
             Assign team-wide roles that automatically apply to all team projects.
           </p>
         </Card>
 
         <Card className="p-6">
-          <div className="p-3 bg-neutral-100 rounded-2xl w-fit mb-4 text-neutral-600">
+          <div className="p-3 rounded-2xl w-fit mb-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)', color: 'var(--tab-text-muted)' }}>
             <Mail className="h-6 w-6" />
           </div>
-          <h3 className="text-lg font-semibold text-neutral-900 mb-2">Bulk Invitations</h3>
-          <p className="text-neutral-500 text-sm">
+          <h3 className="text-lg font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Bulk Invitations</h3>
+          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
             Invite multiple team members at once with customizable access levels.
           </p>
         </Card>
@@ -74,9 +74,9 @@ export const TeamsPage: React.FC = () => {
 
       {/* Current User Info */}
       <Card className="overflow-hidden">
-        <div className="p-6 border-b border-neutral-200 bg-neutral-50">
-          <h2 className="text-lg font-semibold text-neutral-900">Your Profile</h2>
-          <p className="text-sm text-neutral-500 mt-1">
+        <div className="p-6 border-b transition-colors duration-300" style={{ borderColor: 'var(--tab-border)', backgroundColor: 'var(--tab-hover-bg)' }}>
+          <h2 className="text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Your Profile</h2>
+          <p className="text-sm mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
             In the meantime, you can manage project members directly from each project's settings.
           </p>
         </div>
@@ -89,17 +89,17 @@ export const TeamsPage: React.FC = () => {
                 className="w-16 h-16 rounded-full"
               />
             ) : (
-              <div className="w-16 h-16 rounded-full bg-neutral-100 flex items-center justify-center">
-                <span className="text-2xl font-bold text-neutral-700">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)' }}>
+                <span className="text-2xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                   {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
             )}
             <div>
-              <h3 className="text-lg font-semibold text-neutral-900">
+              <h3 className="text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
                 {user?.displayName || user?.email?.split('@')[0]}
               </h3>
-              <p className="text-neutral-500 flex items-center gap-1">
+              <p className="flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                 <Mail className="h-4 w-4" />
                 {user?.email}
               </p>
@@ -108,7 +108,7 @@ export const TeamsPage: React.FC = () => {
                   {user?.platformRole || 'USER'}
                 </Badge>
                 {user?.createdAt && (
-                  <span className="text-xs text-neutral-400 flex items-center">
+                  <span className="text-xs flex items-center transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                     <Clock className="h-3 w-3 mr-1" />
                     Member since {new Date(user.createdAt).toLocaleDateString()}
                   </span>
@@ -120,9 +120,9 @@ export const TeamsPage: React.FC = () => {
       </Card>
 
       {/* Tip */}
-      <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-4">
-        <h4 className="font-medium text-neutral-900 mb-1">💡 Pro tip</h4>
-        <p className="text-sm text-neutral-600">
+      <div className="rounded-2xl border p-4 transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)', borderColor: 'var(--tab-border)' }}>
+        <h4 className="font-medium mb-1 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>💡 Pro tip</h4>
+        <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
           While Teams is in development, you can still collaborate by inviting members directly to your projects. 
           Go to any project → Members tab → Invite Member.
         </p>
