@@ -55,9 +55,21 @@ export const LoginPage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="text-4xl mb-2">🔐</div>
-            <h1 className="text-2xl font-bold text-gray-900">Cloud Secrets Manager</h1>
-            <p className="text-gray-600 mt-2">Sign in to manage your secrets</p>
+            <img 
+              src="/assets/csm-2.webp" 
+              alt="Cloud Secrets Manager Logo" 
+              className="h-16 w-16 mx-auto mb-4 object-contain"
+              onError={(e) => {
+                // Fallback to emoji if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'block';
+              }}
+            />
+            <div className="text-4xl mb-2 hidden">🔐</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cloud Secrets Manager</h1>
+            <p className="text-gray-600 dark:text-neutral-400 mt-2">Sign in to manage your secrets</p>
           </div>
 
           {/* Error Alert */}
@@ -105,11 +117,11 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setKeepSignedIn(e.target.checked)}
                 className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
               />
-              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700">
+              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700 dark:text-neutral-300">
                 Keep me signed in
               </label>
             </div>
-            <p className="text-xs text-gray-500 -mt-2 mb-2">
+            <p className="text-xs text-gray-500 dark:text-neutral-400 -mt-2 mb-2">
               {keepSignedIn 
                 ? 'Your session will persist across browser restarts and tabs will stay synchronized.'
                 : 'Your session will end when you close the browser. Each tab has its own session.'}
@@ -125,10 +137,10 @@ export const LoginPage: React.FC = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-300 dark:border-neutral-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white dark:bg-[#111111] text-gray-500 dark:text-neutral-400">Or continue with</span>
                 </div>
               </div>
 
