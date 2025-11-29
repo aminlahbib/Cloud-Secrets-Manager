@@ -20,9 +20,13 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
       // Enable query deduplication
       structuralSharing: true,
+      // Performance optimizations
+      networkMode: 'online',
+      keepPreviousData: true, // Keep previous data while fetching new data
     },
     mutations: {
       retry: 0, // Don't retry mutations by default
+      networkMode: 'online',
     },
   },
 });

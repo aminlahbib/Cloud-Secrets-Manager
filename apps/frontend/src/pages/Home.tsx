@@ -72,7 +72,7 @@ export const HomePage: React.FC = () => {
   const totalSecrets = projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0);
   const totalMembers = projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0);
 
-  const getTimeAgo = (timestamp: string) => {
+  const getTimeAgo = useCallback((timestamp: string) => {
     const now = new Date();
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
@@ -85,11 +85,11 @@ export const HomePage: React.FC = () => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return then.toLocaleDateString();
-  };
+  }, []);
 
-  const formatAction = (action: string) => {
+  const formatAction = useCallback((action: string) => {
     return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  };
+  }, []);
 
   return (
     <div className="space-y-8">
