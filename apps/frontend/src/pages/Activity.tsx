@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
-import { auditService, type AuditLogsResponse } from '../services/audit';
+import { auditService } from '../services/audit';
+import { projectsService } from '../services/projects';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
-import type { AuditLog } from '../types';
+import type { AuditLog, Project } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -60,66 +60,151 @@ interface FilterState {
   action: string;
   startDate: string;
   endDate: string;
+  projectId: string;
 }
 
 export const ActivityPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { isPlatformAdmin } = useAuth();
-
-  // Redirect non-platform admins
-  useEffect(() => {
-    if (!isPlatformAdmin) {
-      navigate('/home');
-    }
-  }, [isPlatformAdmin, navigate]);
-
-  if (!isPlatformAdmin) {
-    return null;
-  }
-
+  const { user, isPlatformAdmin } = useAuth();
   const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const itemsPerPage = 50;
+
   const [filters, setFilters] = useState<FilterState>({
     action: '',
     startDate: '',
     endDate: '',
-  });
-  const [showFilters, setShowFilters] = useState(false);
-
-  const { data, isLoading, error } = useQuery<AuditLogsResponse>({
-    queryKey: ['activity', page, filters],
-    queryFn: () =>
-      auditService.listAuditLogs({
-        page: page - 1,
-        size: 50,
-        action: filters.action || undefined,
-        startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
-        endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
-      }),
-    placeholderData: (previousData) => previousData,
+    projectId: '',
   });
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
+  // Fetch all projects the user has access to
+  const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
+    queryKey: ['projects', 'all'],
+    queryFn: () => projectsService.listProjects({ size: 1000 }), // Get all projects
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  const projects = projectsData?.content ?? [];
+
+  // Fetch activities from all accessible projects
+  const { data: activitiesData, isLoading: isActivitiesLoading, error } = useQuery<{
+    logs: AuditLog[];
+    totalCount: number;
+  }>({
+    queryKey: ['activity', 'all-projects', filters, projects.length],
+    queryFn: async () => {
+      if (projects.length === 0) {
+        return { logs: [], totalCount: 0 };
+      }
+
+      // If platform admin, use the global endpoint (more efficient)
+      if (isPlatformAdmin) {
+        try {
+          const response = await auditService.listAuditLogs({
+            page: 0,
+            size: 1000, // Get more items to filter client-side
+            action: filters.action || undefined,
+            startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
+            endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
+          });
+          return {
+            logs: response.content || [],
+            totalCount: response.totalElements || 0,
+          };
+        } catch (err: any) {
+          // If 403, fall through to project-by-project fetching
+          if (err.response?.status !== 403) {
+            throw err;
+          }
+        }
+      }
+
+      // For regular users or if admin endpoint fails, fetch from each project
+      const projectIds = filters.projectId
+        ? [filters.projectId]
+        : projects.map((p: Project) => p.id);
+
+      // Fetch activities from all projects in parallel
+      const activityPromises = projectIds.map(async (projectId: string) => {
+        try {
+          const params: any = {
+            page: 0,
+            size: 100, // Get more items per project
+            action: filters.action || undefined,
+          };
+
+          if (filters.startDate && filters.endDate) {
+            params.startDate = `${filters.startDate}T00:00:00`;
+            params.endDate = `${filters.endDate}T23:59:59`;
+          }
+
+          const response = await auditService.getProjectAuditLogs(projectId, params);
+          return response.content || [];
+        } catch (err: any) {
+          // Skip projects user doesn't have access to
+          if (err.response?.status === 403 || err.response?.status === 404) {
+            return [];
+          }
+          throw err;
+        }
+      });
+
+      const allActivities = await Promise.all(activityPromises);
+      const flattened = allActivities.flat();
+
+      // Sort by date (newest first)
+      const sorted = flattened.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
+      // Apply date filter if not already applied server-side
+      let filtered = sorted;
+      if (filters.startDate && !filters.endDate) {
+        const startDate = new Date(`${filters.startDate}T00:00:00`);
+        filtered = filtered.filter((log) => new Date(log.createdAt || 0) >= startDate);
+      }
+      if (filters.endDate && !filters.startDate) {
+        const endDate = new Date(`${filters.endDate}T23:59:59`);
+        filtered = filtered.filter((log) => new Date(log.createdAt || 0) <= endDate);
+      }
+
+      return {
+        logs: filtered,
+        totalCount: filtered.length,
+      };
+    },
+    enabled: !!user?.id && (projects.length > 0 || isProjectsLoading === false),
+    staleTime: 30 * 1000, // 30 seconds - activity is real-time data
+  });
+
+  const isLoading = isProjectsLoading || isActivitiesLoading;
+
+  const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({
       action: '',
       startDate: '',
       endDate: '',
+      projectId: '',
     });
     setPage(1);
-  };
+  }, []);
 
-  const handleExport = () => {
-    if (!data?.content?.length) return;
-    const header = ['Timestamp', 'Action', 'Resource', 'User', 'IP Address'];
-    const rows = data.content.map((log: AuditLog) => [
+  const handleExport = useCallback(() => {
+    if (!activitiesData?.logs?.length) return;
+    const header = ['Timestamp', 'Action', 'Resource', 'User', 'Project', 'IP Address'];
+    const rows = activitiesData.logs.map((log: AuditLog) => [
       new Date(log.createdAt || '').toISOString(),
       log.action,
       log.resourceName || log.resourceId || '',
       log.userEmail || log.user?.email || '',
+      log.project?.name || '',
       log.ipAddress ?? '',
     ]);
 
@@ -127,7 +212,7 @@ export const ActivityPage: React.FC = () => {
       .map((row) =>
         row
           .map((value: string) => {
-            const safe = value.replace(/"/g, '""');
+            const safe = String(value).replace(/"/g, '""');
             return `"${safe}"`;
           })
           .join(',')
@@ -141,20 +226,31 @@ export const ActivityPage: React.FC = () => {
     link.download = `activity-${Date.now()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  };
+  }, [activitiesData?.logs]);
 
   const hasActiveFilters = useMemo(
-    () => filters.action || filters.startDate || filters.endDate,
+    () => filters.action || filters.startDate || filters.endDate || filters.projectId,
     [filters]
   );
 
-  const logs = data?.content ?? [];
+  // Client-side pagination
+  const paginatedLogs = useMemo(() => {
+    if (!activitiesData?.logs) return [];
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return activitiesData.logs.slice(start, end);
+  }, [activitiesData?.logs, page, itemsPerPage]);
 
-  const formatAction = (action: string) => {
+  const totalPages = useMemo(() => {
+    if (!activitiesData?.totalCount) return 0;
+    return Math.ceil(activitiesData.totalCount / itemsPerPage);
+  }, [activitiesData?.totalCount, itemsPerPage]);
+
+  const formatAction = useCallback((action: string) => {
     return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  };
+  }, []);
 
-  const getTimeAgo = (timestamp: string) => {
+  const getTimeAgo = useCallback((timestamp: string) => {
     const now = new Date();
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
@@ -167,7 +263,7 @@ export const ActivityPage: React.FC = () => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return then.toLocaleDateString();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -176,7 +272,9 @@ export const ActivityPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Activity</h1>
           <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Track all actions across your projects and secrets
+            {isPlatformAdmin 
+              ? 'Track all actions across all projects and secrets' 
+              : 'Track all actions across your accessible projects and secrets'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -187,7 +285,7 @@ export const ActivityPage: React.FC = () => {
           <Button
             variant="secondary"
             onClick={handleExport}
-            disabled={!logs.length}
+            disabled={!paginatedLogs.length}
           >
             <Download className="h-5 w-5 mr-2" />
             Export
@@ -198,7 +296,24 @@ export const ActivityPage: React.FC = () => {
       {/* Filters */}
       {showFilters && (
         <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-subtle)' }}>
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Project
+              </label>
+              <select
+                value={filters.projectId}
+                onChange={(e) => handleFilterChange('projectId', e.target.value)}
+                className="input-theme"
+              >
+                <option value="">All Projects</option>
+                {projects.map((project: Project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Action Type
@@ -269,22 +384,26 @@ export const ActivityPage: React.FC = () => {
         </div>
       ) : error ? (
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
-          <p className="text-sm" style={{ color: 'var(--status-danger)' }}>Failed to load activity. Please try again.</p>
+          <p className="text-sm" style={{ color: 'var(--status-danger)' }}>
+            Failed to load activity. {error instanceof Error ? error.message : 'Please try again.'}
+          </p>
         </div>
-      ) : !logs.length ? (
+      ) : !paginatedLogs.length ? (
         <EmptyState
           icon={<FileText className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title="No activity yet"
           description={
             hasActiveFilters
               ? 'No activity matches your filters. Try adjusting them.'
-              : 'Your activity feed will show actions across all your projects.'
+              : projects.length === 0
+              ? 'You don\'t have access to any projects yet.'
+              : 'Your activity feed will show actions across all your accessible projects.'
           }
         />
       ) : (
         <>
           <div className="rounded-lg border divide-y" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-subtle)', borderTopColor: 'var(--border-subtle)' }}>
-            {logs.map((log: AuditLog) => {
+            {paginatedLogs.map((log: AuditLog) => {
               const actionColor = ACTION_COLORS[log.action] || 'default';
               const iconBgStyles = {
                 success: { backgroundColor: 'var(--status-success-bg)', color: 'var(--status-success)' },
@@ -335,18 +454,19 @@ export const ActivityPage: React.FC = () => {
             })}
           </div>
 
-          {data?.totalPages && data.totalPages > 1 && (
+          {totalPages > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={data.totalPages}
+              totalPages={totalPages}
               onPageChange={setPage}
               className="mt-6"
             />
           )}
 
-          {data && (
+          {activitiesData && (
             <div className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Showing {logs.length} of {data.totalElements || 0} activities
+              Showing {paginatedLogs.length} of {activitiesData.totalCount || 0} activities
+              {projects.length > 0 && ` across ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
             </div>
           )}
         </>
