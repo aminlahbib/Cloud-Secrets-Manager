@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   LayoutGrid,
   Download,
+  Upload,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
@@ -39,6 +40,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useSaveSecret } from '../hooks/useSecrets';
 import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
 import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
@@ -104,6 +106,9 @@ export const ProjectDetailPage: React.FC = () => {
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
   const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -266,6 +271,37 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setSelectedSecrets(new Set());
       setShowBulkDeleteModal(false);
+    },
+  });
+
+  // Import secrets mutation
+  const importSecretsMutation = useMutation({
+    mutationFn: async (secretsToImport: Array<{ key: string; value: string; description?: string; expiresAt?: Date }>) => {
+      const results = await Promise.allSettled(
+        secretsToImport.map((secret) =>
+          secretsService.createProjectSecret(projectId!, {
+            secretKey: secret.key,
+            value: secret.value,
+            description: secret.description,
+            expiresAt: secret.expiresAt ? secret.expiresAt.toISOString().split('.')[0] + 'Z' : undefined,
+          })
+        )
+      );
+      return results;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportError(null);
     },
   });
 
@@ -621,10 +657,51 @@ export const ProjectDetailPage: React.FC = () => {
 
             <div className="flex gap-2">
               {activeTab === 'secrets' && canManageSecrets && (
-                <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Secret
-                </Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      // Export secrets to JSON
+                      const exportData = {
+                        project: {
+                          id: project?.id,
+                          name: project?.name,
+                        },
+                        exportedAt: new Date().toISOString(),
+                        secrets: secrets.map((s: Secret) => ({
+                          key: s.secretKey,
+                          description: s.description || '',
+                          expiresAt: s.expiresAt || null,
+                        })),
+                      };
+                      const json = JSON.stringify(exportData, null, 2);
+                      const blob = new Blob([json], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `secrets-${project?.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    disabled={secrets.length === 0}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowImportModal(true)}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import
+                  </Button>
+                  <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Secret
+                  </Button>
+                </>
               )}
 
               {activeTab === 'members' && canManageMembers && (
@@ -1714,6 +1791,122 @@ export const ProjectDetailPage: React.FC = () => {
               Failed to send invitation. Please try again.
             </p>
           )}
+        </div>
+      </Modal>
+
+      {/* Import Secrets Modal */}
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setImportFile(null);
+          setImportError(null);
+        }}
+        title="Import Secrets"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="bg-gray-100 px-1 rounded">key</code> and <code className="bg-gray-100 px-1 rounded">value</code> fields.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select File
+            </label>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setImportFile(file);
+                  setImportError(null);
+                }
+              }}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            />
+            {importFile && (
+              <p className="mt-2 text-sm text-gray-600">
+                Selected: {importFile.name}
+              </p>
+            )}
+          </div>
+
+          {importError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600">{importError}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowImportModal(false);
+                setImportFile(null);
+                setImportError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!importFile) {
+                  setImportError('Please select a file');
+                  return;
+                }
+
+                try {
+                  const text = await importFile.text();
+                  const data = JSON.parse(text);
+                  
+                  // Support both array format and object with secrets array
+                  const secretsToImport = Array.isArray(data) ? data : (data.secrets || []);
+                  
+                  if (!Array.isArray(secretsToImport) || secretsToImport.length === 0) {
+                    setImportError('Invalid file format. Expected an array of secrets.');
+                    return;
+                  }
+
+                  // Validate secrets
+                  const validSecrets = secretsToImport
+                    .filter((s) => s.key && s.value)
+                    .map((s) => ({
+                      key: s.key,
+                      value: s.value,
+                      description: s.description || '',
+                      expiresAt: s.expiresAt ? new Date(s.expiresAt) : undefined,
+                    }));
+
+                  if (validSecrets.length === 0) {
+                    setImportError('No valid secrets found. Each secret must have a key and value.');
+                    return;
+                  }
+
+                  // Import secrets
+                  importSecretsMutation.mutate(validSecrets, {
+                    onSuccess: (results) => {
+                      const successCount = results.filter((r) => r.status === 'fulfilled').length;
+                      const errorCount = results.filter((r) => r.status === 'rejected').length;
+                      if (errorCount > 0) {
+                        setImportError(`Imported ${successCount} secrets. ${errorCount} failed.`);
+                      }
+                    },
+                    onError: (error) => {
+                      setImportError(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    },
+                  });
+                } catch (error) {
+                  setImportError(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+              }}
+              disabled={!importFile || importSecretsMutation.isPending}
+              isLoading={importSecretsMutation.isPending}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import Secrets
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
