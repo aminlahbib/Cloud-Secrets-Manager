@@ -1,9 +1,16 @@
 import React, { useCallback } from 'react';
-import { Mail, Users, Trash2 } from 'lucide-react';
+import { Mail, Users, Trash2, Crown, Shield } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import { EmptyState } from '../ui/EmptyState';
 import { Badge } from '../ui/Badge';
 import type { ProjectMember, ProjectRole } from '../../types';
+
+const ROLE_ICONS: Record<ProjectRole, React.ReactNode> = {
+  OWNER: <Crown className="h-3 w-3" />,
+  ADMIN: <Shield className="h-3 w-3" />,
+  MEMBER: null,
+  VIEWER: null,
+};
 
 interface MembersTabProps {
   members: ProjectMember[] | undefined;
@@ -108,6 +115,9 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
                 </select>
               ) : (
                 <Badge variant={member.role === 'OWNER' || member.role === 'ADMIN' ? 'owner-admin' : member.role === 'MEMBER' ? 'info' : 'default'}>
+                  {ROLE_ICONS[member.role] && (
+                    <span className="mr-1">{ROLE_ICONS[member.role]}</span>
+                  )}
                   {member.role.charAt(0) + member.role.slice(1).toLowerCase()}
                 </Badge>
               )}
