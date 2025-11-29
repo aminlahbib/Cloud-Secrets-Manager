@@ -28,7 +28,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, isPlatformAdmin } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { mode, toggleMode } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -313,10 +313,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               {/* Dark Mode Toggle */}
               <button
-                onClick={toggleTheme}
+                onClick={toggleMode}
                 className="nav-item"
               >
-                {theme === 'dark' ? (
+                {mode === 'dark' ? (
                   <>
                     <Sun className="h-5 w-5" />
                     Light Mode

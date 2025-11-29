@@ -22,7 +22,7 @@ type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, themeInfo, setTheme, availableThemes } = useTheme();
   const { projectView, setProjectView } = usePreferences();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
@@ -298,52 +298,20 @@ export const SettingsPage: React.FC = () => {
                   <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                     Theme
                   </label>
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={() => setTheme('light')}
-                      className="flex items-center gap-2 px-4 py-2 border-2 rounded-2xl transition-all duration-150"
-                      style={{
-                        borderColor: theme === 'light' ? 'var(--accent-primary)' : 'var(--border-default)',
-                        backgroundColor: theme === 'light' ? 'var(--accent-primary)' : 'transparent',
-                        color: theme === 'light' ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (theme !== 'light') {
-                          e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (theme !== 'light') {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
-                    >
-                      <Sun className="h-4 w-4" />
-                      Light
-                    </button>
-                    <button 
-                      onClick={() => setTheme('dark')}
-                      className="flex items-center gap-2 px-4 py-2 border-2 rounded-2xl transition-all duration-150"
-                      style={{
-                        borderColor: theme === 'dark' ? 'var(--accent-primary)' : 'var(--border-default)',
-                        backgroundColor: theme === 'dark' ? 'var(--accent-primary)' : 'transparent',
-                        color: theme === 'dark' ? 'var(--text-inverse)' : 'var(--text-secondary)',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (theme !== 'dark') {
-                          e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (theme !== 'dark') {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }
-                      }}
-                    >
-                      <Moon className="h-4 w-4" />
-                      Dark
-                    </button>
-                  </div>
+                  <select
+                    value={theme}
+                    onChange={(e) => setTheme(e.target.value as any)}
+                    className="input-theme w-full"
+                  >
+                    {availableThemes.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} {t.description ? `- ${t.description}` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+                    Current: {themeInfo.name}
+                  </p>
                 </div>
 
                 <div>
