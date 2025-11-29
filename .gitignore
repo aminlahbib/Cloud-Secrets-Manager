@@ -129,6 +129,9 @@ logs/
 tmp/
 temp/
 
+# Scripts
+scripts/
+
 # Node modules (for future frontend)
 node_modules/
 npm-debug.log*

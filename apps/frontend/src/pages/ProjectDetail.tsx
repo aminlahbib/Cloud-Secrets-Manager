@@ -22,6 +22,8 @@ import {
   Calendar,
   AlertTriangle,
   LayoutGrid,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
@@ -38,6 +40,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
 import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
@@ -70,6 +73,7 @@ export const ProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showNotification } = useNotifications();
 
   // Persist activeTab in sessionStorage to prevent reset on errors
   const [activeTab, setActiveTab] = useState(() => {
@@ -101,6 +105,11 @@ export const ProjectDetailPage: React.FC = () => {
   const [activityPage, setActivityPage] = useState(1);
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
   const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -211,6 +220,114 @@ export const ProjectDetailPage: React.FC = () => {
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
   }, [analyticsStats, dateRange]);
 
+  // Export analytics data
+  const exportAnalytics = useCallback(() => {
+    if (!analyticsStats || !project) return;
+
+    const exportData = {
+      project: {
+        id: project.id,
+        name: project.name,
+      },
+      dateRange,
+      generatedAt: new Date().toISOString(),
+      stats: {
+        totalActions: analyticsStats.totalActions,
+        activeUsers: Object.keys(analyticsStats.actionsByUser).length,
+        actionTypes: Object.keys(analyticsStats.actionsByType).length,
+      },
+      actionsByType: analyticsStats.actionsByType,
+      actionsByDay: analyticsStats.actionsByDay,
+      topUsers: analyticsStats.topUsers,
+      topActions: analyticsStats.topActions,
+      chartData,
+    };
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-${project.name.replace(/\s+/g, '-')}-${dateRange}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [analyticsStats, project, dateRange, chartData]);
+
+  // Bulk delete secrets mutation
+  const bulkDeleteSecretsMutation = useMutation({
+    mutationFn: async (keys: string[]) => {
+      await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setSelectedSecrets(new Set());
+      setShowBulkDeleteModal(false);
+    },
+  });
+
+  // Import secrets mutation
+  const importSecretsMutation = useMutation({
+    mutationFn: async (secretsToImport: Array<{ key: string; value: string; description?: string; expiresAt?: Date }>) => {
+      const results = await Promise.allSettled(
+        secretsToImport.map((secret) =>
+          secretsService.createProjectSecret(projectId!, {
+            secretKey: secret.key,
+            value: secret.value,
+            description: secret.description,
+            expiresAt: secret.expiresAt ? secret.expiresAt.toISOString().split('.')[0] + 'Z' : undefined,
+          })
+        )
+      );
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      setShowImportModal(false);
+      setImportFile(null);
+      setImportError(null);
+      const successCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'fulfilled').length;
+      const errorCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'rejected').length;
+      if (errorCount > 0) {
+        showNotification({
+          type: 'warning',
+          title: 'Import completed with errors',
+          message: `Imported ${successCount} secrets. ${errorCount} failed.`,
+        });
+      } else {
+        showNotification({
+          type: 'success',
+          title: 'Secrets imported',
+          message: `Successfully imported ${successCount} secret${successCount !== 1 ? 's' : ''}`,
+        });
+      }
+    },
+    onError: (error) => {
+      showNotification({
+        type: 'error',
+        title: 'Import failed',
+        message: error instanceof Error ? error.message : 'Failed to import secrets',
+      });
+    },
+  });
+
   // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
     mutationFn: (key: string) => secretsService.deleteProjectSecret(projectId!, key),
@@ -249,6 +366,11 @@ export const ProjectDetailPage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowDeleteSecretModal(null);
+      showNotification({
+        type: 'success',
+        title: 'Secret deleted',
+        message: 'The secret has been successfully deleted',
+      });
     },
   });
 
@@ -365,6 +487,31 @@ export const ProjectDetailPage: React.FC = () => {
     !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secrets = secretsData?.content ?? [];
+
+  // Bulk selection handlers
+  const toggleSecretSelection = useCallback((secretKey: string) => {
+    setSelectedSecrets((prev) => {
+      const next = new Set(prev);
+      if (next.has(secretKey)) {
+        next.delete(secretKey);
+      } else {
+        next.add(secretKey);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectAllSecrets = useCallback(() => {
+    if (selectedSecrets.size === secrets.length) {
+      setSelectedSecrets(new Set());
+    } else {
+      setSelectedSecrets(new Set(secrets.map((s: Secret) => s.secretKey)));
+    }
+  }, [secrets, selectedSecrets.size]);
+
+  const clearSelection = useCallback(() => {
+    setSelectedSecrets(new Set());
+  }, []);
   const transferableMembers = useMemo(
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
@@ -538,10 +685,51 @@ export const ProjectDetailPage: React.FC = () => {
 
             <div className="flex gap-2">
               {activeTab === 'secrets' && canManageSecrets && (
-                <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Secret
-                </Button>
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      // Export secrets to JSON
+                      const exportData = {
+                        project: {
+                          id: project?.id,
+                          name: project?.name,
+                        },
+                        exportedAt: new Date().toISOString(),
+                        secrets: secrets.map((s: Secret) => ({
+                          key: s.secretKey,
+                          description: s.description || '',
+                          expiresAt: s.expiresAt || null,
+                        })),
+                      };
+                      const json = JSON.stringify(exportData, null, 2);
+                      const blob = new Blob([json], { type: 'application/json' });
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = `secrets-${project?.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+                      document.body.appendChild(a);
+                      a.click();
+                      document.body.removeChild(a);
+                      URL.revokeObjectURL(url);
+                    }}
+                    disabled={secrets.length === 0}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowImportModal(true)}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Import
+                  </Button>
+                  <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Secret
+                  </Button>
+                </>
               )}
 
               {activeTab === 'members' && canManageMembers && (
@@ -592,6 +780,29 @@ export const ProjectDetailPage: React.FC = () => {
             />
           </div>
 
+          {/* Bulk Actions Toolbar */}
+          {selectedSecrets.size > 0 && canDeleteSecrets && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-blue-900">
+                  {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
+                </span>
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700">
+                  Clear
+                </Button>
+              </div>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setShowBulkDeleteModal(true)}
+                disabled={bulkDeleteSecretsMutation.isPending}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Selected
+              </Button>
+            </div>
+          )}
+
           {isSecretsLoading ? (
             <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
@@ -619,6 +830,16 @@ export const ProjectDetailPage: React.FC = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                      {canDeleteSecrets && (
+                        <th className="px-6 py-3 text-left">
+                          <input
+                            type="checkbox"
+                            checked={selectedSecrets.size === secrets.length && secrets.length > 0}
+                            onChange={selectAllSecrets}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                        </th>
+                      )}
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
@@ -657,6 +878,16 @@ export const ProjectDetailPage: React.FC = () => {
 
                       return (
                         <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
+                          {canDeleteSecrets && (
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <input
+                                type="checkbox"
+                                checked={selectedSecrets.has(secret.secretKey)}
+                                onChange={() => toggleSecretSelection(secret.secretKey)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                            </td>
+                          )}
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Link
                               to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
@@ -730,16 +961,27 @@ export const ProjectDetailPage: React.FC = () => {
               {/* Mobile Card View */}
               <div className="md:hidden grid grid-cols-1 gap-4">
                 {secrets.map((secret: Secret) => (
-                  <SecretCard
-                    key={secret.id || secret.secretKey}
-                    secret={secret}
-                    projectId={projectId!}
-                    canManageSecrets={canManageSecrets}
-                    canDeleteSecrets={canDeleteSecrets}
-                    onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
-                    onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
-                    onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
-                  />
+                  <div key={secret.id || secret.secretKey} className="relative">
+                    {canDeleteSecrets && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedSecrets.has(secret.secretKey)}
+                          onChange={() => toggleSecretSelection(secret.secretKey)}
+                          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      </div>
+                    )}
+                    <SecretCard
+                      secret={secret}
+                      projectId={projectId!}
+                      canManageSecrets={canManageSecrets}
+                      canDeleteSecrets={canDeleteSecrets}
+                      onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
+                      onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
+                      onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
+                    />
+                  </div>
                 ))}
               </div>
             </>
@@ -851,21 +1093,34 @@ export const ProjectDetailPage: React.FC = () => {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
               <div className="flex items-center gap-3">
-                {/* Date Range Filter (only for analytics) */}
+                {/* Date Range Filter and Export (only for analytics) */}
                 {activityView === 'analytics' && (
-                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <select
-                      value={dateRange}
-                      onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                      className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
-                    >
-                      <option value="7d">Last 7 days</option>
-                      <option value="30d">Last 30 days</option>
-                      <option value="90d">Last 90 days</option>
-                      <option value="all">All time</option>
-                    </select>
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                        className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                      >
+                        <option value="7d">Last 7 days</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                        <option value="all">All time</option>
+                      </select>
+                    </div>
+                    {analyticsStats && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={exportAnalytics}
+                        className="!m-0"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                    )}
+                  </>
                 )}
 
                 {/* View Toggle */}
@@ -1409,6 +1664,31 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       </Modal>
 
+      {/* Bulk Delete Secrets Modal */}
+      <Modal
+        isOpen={showBulkDeleteModal}
+        onClose={() => setShowBulkDeleteModal(false)}
+        title="Delete Selected Secrets"
+      >
+        <div className="space-y-4">
+          <p className="text-neutral-700">
+            Are you sure you want to delete <strong>{selectedSecrets.size}</strong> secret{selectedSecrets.size !== 1 ? 's' : ''}? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button variant="secondary" onClick={() => setShowBulkDeleteModal(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => bulkDeleteSecretsMutation.mutate(Array.from(selectedSecrets))}
+              isLoading={bulkDeleteSecretsMutation.isPending}
+            >
+              Delete {selectedSecrets.size} Secret{selectedSecrets.size !== 1 ? 's' : ''}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Delete Project Modal */}
       <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
         <div className="space-y-4">
@@ -1539,6 +1819,111 @@ export const ProjectDetailPage: React.FC = () => {
               Failed to send invitation. Please try again.
             </p>
           )}
+        </div>
+      </Modal>
+
+      {/* Import Secrets Modal */}
+      <Modal
+        isOpen={showImportModal}
+        onClose={() => {
+          setShowImportModal(false);
+          setImportFile(null);
+          setImportError(null);
+        }}
+        title="Import Secrets"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="bg-gray-100 px-1 rounded">key</code> and <code className="bg-gray-100 px-1 rounded">value</code> fields.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select File
+            </label>
+            <input
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setImportFile(file);
+                  setImportError(null);
+                }
+              }}
+              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            />
+            {importFile && (
+              <p className="mt-2 text-sm text-gray-600">
+                Selected: {importFile.name}
+              </p>
+            )}
+          </div>
+
+          {importError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-sm text-red-600">{importError}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowImportModal(false);
+                setImportFile(null);
+                setImportError(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!importFile) {
+                  setImportError('Please select a file');
+                  return;
+                }
+
+                try {
+                  const text = await importFile.text();
+                  const data = JSON.parse(text);
+                  
+                  // Support both array format and object with secrets array
+                  const secretsToImport = Array.isArray(data) ? data : (data.secrets || []);
+                  
+                  if (!Array.isArray(secretsToImport) || secretsToImport.length === 0) {
+                    setImportError('Invalid file format. Expected an array of secrets.');
+                    return;
+                  }
+
+                  // Validate secrets
+                  const validSecrets = secretsToImport
+                    .filter((s) => s.key && s.value)
+                    .map((s) => ({
+                      key: s.key,
+                      value: s.value,
+                      description: s.description || '',
+                      expiresAt: s.expiresAt ? new Date(s.expiresAt) : undefined,
+                    }));
+
+                  if (validSecrets.length === 0) {
+                    setImportError('No valid secrets found. Each secret must have a key and value.');
+                    return;
+                  }
+
+                  // Import secrets
+                  importSecretsMutation.mutate(validSecrets);
+                } catch (error) {
+                  setImportError(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                }
+              }}
+              disabled={!importFile || importSecretsMutation.isPending}
+              isLoading={importSecretsMutation.isPending}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Import Secrets
+            </Button>
+          </div>
         </div>
       </Modal>
     </div>
