@@ -41,7 +41,6 @@ import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { useSaveSecret } from '../hooks/useSecrets';
 import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
 import { StatsCards } from '../components/analytics/StatsCards';
 import { ActivityChart } from '../components/analytics/ActivityChart';
@@ -291,7 +290,7 @@ export const ProjectDetailPage: React.FC = () => {
       );
       return results;
     },
-    onSuccess: () => {
+    onSuccess: (results) => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
@@ -304,8 +303,8 @@ export const ProjectDetailPage: React.FC = () => {
       setShowImportModal(false);
       setImportFile(null);
       setImportError(null);
-      const successCount = results.filter((r) => r.status === 'fulfilled').length;
-      const errorCount = results.filter((r) => r.status === 'rejected').length;
+      const successCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'fulfilled').length;
+      const errorCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'rejected').length;
       if (errorCount > 0) {
         showNotification({
           type: 'warning',
@@ -1913,18 +1912,7 @@ export const ProjectDetailPage: React.FC = () => {
                   }
 
                   // Import secrets
-                  importSecretsMutation.mutate(validSecrets, {
-                    onSuccess: (results) => {
-                      const successCount = results.filter((r) => r.status === 'fulfilled').length;
-                      const errorCount = results.filter((r) => r.status === 'rejected').length;
-                      if (errorCount > 0) {
-                        setImportError(`Imported ${successCount} secrets. ${errorCount} failed.`);
-                      }
-                    },
-                    onError: (error) => {
-                      setImportError(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                    },
-                  });
+                  importSecretsMutation.mutate(validSecrets);
                 } catch (error) {
                   setImportError(`Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`);
                 }
