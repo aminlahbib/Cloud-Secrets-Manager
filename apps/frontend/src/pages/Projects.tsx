@@ -116,30 +116,50 @@ export const ProjectsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
-          <p className="text-gray-500 dark:text-neutral-400 mt-1">Manage your projects and secret collections</p>
+          <h1 className="text-h1 text-primary">Projects</h1>
+          <p className="text-body-sm text-secondary mt-1">Manage your projects and secret collections</p>
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-lg">
+          <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ backgroundColor: 'var(--elevation-2)', borderColor: 'var(--border-subtle)' }}>
             <button
               onClick={() => setProjectView('grid')}
-              className={`p-2 rounded transition-all duration-300 ${
-                projectView === 'grid'
-                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
+              className="p-2 rounded transition-all duration-150"
+              style={{
+                backgroundColor: projectView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+                color: projectView === 'grid' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                if (projectView !== 'grid') {
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (projectView !== 'grid') {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
               title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
               onClick={() => setProjectView('list')}
-              className={`p-2 rounded transition-all duration-300 ${
-                projectView === 'list'
-                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white'
-              }`}
+              className="p-2 rounded transition-all duration-150"
+              style={{
+                backgroundColor: projectView === 'list' ? 'var(--accent-primary)' : 'transparent',
+                color: projectView === 'list' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+              }}
+              onMouseEnter={(e) => {
+                if (projectView !== 'list') {
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (projectView !== 'list') {
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }
+              }}
               title="List View"
             >
               <List className="w-4 h-4" />
@@ -162,7 +182,7 @@ export const ProjectsPage: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white transition-colors"
+              className="input-theme pl-10 pr-4 py-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30"
             />
           </div>
           <FilterPanel
@@ -216,25 +236,36 @@ export const ProjectsPage: React.FC = () => {
               to={`/projects/${project.id}`}
               className="block group"
             >
-              <div className={`
-                bg-white dark:bg-[#1a1a1a] rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
-                ${project.isArchived
-                  ? 'border-gray-200 dark:border-[rgba(255,255,255,0.05)] opacity-75'
-                  : 'border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] hover:border-orange-300 dark:hover:border-orange-500/30'
-                }
-              `}>
+              <div 
+                className="card h-full flex flex-col"
+                style={{
+                  opacity: project.isArchived ? 0.75 : 1,
+                }}
+              >
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`
-                    p-3 rounded-lg transition-colors
-                    ${project.isArchived
-                      ? 'bg-gray-100 dark:bg-neutral-800'
-                      : 'bg-neutral-100 dark:bg-neutral-800 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors'
-                    }
-                  `}>
+                  <div 
+                    className="p-3 rounded-lg transition-all duration-150"
+                    style={{ 
+                      backgroundColor: 'var(--elevation-1)',
+                      color: 'var(--text-tertiary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!project.isArchived) {
+                        e.currentTarget.style.backgroundColor = 'var(--accent-primary-glow)';
+                        e.currentTarget.style.color = 'var(--accent-primary)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!project.isArchived) {
+                        e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                        e.currentTarget.style.color = 'var(--text-tertiary)';
+                      }
+                    }}
+                  >
                     {project.isArchived ? (
-                      <Archive className="w-8 h-8 text-gray-400 dark:text-neutral-500" />
+                      <Archive className="w-8 h-8" />
                     ) : (
-                      <Folder className="w-8 h-8 text-neutral-600 dark:text-neutral-400" />
+                      <Folder className="w-8 h-8" />
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -252,26 +283,26 @@ export const ProjectsPage: React.FC = () => {
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">
+                  <h3 className="text-h3 font-semibold text-primary mb-2">
                     {project.name}
                   </h3>
                   {project.description && (
-                    <p className="text-gray-500 dark:text-neutral-400 text-sm line-clamp-2 mb-3">
+                    <p className="text-body-sm text-secondary line-clamp-2 mb-3">
                       {project.description}
                     </p>
                   )}
                   {project.workflowName && (
                     <div className="flex items-center gap-1.5 mb-3">
-                      <LayoutGrid className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
+                      <LayoutGrid className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
+                      <span className="text-caption text-tertiary font-medium">
                         {project.workflowName}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-[rgba(255,255,255,0.05)] flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-4 text-gray-400 dark:text-neutral-500">
+                <div className="mt-4 pt-4 border-t flex items-center justify-between text-body-sm" style={{ borderTopColor: 'var(--border-subtle)' }}>
+                  <div className="flex items-center gap-4" style={{ color: 'var(--text-tertiary)' }}>
                     <span className="flex items-center" title="Secrets">
                       <Key className="h-4 w-4 mr-1" />
                       {project.secretCount ?? 0}
