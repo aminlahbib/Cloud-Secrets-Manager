@@ -118,7 +118,7 @@ export const SecretFormPage: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="value" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="value" className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Secret Value *
               </label>
               <Textarea

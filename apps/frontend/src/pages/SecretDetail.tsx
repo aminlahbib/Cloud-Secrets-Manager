@@ -26,8 +26,14 @@ export const SecretDetailPage: React.FC = () => {
   if (!secretKey || !projectId) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">
+        <div 
+          className="border rounded-lg p-4"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
             Invalid URL. Please navigate from a project page.
           </p>
           <Button
@@ -147,8 +153,14 @@ export const SecretDetailPage: React.FC = () => {
   if (error || !secret) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">
+        <div 
+          className="border rounded-lg p-4"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
             Failed to load secret. It may have been deleted or you do not have access.
           </p>
           <Button variant="secondary" onClick={() => navigate(`/projects/${projectId}`)} className="mt-4">
