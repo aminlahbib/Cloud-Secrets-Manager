@@ -15,8 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -106,7 +108,9 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByProjectIdAndDateRange(
             UUID projectId, LocalDateTime start, LocalDateTime end, Pageable pageable) {
         log.debug("Retrieving audit logs for project: {} between {} and {}", projectId, start, end);
-        return auditLogRepository.findByProjectIdAndCreatedAtBetween(projectId, start, end, pageable)
+        Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
+        Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
+        return auditLogRepository.findByProjectIdAndCreatedAtBetween(projectId, startInstant, endInstant, pageable)
                 .map(AuditLogResponse::from);
     }
 
@@ -130,7 +134,9 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByUserIdAndDateRange(
             UUID userId, LocalDateTime start, LocalDateTime end, Pageable pageable) {
         log.debug("Retrieving audit logs for user: {} between {} and {}", userId, start, end);
-        return auditLogRepository.findByUserIdAndCreatedAtBetween(userId, start, end, pageable)
+        Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
+        Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
+        return auditLogRepository.findByUserIdAndCreatedAtBetween(userId, startInstant, endInstant, pageable)
                 .map(AuditLogResponse::from);
     }
 
@@ -171,7 +177,9 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByDateRange(
             LocalDateTime start, LocalDateTime end, Pageable pageable) {
         log.debug("Retrieving audit logs between {} and {}", start, end);
-        return auditLogRepository.findByCreatedAtBetween(start, end, pageable)
+        Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
+        Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
+        return auditLogRepository.findByCreatedAtBetween(startInstant, endInstant, pageable)
                 .map(AuditLogResponse::from);
     }
 
@@ -181,8 +189,10 @@ public class AuditService {
             UUID projectId, UUID userId, LocalDateTime start, LocalDateTime end, Pageable pageable) {
         log.debug("Retrieving audit logs for project: {}, user: {} between {} and {}",
                 projectId, userId, start, end);
+        Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
+        Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
         return auditLogRepository.findByProjectIdAndUserIdAndCreatedAtBetween(
-                projectId, userId, start, end, pageable)
+                projectId, userId, startInstant, endInstant, pageable)
                 .map(AuditLogResponse::from);
     }
 
@@ -192,11 +202,14 @@ public class AuditService {
     public AnalyticsResponse calculateAnalytics(UUID projectId, LocalDateTime start, LocalDateTime end) {
         log.debug("Calculating analytics for project: {} between {} and {}", projectId, start, end);
 
+        Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
+        Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
+
         // Total actions
-        long totalActions = auditLogRepository.countByProjectIdAndDateRange(projectId, start, end);
+        long totalActions = auditLogRepository.countByProjectIdAndDateRange(projectId, startInstant, endInstant);
 
         // Actions by type
-        List<Object[]> actionsByTypeResults = auditLogRepository.countActionsByType(projectId, start, end);
+        List<Object[]> actionsByTypeResults = auditLogRepository.countActionsByType(projectId, startInstant, endInstant);
         Map<String, Long> actionsByType = actionsByTypeResults.stream()
                 .collect(Collectors.toMap(
                         row -> (String) row[0],
@@ -205,7 +218,7 @@ public class AuditService {
                         LinkedHashMap::new));
 
         // Actions by user
-        List<Object[]> actionsByUserResults = auditLogRepository.countActionsByUser(projectId, start, end);
+        List<Object[]> actionsByUserResults = auditLogRepository.countActionsByUser(projectId, startInstant, endInstant);
         Map<String, Long> actionsByUser = actionsByUserResults.stream()
                 .collect(Collectors.toMap(
                         row -> row[0].toString(),
@@ -214,7 +227,7 @@ public class AuditService {
                         LinkedHashMap::new));
 
         // Actions by day
-        List<Object[]> actionsByDayResults = auditLogRepository.countActionsByDay(projectId, start, end);
+        List<Object[]> actionsByDayResults = auditLogRepository.countActionsByDay(projectId, startInstant, endInstant);
         Map<String, Long> actionsByDay = actionsByDayResults.stream()
                 .collect(Collectors.toMap(
                         row -> {
