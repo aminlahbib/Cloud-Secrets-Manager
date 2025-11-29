@@ -80,12 +80,9 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
 
           {isOpen && (
             <div 
-              className="mt-2 rounded-2xl border overflow-hidden" 
+              className="mt-2 rounded-2xl border overflow-hidden dropdown-glass" 
               style={{ 
                 borderColor: 'var(--border-subtle)', 
-                boxShadow: 'var(--shadow-lg)',
-                backgroundColor: 'var(--elevation-2)',
-                backdropFilter: 'blur(12px)',
               }}
             >
               <div className="max-h-64 overflow-y-auto">

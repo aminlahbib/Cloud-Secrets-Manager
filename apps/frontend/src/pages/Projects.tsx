@@ -121,13 +121,14 @@ export const ProjectsPage: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ backgroundColor: 'var(--elevation-2)', borderColor: 'var(--border-subtle)' }}>
+          <div className="flex items-center gap-1 p-1 border rounded-lg dropdown-glass" style={{ borderColor: 'var(--border-subtle)' }}>
             <button
               onClick={() => setProjectView('grid')}
-              className="p-2 rounded transition-all duration-150"
+              className="p-2 rounded transition-all duration-150 border"
               style={{
-                backgroundColor: projectView === 'grid' ? 'var(--accent-primary)' : 'transparent',
-                color: projectView === 'grid' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                backgroundColor: projectView === 'grid' ? 'var(--accent-primary-glow)' : 'transparent',
+                borderColor: projectView === 'grid' ? 'var(--accent-primary)' : 'transparent',
+                color: projectView === 'grid' ? 'var(--accent-primary)' : 'var(--text-secondary)',
               }}
               onMouseEnter={(e) => {
                 if (projectView !== 'grid') {
@@ -145,10 +146,11 @@ export const ProjectsPage: React.FC = () => {
             </button>
             <button
               onClick={() => setProjectView('list')}
-              className="p-2 rounded transition-all duration-150"
+              className="p-2 rounded transition-all duration-150 border"
               style={{
-                backgroundColor: projectView === 'list' ? 'var(--accent-primary)' : 'transparent',
-                color: projectView === 'list' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                backgroundColor: projectView === 'list' ? 'var(--accent-primary-glow)' : 'transparent',
+                borderColor: projectView === 'list' ? 'var(--accent-primary)' : 'transparent',
+                color: projectView === 'list' ? 'var(--accent-primary)' : 'var(--text-secondary)',
               }}
               onMouseEnter={(e) => {
                 if (projectView !== 'list') {
