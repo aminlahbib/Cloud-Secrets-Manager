@@ -11,6 +11,7 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [keepSignedIn, setKeepSignedIn] = useState(false);
 
   const {
     register,
@@ -22,8 +23,10 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
+    console.log('Login submitted with keepSignedIn:', keepSignedIn);
+
     try {
-      await login(data);
+      await login(data, keepSignedIn);
     } catch (err) {
       setError(handleApiError(err));
     } finally {
@@ -35,8 +38,10 @@ export const LoginPage: React.FC = () => {
     setIsGoogleLoading(true);
     setError(null);
 
+    console.log('Google login submitted with keepSignedIn:', keepSignedIn);
+
     try {
-      await loginWithGoogle();
+      await loginWithGoogle(keepSignedIn);
     } catch (err) {
       setError(handleApiError(err));
     } finally {
@@ -91,6 +96,24 @@ export const LoginPage: React.FC = () => {
               })}
               error={errors.password?.message}
             />
+
+            <div className="flex items-center">
+              <input
+                id="keep-signed-in"
+                type="checkbox"
+                checked={keepSignedIn}
+                onChange={(e) => setKeepSignedIn(e.target.checked)}
+                className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
+              />
+              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700">
+                Keep me signed in
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 -mt-2 mb-2">
+              {keepSignedIn 
+                ? 'Your session will persist across browser restarts and tabs will stay synchronized.'
+                : 'Your session will end when you close the browser. Each tab has its own session.'}
+            </p>
 
             <Button type="submit" className="w-full" isLoading={isLoading}>
               Sign In

@@ -12,8 +12,8 @@ interface AuthContextType {
   isLoading: boolean;
   isFirebaseEnabled: boolean;
   isPlatformAdmin: boolean;
-  login: (credentials: LoginRequest) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (credentials: LoginRequest, keepSignedIn?: boolean) => Promise<void>;
+  loginWithGoogle: (keepSignedIn?: boolean) => Promise<void>;
   logout: () => void;
 }
 
@@ -144,6 +144,77 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, [isFirebaseEnabled]);
 
+  // Listen for storage mode changes and storage events (cross-tab synchronization)
+  useEffect(() => {
+    const unsubscribe = tokenStorage.onStorageModeChange((mode) => {
+      // When storage mode changes in another tab, check if we need to re-authenticate
+      if (mode === 'persistent' && !user) {
+        // Try to restore session if we're in persistent mode
+        const refreshToken = tokenStorage.getRefreshToken();
+        if (refreshToken) {
+          // Re-initialize auth by checking for tokens
+          const accessToken = tokenStorage.getAccessToken();
+          if (accessToken) {
+            // We have tokens, try to fetch user
+            authService.getCurrentUser()
+              .then(currentUser => {
+                setUser(currentUser);
+              })
+              .catch(() => {
+                // Token might be invalid, try refresh
+                authService.refreshToken(refreshToken)
+                  .then(response => {
+                    tokenStorage.setAccessToken(response.accessToken);
+                    if (response.refreshToken) {
+                      tokenStorage.setRefreshToken(response.refreshToken);
+                    }
+                    return authService.getCurrentUser();
+                  })
+                  .then(currentUser => {
+                    setUser(currentUser);
+                  })
+                  .catch(() => {
+                    tokenStorage.clearAll();
+                    setUser(null);
+                  });
+              });
+          }
+        }
+      }
+    });
+
+    // Listen for storage events (cross-tab token updates)
+    const handleStorageEvent = (e: StorageEvent) => {
+      // If refresh token was updated in another tab, try to restore session
+      if (e.key && e.key.includes('csm_auth_') && e.newValue && !user) {
+        const refreshToken = tokenStorage.getRefreshToken();
+        if (refreshToken) {
+          authService.refreshToken(refreshToken)
+            .then(response => {
+              tokenStorage.setAccessToken(response.accessToken);
+              if (response.refreshToken) {
+                tokenStorage.setRefreshToken(response.refreshToken);
+              }
+              return authService.getCurrentUser();
+            })
+            .then(currentUser => {
+              setUser(currentUser);
+            })
+            .catch(() => {
+              // Ignore errors, user will need to log in
+            });
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [user]);
+
   // Auto-refresh token before expiration (Local Auth Only)
   useEffect(() => {
     if (!user) return;
@@ -196,7 +267,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timer);
   }, [user, isFirebaseEnabled]);
 
-  const login = async (credentials: LoginRequest) => {
+  const login = async (credentials: LoginRequest, keepSignedIn: boolean = false) => {
+    // Set storage mode based on user preference BEFORE login
+    // This ensures tokens are stored in the correct location
+    tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
+    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
+
     if (isFirebaseEnabled) {
       // Firebase email/password login
       if (!credentials.email || !credentials.password) {
@@ -205,7 +281,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       try {
         const idToken = await firebaseAuthService.signInWithEmail(
           credentials.email,
-          credentials.password
+          credentials.password,
+          keepSignedIn
         );
         if (idToken) {
           tokenStorage.setAccessToken(idToken);
@@ -227,13 +304,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (keepSignedIn: boolean = false) => {
     if (!isFirebaseEnabled) {
       throw new Error('Firebase is not enabled');
     }
 
+    // Set storage mode based on user preference BEFORE login
+    tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
+    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
+
     try {
-      const idToken = await firebaseAuthService.signInWithGoogle();
+      const idToken = await firebaseAuthService.signInWithGoogle(keepSignedIn);
       tokenStorage.setAccessToken(idToken);
       // User state will be set by onAuthStateChanged listener
       navigate('/home');
