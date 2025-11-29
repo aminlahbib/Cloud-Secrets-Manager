@@ -1,24 +1,34 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Folder, Plus } from 'lucide-react';
-import { workflowsService } from '../services/workflows';
+import { ArrowLeft, Folder, Plus, Edit, Trash2, Save, X } from 'lucide-react';
+import { useWorkflow, useUpdateWorkflow, useDeleteWorkflow } from '../hooks/useWorkflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
-import type { Workflow } from '../types';
+import { Modal } from '../components/ui/Modal';
+import { Input } from '../components/ui/Input';
 
 export const WorkflowDetailPage: React.FC = () => {
   const { workflowId } = useParams<{ workflowId: string }>();
   const navigate = useNavigate();
-  const [showCreateModal, setShowCreateModal] = React.useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
 
-  const { data: workflow, isLoading, error } = useQuery<Workflow>({
-    queryKey: ['workflow', workflowId],
-    queryFn: () => workflowsService.getWorkflow(workflowId!),
-    enabled: !!workflowId,
-  });
+  const { data: workflow, isLoading, error } = useWorkflow(workflowId);
+  const updateWorkflow = useUpdateWorkflow();
+  const deleteWorkflow = useDeleteWorkflow();
+
+  // Initialize edit form when workflow loads or editing starts
+  React.useEffect(() => {
+    if (workflow && isEditing) {
+      setEditName(workflow.name);
+      setEditDescription(workflow.description || '');
+    }
+  }, [workflow, isEditing]);
 
   if (isLoading) {
     return (
@@ -60,17 +70,90 @@ export const WorkflowDetailPage: React.FC = () => {
         </Button>
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-neutral-900">{workflow.name}</h1>
-            {workflow.description && (
-              <p className="mt-1 text-neutral-500">{workflow.description}</p>
-            )}
-            {workflow.isDefault && (
-              <span className="inline-block mt-2 px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full">
-                Default Workflow
-              </span>
+          <div className="flex-1">
+            {isEditing ? (
+              <div className="space-y-4">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Workflow name"
+                  className="text-2xl font-bold"
+                />
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  placeholder="Description (optional)"
+                  rows={2}
+                  className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={() => {
+                      updateWorkflow.mutate(
+                        {
+                          id: workflowId!,
+                          data: { name: editName, description: editDescription || undefined },
+                        },
+                        {
+                          onSuccess: () => {
+                            setIsEditing(false);
+                          },
+                        }
+                      );
+                    }}
+                    isLoading={updateWorkflow.isPending}
+                    disabled={!editName.trim()}
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setEditName(workflow.name);
+                      setEditDescription(workflow.description || '');
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-neutral-900">{workflow.name}</h1>
+                {workflow.description && (
+                  <p className="mt-1 text-neutral-500">{workflow.description}</p>
+                )}
+                {workflow.isDefault && (
+                  <span className="inline-block mt-2 px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full">
+                    Default Workflow
+                  </span>
+                )}
+              </>
             )}
           </div>
+          {!isEditing && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setIsEditing(true)}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+              {!workflow.isDefault && (
+                <Button
+                  variant="danger"
+                  onClick={() => setShowDeleteModal(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,6 +220,44 @@ export const WorkflowDetailPage: React.FC = () => {
         onClose={() => setShowCreateModal(false)}
         initialWorkflowId={workflowId}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="Delete Workflow"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700">
+            Are you sure you want to delete <strong>{workflow.name}</strong>?
+          </p>
+          <p className="text-sm text-gray-500">
+            This will remove the workflow, but projects in this workflow will not be deleted. 
+            They will become unassigned and can be moved to other workflows.
+          </p>
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                deleteWorkflow.mutate(workflowId!, {
+                  onSuccess: () => {
+                    navigate('/home');
+                  },
+                });
+              }}
+              isLoading={deleteWorkflow.isPending}
+            >
+              Delete Workflow
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
