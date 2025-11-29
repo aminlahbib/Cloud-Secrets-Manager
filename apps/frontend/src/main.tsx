@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
@@ -18,9 +20,13 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
       // Enable query deduplication
       structuralSharing: true,
+      // Performance optimizations
+      networkMode: 'online',
+      keepPreviousData: true, // Keep previous data while fetching new data
     },
     mutations: {
       retry: 0, // Don't retry mutations by default
+      networkMode: 'online',
     },
   },
 });
@@ -55,9 +61,13 @@ root.render(
           v7_relativeSplatPath: true,
         }}
       >
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <App />
+            </NotificationProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>
     </ErrorBoundary>

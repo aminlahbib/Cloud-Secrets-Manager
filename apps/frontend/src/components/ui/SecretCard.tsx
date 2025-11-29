@@ -15,7 +15,7 @@ interface SecretCardProps {
   onDelete: () => void;
 }
 
-export const SecretCard: React.FC<SecretCardProps> = ({
+export const SecretCard: React.FC<SecretCardProps> = React.memo(({
   secret,
   projectId,
   canManageSecrets,
@@ -24,17 +24,34 @@ export const SecretCard: React.FC<SecretCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const isExpired = secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
+  const isExpired = React.useMemo(() => 
+    secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date()),
+    [secret.expired, secret.expiresAt]
+  );
   const versionList = secret.secretVersions;
-  const lastVersionEntry = versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
-  const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
-  const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
-  const lastChangeUser =
+  const lastVersionEntry = React.useMemo(() => 
+    versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined,
+    [versionList]
+  );
+  const versionNumber = React.useMemo(() => 
+    secret.version ?? lastVersionEntry?.versionNumber ?? 1,
+    [secret.version, lastVersionEntry?.versionNumber]
+  );
+  const lastChangeDate = React.useMemo(() => 
+    lastVersionEntry?.createdAt ?? secret.updatedAt,
+    [lastVersionEntry?.createdAt, secret.updatedAt]
+  );
+  const lastChangeUser = React.useMemo(() =>
     lastVersionEntry?.creator?.displayName ||
     lastVersionEntry?.creator?.email ||
     secret.creator?.displayName ||
-    secret.creator?.email;
-  const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}#versions`;
+    secret.creator?.email,
+    [lastVersionEntry?.creator, secret.creator]
+  );
+  const historyLink = React.useMemo(() => 
+    `/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}#versions`,
+    [projectId, secret.secretKey]
+  );
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -101,5 +118,5 @@ export const SecretCard: React.FC<SecretCardProps> = ({
       </div>
     </div>
   );
-};
+});
 

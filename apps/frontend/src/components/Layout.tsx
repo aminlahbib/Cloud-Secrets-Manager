@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { Button } from './ui/Button';
 import {
@@ -15,7 +16,9 @@ import {
   X,
   Plus,
   ChevronDown,
-  Shield
+  Shield,
+  Moon,
+  Sun
 } from 'lucide-react';
 
 
@@ -25,6 +28,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, isPlatformAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -252,7 +256,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
             </div>
 
-            <div className="border-t border-neutral-200 pt-6">
+            <div className="border-t border-neutral-200 pt-6 space-y-3">
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="mr-3 h-5 w-5" />
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="mr-3 h-5 w-5" />
+                    Dark Mode
+                  </>
+                )}
+              </button>
+
               <div className="flex items-center space-x-3">
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.displayName || user.email} className="h-10 w-10 rounded-full" />
