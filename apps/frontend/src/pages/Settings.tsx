@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePreferences } from '../hooks/usePreferences';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -22,6 +23,7 @@ type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { projectView, setProjectView } = usePreferences();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
 
   const tabs = [
@@ -49,11 +51,11 @@ export const SettingsPage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`
-                  w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium transition-colors
+                  className={`
+                  w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-300
                   ${isActive 
-                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' 
-                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                    ? 'bg-neutral-100 dark:bg-[rgba(255,255,255,0.08)] text-neutral-900 dark:text-white' 
+                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-[rgba(255,255,255,0.08)]'
                   }
                 `}
               >
@@ -67,7 +69,7 @@ export const SettingsPage: React.FC = () => {
         {/* Settings Content */}
         <div className="flex-1">
           {activeTab === 'profile' && (
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-6">Profile Settings</h2>
               
               <div className="space-y-6">
@@ -131,7 +133,7 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="pt-6 border-t border-gray-200 dark:border-neutral-800">
+                <div className="pt-6 border-t border-gray-200 dark:border-[rgba(255,255,255,0.05)]">
                   <Button>Save Changes</Button>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'security' && (
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Security Settings</h2>
               
               <div className="space-y-6 max-w-xl">
@@ -166,7 +168,7 @@ export const SettingsPage: React.FC = () => {
                   </Button>
                 </div>
 
-                <div className="pt-6 border-t border-gray-200 dark:border-neutral-800">
+                <div className="pt-6 border-t border-gray-200 dark:border-[rgba(255,255,255,0.05)]">
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Active Sessions</h3>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-neutral-800 rounded-lg transition-colors">
@@ -186,7 +188,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'notifications' && (
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-6">Notification Preferences</h2>
               
               <div className="space-y-6 max-w-xl">
@@ -234,7 +236,7 @@ export const SettingsPage: React.FC = () => {
                   </label>
                 </div>
 
-                <div className="pt-6 border-t border-gray-200 dark:border-neutral-800">
+                <div className="pt-6 border-t border-gray-200 dark:border-[rgba(255,255,255,0.05)]">
                   <Button>Save Preferences</Button>
                 </div>
               </div>
@@ -242,7 +244,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'preferences' && (
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
               <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-6">Application Preferences</h2>
               
               <div className="space-y-6 max-w-xl">
@@ -280,9 +282,13 @@ export const SettingsPage: React.FC = () => {
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Default Project View
                   </label>
-                  <select className="w-full px-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors">
-                    <option>Grid View</option>
-                    <option>List View</option>
+                  <select 
+                    value={projectView}
+                    onChange={(e) => setProjectView(e.target.value as 'grid' | 'list')}
+                    className="w-full px-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white transition-colors"
+                  >
+                    <option value="grid">Grid View</option>
+                    <option value="list">List View</option>
                   </select>
                 </div>
 
@@ -290,7 +296,7 @@ export const SettingsPage: React.FC = () => {
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Timezone
                   </label>
-                  <select className="w-full px-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors">
+                  <select className="w-full px-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white transition-colors">
                     <option>UTC (Coordinated Universal Time)</option>
                     <option>America/New_York (Eastern Time)</option>
                     <option>America/Los_Angeles (Pacific Time)</option>
@@ -304,14 +310,14 @@ export const SettingsPage: React.FC = () => {
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Date Format
                   </label>
-                  <select className="w-full px-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors">
+                  <select className="w-full px-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white transition-colors">
                     <option>MM/DD/YYYY</option>
                     <option>DD/MM/YYYY</option>
                     <option>YYYY-MM-DD</option>
                   </select>
                 </div>
 
-                <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800">
+                <div className="pt-6 border-t border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
                   <Button>Save Preferences</Button>
                 </div>
               </div>
