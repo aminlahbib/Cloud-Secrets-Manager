@@ -44,13 +44,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
         <Filter className="h-4 w-4" />
         Filters
         {activeFiltersCount > 0 && (
-          <span 
-            className="text-caption rounded-full px-2 py-0.5"
-            style={{
-              backgroundColor: 'var(--status-info)',
-              color: 'var(--text-inverse)',
-            }}
-          >
+          <span className="text-caption rounded-full px-2 py-0.5 bg-status-info text-theme-inverse">
             {activeFiltersCount}
           </span>
         )}
@@ -63,27 +57,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div 
-            className="absolute top-full left-0 mt-2 border rounded-lg shadow-lg p-4 z-20 min-w-[300px] transition-colors"
-            style={{
-              backgroundColor: 'var(--elevation-4)',
-              borderColor: 'var(--border-subtle)',
-              boxShadow: 'var(--shadow-lg)',
-            }}
-          >
+          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors bg-elevation-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Filters</h3>
+              <h3 className="text-body-sm font-semibold text-theme-primary">Filters</h3>
               {activeFiltersCount > 0 && (
                 <button
                   onClick={onClear}
-                  className="text-caption transition-colors"
-                  style={{ color: 'var(--accent-primary)' }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--accent-primary-hover)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--accent-primary)';
-                  }}
+                  className="text-caption transition-colors text-accent-primary hover:text-accent-primary"
                 >
                   Clear all
                 </button>
@@ -93,7 +73,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             <div className="space-y-4">
               {filters.map((filter) => (
                 <div key={filter.key}>
-                  <label className="block text-caption font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+                  <label className="block text-caption font-medium mb-1 text-theme-primary">
                     {filter.label}
                   </label>
                   {filter.type === 'select' && filter.options && (
@@ -140,10 +120,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
               ))}
             </div>
 
-            <div 
-              className="mt-4 pt-4 border-t flex justify-end"
-              style={{ borderTopColor: 'var(--border-subtle)' }}
-            >
+            <div className="mt-4 pt-4 border-t border-theme-subtle flex justify-end">
               <Button
                 variant="ghost"
                 size="sm"

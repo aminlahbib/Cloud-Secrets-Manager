@@ -15,7 +15,7 @@ export const Card: React.FC<CardProps> = ({
   hover = false,
   style
 }) => {
-  const hoverClass = hover ? 'cursor-pointer transition-all duration-150' : '';
+  const hoverClass = hover ? 'cursor-pointer transition-all duration-150 hover:bg-card hover:shadow-theme-lg' : '';
   const clickClass = onClick ? 'cursor-pointer' : '';
 
   return (

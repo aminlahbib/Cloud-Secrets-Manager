@@ -60,6 +60,14 @@
     border-color: var(--border-subtle) !important;
   }
   
+  /* Theme-aware divide utilities */
+  .divide-y > * + * {
+    border-top-color: var(--border-subtle);
+  }
+  .divide-x > * + * {
+    border-left-color: var(--border-subtle);
+  }
+  
   /* ============================================
      MODERN THEME MANAGEMENT WITH CSS VARIABLES
      Single source of truth - No class duplication
@@ -2498,13 +2506,14 @@
     background-color: var(--text-inverse);
     border-color: var(--border-default);
   }
-  
-  /* ============================================
-     THEME UTILITY CLASSES FOR TAILWIND
-     These utilities work with Tailwind's class system
-     while using CSS variables for theme support
-     ============================================ */
-  @layer utilities {
+}
+
+/* ============================================
+   THEME UTILITY CLASSES FOR TAILWIND
+   These utilities work with Tailwind's class system
+   while using CSS variables for theme support
+   ============================================ */
+@layer utilities {
     /* Text color utilities */
     .text-theme-primary { color: var(--text-primary); }
     .text-theme-secondary { color: var(--text-secondary); }
@@ -2544,6 +2553,19 @@
     .hover\:bg-card:hover { background-color: var(--card-hover-bg); }
     .hover\:border-theme-default:hover { border-color: var(--border-default); }
     .hover\:text-theme-primary:hover { color: var(--text-primary); }
+    .hover\:text-accent-primary:hover { color: var(--accent-primary); }
+    
+    /* Status background utilities */
+    .bg-status-success-bg { background-color: var(--status-success-bg); }
+    .bg-status-warning-bg { background-color: var(--status-warning-bg); }
+    .bg-status-danger-bg { background-color: var(--status-danger-bg); }
+    .bg-status-info-bg { background-color: var(--status-info-bg); }
+    
+    /* Status text utilities */
+    .text-status-success { color: var(--status-success); }
+    .text-status-warning { color: var(--status-warning); }
+    .text-status-danger { color: var(--status-danger); }
+    .text-status-info { color: var(--status-info); }
     
     /* Focus state utilities */
     .focus\:border-theme-accent:focus { border-color: var(--border-accent); }
@@ -2551,5 +2573,4 @@
       --tw-ring-color: var(--accent-primary);
       --tw-ring-opacity: 0.2;
     }
-  }
   }

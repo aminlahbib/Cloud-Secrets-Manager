@@ -7,7 +7,7 @@ export const useWorkflows = (userId?: string) => {
         queryKey: ['workflows', userId],
         queryFn: () => workflowsService.listWorkflows(),
         enabled: !!userId,
-        staleTime: 30000,
+        staleTime: 2 * 60 * 1000, // 2 minutes - workflows rarely change
     });
 };
 

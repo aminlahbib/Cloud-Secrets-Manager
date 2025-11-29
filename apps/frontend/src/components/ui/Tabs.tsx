@@ -38,26 +38,20 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
               <button
                 key={tab.id}
                 onClick={() => handleChange(tab.id)}
-                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent'}`}
+                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent'} ${isActive ? 'text-theme-primary' : 'text-theme-secondary'}`}
                 style={{
                   borderBottomColor: isActive ? 'var(--tab-active-border)' : 'transparent',
-                  color: isActive ? 'var(--tab-text)' : 'var(--tab-text-muted)',
                 }}
               >
                 {Icon && (
                   <Icon 
-                    className="h-4 w-4 transition-colors duration-300" 
-                    style={{ color: isActive ? 'var(--tab-text)' : 'var(--tab-text-muted)' }}
+                    className={`h-4 w-4 transition-colors duration-300 ${isActive ? 'text-theme-primary' : 'text-theme-secondary'}`}
                   />
                 )}
                 {tab.label}
                 {tab.count !== undefined && (
                   <span 
-                    className="px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300"
-                    style={{
-                      backgroundColor: isActive ? 'var(--tab-active-border)' : 'var(--tab-hover-bg)',
-                      color: isActive ? 'var(--text-inverse)' : 'var(--tab-text-muted)',
-                    }}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${isActive ? 'bg-accent-primary text-theme-inverse' : 'bg-elevation-2 text-theme-secondary'}`}
                   >
                     {tab.count}
                   </span>
