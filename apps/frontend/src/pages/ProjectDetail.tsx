@@ -215,6 +215,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowDeleteSecretModal(null);
     },
   });
@@ -226,6 +231,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('MEMBER');
@@ -239,6 +249,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 
@@ -249,6 +264,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 
@@ -259,6 +279,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowTransferModal(false);
       setTransferTarget('');
     },
@@ -338,6 +363,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 
@@ -347,6 +377,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowArchiveModal(false);
     },
   });
@@ -354,6 +389,11 @@ export const ProjectDetailPage: React.FC = () => {
   const deleteProjectMutation = useMutation({
     mutationFn: () => projectsService.deleteProjectPermanently(projectId!),
     onSuccess: () => {
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowDeleteProjectModal(false);
       navigate('/projects');
     },
@@ -365,6 +405,11 @@ export const ProjectDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
+        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      }
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowRestoreModal(false);
     },
   });
