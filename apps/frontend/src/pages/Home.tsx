@@ -94,14 +94,14 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 rounded-3xl p-8 shadow-sm transition-colors">
+      <div className="bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-8 shadow-sm dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3)] transition-all duration-300">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">Dashboard</p>
             <h1 className="text-3xl font-semibold mt-2 text-neutral-900 dark:text-white">
               Welcome back, {user?.displayName || user?.email?.split('@')[0]}
             </h1>
-            <p className="text-neutral-500 dark:text-neutral-400 mt-2 max-w-2xl">
+            <p className="text-neutral-600 dark:text-neutral-300 mt-2 max-w-2xl">
               Everything you need to organise secrets, workflows and teams now lives in one calm, focused surface.
             </p>
             {isPlatformAdmin && (
@@ -125,7 +125,7 @@ export const HomePage: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-800 transition-colors">
+        <div className="group bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300 hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Projects</p>
@@ -133,13 +133,13 @@ export const HomePage: React.FC = () => {
                 {isProjectsLoading ? '...' : projectsData?.totalElements ?? 0}
               </p>
             </div>
-            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] text-neutral-500 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all duration-300 group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10">
               <Folder className="h-5 w-5" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-800 transition-colors">
+        <div className="group bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300 hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Secrets</p>
@@ -147,13 +147,13 @@ export const HomePage: React.FC = () => {
                 {isProjectsLoading ? '...' : totalSecrets}
               </p>
             </div>
-            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] text-neutral-500 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all duration-300 group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10">
               <Key className="h-5 w-5" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-800 transition-colors">
+        <div className="group bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300 hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)]">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Team Members</p>
@@ -161,14 +161,14 @@ export const HomePage: React.FC = () => {
                 {isProjectsLoading ? '...' : totalMembers}
               </p>
             </div>
-            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+            <div className="p-3 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] text-neutral-500 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all duration-300 group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10">
               <Users className="h-5 w-5" />
             </div>
           </div>
         </div>
 
         {isPlatformAdmin && (
-          <div className="bg-white dark:bg-[#111111] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-neutral-800 transition-colors">
+          <div className="group bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 shadow-sm border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300 hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)]">
           <div className="flex items-center justify-between">
             <div>
                 <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Recent Activity</p>
@@ -176,7 +176,7 @@ export const HomePage: React.FC = () => {
                 {isActivityLoading ? '...' : activityData?.totalElements ?? 0}
               </p>
             </div>
-              <div className="p-3 rounded-2xl border border-neutral-200 dark:border-neutral-800 text-neutral-500 dark:text-neutral-400">
+              <div className="p-3 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] text-neutral-500 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 group-hover:border-orange-200 dark:group-hover:border-orange-500/30 transition-all duration-300 group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10">
                 <Activity className="h-5 w-5" />
               </div>
             </div>
@@ -186,25 +186,25 @@ export const HomePage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Workflows */}
-        <div className="lg:col-span-1 bg-white dark:bg-[#111111] rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800 transition-colors">
-          <div className="p-6 border-b border-gray-100 dark:border-neutral-800">
+        <div className="lg:col-span-1 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-gray-100 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-[rgba(255,255,255,0.05)]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Workflows</h2>
               <Link
                 to="/workflows/new"
-                className="text-neutral-600 hover:text-neutral-900 text-sm font-medium flex items-center"
+                className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 text-sm font-medium flex items-center transition-colors group"
               >
-                New <Plus className="w-4 h-4 ml-1" />
+                New <Plus className="w-4 h-4 ml-1 group-hover:scale-110 transition-transform" />
               </Link>
             </div>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-[rgba(255,255,255,0.05)]">
             {isWorkflowsLoading ? (
               <div className="p-6 flex justify-center">
                 <Spinner size="sm" />
               </div>
             ) : !workflows || workflows.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 text-sm">
+              <div className="p-6 text-center text-gray-500 dark:text-neutral-400 text-sm">
                 No workflows yet
               </div>
             ) : (
@@ -212,11 +212,11 @@ export const HomePage: React.FC = () => {
                 <Link
                   key={workflow.id}
                   to={`/workflows/${workflow.id}`}
-                  className="block p-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors"
+                  className="block p-4 hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.08)] transition-all duration-300 group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded">
-                      <Folder className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
+                    <div className="p-1.5 bg-neutral-100 dark:bg-neutral-800 rounded group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 transition-colors">
+                      <Folder className="h-4 w-4 text-neutral-600 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -238,19 +238,19 @@ export const HomePage: React.FC = () => {
 
         {/* Recent Activity - Only for Platform Admins */}
         {isPlatformAdmin && (
-        <div className="lg:col-span-1 bg-white dark:bg-[#111111] rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800 transition-colors">
-          <div className="p-6 border-b border-gray-100 dark:border-neutral-800">
+        <div className="lg:col-span-1 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-gray-100 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-[rgba(255,255,255,0.05)]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Recent Activity</h2>
               <Link 
                 to="/activity" 
-                className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white text-sm font-medium flex items-center transition-colors"
+                className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 text-sm font-medium flex items-center transition-colors group"
               >
-                View all <ArrowRight className="w-4 h-4 ml-1" />
+                View all <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
-          <div className="divide-y divide-gray-100 dark:divide-neutral-800">
+          <div className="divide-y divide-gray-100 dark:divide-[rgba(255,255,255,0.05)]">
             {isActivityLoading ? (
               <div className="p-6 flex justify-center">
                 <Spinner size="sm" />
@@ -261,10 +261,10 @@ export const HomePage: React.FC = () => {
               </div>
             ) : (
               recentActivity.map((log: AuditLog) => (
-                <div key={log.id} className="p-4 hover:bg-gray-50 dark:hover:bg-neutral-800/50 transition-colors">
+                <div key={log.id} className="p-4 hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.08)] transition-all duration-300 group">
                   <div className="flex items-start gap-3">
-                    <div className="p-1.5 bg-gray-100 dark:bg-neutral-800 rounded">
-                      <Activity className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
+                    <div className="p-1.5 bg-gray-100 dark:bg-neutral-800 rounded group-hover:bg-orange-50 dark:group-hover:bg-orange-500/10 transition-colors">
+                      <Activity className="h-4 w-4 text-gray-500 dark:text-neutral-400 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -286,15 +286,15 @@ export const HomePage: React.FC = () => {
         )}
 
         {/* Projects Overview */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#111111] rounded-xl shadow-sm border border-gray-100 dark:border-neutral-800 transition-colors">
-          <div className="p-6 border-b border-gray-100 dark:border-neutral-800">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-gray-100 dark:border-[rgba(255,255,255,0.05)] transition-all duration-300">
+          <div className="p-6 border-b border-gray-100 dark:border-[rgba(255,255,255,0.05)]">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Your Projects</h2>
               <Link 
                 to="/projects" 
-                className="text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white text-sm font-medium flex items-center transition-colors"
+                className="text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 text-sm font-medium flex items-center transition-colors group"
               >
-                View all <ArrowRight className="w-4 h-4 ml-1" />
+                View all <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
           </div>
@@ -319,10 +319,10 @@ export const HomePage: React.FC = () => {
                 <Link
                   key={project.id}
                   to={`/projects/${project.id}`}
-                  className="group block p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-700 hover:shadow-md transition-all bg-white dark:bg-[#111111]"
+                  className="group block p-4 rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30 hover:shadow-lg dark:hover:shadow-[0_8px_16px_-4px_rgba(249,115,22,0.2)] transition-all duration-300 bg-white dark:bg-[#1a1a1a] hover:bg-orange-50/50 dark:hover:bg-orange-500/5"
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl group-hover:bg-neutral-900 dark:group-hover:bg-neutral-700 group-hover:text-white transition-colors text-neutral-600 dark:text-neutral-400">
+                    <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-all duration-300 text-neutral-600 dark:text-neutral-400">
                       <Folder className="h-5 w-5" />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -369,14 +369,14 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white dark:bg-[#111111] rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-800 p-6 transition-colors">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl shadow-sm border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] p-6 transition-all duration-300">
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-4">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => navigate('/projects')}
-            className="flex items-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all text-left bg-white dark:bg-[#111111]"
+            className="group flex items-center p-4 rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30 hover:bg-orange-50/50 dark:hover:bg-orange-500/5 hover:shadow-md dark:hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] transition-all duration-300 text-left bg-white dark:bg-[#1a1a1a]"
           >
-            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400">
+            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-all duration-300">
               <Plus className="h-5 w-5" />
             </div>
             <div>
@@ -388,9 +388,9 @@ export const HomePage: React.FC = () => {
           {isPlatformAdmin && (
           <button
             onClick={() => navigate('/activity')}
-              className="flex items-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all text-left bg-white dark:bg-[#111111]"
+              className="group flex items-center p-4 rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30 hover:bg-orange-50/50 dark:hover:bg-orange-500/5 hover:shadow-md dark:hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] transition-all duration-300 text-left bg-white dark:bg-[#1a1a1a]"
           >
-              <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400">
+              <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-all duration-300">
                 <Activity className="h-5 w-5" />
             </div>
             <div>
@@ -402,9 +402,9 @@ export const HomePage: React.FC = () => {
 
           <button
             onClick={() => navigate('/teams')}
-            className="flex items-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all text-left bg-white dark:bg-[#111111]"
+            className="group flex items-center p-4 rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30 hover:bg-orange-50/50 dark:hover:bg-orange-500/5 hover:shadow-md dark:hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] transition-all duration-300 text-left bg-white dark:bg-[#1a1a1a]"
           >
-            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400">
+            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-all duration-300">
               <Users className="h-5 w-5" />
             </div>
             <div>
@@ -415,9 +415,9 @@ export const HomePage: React.FC = () => {
 
           <button
             onClick={() => navigate('/settings')}
-            className="flex items-center p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-neutral-900 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all text-left bg-white dark:bg-[#111111]"
+            className="group flex items-center p-4 rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30 hover:bg-orange-50/50 dark:hover:bg-orange-500/5 hover:shadow-md dark:hover:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)] transition-all duration-300 text-left bg-white dark:bg-[#1a1a1a]"
           >
-            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400">
+            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-xl mr-4 text-neutral-600 dark:text-neutral-400 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-all duration-300">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>

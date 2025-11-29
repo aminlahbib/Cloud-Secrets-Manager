@@ -101,7 +101,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#111111] border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-between px-6 py-8 transition-all duration-300 md:translate-x-0
+            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#1a1a1a] border-r border-neutral-200 dark:border-[rgba(255,255,255,0.05)] flex flex-col justify-between px-6 py-8 transition-all duration-300 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
@@ -134,12 +134,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActive
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-h-[44px] touch-manipulation group ${isActive
+                      ? 'bg-neutral-100 dark:bg-[rgba(255,255,255,0.08)] text-neutral-900 dark:text-white'
+                      : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white'
                       }`}
                   >
-                    <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
+                    <Icon className={`mr-3 h-5 w-5 transition-colors ${isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-orange-500 dark:group-hover:text-orange-400'}`} />
                     {item.name}
                   </Link>
                 );
@@ -151,9 +151,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <span>Workspace</span>
                 <button
                   onClick={() => navigate('/workflows/new')}
-                  className="text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1"
+                  className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 transition-colors group"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
                   New
                 </button>
               </div>
@@ -163,8 +163,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <button
                     onClick={() => setIsWorkflowMenuOpen((prev) => !prev)}
                     className={`
-                      w-full text-left rounded-2xl border px-4 py-3 transition-all flex items-center justify-between
-                      ${isWorkflowMenuOpen ? 'border-neutral-900 shadow-sm' : 'border-neutral-200 hover:border-neutral-300'}
+                      w-full text-left rounded-2xl border px-4 py-3 transition-all duration-300 flex items-center justify-between
+                      ${isWorkflowMenuOpen ? 'border-orange-300 dark:border-orange-500/30 shadow-sm dark:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)]' : 'border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30'}
                     `}
                   >
                     <div>
@@ -182,7 +182,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </button>
 
                   {isWorkflowMenuOpen && (
-                    <div className="mt-2 rounded-2xl border border-neutral-200 bg-white shadow-lg overflow-hidden">
+                    <div className="mt-2 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] bg-white dark:bg-[#1a1a1a] shadow-lg dark:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] overflow-hidden backdrop-blur-sm">
                       <div className="max-h-64 overflow-y-auto">
                         {workflows.map((workflow) => {
                           const isSelected = workflow.id === selectedWorkflowId;
@@ -190,7 +190,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <button
                               key={workflow.id}
                               onClick={() => handleWorkflowSelect(workflow.id)}
-                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm transition-colors ${isSelected ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm transition-all duration-300 group ${isSelected ? 'bg-orange-50 dark:bg-orange-500/10 text-neutral-900 dark:text-white border-l-2 border-orange-500' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-[rgba(255,255,255,0.08)]'
                                 }`}
                             >
                               <div>
@@ -209,9 +209,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           setIsWorkflowMenuOpen(false);
                           navigate('/workflows/new');
                         }}
-                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 dark:text-neutral-300 border-t border-neutral-100 dark:border-neutral-800 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 flex items-center gap-2 transition-colors"
+                        className="w-full px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 border-t border-neutral-100 dark:border-[rgba(255,255,255,0.05)] text-left hover:bg-orange-50 dark:hover:bg-orange-500/10 flex items-center gap-2 transition-all duration-300 group"
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
                         Create Workflow
                       </button>
                     </div>
@@ -239,15 +239,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActive
-                      ? 'bg-neutral-100 text-neutral-900'
-                      : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-h-[44px] touch-manipulation group ${isActive
+                      ? 'bg-neutral-100 dark:bg-[rgba(255,255,255,0.08)] text-neutral-900 dark:text-white'
+                      : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white'
                       }`}
                   >
-                    <Icon className={`mr-3 h-5 w-5 ${isActive ? 'text-neutral-900' : 'text-neutral-400'}`} />
+                    <Icon className={`mr-3 h-5 w-5 transition-colors ${isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-orange-500 dark:group-hover:text-orange-400'}`} />
                     {item.name}
                     {item.badge && (
-                      <span className="ml-auto text-[11px] uppercase tracking-wide text-neutral-400">{item.badge}</span>
+                      <span className="ml-auto text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">{item.badge}</span>
                     )}
                   </Link>
                 );
@@ -272,16 +272,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-white"
+                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white group"
               >
                 {theme === 'dark' ? (
                   <>
-                    <Sun className="mr-3 h-5 w-5" />
+                    <Sun className="mr-3 h-5 w-5 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
                     Light Mode
                   </>
                 ) : (
                   <>
-                    <Moon className="mr-3 h-5 w-5" />
+                    <Moon className="mr-3 h-5 w-5 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
                     Dark Mode
                   </>
                 )}
@@ -302,7 +302,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
               <button
                 onClick={logout}
-                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)] transition-all duration-300"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -312,7 +312,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
 
         <div className="flex-1 flex flex-col md:ml-72">
-          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111111] transition-colors">
+          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] bg-white dark:bg-[#1a1a1a] transition-colors">
             <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-white transition-colors">
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
