@@ -61,7 +61,7 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
             className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline block truncate transition-colors"
           >
-            <Key className="h-4 w-4 inline-block mr-2 text-gray-400" />
+            <Key className="h-4 w-4 inline-block mr-2 text-gray-400 dark:text-neutral-500" />
             {secret.secretKey}
           </Link>
         </div>
