@@ -40,22 +40,37 @@ export const Modal: React.FC<ModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 transition-opacity"
+        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
         onClick={onClose}
       />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={`relative w-full ${sizeClasses[size]} bg-white dark:bg-[#111111] rounded-lg shadow-xl transition-colors`}
+          className={`relative w-full ${sizeClasses[size]} rounded-lg shadow-xl transition-colors`}
+          style={{
+            backgroundColor: 'var(--elevation-4)',
+            boxShadow: 'var(--shadow-xl)',
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-neutral-800">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
+          <div 
+            className="flex items-center justify-between p-4 border-b transition-colors"
+            style={{ borderBottomColor: 'var(--border-subtle)' }}
+          >
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
             <button
               onClick={onClose}
-              className="text-gray-400 dark:text-neutral-500 hover:text-gray-600 dark:hover:text-neutral-300 transition-colors"
+              className="transition-colors"
+              style={{ color: 'var(--text-tertiary)' }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = 'var(--text-tertiary)';
+              }}
             >
               <X className="h-5 w-5" />
             </button>

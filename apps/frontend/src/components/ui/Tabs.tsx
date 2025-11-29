@@ -38,7 +38,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
               <button
                 key={tab.id}
                 onClick={() => handleChange(tab.id)}
-                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent hover:border-neutral-300 dark:hover:border-orange-500/30'}`}
+                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent'}`}
                 style={{
                   borderBottomColor: isActive ? 'var(--tab-active-border)' : 'transparent',
                   color: isActive ? 'var(--tab-text)' : 'var(--tab-text-muted)',

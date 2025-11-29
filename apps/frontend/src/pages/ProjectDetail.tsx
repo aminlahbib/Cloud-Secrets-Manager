@@ -706,9 +706,15 @@ export const ProjectDetailPage: React.FC = () => {
   if (projectError || !project) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 transition-colors">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Project Not Found</h2>
-          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+        <div 
+          className="border rounded-lg p-6 transition-colors"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Project Not Found</h2>
+          <p className="text-body-sm mb-4" style={{ color: 'var(--status-danger)' }}>
             This project may have been deleted or you don't have access to it.
           </p>
           <Button variant="secondary" onClick={() => navigate('/projects')}>
@@ -739,7 +745,7 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.name}</h1>
+                <h1 className="text-h1 font-bold" style={{ color: 'var(--text-primary)' }}>{project.name}</h1>
                 {currentUserRole && (
                   <Badge variant={ROLE_COLORS[currentUserRole]}>
                     {ROLE_ICONS[currentUserRole]}
@@ -748,7 +754,7 @@ export const ProjectDetailPage: React.FC = () => {
                 )}
                 {project.isArchived && <Badge variant="warning">Archived</Badge>}
               </div>
-              {project.description && <p className="mt-1 text-gray-500 dark:text-neutral-400">{project.description}</p>}
+              {project.description && <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{project.description}</p>}
             </div>
 
             <div className="flex gap-2">
@@ -808,7 +814,14 @@ export const ProjectDetailPage: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 transition-colors">
+          <div 
+            className="rounded-3xl border px-6 py-4 text-body-sm transition-colors"
+            style={{
+              borderColor: 'var(--border-subtle)',
+              backgroundColor: 'var(--elevation-1)',
+              color: 'var(--text-secondary)',
+            }}
+          >
             <p>
               Need help?{' '}
               <button className="underline" type="button" onClick={() => setActiveTab('activity')}>
@@ -845,7 +858,7 @@ export const ProjectDetailPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search secrets..."
-                className="input-theme pl-10 pr-4 py-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30"
+                className="input-theme pl-10 pr-4 py-2"
               />
             </div>
             <FilterPanel
@@ -858,12 +871,18 @@ export const ProjectDetailPage: React.FC = () => {
 
           {/* Bulk Actions Toolbar */}
           {selectedSecrets.size > 0 && canDeleteSecrets && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between">
+            <div 
+              className="border rounded-lg p-4 flex items-center justify-between"
+              style={{
+                backgroundColor: 'var(--status-info-bg)',
+                borderColor: 'var(--status-info)',
+              }}
+            >
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                <span className="text-body-sm font-medium" style={{ color: 'var(--status-info)' }}>
                   {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
                 </span>
-                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700 dark:text-blue-400">
+                <Button variant="ghost" size="sm" onClick={clearSelection} style={{ color: 'var(--status-info)' }}>
                   Clear
                 </Button>
               </div>
@@ -883,7 +902,7 @@ export const ProjectDetailPage: React.FC = () => {
             <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
             <EmptyState
-              icon={<Key className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
+              icon={<Key className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
               title={searchTerm ? 'No secrets match your search' : 'No secrets yet'}
               description={
                 searchTerm
@@ -967,21 +986,32 @@ export const ProjectDetailPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Link
                               to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-                              className="text-sm font-medium text-neutral-900 dark:text-white hover:underline transition-colors"
+                              className="text-body-sm font-medium hover:underline transition-colors"
+                              style={{ color: 'var(--text-primary)' }}
                             >
                               {secret.secretKey}
                             </Link>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-neutral-400">
+                          <td className="px-6 py-4 whitespace-nowrap text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                             {new Date(secret.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-white">{new Date(lastChangeDate).toLocaleDateString()}</div>
-                            {lastChangeUser && <div className="text-xs text-gray-500 dark:text-neutral-400">by {lastChangeUser}</div>}
+                            <div className="text-body-sm" style={{ color: 'var(--text-primary)' }}>{new Date(lastChangeDate).toLocaleDateString()}</div>
+                            {lastChangeUser && <div className="text-caption" style={{ color: 'var(--text-tertiary)' }}>by {lastChangeUser}</div>}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">v{versionNumber}</div>
-                            <Link to={historyLink} className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
+                            <div className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>v{versionNumber}</div>
+                            <Link 
+                              to={historyLink} 
+                              className="text-caption transition-colors"
+                              style={{ color: 'var(--text-tertiary)' }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'var(--text-tertiary)';
+                              }}
+                            >
                               View history
                             </Link>
                           </td>
@@ -1073,7 +1103,7 @@ export const ProjectDetailPage: React.FC = () => {
             </div>
           ) : !members || members.length === 0 ? (
             <EmptyState
-              icon={<Users className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
+              icon={<Users className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
               title="No members"
               description="Invite team members to collaborate on this project"
               action={
@@ -1169,7 +1199,7 @@ export const ProjectDetailPage: React.FC = () => {
           fallback={
             <Card className="p-6">
               <div className="text-center">
-                <p className="text-red-600 dark:text-red-400 mb-2">Error loading activity tab</p>
+                <p className="mb-2" style={{ color: 'var(--status-danger)' }}>Error loading activity tab</p>
                 <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                   There was an error displaying the activity tab. Please try refreshing the page.
                 </p>
@@ -1181,17 +1211,21 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="tab-content-container space-y-6">
             {/* Header with view toggle and date filter */}
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Project Activity</h2>
+              <h2 className="text-h3 font-semibold" style={{ color: 'var(--text-primary)' }}>Project Activity</h2>
               <div className="flex items-center gap-3">
                 {/* Date Range Filter and Export (only for analytics) */}
                 {activityView === 'analytics' && (
                   <>
-                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                      <Calendar className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
+                    <div 
+                      className="flex items-center gap-2 rounded-lg p-1"
+                      style={{ backgroundColor: 'var(--elevation-1)' }}
+                    >
+                      <Calendar className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
                       <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                        className="bg-transparent border-none text-sm font-medium text-gray-700 dark:text-neutral-300 focus:outline-none cursor-pointer transition-colors"
+                        className="bg-transparent border-none text-body-sm font-medium focus:outline-none cursor-pointer transition-colors"
+                        style={{ color: 'var(--text-primary)' }}
                       >
                         <option value="7d">Last 7 days</option>
                         <option value="30d">Last 30 days</option>
@@ -1260,8 +1294,8 @@ export const ProjectDetailPage: React.FC = () => {
                       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                         <AlertTriangle className="h-6 w-6 text-red-600" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Error Loading Analytics</h3>
-                      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-4">
+                      <h3 className="text-h3 font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Error Loading Analytics</h3>
+                      <p className="text-body-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                         {analyticsError instanceof Error
                           ? analyticsError.message
                           : 'An error occurred while loading analytics. Please try again.'}
@@ -1319,9 +1353,9 @@ export const ProjectDetailPage: React.FC = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Top Users */}
                           <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Contributors</h3>
+                            <h3 className="text-h3 font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Top Contributors</h3>
                             {analyticsStats.topUsers.length === 0 ? (
-                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No user data available</p>
+                              <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>No user data available</p>
                             ) : (
                               <div className="space-y-3">
                                 {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
@@ -1345,9 +1379,9 @@ export const ProjectDetailPage: React.FC = () => {
 
                           {/* Top Actions */}
                           <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Most Common Actions</h3>
+                            <h3 className="text-h3 font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Most Common Actions</h3>
                             {analyticsStats.topActions.length === 0 ? (
-                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No action data available</p>
+                              <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>No action data available</p>
                             ) : (
                               <div className="space-y-3">
                                 {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (

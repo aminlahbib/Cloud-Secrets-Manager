@@ -41,9 +41,15 @@ export const WorkflowDetailPage: React.FC = () => {
   if (error || !workflow) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 transition-colors duration-300">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Workflow Not Found</h2>
-          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+        <div 
+          className="border rounded-lg p-6 transition-colors duration-300"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Workflow Not Found</h2>
+          <p className="text-body-sm mb-4" style={{ color: 'var(--status-danger)' }}>
             This workflow may have been deleted or you don't have access to it.
           </p>
           <Button variant="secondary" onClick={() => navigate('/home')}>
@@ -84,7 +90,7 @@ export const WorkflowDetailPage: React.FC = () => {
                   onChange={(e) => setEditDescription(e.target.value)}
                   placeholder="Description (optional)"
                   rows={2}
-                  className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30"
+                  className="input-theme w-full px-4 py-2 rounded-lg"
                 />
                 <div className="flex items-center gap-2">
                   <Button
