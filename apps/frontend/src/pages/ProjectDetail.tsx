@@ -22,6 +22,7 @@ import {
   Calendar,
   AlertTriangle,
   LayoutGrid,
+  Download,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
 import { secretsService } from '../services/secrets';
@@ -210,6 +211,41 @@ export const ProjectDetailPage: React.FC = () => {
     const dayKeys = getLastNDays(days);
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
   }, [analyticsStats, dateRange]);
+
+  // Export analytics data
+  const exportAnalytics = useCallback(() => {
+    if (!analyticsStats || !project) return;
+
+    const exportData = {
+      project: {
+        id: project.id,
+        name: project.name,
+      },
+      dateRange,
+      generatedAt: new Date().toISOString(),
+      stats: {
+        totalActions: analyticsStats.totalActions,
+        activeUsers: Object.keys(analyticsStats.actionsByUser).length,
+        actionTypes: Object.keys(analyticsStats.actionsByType).length,
+      },
+      actionsByType: analyticsStats.actionsByType,
+      actionsByDay: analyticsStats.actionsByDay,
+      topUsers: analyticsStats.topUsers,
+      topActions: analyticsStats.topActions,
+      chartData,
+    };
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-${project.name.replace(/\s+/g, '-')}-${dateRange}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [analyticsStats, project, dateRange, chartData]);
 
   // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
@@ -851,21 +887,34 @@ export const ProjectDetailPage: React.FC = () => {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
               <div className="flex items-center gap-3">
-                {/* Date Range Filter (only for analytics) */}
+                {/* Date Range Filter and Export (only for analytics) */}
                 {activityView === 'analytics' && (
-                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <select
-                      value={dateRange}
-                      onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                      className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
-                    >
-                      <option value="7d">Last 7 days</option>
-                      <option value="30d">Last 30 days</option>
-                      <option value="90d">Last 90 days</option>
-                      <option value="all">All time</option>
-                    </select>
-                  </div>
+                  <>
+                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                        className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                      >
+                        <option value="7d">Last 7 days</option>
+                        <option value="30d">Last 30 days</option>
+                        <option value="90d">Last 90 days</option>
+                        <option value="all">All time</option>
+                      </select>
+                    </div>
+                    {analyticsStats && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={exportAnalytics}
+                        className="!m-0"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export
+                      </Button>
+                    )}
+                  </>
                 )}
 
                 {/* View Toggle */}
