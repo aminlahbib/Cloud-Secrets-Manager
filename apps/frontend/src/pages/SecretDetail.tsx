@@ -64,6 +64,10 @@ export const SecretDetailPage: React.FC = () => {
     mutationFn: () => secretsService.deleteProjectSecret(projectId, secretKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       navigate(`/projects/${projectId}`);
     },
   });
@@ -73,6 +77,11 @@ export const SecretDetailPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 
@@ -92,6 +101,10 @@ export const SecretDetailPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
+      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
       setShowVersionModal(false);
       setVersionDetail(null);
       setActiveVersionNumber(null);

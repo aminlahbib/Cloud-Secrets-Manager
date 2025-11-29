@@ -18,6 +18,8 @@ export const useCreateWorkflow = () => {
         mutationFn: (data: CreateWorkflowRequest) => workflowsService.createWorkflow(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['workflows'] });
+            // Invalidate home page workflows query
+            queryClient.invalidateQueries({ queryKey: ['workflows'] });
         },
     });
 };
