@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type ColorScheme = 'orange' | 'violet';
+export type ColorScheme = 'orange' | 'violet' | 'emerald' | 'minimal' | 'blue';
 export type ThemeMode = 'light' | 'dark';
 export type Theme = `${ThemeMode}-${ColorScheme}`;
 
@@ -17,6 +17,12 @@ export const AVAILABLE_THEMES: ThemeInfo[] = [
   { id: 'dark-orange', name: 'Dark (Orange)', mode: 'dark', colorScheme: 'orange', description: 'Classic orange theme' },
   { id: 'light-violet', name: 'Light (Violet Pro)', mode: 'light', colorScheme: 'violet', description: 'Violet pro/dev theme' },
   { id: 'dark-violet', name: 'Dark (Violet Pro)', mode: 'dark', colorScheme: 'violet', description: 'Violet pro/dev theme' },
+  { id: 'light-emerald', name: 'Light (Emerald)', mode: 'light', colorScheme: 'emerald', description: 'Security/infra theme' },
+  { id: 'dark-emerald', name: 'Dark (Emerald)', mode: 'dark', colorScheme: 'emerald', description: 'Security/infra theme' },
+  { id: 'light-minimal', name: 'Light (Minimal)', mode: 'light', colorScheme: 'minimal', description: 'Minimal grayscale + subtle accent' },
+  { id: 'dark-minimal', name: 'Dark (Minimal)', mode: 'dark', colorScheme: 'minimal', description: 'Minimal grayscale + subtle accent' },
+  { id: 'light-blue', name: 'Light (Cool Blue)', mode: 'light', colorScheme: 'blue', description: 'Cool blue cloud theme' },
+  { id: 'dark-blue', name: 'Dark (Cool Blue)', mode: 'dark', colorScheme: 'blue', description: 'Cool blue cloud theme' },
 ];
 
 interface ThemeContextType {
