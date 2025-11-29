@@ -165,7 +165,10 @@ public class ProjectSecretService {
         Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
             .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
+        String oldEncryptedValue = secret.getEncryptedValue();
         String encryptedValue = encryptionService.encrypt(request.getValue());
+        boolean valueChanged = !encryptedValue.equals(oldEncryptedValue);
+        
         secret.setEncryptedValue(encryptedValue);
         secret.setUpdatedBy(userId);
         if (request.getDescription() != null) {
@@ -177,8 +180,17 @@ public class ProjectSecretService {
 
         Secret saved = secretRepository.save(secret);
 
-        // Create new version
-        secretVersionService.createVersion(saved, userId, "Secret value updated");
+        // Create new version only if the value actually changed
+        if (valueChanged) {
+            try {
+                secretVersionService.createVersion(saved, userId, "Secret value updated");
+                log.debug("Created new version for secret {} in project {}", secretKey, projectId);
+            } catch (Exception e) {
+                log.error("Failed to create version for secret {} in project {}: {}", 
+                    secretKey, projectId, e.getMessage(), e);
+                // Don't fail the update if version creation fails, but log it
+            }
+        }
 
         // Audit log
         auditClient.logSecretEvent(projectId, userId, "SECRET_UPDATE", secretKey);

@@ -94,9 +94,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
         @Param("end") Instant end
     );
     
-    @Query("SELECT DATE(a.createdAt) as day, COUNT(a) as count FROM AuditLog a " +
-           "WHERE a.projectId = :projectId AND a.createdAt >= :start AND a.createdAt <= :end " +
-           "GROUP BY DATE(a.createdAt) ORDER BY day ASC")
+    @Query(value = "SELECT DATE(a.created_at) as day, COUNT(a) as count FROM audit_logs a " +
+           "WHERE a.project_id = :projectId AND a.created_at >= :start AND a.created_at <= :end " +
+           "GROUP BY DATE(a.created_at) ORDER BY day ASC", nativeQuery = true)
     List<Object[]> countActionsByDay(
         @Param("projectId") UUID projectId,
         @Param("start") Instant start,
