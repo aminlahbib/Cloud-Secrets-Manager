@@ -93,6 +93,33 @@ public class ProjectSecretService {
     }
 
     /**
+     * Get max version numbers for a list of secrets
+     */
+    @Transactional(readOnly = true)
+    public java.util.Map<UUID, Integer> getMaxVersionNumbersForSecrets(java.util.List<UUID> secretIds) {
+        java.util.Map<UUID, Integer> versionMap = new java.util.HashMap<>();
+        if (secretIds == null || secretIds.isEmpty()) {
+            return versionMap;
+        }
+        for (UUID secretId : secretIds) {
+            if (secretId == null) {
+                continue;
+            }
+            try {
+                Integer versionNumber = secretVersionRepository.findMaxVersionNumberBySecretId(secretId)
+                    .orElse(null);
+                if (versionNumber != null) {
+                    versionMap.put(secretId, versionNumber);
+                }
+            } catch (Exception e) {
+                // Skip if version fetch fails - secret might have no versions yet
+                log.debug("Failed to fetch version for secret {}: {}", secretId, e.getMessage());
+            }
+        }
+        return versionMap;
+    }
+
+    /**
      * Get a secret from a project
      */
     @Transactional(readOnly = true)
@@ -165,7 +192,10 @@ public class ProjectSecretService {
         Secret secret = secretRepository.findByProjectIdAndSecretKey(projectId, secretKey)
             .orElseThrow(() -> new SecretNotFoundException("Secret not found"));
 
+        String oldEncryptedValue = secret.getEncryptedValue();
         String encryptedValue = encryptionService.encrypt(request.getValue());
+        boolean valueChanged = !encryptedValue.equals(oldEncryptedValue);
+        
         secret.setEncryptedValue(encryptedValue);
         secret.setUpdatedBy(userId);
         if (request.getDescription() != null) {
@@ -177,8 +207,17 @@ public class ProjectSecretService {
 
         Secret saved = secretRepository.save(secret);
 
-        // Create new version
-        secretVersionService.createVersion(saved, userId, "Secret value updated");
+        // Create new version only if the value actually changed
+        if (valueChanged) {
+            try {
+                secretVersionService.createVersion(saved, userId, "Secret value updated");
+                log.debug("Created new version for secret {} in project {}", secretKey, projectId);
+            } catch (Exception e) {
+                log.error("Failed to create version for secret {} in project {}: {}", 
+                    secretKey, projectId, e.getMessage(), e);
+                // Don't fail the update if version creation fails, but log it
+            }
+        }
 
         // Audit log
         auditClient.logSecretEvent(projectId, userId, "SECRET_UPDATE", secretKey);

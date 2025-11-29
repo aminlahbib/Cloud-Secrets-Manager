@@ -25,10 +25,26 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     
     @Query("SELECT p FROM Project p " +
            "JOIN ProjectMembership pm ON pm.projectId = p.id " +
+           "WHERE pm.userId = :userId")
+    Page<Project> findAccessibleProjectsByUserIdIncludingArchived(@Param("userId") UUID userId, Pageable pageable);
+    
+    @Query("SELECT p FROM Project p " +
+           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
            "WHERE pm.userId = :userId AND p.isArchived = false " +
            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Project> findAccessibleProjectsByUserIdAndSearch(
+        @Param("userId") UUID userId, 
+        @Param("search") String search, 
+        Pageable pageable
+    );
+    
+    @Query("SELECT p FROM Project p " +
+           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
+           "WHERE pm.userId = :userId " +
+           "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+    Page<Project> findAccessibleProjectsByUserIdAndSearchIncludingArchived(
         @Param("userId") UUID userId, 
         @Param("search") String search, 
         Pageable pageable

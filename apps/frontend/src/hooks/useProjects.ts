@@ -28,6 +28,9 @@ export const useCreateProject = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['projects'] });
             queryClient.invalidateQueries({ queryKey: ['workflows'] });
+            // Invalidate home page queries - will be invalidated with user ID in component
+            queryClient.invalidateQueries({ queryKey: ['projects', 'recent'] });
+            queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
         },
     });
 };
