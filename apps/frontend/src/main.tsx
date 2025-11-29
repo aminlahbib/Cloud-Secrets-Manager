@@ -22,7 +22,7 @@ export const queryClient = new QueryClient({
       structuralSharing: true,
       // Performance optimizations
       networkMode: 'online',
-      keepPreviousData: true, // Keep previous data while fetching new data
+      // Note: keepPreviousData is deprecated in v5, use placeholderData per-query if needed
     },
     mutations: {
       retry: 0, // Don't retry mutations by default
