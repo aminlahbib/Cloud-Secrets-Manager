@@ -105,11 +105,11 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) => setKeepSignedIn(e.target.checked)}
                 className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
               />
-              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700">
+              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700 dark:text-neutral-300">
                 Keep me signed in
               </label>
             </div>
-            <p className="text-xs text-gray-500 -mt-2 mb-2">
+            <p className="text-xs text-gray-500 dark:text-neutral-400 -mt-2 mb-2">
               {keepSignedIn 
                 ? 'Your session will persist across browser restarts and tabs will stay synchronized.'
                 : 'Your session will end when you close the browser. Each tab has its own session.'}
@@ -125,10 +125,10 @@ export const LoginPage: React.FC = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-300 dark:border-neutral-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white dark:bg-[#111111] text-gray-500 dark:text-neutral-400">Or continue with</span>
                 </div>
               </div>
 
