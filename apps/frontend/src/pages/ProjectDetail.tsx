@@ -48,11 +48,13 @@ import { ActionDistributionChart } from '../components/analytics/ActionDistribut
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
 import { SecretCard } from '../components/ui/SecretCard';
+import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
 import {
   getLastNDays,
   prepareChartData,
   formatActionName,
 } from '../utils/analytics';
+import { useDebounce } from '../utils/debounce';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -88,6 +90,7 @@ export const ProjectDetailPage: React.FC = () => {
     }
   }, [activeTab, projectId]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -110,6 +113,11 @@ export const ProjectDetailPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [secretFilters, setSecretFilters] = useState<Record<string, any>>({
+    status: null,
+    sortBy: 'createdAt',
+    sortDir: 'DESC',
+  });
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -143,8 +151,12 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Fetch secrets
   const { data: secretsData, isLoading: isSecretsLoading } = useQuery({
-    queryKey: ['project-secrets', projectId, searchTerm],
-    queryFn: () => secretsService.listProjectSecrets(projectId!, { keyword: searchTerm || undefined }),
+    queryKey: ['project-secrets', projectId, debouncedSearchTerm, secretFilters],
+    queryFn: () => secretsService.listProjectSecrets(projectId!, {
+      keyword: debouncedSearchTerm || undefined,
+      sortBy: secretFilters.sortBy || 'createdAt',
+      sortDir: secretFilters.sortDir || 'DESC',
+    }),
     enabled: !!projectId && activeTab === 'secrets',
   });
 
@@ -486,7 +498,63 @@ export const ProjectDetailPage: React.FC = () => {
   const canLeaveProject =
     !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
-  const secrets = secretsData?.content ?? [];
+  const secretFilterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { label: 'Active', value: 'active' },
+        { label: 'Expired', value: 'expired' },
+        { label: 'Expiring Soon', value: 'expiring' },
+      ],
+    },
+    {
+      key: 'sortBy',
+      label: 'Sort By',
+      type: 'select',
+      options: [
+        { label: 'Created Date', value: 'createdAt' },
+        { label: 'Updated Date', value: 'updatedAt' },
+        { label: 'Key', value: 'secretKey' },
+      ],
+    },
+    {
+      key: 'sortDir',
+      label: 'Order',
+      type: 'select',
+      options: [
+        { label: 'Newest First', value: 'DESC' },
+        { label: 'Oldest First', value: 'ASC' },
+      ],
+    },
+  ], []);
+
+  const secrets = useMemo(() => {
+    let filtered = secretsData?.content ?? [];
+    
+    // Apply status filter (client-side filtering for status)
+    if (secretFilters.status) {
+      const now = new Date();
+      filtered = filtered.filter((secret: Secret) => {
+        if (secretFilters.status === 'expired') {
+          return secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < now);
+        }
+        if (secretFilters.status === 'expiring') {
+          if (!secret.expiresAt) return false;
+          const expiresAt = new Date(secret.expiresAt);
+          const daysUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          return !secret.expired && expiresAt > now && daysUntilExpiry <= 30;
+        }
+        if (secretFilters.status === 'active') {
+          return !secret.expired && (!secret.expiresAt || new Date(secret.expiresAt) > now);
+        }
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [secretsData?.content, secretFilters.status]);
 
   // Bulk selection handlers
   const toggleSecretSelection = useCallback((secretKey: string) => {
@@ -768,15 +836,23 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'secrets' && (
         <div className="space-y-4">
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search secrets..."
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search secrets..."
+                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              />
+            </div>
+            <FilterPanel
+              filters={secretFilterConfigs}
+              values={secretFilters}
+              onChange={(key, value) => setSecretFilters(prev => ({ ...prev, [key]: value }))}
+              onClear={() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' })}
             />
           </div>
 
