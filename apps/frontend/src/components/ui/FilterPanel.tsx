@@ -57,7 +57,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors bg-elevation-4">
+          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors dropdown-glass">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-body-sm font-semibold text-theme-primary">Filters</h3>
               {activeFiltersCount > 0 && (

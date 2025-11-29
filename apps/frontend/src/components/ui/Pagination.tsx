@@ -56,9 +56,10 @@ export const Pagination: React.FC<PaginationProps> = ({
               onClick={() => onPageChange(page)}
               className={`px-4 py-2 rounded-md border transition-colors ${
                 currentPage === page 
-                  ? 'bg-accent-primary text-theme-inverse border-accent-primary' 
+                  ? 'border-accent-primary text-accent-primary bg-accent-primary-glow' 
                   : 'bg-transparent text-theme-primary border-theme-default hover:bg-elevation-1'
               }`}
+              style={currentPage === page ? { borderColor: 'var(--accent-primary)' } : {}}
             >
               {page}
             </button>
