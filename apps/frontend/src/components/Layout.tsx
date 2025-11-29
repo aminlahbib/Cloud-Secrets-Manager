@@ -97,13 +97,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
+    <div className="min-h-screen bg-neutral-100 dark:bg-elevation-0 text-neutral-900 dark:text-primary transition-colors duration-200">
       <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#1a1a1a] border-r border-neutral-200 dark:border-[rgba(255,255,255,0.05)] flex flex-col justify-between px-6 py-8 transition-all duration-300 md:translate-x-0
+            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-elevation-1 border-r border-neutral-200 dark:border-subtle flex flex-col justify-between padding-sidebar transition-all duration-200 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
+          style={{
+            borderRightColor: 'var(--sidebar-border)',
+          }}
         >
           <div>
             <Link to="/home" className="flex items-center space-x-3">
@@ -122,7 +125,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold hidden">
                 CSM
               </div>
-              <span className="text-lg font-semibold tracking-tight">Cloud Secrets</span>
+              <span className="text-lg font-semibold tracking-tight text-primary dark:text-primary">Cloud Secrets</span>
             </Link>
 
             <div className="mt-10 space-y-1">
@@ -134,12 +137,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-h-[44px] touch-manipulation group ${isActive
-                      ? 'bg-neutral-100 dark:bg-[rgba(255,255,255,0.08)] text-neutral-900 dark:text-white'
-                      : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white'
-                      }`}
+                    className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
                   >
-                    <Icon className={`mr-3 h-5 w-5 transition-colors ${isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-orange-500 dark:group-hover:text-orange-400'}`} />
+                    <Icon className="h-5 w-5" />
                     {item.name}
                   </Link>
                 );
@@ -147,13 +147,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
 
             <div className="mt-10" ref={workflowSelectorRef}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 px-1 mb-3">
+              <div className="flex items-center justify-between text-label text-tertiary px-1 mb-3">
                 <span>Workspace</span>
                 <button
                   onClick={() => navigate('/workflows/new')}
-                  className="text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 flex items-center gap-1 transition-colors group"
+                  className="text-xs font-medium flex items-center gap-1 transition-all duration-150 hover:scale-105"
+                  style={{ color: 'var(--accent-primary)' }}
                 >
-                  <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Plus className="h-4 w-4" />
                   New
                 </button>
               </div>
@@ -162,27 +163,28 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <div>
                   <button
                     onClick={() => setIsWorkflowMenuOpen((prev) => !prev)}
-                    className={`
-                      w-full text-left rounded-2xl border px-4 py-3 transition-all duration-300 flex items-center justify-between
-                      ${isWorkflowMenuOpen ? 'border-orange-300 dark:border-orange-500/30 shadow-sm dark:shadow-[0_4px_12px_-2px_rgba(249,115,22,0.15)]' : 'border-neutral-200 dark:border-[rgba(255,255,255,0.05)] hover:border-orange-300 dark:hover:border-orange-500/30'}
-                    `}
+                    className="w-full text-left rounded-2xl border px-4 py-3 transition-all duration-150 flex items-center justify-between card hover:border-default"
+                    style={{
+                      borderColor: isWorkflowMenuOpen ? 'var(--border-accent)' : 'var(--border-subtle)',
+                      boxShadow: isWorkflowMenuOpen ? 'var(--shadow-md), var(--glow-accent)' : 'var(--shadow-sm)',
+                    }}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                      <p className="text-body-sm font-semibold text-primary">
                         {selectedWorkflow?.name || 'Select workflow'}
                       </p>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      <p className="text-caption text-tertiary">
                         {(selectedWorkflow?.projects?.length || 0)} Projects
                       </p>
                     </div>
                     <ChevronDown
-                      className={`h-4 w-4 text-neutral-400 transition-transform ${isWorkflowMenuOpen ? 'rotate-180' : ''
-                        }`}
+                      className="h-4 w-4 text-tertiary transition-transform duration-150"
+                      style={{ transform: isWorkflowMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
                     />
                   </button>
 
                   {isWorkflowMenuOpen && (
-                    <div className="mt-2 rounded-2xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] bg-white dark:bg-[#1a1a1a] shadow-lg dark:shadow-[0_8px_16px_-4px_rgba(0,0,0,0.4)] overflow-hidden backdrop-blur-sm">
+                    <div className="mt-2 rounded-2xl border overflow-hidden glass" style={{ borderColor: 'var(--border-subtle)', boxShadow: 'var(--shadow-lg)' }}>
                       <div className="max-h-64 overflow-y-auto">
                         {workflows.map((workflow) => {
                           const isSelected = workflow.id === selectedWorkflowId;
@@ -190,16 +192,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <button
                               key={workflow.id}
                               onClick={() => handleWorkflowSelect(workflow.id)}
-                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm transition-all duration-300 group ${isSelected ? 'bg-orange-50 dark:bg-orange-500/10 text-neutral-900 dark:text-white border-l-2 border-orange-500' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                                }`}
+                              className="w-full px-4 py-3 text-left flex items-center justify-between text-body-sm transition-all duration-150"
+                              style={{
+                                backgroundColor: isSelected ? 'var(--sidebar-active-bg)' : 'transparent',
+                                color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                borderLeft: isSelected ? '3px solid var(--accent-primary)' : 'none',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = 'var(--sidebar-hover-bg)';
+                                  e.currentTarget.style.color = 'var(--text-primary)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isSelected) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = 'var(--text-secondary)';
+                                }
+                              }}
                             >
                               <div>
-                                <p className="font-medium text-neutral-900 dark:text-white">{workflow.name}</p>
-                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                <p className="font-medium">{workflow.name}</p>
+                                <p className="text-caption text-tertiary">
                                   {(workflow.projects?.length || 0)} Projects
                                 </p>
                               </div>
-                              {isSelected && <span className="text-neutral-900 dark:text-neutral-100 text-lg">•</span>}
+                              {isSelected && <span className="text-primary text-lg">•</span>}
                             </button>
                           );
                         })}
@@ -209,9 +227,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           setIsWorkflowMenuOpen(false);
                           navigate('/workflows/new');
                         }}
-                        className="w-full px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 border-t border-neutral-100 dark:border-[rgba(255,255,255,0.05)] text-left hover:bg-orange-50 dark:hover:bg-orange-500/10 flex items-center gap-2 transition-all duration-300 group"
+                        className="w-full px-4 py-3 text-body-sm font-medium border-t text-left flex items-center gap-2 transition-all duration-150 hover:bg-elevation-2"
+                        style={{ 
+                          color: 'var(--accent-primary)',
+                          borderTopColor: 'var(--border-subtle)',
+                        }}
                       >
-                        <Plus className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                        <Plus className="h-4 w-4" />
                         Create Workflow
                       </button>
                     </div>
@@ -239,15 +261,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     key={item.name}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-h-[44px] touch-manipulation group ${isActive
-                      ? 'bg-neutral-100 dark:bg-[rgba(255,255,255,0.08)] text-neutral-900 dark:text-white'
-                      : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white'
-                      }`}
+                    className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
                   >
-                    <Icon className={`mr-3 h-5 w-5 transition-colors ${isActive ? 'text-neutral-900 dark:text-white' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-orange-500 dark:group-hover:text-orange-400'}`} />
+                    <Icon className="h-5 w-5" />
                     {item.name}
                     {item.badge && (
-                      <span className="ml-auto text-[11px] uppercase tracking-wide text-neutral-400 dark:text-neutral-500">{item.badge}</span>
+                      <span className="ml-auto text-caption text-tertiary uppercase tracking-wide">{item.badge}</span>
                     )}
                   </Link>
                 );
@@ -272,16 +291,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:text-neutral-900 dark:hover:text-white group"
+                className="nav-item"
               >
                 {theme === 'dark' ? (
                   <>
-                    <Sun className="mr-3 h-5 w-5 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
+                    <Sun className="h-5 w-5" />
                     Light Mode
                   </>
                 ) : (
                   <>
-                    <Moon className="mr-3 h-5 w-5 group-hover:text-orange-500 dark:group-hover:text-orange-400 transition-colors" />
+                    <Moon className="h-5 w-5" />
                     Dark Mode
                   </>
                 )}
@@ -302,7 +321,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
               <button
                 onClick={logout}
-                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.08)] hover:border-neutral-300 dark:hover:border-[rgba(255,255,255,0.1)] transition-all duration-300"
+                className="mt-4 w-full flex items-center justify-center rounded-xl border px-3 py-2 text-body-sm font-medium transition-all duration-150 hover:bg-elevation-2"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-default)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
+                }}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -312,11 +343,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
 
         <div className="flex-1 flex flex-col md:ml-72">
-          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] bg-white dark:bg-[#1a1a1a] transition-colors">
+          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b bg-white dark:bg-elevation-1 transition-colors" style={{ borderBottomColor: 'var(--border-subtle)' }}>
             <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-white transition-colors">
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <span className="text-sm font-semibold tracking-tight uppercase text-neutral-900 dark:text-neutral-100">Cloud Secrets</span>
+            <span className="text-body-sm font-semibold tracking-tight uppercase text-primary">Cloud Secrets</span>
             <div className="h-8 w-8 rounded-full bg-neutral-900 text-white flex items-center justify-center">
               {user?.displayName?.[0] || user?.email?.[0] || 'U'}
             </div>
