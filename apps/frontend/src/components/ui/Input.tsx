@@ -27,11 +27,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={clsx(
-              'w-full py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100',
+              'w-full py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors bg-white dark:bg-[#111111] text-neutral-900 dark:text-white',
               icon ? 'pl-10 pr-3' : 'px-3',
               error
                 ? 'border-red-300 dark:border-red-600 focus:ring-red-500 focus:border-red-500'
-                : 'border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500',
+                : 'border-neutral-300 dark:border-neutral-800 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500',
               className
             )}
             {...props}
