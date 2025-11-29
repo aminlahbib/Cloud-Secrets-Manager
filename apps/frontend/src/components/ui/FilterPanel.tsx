@@ -23,7 +23,7 @@ interface FilterPanelProps {
   className?: string;
 }
 
-export const FilterPanel: React.FC<FilterPanelProps> = ({
+export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
   filters,
   values,
   onChange,
