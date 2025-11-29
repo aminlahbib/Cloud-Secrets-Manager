@@ -42,8 +42,8 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
         },
         onSuccess: (result, variables) => {
             const targetKey = result.key || result.secretKey || variables.key;
-            // Invalidate secret-related queries
-            queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+            // Refetch secrets list immediately to show updated version numbers
+            queryClient.refetchQueries({ queryKey: ['project-secrets', projectId] });
             queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, targetKey] });
             // Refetch secret versions immediately to show latest version (critical for version display)
             queryClient.refetchQueries({ queryKey: ['project-secret-versions', projectId, targetKey] });
