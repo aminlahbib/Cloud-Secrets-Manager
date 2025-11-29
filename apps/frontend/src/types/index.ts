@@ -35,6 +35,17 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface UserPreferencesResponse {
+  notifications: {
+    email: boolean;
+    secretExpiration: boolean;
+    projectInvitations: boolean;
+    securityAlerts: boolean;
+  };
+  timezone: string;
+  dateFormat: string;
+}
+
 // ----------------------------------------------------------------------------
 // Workflows (Personal Organization)
 // ----------------------------------------------------------------------------

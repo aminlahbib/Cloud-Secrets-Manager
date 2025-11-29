@@ -28,6 +28,7 @@ interface ProjectHeaderProps {
   onImportSecrets: () => void;
   onAddSecret: () => void;
   onInviteMember: () => void;
+  onTabChange?: (tab: string) => void;
   secretsCount: number;
 }
 
@@ -40,6 +41,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
   onImportSecrets,
   onAddSecret,
   onInviteMember,
+  onTabChange,
   secretsCount,
 }) => {
   const navigate = useNavigate();
@@ -48,6 +50,18 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
   const handleBack = useCallback(() => {
     navigate('/projects');
   }, [navigate]);
+
+  const handleActivityClick = useCallback(() => {
+    if (onTabChange) {
+      onTabChange('activity');
+    }
+  }, [onTabChange]);
+
+  const handleSettingsClick = useCallback(() => {
+    if (onTabChange) {
+      onTabChange('settings');
+    }
+  }, [onTabChange]);
 
   return (
     <div>
@@ -109,11 +123,21 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
         <div className="rounded-3xl border border-theme-subtle px-6 py-4 text-body-sm bg-elevation-1 text-theme-secondary">
           <p>
             Need help?{' '}
-            <button className="underline" type="button" onClick={() => {/* This will be handled by parent via onTabChange */}}>
+            <button 
+              className="underline hover:no-underline transition-all" 
+              type="button" 
+              onClick={handleActivityClick}
+              style={{ color: 'var(--accent-primary)' }}
+            >
               View project activity
             </button>{' '}
             or visit{' '}
-            <button className="underline" type="button" onClick={() => {/* This will be handled by parent via onTabChange */}}>
+            <button 
+              className="underline hover:no-underline transition-all" 
+              type="button" 
+              onClick={handleSettingsClick}
+              style={{ color: 'var(--accent-primary)' }}
+            >
               project settings
             </button>{' '}
             for more tools.

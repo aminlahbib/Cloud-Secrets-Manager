@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useProjectSecret, useSaveSecret } from '../hooks/useSecrets';
+import { useNotifications } from '../contexts/NotificationContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
@@ -11,6 +12,7 @@ export const SecretFormPage: React.FC = () => {
   const { projectId, key: keyParam } = useParams<{ projectId: string; key: string }>();
   const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
+  const { showNotification } = useNotifications();
   const isEditMode = !!secretKey;
   const isProjectScoped = !!projectId;
 
@@ -42,15 +44,31 @@ export const SecretFormPage: React.FC = () => {
     }
 
     if (!payload.key || !payload.value) {
-      alert('Key and value are required');
+      showNotification({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Key and value are required',
+      });
       return;
     }
 
     mutation.mutate(payload, {
       onSuccess: (result) => {
         const targetKey = result.key || result.secretKey || payload.key;
+        showNotification({
+          type: 'success',
+          title: isEditMode ? 'Secret updated' : 'Secret created',
+          message: `Secret "${targetKey}" has been ${isEditMode ? 'updated' : 'created'} successfully`,
+        });
         navigate(`/projects/${projectId}/secrets/${encodeURIComponent(targetKey)}`);
-      }
+      },
+      onError: (error: any) => {
+        showNotification({
+          type: 'error',
+          title: isEditMode ? 'Update failed' : 'Creation failed',
+          message: error?.response?.data?.message || error?.message || `Failed to ${isEditMode ? 'update' : 'create'} secret`,
+        });
+      },
     });
   };
 

@@ -7,6 +7,7 @@ import {
   setPersistence,
   browserSessionPersistence,
   browserLocalPersistence,
+  updateProfile,
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
@@ -161,6 +162,25 @@ export const firebaseAuthService = {
    */
   onAuthStateChanged(callback: (user: FirebaseUser | null) => void): () => void {
     return onAuthStateChanged(auth, callback);
+  },
+
+  /**
+   * Update the current user's profile (display name, photo URL)
+   */
+  async updateUserProfile(updates: { displayName?: string; photoURL?: string }): Promise<void> {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('No user is currently signed in');
+    }
+
+    try {
+      await updateProfile(user, updates);
+      // Force token refresh to get updated claims
+      await user.getIdToken(true);
+    } catch (error: any) {
+      console.error('Failed to update user profile:', error);
+      throw new Error(error.message || 'Failed to update profile');
+    }
   },
 
   /**
