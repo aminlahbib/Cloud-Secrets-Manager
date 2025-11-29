@@ -8,7 +8,9 @@ import {
   Moon,
   Sun,
   Globe,
-  Clock
+  Clock,
+  Palette,
+  Check
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -293,24 +295,126 @@ export const SettingsPage: React.FC = () => {
             <Card className="p-6">
               <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Application Preferences</h2>
               
-              <div className="space-y-6 max-w-xl">
+              <div className="space-y-6 max-w-4xl">
                 <div>
-                  <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Theme
+                  <label className="block text-body-sm font-medium mb-4" style={{ color: 'var(--text-primary)' }}>
+                    <div className="flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Theme
+                    </div>
                   </label>
-                  <select
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value as any)}
-                    className="input-theme w-full"
-                  >
-                    {availableThemes.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} {t.description ? `- ${t.description}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-                    Current: {themeInfo.name}
+                  
+                  {/* Group themes by color scheme */}
+                  <div className="space-y-6">
+                    {['orange', 'violet', 'emerald', 'minimal', 'blue', 'neomint', 'plum'].map((scheme) => {
+                      const schemeThemes = availableThemes.filter(t => t.colorScheme === scheme);
+                      if (schemeThemes.length === 0) return null;
+                      
+                      const schemeName = scheme.charAt(0).toUpperCase() + scheme.slice(1).replace(/-/g, ' ');
+                      // Use CSS variables for colors instead of hardcoded values
+                      const schemeColors: Record<string, { primary: string; secondary?: string }> = {
+                        orange: { primary: 'var(--accent-primary)' },
+                        violet: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
+                        emerald: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
+                        minimal: { primary: 'var(--accent-primary)' },
+                        blue: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
+                        neomint: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
+                        plum: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
+                      };
+                      
+                      return (
+                        <div key={scheme} className="space-y-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded-full border-2"
+                                style={{ 
+                                  backgroundColor: schemeColors[scheme].primary,
+                                  borderColor: 'var(--border-default)'
+                                }}
+                              />
+                              {schemeColors[scheme].secondary && (
+                                <div 
+                                  className="w-4 h-4 rounded-full border-2"
+                                  style={{ 
+                                    backgroundColor: schemeColors[scheme].secondary,
+                                    borderColor: 'var(--border-default)'
+                                  }}
+                                />
+                              )}
+                            </div>
+                            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                              {schemeName}
+                            </h3>
+                            {schemeThemes[0].description && (
+                              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                                - {schemeThemes[0].description}
+                              </span>
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {schemeThemes.map((t) => {
+                              const isActive = theme === t.id;
+                              return (
+                                <button
+                                  key={t.id}
+                                  onClick={() => setTheme(t.id)}
+                                  className="relative p-4 rounded-xl border-2 transition-all duration-200 text-left group"
+                                  style={{
+                                    borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-default)',
+                                    backgroundColor: isActive ? 'var(--accent-primary-glow)' : 'var(--elevation-1)',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!isActive) {
+                                      e.currentTarget.style.borderColor = 'var(--border-strong)';
+                                      e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isActive) {
+                                      e.currentTarget.style.borderColor = 'var(--border-default)';
+                                      e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      {t.mode === 'light' ? (
+                                        <Sun className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                                      ) : (
+                                        <Moon className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
+                                      )}
+                                      <div>
+                                        <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
+                                          {t.mode === 'light' ? 'Light' : 'Dark'}
+                                        </div>
+                                        <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                                          {schemeName}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {isActive && (
+                                      <div 
+                                        className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
+                                        style={{ backgroundColor: 'var(--accent-primary)' }}
+                                      >
+                                        <Check className="h-3 w-3" style={{ color: 'var(--text-inverse)' }} />
+                                      </div>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <p className="text-xs mt-4 pt-4 border-t" style={{ color: 'var(--text-tertiary)', borderColor: 'var(--border-subtle)' }}>
+                    Current theme: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{themeInfo.name}</span>
+                    {themeInfo.description && ` - ${themeInfo.description}`}
                   </p>
                 </div>
 

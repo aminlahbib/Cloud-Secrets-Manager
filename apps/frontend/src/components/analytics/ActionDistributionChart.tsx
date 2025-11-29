@@ -20,8 +20,9 @@ const COLOR_VARS = [
 
 // Helper to get computed CSS variable value
 const getCSSVariable = (varName: string): string => {
-  if (typeof window === 'undefined') return '#3b82f6'; // fallback
-  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#3b82f6';
+  if (typeof window === 'undefined') return 'var(--status-info)'; // fallback
+  const value = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return value || getComputedStyle(document.documentElement).getPropertyValue('--status-info').trim() || '#3b82f6';
 };
 
 export const ActionDistributionChart: React.FC<ActionDistributionChartProps> = React.memo(({
@@ -58,8 +59,11 @@ export const ActionDistributionChart: React.FC<ActionDistributionChartProps> = R
     );
   }
 
-  // Use computed colors or fallback
-  const chartColors = colors.length > 0 ? colors : COLOR_VARS.map(() => '#3b82f6');
+  // Use computed colors or fallback to status-info
+  const fallbackColor = typeof window !== 'undefined' 
+    ? getComputedStyle(document.documentElement).getPropertyValue('--status-info').trim() || '#3b82f6'
+    : '#3b82f6';
+  const chartColors = colors.length > 0 ? colors : COLOR_VARS.map(() => fallbackColor);
 
   return (
     <Card className="p-6">

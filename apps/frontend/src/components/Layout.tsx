@@ -18,7 +18,9 @@ import {
   ChevronDown,
   Shield,
   Moon,
-  Sun
+  Sun,
+  Palette,
+  ChevronUp
 } from 'lucide-react';
 
 
@@ -28,11 +30,13 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout, isPlatformAdmin } = useAuth();
-  const { mode, toggleMode } = useTheme();
+  const { mode, toggleMode, setTheme, availableThemes, colorScheme } = useTheme();
+  const [isThemeSelectorOpen, setIsThemeSelectorOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
+  const themeSelectorRef = useRef<HTMLDivElement>(null);
   const [isWorkflowMenuOpen, setIsWorkflowMenuOpen] = useState(false);
   const workflowSelectorRef = useRef<HTMLDivElement | null>(null);
 
@@ -62,6 +66,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         !workflowSelectorRef.current.contains(event.target as Node)
       ) {
         setIsWorkflowMenuOpen(false);
+      }
+      if (
+        themeSelectorRef.current &&
+        !themeSelectorRef.current.contains(event.target as Node)
+      ) {
+        setIsThemeSelectorOpen(false);
       }
     };
 
@@ -182,16 +192,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     }}
                   >
                     <div>
-                      <p className="text-body-sm font-semibold text-primary">
+                      <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
                         {selectedWorkflow?.name || 'Select workflow'}
                       </p>
-                      <p className="text-caption text-tertiary">
+                      <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>
                         {(selectedWorkflow?.projects?.length || 0)} Projects
                       </p>
                     </div>
                     <ChevronDown
-                      className="h-4 w-4 text-tertiary transition-transform duration-150"
-                      style={{ transform: isWorkflowMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                      className="h-4 w-4 transition-transform duration-150"
+                      style={{ 
+                        color: 'var(--text-tertiary)',
+                        transform: isWorkflowMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)' 
+                      }}
                     />
                   </button>
 
@@ -232,12 +245,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                               }}
                             >
                               <div>
-                                <p className="font-medium">{workflow.name}</p>
-                                <p className="text-caption text-tertiary">
+                                <p className="font-medium" style={{ color: 'var(--text-primary)' }}>{workflow.name}</p>
+                                <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>
                                   {(workflow.projects?.length || 0)} Projects
                                 </p>
                               </div>
-                              {isSelected && <span className="text-primary text-lg">•</span>}
+                              {isSelected && <span className="text-lg" style={{ color: 'var(--accent-primary)' }}>•</span>}
                             </button>
                           );
                         })}
@@ -247,10 +260,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           setIsWorkflowMenuOpen(false);
                           navigate('/workflows/new');
                         }}
-                        className="w-full px-4 py-3 text-body-sm font-medium border-t text-left flex items-center gap-2 transition-all duration-150 hover:bg-elevation-2"
+                        className="w-full px-4 py-3 text-body-sm font-medium border-t text-left flex items-center gap-2 transition-all duration-150"
                         style={{ 
                           color: 'var(--accent-primary)',
                           borderTopColor: 'var(--border-subtle)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
                         <Plus className="h-4 w-4" />
@@ -289,7 +308,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     <Icon className="h-5 w-5" />
                     {item.name}
                     {item.badge && (
-                      <span className="ml-auto text-caption text-tertiary uppercase tracking-wide">{item.badge}</span>
+                      <span className="ml-auto text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>{item.badge}</span>
                     )}
                   </Link>
                 );
@@ -311,23 +330,151 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               className="border-t pt-6 space-y-3"
               style={{ borderTopColor: 'var(--border-subtle)' }}
             >
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleMode}
-                className="nav-item"
-              >
-                {mode === 'dark' ? (
-                  <>
-                    <Sun className="h-5 w-5" />
-                    Light Mode
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-5 w-5" />
-                    Dark Mode
-                  </>
-                )}
-              </button>
+              {/* Theme Controls */}
+              <div className="flex items-center gap-2">
+                {/* Theme Selector - Shows only color schemes */}
+                <div className="relative flex-1" ref={themeSelectorRef}>
+                  <button
+                    onClick={() => setIsThemeSelectorOpen(!isThemeSelectorOpen)}
+                    className="flex items-center justify-between w-full p-2 rounded-lg transition-all duration-200 hover:bg-elevation-2 text-left"
+                    style={{ 
+                      backgroundColor: 'var(--elevation-1)',
+                      border: '1px solid var(--border-subtle)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+                      e.currentTarget.style.borderColor = 'var(--border-default)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isThemeSelectorOpen) {
+                        e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                        e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Palette className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
+                      <span className="text-xs font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                        {colorScheme.charAt(0).toUpperCase() + colorScheme.slice(1)}
+                      </span>
+                    </div>
+                    {isThemeSelectorOpen ? (
+                      <ChevronUp className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+                    )}
+                  </button>
+
+                  {/* Theme Dropdown - Only 5 color schemes (light mode versions) */}
+                  {isThemeSelectorOpen && (
+                    <div 
+                      className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border shadow-xl z-50"
+                      style={{
+                        backgroundColor: 'var(--elevation-4)',
+                        borderColor: 'var(--border-default)',
+                        boxShadow: 'var(--shadow-xl)'
+                      }}
+                    >
+                      <div className="p-2">
+                        {['orange', 'violet', 'emerald', 'minimal', 'blue', 'neomint', 'plum'].map((scheme) => {
+                          // Get any version of the theme (prefer light, fallback to dark)
+                          const themeForScheme = availableThemes.find(t => t.colorScheme === scheme && t.mode === 'light') 
+                            || availableThemes.find(t => t.colorScheme === scheme);
+                          if (!themeForScheme) return null;
+                          
+                          const isActive = colorScheme === scheme;
+                          const schemeDisplayNames: Record<string, string> = {
+                            orange: 'Orange',
+                            violet: 'Violet Pro',
+                            emerald: 'Emerald',
+                            minimal: 'Minimal',
+                            blue: 'Cool Blue',
+                            neomint: 'Neo-Mint',
+                            plum: 'Plum & Sand',
+                          };
+                          
+                          // Determine which theme to apply based on scheme availability
+                          const getThemeToApply = () => {
+                            // Check if both light and dark exist
+                            const hasLight = availableThemes.some(t => t.colorScheme === scheme && t.mode === 'light');
+                            const hasDark = availableThemes.some(t => t.colorScheme === scheme && t.mode === 'dark');
+                            
+                            if (hasLight && hasDark) {
+                              // Both exist, use current mode
+                              return `${mode}-${scheme}` as any;
+                            } else if (hasLight) {
+                              // Only light exists
+                              return `light-${scheme}` as any;
+                            } else if (hasDark) {
+                              // Only dark exists
+                              return `dark-${scheme}` as any;
+                            }
+                            return themeForScheme.id;
+                          };
+                          
+                          return (
+                            <button
+                              key={scheme}
+                              onClick={() => {
+                                const newTheme = getThemeToApply();
+                                setTheme(newTheme);
+                                setIsThemeSelectorOpen(false);
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors mb-0.5"
+                              style={{
+                                backgroundColor: isActive ? 'var(--accent-primary-glow)' : 'transparent',
+                                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.backgroundColor = 'var(--elevation-3)';
+                                  e.currentTarget.style.color = 'var(--text-primary)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isActive) {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = 'var(--text-secondary)';
+                                }
+                              }}
+                            >
+                              <span className="flex-1 text-left">{schemeDisplayNames[scheme]}</span>
+                              {isActive && (
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--accent-primary)' }} />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Light/Dark Mode Toggle - Compact with icons only */}
+                <button
+                  onClick={toggleMode}
+                  className="flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-elevation-2"
+                  style={{ 
+                    backgroundColor: 'var(--elevation-1)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                  title={mode === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+                    e.currentTarget.style.borderColor = 'var(--border-default)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  }}
+                >
+                  {mode === 'dark' ? (
+                    <Sun className="h-4 w-4" style={{ color: 'var(--text-primary)' }} />
+                  ) : (
+                    <Moon className="h-4 w-4" style={{ color: 'var(--text-primary)' }} />
+                  )}
+                </button>
+              </div>
 
               <div className="flex items-center space-x-3">
                 {user?.avatarUrl ? (
@@ -386,7 +533,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             >
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <span className="text-body-sm font-semibold tracking-tight uppercase text-primary">Cloud Secrets</span>
+            <span className="text-body-sm font-semibold tracking-tight uppercase" style={{ color: 'var(--text-primary)' }}>Cloud Secrets</span>
             <div 
               className="h-8 w-8 rounded-full flex items-center justify-center"
               style={{ backgroundColor: 'var(--elevation-2)', color: 'var(--text-primary)' }}
@@ -404,7 +551,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {isSidebarOpen && (
         <div 
           className="fixed inset-0 z-30 md:hidden" 
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.3)' }}
+          style={{ backgroundColor: 'var(--overlay-bg-light)' }}
           onClick={() => setIsSidebarOpen(false)} 
         />
       )}

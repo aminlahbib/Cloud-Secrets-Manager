@@ -13,14 +13,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-body-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+          <label className="block text-body-sm font-medium mb-1 text-theme-primary">
             {label}
-            {props.required && <span className="ml-1" style={{ color: 'var(--status-danger)' }}>*</span>}
+            {props.required && <span className="ml-1 text-status-danger">*</span>}
           </label>
         )}
         <div className="relative">
           {icon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-theme-tertiary">
               {icon}
             </div>
           )}
@@ -29,17 +29,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             className={clsx(
               'input-theme',
               icon ? 'pl-10 pr-3' : 'px-3',
-              error ? 'border-red-500 focus:ring-red-500' : '',
+              error ? 'border-status-danger focus:ring-status-danger' : '',
               className
             )}
-            style={{
-              borderColor: error ? 'var(--status-danger)' : undefined,
-            }}
             {...props}
           />
         </div>
-        {error && <p className="mt-1 text-body-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>}
-        {helperText && !error && <p className="mt-1 text-body-sm" style={{ color: 'var(--text-secondary)' }}>{helperText}</p>}
+        {error && <p className="mt-1 text-body-sm text-status-danger">{error}</p>}
+        {helperText && !error && <p className="mt-1 text-body-sm text-theme-secondary">{helperText}</p>}
       </div>
     );
   }

@@ -19,8 +19,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   return (
     <div className="text-center py-12">
       {icon && <div className="flex justify-center mb-4">{icon}</div>}
-      <h3 className="text-h3 font-medium mb-2" style={{ color: 'var(--text-primary)' }}>{title}</h3>
-      <p className="text-body-sm mb-6 max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>{description}</p>
+      <h3 className="text-h3 font-medium mb-2 text-theme-primary">{title}</h3>
+      <p className="text-body-sm mb-6 max-w-md mx-auto text-theme-secondary">{description}</p>
       {action && (
         <button
           onClick={action.onClick}

@@ -15,10 +15,10 @@
   animation: shimmer 2s infinite linear;
   background: linear-gradient(
     to right,
-    #f3f4f6 0%,
-    #e5e7eb 20%,
-    #f3f4f6 40%,
-    #f3f4f6 100%
+    var(--elevation-1) 0%,
+    var(--elevation-2) 20%,
+    var(--elevation-1) 40%,
+    var(--elevation-1) 100%
   );
   background-size: 1000px 100%;
 }
@@ -98,6 +98,8 @@
     --accent-secondary: #64748b;      /* Secondary actions, icons */
     --accent-secondary-hover: #475569;
     --accent-secondary-muted: #94a3b8;
+    --accent-secondary-bg: rgba(100, 116, 139, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(100, 116, 139, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors */
     --status-success: #10b981;        /* Success text */
@@ -141,6 +143,10 @@
        ============================================ */
     /* Page Background */
     --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
@@ -274,6 +280,10 @@
     /* Page Background */
     --page-bg: var(--elevation-0);
     
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
@@ -362,6 +372,8 @@
     --accent-secondary: #EC4899;      /* Secondary actions, important statuses, owner/admin chips */
     --accent-secondary-hover: #DB2777;
     --accent-secondary-muted: #F472B6;
+    --accent-secondary-bg: rgba(236, 72, 153, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(236, 72, 153, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors */
     --status-success: #10b981;        /* Success text */
@@ -405,6 +417,10 @@
        ============================================ */
     /* Page Background */
     --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
@@ -538,6 +554,10 @@
     /* Page Background */
     --page-bg: var(--elevation-0);
     
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
@@ -626,6 +646,8 @@
     --accent-secondary: #84CC16;      /* Warnings, lime/yellow-green */
     --accent-secondary-hover: #65A30D;
     --accent-secondary-muted: #A3E635;
+    --accent-secondary-bg: rgba(132, 204, 22, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(132, 204, 22, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors */
     --status-success: #10B981;        /* Success text - emerald */
@@ -669,6 +691,10 @@
        ============================================ */
     /* Page Background */
     --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
@@ -758,6 +784,8 @@
     --accent-secondary: #84CC16;      /* Warnings, lime/yellow-green */
     --accent-secondary-hover: #A3E635;
     --accent-secondary-muted: #BEF264;
+    --accent-secondary-bg: rgba(132, 204, 22, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(132, 204, 22, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #10B981;        /* Success text - emerald */
@@ -890,6 +918,8 @@
     --accent-secondary: #6B7280;      /* Secondary actions - calm grey */
     --accent-secondary-hover: #4B5563;
     --accent-secondary-muted: #9CA3AF;
+    --accent-secondary-bg: rgba(107, 114, 128, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(107, 114, 128, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors - Neutral */
     --status-success: #10b981;        /* Success text */
@@ -1022,6 +1052,8 @@
     --accent-secondary: #6B7280;      /* Secondary actions - calm grey */
     --accent-secondary-hover: #7C8288;
     --accent-secondary-muted: #9CA3AF;
+    --accent-secondary-bg: rgba(107, 114, 128, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(107, 114, 128, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #4ADE80;        /* Success text */
@@ -1065,6 +1097,10 @@
        ============================================ */
     /* Page Background */
     --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
@@ -1154,6 +1190,8 @@
     --accent-secondary: #14B8A6;      /* Subtle highlights, badges, icons */
     --accent-secondary-hover: #0D9488;
     --accent-secondary-muted: #5EEAD4;
+    --accent-secondary-bg: rgba(20, 184, 166, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(20, 184, 166, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors */
     --status-success: #10b981;        /* Success text */
@@ -1286,6 +1324,8 @@
     --accent-secondary: #14B8A6;      /* Success/badges - teal */
     --accent-secondary-hover: #5EEAD4;
     --accent-secondary-muted: #99F6E4;
+    --accent-secondary-bg: rgba(20, 184, 166, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(20, 184, 166, 0.3);  /* Owner/admin badge border */
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #14B8A6;        /* Success text - teal */
@@ -1330,6 +1370,10 @@
     /* Page Background */
     --page-bg: var(--elevation-0);
     
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
@@ -1372,6 +1416,554 @@
     --table-row-hover: var(--elevation-1);
     
     /* Buttons */
+    --btn-primary-bg: var(--accent-primary);
+    --btn-primary-hover: var(--accent-primary-hover);
+    --btn-primary-active: var(--accent-primary-active);
+    --btn-primary-text: var(--text-inverse);
+    
+    --btn-secondary-bg: var(--elevation-2);
+    --btn-secondary-hover: var(--elevation-3);
+    --btn-secondary-border: var(--border-default);
+    --btn-secondary-text: var(--text-primary);
+    
+    --btn-ghost-hover: var(--elevation-2);
+    --btn-ghost-text: var(--text-secondary);
+  }
+  
+  /* ============================================
+     NEO-MINT CYBER THEME - Dark (Futuristic)
+     ============================================ */
+  [data-theme="dark-neomint"] {
+    /* ============================================
+       ELEVATION LAYERS (Background Hierarchy)
+       ============================================ */
+    --elevation-0: #0A0D0F;  /* Page background - very dark charcoal */
+    --elevation-1: #121518;  /* Sidebar, main containers - dark charcoal */
+    --elevation-2: #1A1D21;  /* Cards - soft grey */
+    --elevation-3: #222529;  /* Hover states, active cards */
+    --elevation-4: #2A2D31;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds */
+    --gradient-hero: linear-gradient(135deg, rgba(16, 185, 185, 0.05) 0%, rgba(16, 185, 185, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 185, 185, 0.08) 0%, rgba(16, 185, 185, 0.03) 100%);
+    
+    /* ============================================
+       SEMANTIC COLORS - Neo-Mint Cyber Theme
+       ============================================ */
+    /* Primary Accent - Mint Green */
+    --accent-primary: #10D9C4;        /* Primary CTA, buttons - mint */
+    --accent-primary-hover: #2EE8D6;  /* Hover state with glow */
+    --accent-primary-active: #0BB5A3; /* Pressed state */
+    --accent-primary-glow: rgba(16, 217, 196, 0.2); /* Tiny outer glow on hover */
+    --accent-primary-light: #4DF0E0;  /* Lighter mint */
+    --accent-primary-muted: #6DF5E8;  /* Muted mint */
+    
+    /* Secondary Accent - Cyan */
+    --accent-secondary: #06B6D4;      /* Links and icons - cyan */
+    --accent-secondary-hover: #22D3EE;
+    --accent-secondary-muted: #67E8F9;
+    --accent-secondary-bg: rgba(6, 182, 212, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(6, 182, 212, 0.3);  /* Owner/admin badge border */
+    
+    /* Status Colors - Muted so nothing screams */
+    --status-success: #10D9C4;        /* Success - mint */
+    --status-success-bg: rgba(16, 217, 196, 0.12);
+    --status-warning: #FCD34D;        /* Warning - soft yellow */
+    --status-warning-bg: rgba(252, 211, 77, 0.12);
+    --status-danger: #F87171;         /* Danger - muted red */
+    --status-danger-bg: rgba(248, 113, 113, 0.12);
+    --status-info: #06B6D4;           /* Info - cyan */
+    --status-info-bg: rgba(6, 182, 212, 0.12);
+    
+    /* ============================================
+       TEXT COLORS
+       ============================================ */
+    --text-primary: #E8EAED;
+    --text-secondary: #B4B9C0;
+    --text-tertiary: #7C8288;
+    --text-disabled: #4A4F55;
+    --text-inverse: #0A0D0F;
+    
+    /* ============================================
+       BORDERS & DIVIDERS
+       ============================================ */
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border-default: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --border-accent: rgba(16, 217, 196, 0.30);
+    
+    /* ============================================
+       SHADOWS & GLOWS
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.5);
+    
+    /* ============================================
+       COMPONENT-SPECIFIC TOKENS
+       ============================================ */
+    --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
+    /* Sidebar - Active nav has thin cyan line on left and mint text */
+    --sidebar-bg: var(--elevation-1);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-active-bg: rgba(16, 217, 196, 0.1);
+    --sidebar-active-border: var(--accent-secondary); /* Thin cyan line */
+    --sidebar-hover-bg: var(--elevation-2);
+    --sidebar-link-color: var(--accent-secondary); /* Cyan for links */
+    --sidebar-icon-color: var(--accent-secondary); /* Cyan for icons */
+    --sidebar-section-header: var(--text-tertiary);
+    
+    /* Cards */
+    --card-bg: var(--elevation-2);
+    --card-border: var(--border-subtle);
+    --card-hover-bg: var(--elevation-3);
+    --card-hover-border: var(--border-default);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
+    
+    /* Tabs */
+    --tab-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-2);
+    --tab-border: var(--border-subtle);
+    --tab-active-border: var(--accent-primary);
+    --tab-text: var(--text-primary);
+    --tab-text-muted: var(--text-secondary);
+    --tab-hover-bg: var(--elevation-3);
+    
+    /* Inputs */
+    --input-bg: var(--elevation-1);
+    --input-border: var(--border-subtle);
+    --input-border-focus: var(--accent-primary);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(16, 217, 196, 0.2);
+    
+    /* Tables */
+    --table-header-bg: var(--elevation-1);
+    --table-body-bg: var(--elevation-0);
+    --table-divider: var(--border-subtle);
+    --table-row-hover: var(--elevation-1);
+    
+    /* Buttons - Primary in mint with tiny outer glow on hover */
+    --btn-primary-bg: var(--accent-primary);
+    --btn-primary-hover: var(--accent-primary-hover);
+    --btn-primary-active: var(--accent-primary-active);
+    --btn-primary-text: var(--text-inverse);
+    
+    --btn-secondary-bg: var(--elevation-2);
+    --btn-secondary-hover: var(--elevation-3);
+    --btn-secondary-border: var(--border-default);
+    --btn-secondary-text: var(--text-primary);
+    
+    --btn-ghost-hover: var(--elevation-2);
+    --btn-ghost-text: var(--text-secondary);
+  }
+  
+  /* ============================================
+     NEO-MINT CYBER THEME - Light (Futuristic)
+     ============================================ */
+  [data-theme="light-neomint"] {
+    /* ============================================
+       ELEVATION LAYERS (Background Hierarchy)
+       ============================================ */
+    --elevation-0: #F8FAFC;  /* Page background - very light cool grey */
+    --elevation-1: #FFFFFF;  /* Sidebar, main containers */
+    --elevation-2: #FFFFFF;  /* Cards, elevated surfaces */
+    --elevation-3: #F1F5F9;  /* Hover states, active cards */
+    --elevation-4: #E2E8F0;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds with subtle mint tint */
+    --gradient-hero: linear-gradient(135deg, rgba(16, 217, 196, 0.02) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 217, 196, 0.03) 0%, var(--elevation-1) 100%);
+    
+    /* ============================================
+       SEMANTIC COLORS - Neo-Mint Cyber Theme (Light)
+       ============================================ */
+    /* Primary Accent - Mint Green */
+    --accent-primary: #10D9C4;        /* Primary CTA, active states, buttons, switches, progress, selection */
+    --accent-primary-hover: #0BB5A3;  /* Hover state */
+    --accent-primary-active: #089B8A; /* Pressed state */
+    --accent-primary-glow: rgba(16, 217, 196, 0.15); /* Soft glow */
+    --accent-primary-light: #2EE8D6;  /* Lighter mint for links and icons */
+    --accent-primary-muted: #4DF0E0;  /* Muted mint for section headers */
+    
+    /* Secondary Accent - Cyan */
+    --accent-secondary: #06B6D4;      /* Links and icons - cyan */
+    --accent-secondary-hover: #0891B2;
+    --accent-secondary-muted: #22D3EE;
+    --accent-secondary-bg: rgba(6, 182, 212, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(6, 182, 212, 0.3);  /* Owner/admin badge border */
+    
+    /* Status Colors */
+    --status-success: #10D9C4;        /* Success - mint */
+    --status-success-bg: rgba(16, 217, 196, 0.1);
+    --status-warning: #F59E0B;        /* Warning - soft yellow */
+    --status-warning-bg: rgba(245, 158, 11, 0.1);
+    --status-danger: #EF4444;         /* Danger - muted red */
+    --status-danger-bg: rgba(239, 68, 68, 0.1);
+    --status-info: #06B6D4;           /* Info - cyan */
+    --status-info-bg: rgba(6, 182, 212, 0.1);
+    
+    /* ============================================
+       TEXT COLORS (WCAG AA Compliant)
+       ============================================ */
+    --text-primary: #0F172A;          /* Primary text */
+    --text-secondary: #475569;        /* Secondary text */
+    --text-tertiary: #64748B;         /* Tertiary text */
+    --text-disabled: #94A3B8;         /* Disabled text */
+    --text-inverse: #FFFFFF;          /* Text on dark backgrounds */
+    
+    /* ============================================
+       BORDERS & DIVIDERS
+       ============================================ */
+    --border-subtle: #E2E8F0;         /* Subtle borders */
+    --border-default: #CBD5E1;        /* Default borders */
+    --border-strong: #94A3B8;         /* Strong borders */
+    --border-accent: rgba(16, 217, 196, 0.3);     /* Accent borders - mint */
+    
+    /* ============================================
+       SHADOWS & GLOWS
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    
+    /* ============================================
+       COMPONENT-SPECIFIC TOKENS
+       ============================================ */
+    --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
+    /* Sidebar - Active nav has thin cyan line on left and mint text */
+    --sidebar-bg: var(--elevation-1);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-active-bg: rgba(16, 217, 196, 0.1);  /* Mint pill background */
+    --sidebar-active-border: var(--accent-secondary); /* Thin cyan line */
+    --sidebar-hover-bg: var(--elevation-3);
+    --sidebar-link-color: var(--accent-secondary); /* Cyan for links */
+    --sidebar-icon-color: var(--accent-secondary); /* Cyan for icons */
+    --sidebar-section-header: var(--text-tertiary);
+    
+    /* Cards */
+    --card-bg: var(--elevation-2);
+    --card-border: var(--border-subtle);
+    --card-hover-bg: var(--elevation-3);
+    --card-hover-border: var(--border-default);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
+    
+    /* Tabs */
+    --tab-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-2);
+    --tab-border: var(--border-subtle);
+    --tab-active-border: var(--accent-primary);
+    --tab-text: var(--text-primary);
+    --tab-text-muted: var(--text-secondary);
+    --tab-hover-bg: var(--elevation-3);
+    
+    /* Inputs */
+    --input-bg: var(--elevation-1);
+    --input-border: var(--border-subtle);
+    --input-border-focus: var(--accent-primary);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(16, 217, 196, 0.1);
+    
+    /* Tables */
+    --table-header-bg: var(--elevation-1);
+    --table-body-bg: var(--elevation-0);
+    --table-divider: var(--border-subtle);
+    --table-row-hover: var(--elevation-1);
+    
+    /* Buttons - Primary in mint with tiny outer glow on hover */
+    --btn-primary-bg: var(--accent-primary);
+    --btn-primary-hover: var(--accent-primary-hover);
+    --btn-primary-active: var(--accent-primary-active);
+    --btn-primary-text: var(--text-inverse);
+    
+    --btn-secondary-bg: var(--elevation-2);
+    --btn-secondary-hover: var(--elevation-3);
+    --btn-secondary-border: var(--border-default);
+    --btn-secondary-text: var(--text-primary);
+    
+    --btn-ghost-hover: var(--elevation-2);
+    --btn-ghost-text: var(--text-secondary);
+  }
+  
+  /* ============================================
+     PLUM & SAND THEME - Dark
+     ============================================ */
+  [data-theme="dark-plum"] {
+    /* ============================================
+       ELEVATION LAYERS (Background Hierarchy)
+       ============================================ */
+    --elevation-0: #1A0F1A;  /* Page background - dark plum */
+    --elevation-1: #241924;  /* Sidebar */
+    --elevation-2: #2E1F2E;  /* Cards - warm sand/beige */
+    --elevation-3: #382938;  /* Hover states, active cards */
+    --elevation-4: #423342;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds */
+    --gradient-hero: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(251, 146, 60, 0.05) 0%, rgba(251, 146, 60, 0.02) 100%);
+    
+    /* ============================================
+       SEMANTIC COLORS - Plum & Sand Theme
+       ============================================ */
+    /* Primary Accent - Soft Coral */
+    --accent-primary: #FB923C;        /* Primary button - coral */
+    --accent-primary-hover: #FDBA74;  /* Hover state */
+    --accent-primary-active: #F97316; /* Pressed state */
+    --accent-primary-glow: rgba(251, 146, 60, 0.2);
+    --accent-primary-light: #FED7AA;  /* Lighter coral */
+    --accent-primary-muted: #FFEDD5;  /* Muted coral */
+    
+    /* Secondary Accent - Muted Gold */
+    --accent-secondary: #EAB308;      /* Secondary actions - muted gold */
+    --accent-secondary-hover: #FCD34D;
+    --accent-secondary-muted: #FDE047;
+    --accent-secondary-bg: rgba(234, 179, 8, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(234, 179, 8, 0.3);  /* Owner/admin badge border */
+    
+    /* Status Colors */
+    --status-success: #10B981;        /* Success */
+    --status-success-bg: rgba(16, 185, 129, 0.12);
+    --status-warning: #FBBF24;        /* Warning */
+    --status-warning-bg: rgba(251, 191, 36, 0.12);
+    --status-danger: #F87171;         /* Danger */
+    --status-danger-bg: rgba(248, 113, 113, 0.12);
+    --status-info: #3B82F6;           /* Info */
+    --status-info-bg: rgba(59, 130, 246, 0.12);
+    
+    /* ============================================
+       TEXT COLORS - Section titles in plum-tinted white
+       ============================================ */
+    --text-primary: #F3E8FF;          /* Plum-tinted white */
+    --text-secondary: #DDD6FE;        /* Secondary text */
+    --text-tertiary: #C4B5FD;         /* Tertiary text */
+    --text-disabled: #A78BFA;         /* Disabled text */
+    --text-inverse: #1A0F1A;
+    
+    /* ============================================
+       BORDERS & DIVIDERS - Dividers in desaturated rose
+       ============================================ */
+    --border-subtle: rgba(251, 207, 232, 0.1);    /* Desaturated rose */
+    --border-default: rgba(251, 207, 232, 0.15);
+    --border-strong: rgba(251, 207, 232, 0.2);
+    --border-accent: rgba(251, 146, 60, 0.30);
+    
+    /* ============================================
+       SHADOWS & GLOWS
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.5);
+    
+    /* ============================================
+       COMPONENT-SPECIFIC TOKENS
+       ============================================ */
+    --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
+    /* Sidebar */
+    --sidebar-bg: var(--elevation-1);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-active-bg: rgba(251, 146, 60, 0.15);
+    --sidebar-active-border: var(--accent-primary);
+    --sidebar-hover-bg: var(--elevation-2);
+    --sidebar-link-color: var(--text-secondary);
+    --sidebar-icon-color: var(--text-secondary);
+    --sidebar-section-header: var(--text-tertiary);
+    
+    /* Cards - Warm sand/beige */
+    --card-bg: var(--elevation-2);
+    --card-border: var(--border-subtle);
+    --card-hover-bg: var(--elevation-3);
+    --card-hover-border: var(--border-default);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
+    
+    /* Tabs */
+    --tab-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-2);
+    --tab-border: var(--border-subtle);
+    --tab-active-border: var(--accent-primary);
+    --tab-text: var(--text-primary);
+    --tab-text-muted: var(--text-secondary);
+    --tab-hover-bg: var(--elevation-3);
+    
+    /* Inputs */
+    --input-bg: var(--elevation-1);
+    --input-border: var(--border-subtle);
+    --input-border-focus: var(--accent-primary);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(251, 146, 60, 0.2);
+    
+    /* Tables */
+    --table-header-bg: var(--elevation-1);
+    --table-body-bg: var(--elevation-0);
+    --table-divider: var(--border-subtle);
+    --table-row-hover: var(--elevation-1);
+    
+    /* Buttons - Primary in coral, secondary in beige outline with plum text */
+    --btn-primary-bg: var(--accent-primary);
+    --btn-primary-hover: var(--accent-primary-hover);
+    --btn-primary-active: var(--accent-primary-active);
+    --btn-primary-text: var(--text-inverse);
+    
+    --btn-secondary-bg: transparent;
+    --btn-secondary-hover: var(--elevation-3);
+    --btn-secondary-border: rgba(221, 214, 254, 0.3); /* Beige outline */
+    --btn-secondary-text: var(--text-primary); /* Plum text */
+    
+    --btn-ghost-hover: var(--elevation-2);
+    --btn-ghost-text: var(--text-secondary);
+  }
+  
+  /* ============================================
+     PLUM & SAND THEME - Light
+     ============================================ */
+  [data-theme="light-plum"] {
+    /* ============================================
+       ELEVATION LAYERS (Background Hierarchy)
+       ============================================ */
+    --elevation-0: #FEF7ED;  /* Page background - pale sand */
+    --elevation-1: #FFFFFF;  /* Sidebar */
+    --elevation-2: #FFFFFF;  /* Cards */
+    --elevation-3: #FEF7ED;  /* Hover states, active cards */
+    --elevation-4: #FDE68A;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds */
+    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    
+    /* ============================================
+       SEMANTIC COLORS - Plum & Sand Theme (Light)
+       ============================================ */
+    /* Primary Accent - Plum */
+    --accent-primary: #8B5CF6;        /* Primary button - plum */
+    --accent-primary-hover: #7C3AED;  /* Hover state */
+    --accent-primary-active: #6D28D9; /* Pressed state */
+    --accent-primary-glow: rgba(139, 92, 246, 0.15);
+    --accent-primary-light: #A78BFA;  /* Lighter plum */
+    --accent-primary-muted: #C4B5FD;  /* Muted plum */
+    
+    /* Secondary Accent - Coral (limited accent) */
+    --accent-secondary: #FB923C;      /* Limited accent - coral */
+    --accent-secondary-hover: #FDBA74;
+    --accent-secondary-muted: #FED7AA;
+    --accent-secondary-bg: rgba(251, 146, 60, 0.15);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(251, 146, 60, 0.3);  /* Owner/admin badge border */
+    
+    /* Status Colors */
+    --status-success: #10B981;        /* Success */
+    --status-success-bg: rgba(16, 185, 129, 0.1);
+    --status-warning: #F59E0B;        /* Warning */
+    --status-warning-bg: rgba(245, 158, 11, 0.1);
+    --status-danger: #EF4444;         /* Danger */
+    --status-danger-bg: rgba(239, 68, 68, 0.1);
+    --status-info: #3B82F6;           /* Info */
+    --status-info-bg: rgba(59, 130, 246, 0.1);
+    
+    /* ============================================
+       TEXT COLORS - Plum text
+       ============================================ */
+    --text-primary: #581C87;          /* Plum text */
+    --text-secondary: #7C3AED;        /* Secondary text */
+    --text-tertiary: #A78BFA;         /* Tertiary text */
+    --text-disabled: #C4B5FD;         /* Disabled text */
+    --text-inverse: #FFFFFF;
+    
+    /* ============================================
+       BORDERS & DIVIDERS
+       ============================================ */
+    --border-subtle: #F3E8FF;         /* Subtle borders */
+    --border-default: #E9D5FF;        /* Default borders */
+    --border-strong: #DDD6FE;         /* Strong borders */
+    --border-accent: rgba(139, 92, 246, 0.3);
+    
+    /* ============================================
+       SHADOWS & GLOWS
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    
+    /* ============================================
+       COMPONENT-SPECIFIC TOKENS
+       ============================================ */
+    --page-bg: var(--elevation-0);
+    
+    /* Overlays & Backdrops */
+    --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
+    --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
+    
+    /* Sidebar */
+    --sidebar-bg: var(--elevation-1);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-active-bg: rgba(139, 92, 246, 0.1);
+    --sidebar-active-border: var(--accent-primary);
+    --sidebar-hover-bg: var(--elevation-3);
+    --sidebar-link-color: var(--text-secondary);
+    --sidebar-icon-color: var(--text-secondary);
+    --sidebar-section-header: var(--text-tertiary);
+    
+    /* Cards */
+    --card-bg: var(--elevation-2);
+    --card-border: var(--border-subtle);
+    --card-hover-bg: var(--elevation-3);
+    --card-hover-border: var(--border-default);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
+    
+    /* Tabs */
+    --tab-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-2);
+    --tab-border: var(--border-subtle);
+    --tab-active-border: var(--accent-primary);
+    --tab-text: var(--text-primary);
+    --tab-text-muted: var(--text-secondary);
+    --tab-hover-bg: var(--elevation-3);
+    
+    /* Inputs */
+    --input-bg: var(--elevation-1);
+    --input-border: var(--border-subtle);
+    --input-border-focus: var(--accent-primary);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    
+    /* Tables */
+    --table-header-bg: var(--elevation-1);
+    --table-body-bg: var(--elevation-0);
+    --table-divider: var(--border-subtle);
+    --table-row-hover: var(--elevation-1);
+    
+    /* Buttons - Plum buttons */
     --btn-primary-bg: var(--accent-primary);
     --btn-primary-hover: var(--accent-primary-hover);
     --btn-primary-active: var(--accent-primary-active);
@@ -1749,15 +2341,9 @@
   }
   
   .badge-owner-admin {
-    background-color: rgba(236, 72, 153, 0.15);
+    background-color: var(--accent-secondary-bg);
     color: var(--accent-secondary);
-    border: 1px solid rgba(236, 72, 153, 0.3);
-  }
-  
-  [data-theme="dark"] .badge-owner-admin {
-    background-color: rgba(236, 72, 153, 0.2);
-    color: var(--accent-secondary);
-    border: 1px solid rgba(236, 72, 153, 0.4);
+    border: 1px solid var(--accent-secondary-border);
   }
   
   /* ============================================
@@ -1912,4 +2498,58 @@
     background-color: var(--text-inverse);
     border-color: var(--border-default);
   }
-}
+  
+  /* ============================================
+     THEME UTILITY CLASSES FOR TAILWIND
+     These utilities work with Tailwind's class system
+     while using CSS variables for theme support
+     ============================================ */
+  @layer utilities {
+    /* Text color utilities */
+    .text-theme-primary { color: var(--text-primary); }
+    .text-theme-secondary { color: var(--text-secondary); }
+    .text-theme-tertiary { color: var(--text-tertiary); }
+    .text-theme-disabled { color: var(--text-disabled); }
+    .text-theme-inverse { color: var(--text-inverse); }
+    
+    /* Background utilities */
+    .bg-elevation-0 { background-color: var(--elevation-0); }
+    .bg-elevation-1 { background-color: var(--elevation-1); }
+    .bg-elevation-2 { background-color: var(--elevation-2); }
+    .bg-elevation-3 { background-color: var(--elevation-3); }
+    .bg-elevation-4 { background-color: var(--elevation-4); }
+    .bg-card { background-color: var(--card-bg); }
+    .bg-sidebar { background-color: var(--sidebar-bg); }
+    .bg-page { background-color: var(--page-bg); }
+    .bg-overlay { background-color: var(--overlay-bg); }
+    .bg-overlay-light { background-color: var(--overlay-bg-light); }
+    .bg-table-header { background-color: var(--table-header-bg); }
+    .bg-table-body { background-color: var(--table-body-bg); }
+    
+    /* Border color utilities */
+    .border-theme-subtle { border-color: var(--border-subtle); }
+    .border-theme-default { border-color: var(--border-default); }
+    .border-theme-strong { border-color: var(--border-strong); }
+    .border-theme-accent { border-color: var(--border-accent); }
+    
+    /* Shadow utilities */
+    .shadow-theme-sm { box-shadow: var(--shadow-sm); }
+    .shadow-theme-md { box-shadow: var(--shadow-md); }
+    .shadow-theme-lg { box-shadow: var(--shadow-lg); }
+    .shadow-theme-xl { box-shadow: var(--shadow-xl); }
+    
+    /* Hover state utilities */
+    .hover\:bg-elevation-2:hover { background-color: var(--elevation-2); }
+    .hover\:bg-elevation-3:hover { background-color: var(--elevation-3); }
+    .hover\:bg-card:hover { background-color: var(--card-hover-bg); }
+    .hover\:border-theme-default:hover { border-color: var(--border-default); }
+    .hover\:text-theme-primary:hover { color: var(--text-primary); }
+    
+    /* Focus state utilities */
+    .focus\:border-theme-accent:focus { border-color: var(--border-accent); }
+    .focus\:ring-theme-accent:focus { 
+      --tw-ring-color: var(--accent-primary);
+      --tw-ring-opacity: 0.2;
+    }
+  }
+  }
