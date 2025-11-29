@@ -13,7 +13,7 @@ import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
@@ -71,7 +71,7 @@ public class AuditLog {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     public AuditLog() {
     }
@@ -79,7 +79,7 @@ public class AuditLog {
     public AuditLog(UUID id, UUID projectId, UUID userId, String action, String resourceType,
                     String resourceId, String resourceName, Map<String, Object> oldValue,
                     Map<String, Object> newValue, Map<String, Object> metadata,
-                    String ipAddress, String userAgent, LocalDateTime createdAt) {
+                    String ipAddress, String userAgent, Instant createdAt) {
         this.id = id;
         this.projectId = projectId;
         this.userId = userId;
@@ -196,11 +196,11 @@ public class AuditLog {
         this.userAgent = userAgent;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -217,7 +217,7 @@ public class AuditLog {
         private Map<String, Object> metadata;
         private String ipAddress;
         private String userAgent;
-        private LocalDateTime createdAt;
+        private Instant createdAt;
 
         private Builder() {
         }
@@ -282,7 +282,7 @@ public class AuditLog {
             return this;
         }
 
-        public Builder createdAt(LocalDateTime createdAt) {
+        public Builder createdAt(Instant createdAt) {
             this.createdAt = createdAt;
             return this;
         }

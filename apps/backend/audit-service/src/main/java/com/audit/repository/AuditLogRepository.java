@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,8 +24,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     
     Page<AuditLog> findByProjectIdAndCreatedAtBetween(
         UUID projectId, 
-        LocalDateTime start, 
-        LocalDateTime end, 
+        Instant start, 
+        Instant end, 
         Pageable pageable
     );
     
@@ -36,8 +36,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     
     Page<AuditLog> findByUserIdAndCreatedAtBetween(
         UUID userId, 
-        LocalDateTime start, 
-        LocalDateTime end, 
+        Instant start, 
+        Instant end, 
         Pageable pageable
     );
     
@@ -52,14 +52,14 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
     List<AuditLog> findByAction(String action);
     
     // Date range queries
-    Page<AuditLog> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end, Pageable pageable);
+    Page<AuditLog> findByCreatedAtBetween(Instant start, Instant end, Pageable pageable);
     
     // Combined queries
     Page<AuditLog> findByProjectIdAndUserIdAndCreatedAtBetween(
         UUID projectId,
         UUID userId,
-        LocalDateTime start,
-        LocalDateTime end,
+        Instant start,
+        Instant end,
         Pageable pageable
     );
     
@@ -72,8 +72,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
            "AND a.createdAt >= :start AND a.createdAt <= :end")
     long countByProjectIdAndDateRange(
         @Param("projectId") UUID projectId,
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
+        @Param("start") Instant start,
+        @Param("end") Instant end
     );
     
     @Query("SELECT a.action, COUNT(a) as count FROM AuditLog a " +
@@ -81,8 +81,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
            "GROUP BY a.action ORDER BY count DESC")
     List<Object[]> countActionsByType(
         @Param("projectId") UUID projectId,
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
+        @Param("start") Instant start,
+        @Param("end") Instant end
     );
     
     @Query("SELECT a.userId, COUNT(a) as count FROM AuditLog a " +
@@ -90,8 +90,8 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
            "GROUP BY a.userId ORDER BY count DESC")
     List<Object[]> countActionsByUser(
         @Param("projectId") UUID projectId,
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
+        @Param("start") Instant start,
+        @Param("end") Instant end
     );
     
     @Query("SELECT DATE(a.createdAt) as day, COUNT(a) as count FROM AuditLog a " +
@@ -99,7 +99,7 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, UUID> {
            "GROUP BY DATE(a.createdAt) ORDER BY day ASC")
     List<Object[]> countActionsByDay(
         @Param("projectId") UUID projectId,
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
+        @Param("start") Instant start,
+        @Param("end") Instant end
     );
 }
