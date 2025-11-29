@@ -94,7 +94,7 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-8 shadow-sm dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3)] transition-all duration-300">
+      <div className="card rounded-3xl p-8 shadow-sm dark:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.3)] transition-all duration-300">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">Dashboard</p>
