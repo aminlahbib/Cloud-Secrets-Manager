@@ -56,7 +56,7 @@ export const LoginPage: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <img 
-              src="/assets/csm.jpeg" 
+              src="/assets/csm-2.webp" 
               alt="Cloud Secrets Manager Logo" 
               className="h-16 w-16 mx-auto mb-4 object-contain"
               onError={(e) => {
