@@ -168,10 +168,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                     `}
                   >
                     <div>
-                      <p className="text-sm font-semibold text-neutral-900">
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-white">
                         {selectedWorkflow?.name || 'Select workflow'}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
                         {(selectedWorkflow?.projects?.length || 0)} Projects
                       </p>
                     </div>
@@ -194,7 +194,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 }`}
                             >
                               <div>
-                                <p className="font-medium">{workflow.name}</p>
+                                <p className="font-medium text-neutral-900 dark:text-white">{workflow.name}</p>
                                 <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                   {(workflow.projects?.length || 0)} Projects
                                 </p>
