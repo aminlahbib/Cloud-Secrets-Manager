@@ -94,14 +94,14 @@ export const HomePage: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="bg-white border border-neutral-200 rounded-3xl p-8 shadow-sm">
+      <div className="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-3xl p-8 shadow-sm">
         <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-neutral-400">Dashboard</p>
-            <h1 className="text-3xl font-semibold mt-2 text-neutral-900">
+            <p className="text-sm uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-500">Dashboard</p>
+            <h1 className="text-3xl font-semibold mt-2 text-neutral-900 dark:text-neutral-100">
               Welcome back, {user?.displayName || user?.email?.split('@')[0]}
             </h1>
-            <p className="text-neutral-500 mt-2 max-w-2xl">
+            <p className="text-neutral-500 dark:text-neutral-400 mt-2 max-w-2xl">
               Everything you need to organise secrets, workflows and teams now lives in one calm, focused surface.
             </p>
             {isPlatformAdmin && (
