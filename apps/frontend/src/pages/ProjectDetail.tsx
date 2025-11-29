@@ -48,6 +48,7 @@ import { ActionDistributionChart } from '../components/analytics/ActionDistribut
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
 import { SecretCard } from '../components/ui/SecretCard';
+import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
 import {
   getLastNDays,
   prepareChartData,
@@ -110,6 +111,11 @@ export const ProjectDetailPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [secretFilters, setSecretFilters] = useState<Record<string, any>>({
+    status: null,
+    sortBy: 'createdAt',
+    sortDir: 'DESC',
+  });
 
   // Fetch project details
   const { data: project, isLoading: isProjectLoading, error: projectError } = useQuery<Project>({
@@ -768,15 +774,23 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'secrets' && (
         <div className="space-y-4">
-          {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search secrets..."
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+          {/* Search and Filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search secrets..."
+                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              />
+            </div>
+            <FilterPanel
+              filters={secretFilterConfigs}
+              values={secretFilters}
+              onChange={(key, value) => setSecretFilters(prev => ({ ...prev, [key]: value }))}
+              onClear={() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' })}
             />
           </div>
 
