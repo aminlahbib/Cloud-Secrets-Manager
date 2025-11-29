@@ -54,12 +54,12 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
   );
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 p-4 hover:shadow-md transition-all">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <Link
             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-            className="text-sm font-semibold text-gray-900 hover:text-blue-600 hover:underline block truncate"
+            className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline block truncate transition-colors"
           >
             <Key className="h-4 w-4 inline-block mr-2 text-gray-400" />
             {secret.secretKey}
@@ -77,11 +77,11 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
       </div>
 
       <div className="space-y-2 mb-4">
-        <div className="flex items-center text-xs text-gray-500">
+        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
           <Clock className="h-3 w-3 mr-1.5" />
           <span>Created: {new Date(secret.createdAt).toLocaleDateString()}</span>
         </div>
-        <div className="flex items-center text-xs text-gray-500">
+        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
           <Clock className="h-3 w-3 mr-1.5" />
           <span>Last change: {new Date(lastChangeDate).toLocaleDateString()}</span>
           {lastChangeUser && (
@@ -91,15 +91,15 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
             </span>
           )}
         </div>
-        <div className="flex items-center text-xs text-gray-500">
+        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
           <span>Version: v{versionNumber}</span>
-          <Link to={historyLink} className="ml-2 text-blue-600 hover:underline">
+          <Link to={historyLink} className="ml-2 text-blue-600 dark:text-blue-400 hover:underline transition-colors">
             View history
           </Link>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
+      <div className="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800">
         <Button variant="ghost" size="sm" onClick={onView} className="flex-1">
           <Eye className="h-4 w-4 mr-1" />
           View
