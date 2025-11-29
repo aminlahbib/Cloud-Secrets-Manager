@@ -77,7 +77,8 @@ export const SecretDetailPage: React.FC = () => {
     mutationFn: () => secretsService.rotateProjectSecret(projectId, secretKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
-      queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
+      // Refetch versions immediately to show latest version
+      queryClient.refetchQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
@@ -102,8 +103,10 @@ export const SecretDetailPage: React.FC = () => {
       secretsService.restoreProjectSecretVersion(projectId, secretKey, versionNumber),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
-      queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
+      // Refetch versions immediately to show latest version
+      queryClient.refetchQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
@@ -157,7 +160,11 @@ export const SecretDetailPage: React.FC = () => {
   }
 
   const isExpired = secret.expiresAt && new Date(secret.expiresAt) < new Date();
-  const latestVersionNumber = versions && versions.length > 0 ? versions[0].versionNumber : secret.version || 1;
+  // Versions are sorted DESC (newest first) from backend, so versions[0] is the latest
+  // If versions array is not loaded yet or empty, fall back to finding max version number from the array
+  const latestVersionNumber = versions && versions.length > 0 
+    ? versions[0].versionNumber  // First element is latest (sorted DESC)
+    : 1; // Default to 1 if no versions loaded yet
   const currentUserRole = project?.currentUserRole;
   const canRestoreVersions = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
 
