@@ -147,7 +147,7 @@ apps/frontend/build/
 testing/
 
 # Documents (keep documentation, ignore generated docs)
-# docs
+docs
 
 # PDF files
 Cloud-Secrets-Manager.pdf
