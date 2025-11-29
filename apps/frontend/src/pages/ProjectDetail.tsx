@@ -149,8 +149,12 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Fetch secrets
   const { data: secretsData, isLoading: isSecretsLoading } = useQuery({
-    queryKey: ['project-secrets', projectId, searchTerm],
-    queryFn: () => secretsService.listProjectSecrets(projectId!, { keyword: searchTerm || undefined }),
+    queryKey: ['project-secrets', projectId, searchTerm, secretFilters],
+    queryFn: () => secretsService.listProjectSecrets(projectId!, {
+      keyword: searchTerm || undefined,
+      sortBy: secretFilters.sortBy || 'createdAt',
+      sortDir: secretFilters.sortDir || 'DESC',
+    }),
     enabled: !!projectId && activeTab === 'secrets',
   });
 
@@ -492,7 +496,63 @@ export const ProjectDetailPage: React.FC = () => {
   const canLeaveProject =
     !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
-  const secrets = secretsData?.content ?? [];
+  const secretFilterConfigs: FilterConfig[] = useMemo(() => [
+    {
+      key: 'status',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { label: 'Active', value: 'active' },
+        { label: 'Expired', value: 'expired' },
+        { label: 'Expiring Soon', value: 'expiring' },
+      ],
+    },
+    {
+      key: 'sortBy',
+      label: 'Sort By',
+      type: 'select',
+      options: [
+        { label: 'Created Date', value: 'createdAt' },
+        { label: 'Updated Date', value: 'updatedAt' },
+        { label: 'Key', value: 'secretKey' },
+      ],
+    },
+    {
+      key: 'sortDir',
+      label: 'Order',
+      type: 'select',
+      options: [
+        { label: 'Newest First', value: 'DESC' },
+        { label: 'Oldest First', value: 'ASC' },
+      ],
+    },
+  ], []);
+
+  const secrets = useMemo(() => {
+    let filtered = secretsData?.content ?? [];
+    
+    // Apply status filter (client-side filtering for status)
+    if (secretFilters.status) {
+      const now = new Date();
+      filtered = filtered.filter((secret: Secret) => {
+        if (secretFilters.status === 'expired') {
+          return secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < now);
+        }
+        if (secretFilters.status === 'expiring') {
+          if (!secret.expiresAt) return false;
+          const expiresAt = new Date(secret.expiresAt);
+          const daysUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+          return !secret.expired && expiresAt > now && daysUntilExpiry <= 30;
+        }
+        if (secretFilters.status === 'active') {
+          return !secret.expired && (!secret.expiresAt || new Date(secret.expiresAt) > now);
+        }
+        return true;
+      });
+    }
+    
+    return filtered;
+  }, [secretsData?.content, secretFilters.status]);
 
   // Bulk selection handlers
   const toggleSecretSelection = useCallback((secretKey: string) => {
