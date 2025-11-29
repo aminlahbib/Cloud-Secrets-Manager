@@ -13,12 +13,12 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   hover = false 
 }) => {
-  const hoverClass = hover ? 'hover:shadow-md hover:border-neutral-300 cursor-pointer transition-all' : '';
+  const hoverClass = hover ? 'hover:shadow-md hover:border-neutral-300 dark:hover:border-neutral-600 cursor-pointer transition-all' : '';
   const clickClass = onClick ? 'cursor-pointer' : '';
 
   return (
     <div
-      className={`bg-white rounded-2xl border border-neutral-200 shadow-sm ${hoverClass} ${clickClass} ${className}`}
+      className={`bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-sm ${hoverClass} ${clickClass} ${className}`}
       onClick={onClick}
     >
       {children}
