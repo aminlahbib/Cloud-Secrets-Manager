@@ -21,12 +21,15 @@ spring:
     open-in-view: false  # Disable anti-pattern for better performance
     properties:
       hibernate:
-        # dialect auto-detected by Hibernate, no need to specify
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
+        transaction:
+          jta:
+            platform: org.hibernate.service.jta.platform.internal.NoJtaPlatform
 
   jackson:
     serialization:
