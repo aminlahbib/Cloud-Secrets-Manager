@@ -18,15 +18,15 @@ spring:
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
     show-sql: false
+    open-in-view: false  # Disable anti-pattern for better performance
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # dialect auto-detected by Hibernate, no need to specify
         format_sql: true
         jdbc:
           batch_size: 20
         order_inserts: true
         order_updates: true
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   jackson:
     serialization:
