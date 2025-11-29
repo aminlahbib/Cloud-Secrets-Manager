@@ -773,4 +773,24 @@
   .ambient-glow:hover::after {
     opacity: 1;
   }
+  
+  /* Toggle Switch */
+  .toggle-switch {
+    background-color: var(--border-default);
+    transition: background-color 0.3s;
+  }
+  
+  .toggle-switch::after {
+    background-color: var(--text-inverse);
+    border-color: var(--border-default);
+  }
+  
+  input:checked ~ .toggle-switch {
+    background-color: var(--accent-primary);
+  }
+  
+  input:checked ~ .toggle-switch::after {
+    background-color: var(--text-inverse);
+    border-color: var(--border-default);
+  }
 }

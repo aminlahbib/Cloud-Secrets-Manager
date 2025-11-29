@@ -44,7 +44,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
         <Filter className="h-4 w-4" />
         Filters
         {activeFiltersCount > 0 && (
-          <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5">
+          <span 
+            className="text-caption rounded-full px-2 py-0.5"
+            style={{
+              backgroundColor: 'var(--status-info)',
+              color: 'var(--text-inverse)',
+            }}
+          >
             {activeFiltersCount}
           </span>
         )}

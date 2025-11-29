@@ -931,26 +931,28 @@ export const ProjectDetailPage: React.FC = () => {
                             type="checkbox"
                             checked={selectedSecrets.size === secrets.length && secrets.length > 0}
                             onChange={selectAllSecrets}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            className="h-4 w-4 rounded transition-colors"
+                            style={{
+                              borderColor: 'var(--border-default)',
+                              color: 'var(--accent-primary)',
+                            }}
                           />
                         </th>
                       )}
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider transition-colors duration-300" style={{ color: 'var(--tab-text-muted)', backgroundColor: 'var(--table-header-bg)' }}>Key</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-caption font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                         Created
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-caption font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                         Last Change
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-caption font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                         Version
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-caption font-medium uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
                         Status
                       </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="px-6 py-3 text-right text-caption font-medium uppercase tracking-wider transition-colors duration-300" style={{ color: 'var(--tab-text-muted)', backgroundColor: 'var(--table-header-bg)' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody className="table-theme table-divider-theme" style={{ borderColor: 'var(--table-divider)' }}>
@@ -972,14 +974,30 @@ export const ProjectDetailPage: React.FC = () => {
                       )}#versions`;
 
                       return (
-                        <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
+                        <tr 
+                          key={secret.id || secret.secretKey} 
+                          className="transition-colors"
+                          style={{
+                            backgroundColor: 'transparent',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                          }}
+                        >
                           {canDeleteSecrets && (
                             <td className="px-6 py-4 whitespace-nowrap">
                               <input
                                 type="checkbox"
                                 checked={selectedSecrets.has(secret.secretKey)}
                                 onChange={() => toggleSecretSelection(secret.secretKey)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                className="h-4 w-4 rounded transition-colors"
+                                style={{
+                                  borderColor: 'var(--border-default)',
+                                  color: 'var(--accent-primary)',
+                                }}
                               />
                             </td>
                           )}
@@ -1053,7 +1071,7 @@ export const ProjectDetailPage: React.FC = () => {
                                 size="sm"
                                 onClick={() => setShowDeleteSecretModal(secret.secretKey)}
                               >
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                                <Trash2 className="h-4 w-4" style={{ color: 'var(--status-danger)' }} />
                               </Button>
                             )}
                           </td>
@@ -1074,7 +1092,11 @@ export const ProjectDetailPage: React.FC = () => {
                           type="checkbox"
                           checked={selectedSecrets.has(secret.secretKey)}
                           onChange={() => toggleSecretSelection(secret.secretKey)}
-                          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          className="h-5 w-5 rounded transition-colors"
+                          style={{
+                            borderColor: 'var(--border-default)',
+                            color: 'var(--accent-primary)',
+                          }}
                         />
                       </div>
                     )}
@@ -1160,7 +1182,11 @@ export const ProjectDetailPage: React.FC = () => {
                       <select
                         value={member.role}
                         onChange={(e) => handleMemberRoleChange(member, e.target.value as ProjectRole)}
-                        className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900"
+                        className="input-theme px-3 py-1.5 rounded-lg text-body-sm focus:outline-none focus:ring-2"
+                        style={{
+                          borderColor: 'var(--input-border)',
+                          color: 'var(--input-text)',
+                        }}
                         disabled={roleChangeTarget === member.userId && updateMemberRoleMutation.isPending}
                       >
                         {availableRoleOptions.map((role) => (
@@ -1182,7 +1208,7 @@ export const ProjectDetailPage: React.FC = () => {
                         onClick={() => removeMemberMutation.mutate(member.userId)}
                         isLoading={removeMemberMutation.isPending}
                       >
-                        <Trash2 className="h-4 w-4 text-red-600" />
+                        <Trash2 className="h-4 w-4" style={{ color: 'var(--status-danger)' }} />
                       </Button>
                     )}
                   </div>
@@ -1248,7 +1274,10 @@ export const ProjectDetailPage: React.FC = () => {
                 )}
 
                 {/* View Toggle */}
-                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                <div 
+                  className="flex items-center gap-2 rounded-lg p-1"
+                  style={{ backgroundColor: 'var(--elevation-1)' }}
+                >
                   <Button
                     variant={activityView === 'analytics' ? 'primary' : 'secondary'}
                     size="sm"
@@ -1291,8 +1320,11 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : analyticsError ? (
                   <Card className="p-6">
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      <div 
+                        className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"
+                        style={{ backgroundColor: 'var(--status-danger-bg)' }}
+                      >
+                        <AlertTriangle className="h-6 w-6" style={{ color: 'var(--status-danger)' }} />
                       </div>
                       <h3 className="text-h3 font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Error Loading Analytics</h3>
                       <p className="text-body-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
@@ -1301,7 +1333,7 @@ export const ProjectDetailPage: React.FC = () => {
                           : 'An error occurred while loading analytics. Please try again.'}
                       </p>
                       {(analyticsError as any)?.isPermissionError && (
-                        <p className="text-xs text-gray-500 mb-4">
+                        <p className="text-caption mb-4" style={{ color: 'var(--text-tertiary)' }}>
                           You may not have permission to view analytics for this project.
                         </p>
                       )}
@@ -1317,7 +1349,7 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : !analyticsStats ? (
                   <Card className="p-6">
                     <EmptyState
-                      icon={<Activity className="h-16 w-16 text-gray-400" />}
+                      icon={<Activity className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
                       title="No Activity"
                       description="Activity for this project will appear here as actions are performed"
                     />
@@ -1328,7 +1360,7 @@ export const ProjectDetailPage: React.FC = () => {
                       return (
                         <Card className="p-6">
                           <EmptyState
-                            icon={<Activity className="h-16 w-16 text-gray-400" />}
+                            icon={<Activity className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
                             title="No Activity"
                             description="Activity for this project will appear here as actions are performed"
                           />
@@ -1361,14 +1393,20 @@ export const ProjectDetailPage: React.FC = () => {
                                 {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
                                   <div key={user.userId} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
+                                      <div 
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-body-sm font-semibold"
+                                        style={{
+                                          backgroundColor: 'var(--elevation-2)',
+                                          color: 'var(--text-secondary)',
+                                        }}
+                                      >
                                         {index + 1}
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-gray-900">
+                                        <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                           {user.email || 'Unknown User'}
                                         </p>
-                                        <p className="text-xs text-gray-500">{user.count} actions</p>
+                                        <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>{user.count} actions</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1387,14 +1425,20 @@ export const ProjectDetailPage: React.FC = () => {
                                 {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (
                                   <div key={action.action} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
+                                      <div 
+                                        className="w-8 h-8 rounded-full flex items-center justify-center text-body-sm font-semibold"
+                                        style={{
+                                          backgroundColor: 'var(--status-info-bg)',
+                                          color: 'var(--status-info)',
+                                        }}
+                                      >
                                         {index + 1}
                                       </div>
                                       <div>
-                                        <p className="text-sm font-medium text-gray-900">
+                                        <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                           {formatActionName(action.action)}
                                         </p>
-                                        <p className="text-xs text-gray-500">{action.count} occurrences</p>
+                                        <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>{action.count} occurrences</p>
                                       </div>
                                     </div>
                                   </div>
@@ -1411,8 +1455,8 @@ export const ProjectDetailPage: React.FC = () => {
                     return (
                       <Card className="p-6">
                         <div className="text-center">
-                          <p className="text-red-600 mb-2">Error rendering analytics</p>
-                          <p className="text-sm text-gray-500">{String(error)}</p>
+                          <p className="mb-2" style={{ color: 'var(--status-danger)' }}>Error rendering analytics</p>
+                          <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>{String(error)}</p>
                         </div>
                       </Card>
                     );
@@ -1431,17 +1475,20 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : activityError ? (
                   <Card className="p-6">
                     <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
+                      <div 
+                        className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4"
+                        style={{ backgroundColor: 'var(--status-danger-bg)' }}
+                      >
+                        <AlertTriangle className="h-6 w-6" style={{ color: 'var(--status-danger)' }} />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Activity</h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <h3 className="text-h3 font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Error Loading Activity</h3>
+                      <p className="text-body-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                         {activityError instanceof Error
                           ? activityError.message
                           : 'An error occurred while loading activity data. Please try again.'}
                       </p>
                       {(activityError as any)?.isPermissionError && (
-                        <p className="text-xs text-gray-500 mb-4">
+                        <p className="text-caption mb-4" style={{ color: 'var(--text-tertiary)' }}>
                           You may not have permission to view audit logs for this project.
                         </p>
                       )}
@@ -1457,14 +1504,20 @@ export const ProjectDetailPage: React.FC = () => {
                 ) : !activityData || !('content' in activityData) || activityData.content.length === 0 ? (
                   <Card className="p-6">
                     <EmptyState
-                      icon={<Activity className="h-16 w-16 text-gray-400" />}
+                      icon={<Activity className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
                       title="No Activity"
                       description="Activity for this project will appear here as actions are performed"
                     />
                   </Card>
                 ) : (
                   <>
-                    <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
+                    <div 
+                      className="rounded-lg border divide-y transition-colors duration-300"
+                      style={{
+                        backgroundColor: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                      }}
+                    >
                       {activityData.content.map((log: AuditLog) => {
                         const getTimeAgo = (timestamp: string) => {
                           const date = new Date(timestamp);
@@ -1491,14 +1544,33 @@ export const ProjectDetailPage: React.FC = () => {
                         };
 
                         return (
-                          <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
+                          <div 
+                            key={log.id} 
+                            className="p-4 transition-colors"
+                            style={{ backgroundColor: 'transparent' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
                             <div className="flex items-start gap-4">
-                              <div className={`p-2 rounded-lg ${getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
-                                getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
-                                  getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                    getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
-                                      'bg-gray-100 text-gray-600'
-                                }`}>
+                              <div 
+                                className="p-2 rounded-lg"
+                                style={{
+                                  backgroundColor: getActionColor(log.action) === 'success' ? 'var(--status-success-bg)' :
+                                    getActionColor(log.action) === 'danger' ? 'var(--status-danger-bg)' :
+                                      getActionColor(log.action) === 'warning' ? 'var(--status-warning-bg)' :
+                                        getActionColor(log.action) === 'info' ? 'var(--status-info-bg)' :
+                                          'var(--elevation-2)',
+                                  color: getActionColor(log.action) === 'success' ? 'var(--status-success)' :
+                                    getActionColor(log.action) === 'danger' ? 'var(--status-danger)' :
+                                      getActionColor(log.action) === 'warning' ? 'var(--status-warning)' :
+                                        getActionColor(log.action) === 'info' ? 'var(--status-info)' :
+                                          'var(--text-secondary)',
+                                }}
+                              >
                                 <Activity className="h-4 w-4" />
                               </div>
 
@@ -1508,17 +1580,17 @@ export const ProjectDetailPage: React.FC = () => {
                                     {formatAction(log.action)}
                                   </Badge>
                                   {log.resourceName && (
-                                    <span className="text-sm font-medium text-gray-900">
+                                    <span className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                                       {log.resourceName}
                                     </span>
                                   )}
                                 </div>
-                                <p className="mt-1 text-sm text-gray-500">
+                                <p className="mt-1 text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
                                   by {log.userEmail || log.user?.email || 'Unknown'}
                                 </p>
                               </div>
 
-                              <div className="flex items-center text-sm text-gray-400">
+                              <div className="flex items-center text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
                                 <Clock className="h-4 w-4 mr-1" />
                                 {getTimeAgo(log.createdAt || '')}
                               </div>
@@ -1539,7 +1611,7 @@ export const ProjectDetailPage: React.FC = () => {
                           >
                             Previous
                           </Button>
-                          <span className="flex items-center px-4 text-sm text-gray-600">
+                          <span className="flex items-center px-4 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                             Page {activityPage} of {activityData.totalPages}
                           </span>
                           <Button
@@ -1596,7 +1668,7 @@ export const ProjectDetailPage: React.FC = () => {
 
             <div className="space-y-5 max-w-2xl">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Project Name</label>
+                <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Project Name</label>
                 <Input
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
@@ -1605,9 +1677,9 @@ export const ProjectDetailPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
+                <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Description</label>
                 <textarea
-                  className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+                  className="input-theme w-full px-4 py-3 rounded-xl focus:ring-2"
                   rows={4}
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
@@ -1618,13 +1690,13 @@ export const ProjectDetailPage: React.FC = () => {
 
               {/* Workflow Selection */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                   Workflow
-                  <span className="text-gray-400 font-normal ml-1">(optional)</span>
+                  <span className="font-normal ml-1" style={{ color: 'var(--text-tertiary)' }}>(optional)</span>
                 </label>
                 <div className="relative">
                   <div className="absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none">
-                    <LayoutGrid className="h-4 w-4 text-gray-400" />
+                    <LayoutGrid className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
                   </div>
                   <select
                     value={selectedWorkflowId}
@@ -1638,7 +1710,7 @@ export const ProjectDetailPage: React.FC = () => {
                       });
                     }}
                     disabled={!canManageProject || moveProjectToWorkflowMutation.isPending}
-                    className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="input-theme w-full pl-10 pr-4 py-2 rounded-xl appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <option value="">No Workflow (Unassigned)</option>
                     {workflows?.map((w) => (
@@ -1648,16 +1720,16 @@ export const ProjectDetailPage: React.FC = () => {
                     ))}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-caption" style={{ color: 'var(--text-tertiary)' }}>
                   Organize this project by assigning it to a workflow. Projects can be moved between workflows at any time.
                 </p>
                 {moveProjectToWorkflowMutation.isPending && (
-                  <p className="mt-1 text-xs text-blue-600">Moving project...</p>
+                  <p className="mt-1 text-caption" style={{ color: 'var(--status-info)' }}>Moving project...</p>
                 )}
               </div>
             </div>
@@ -1717,7 +1789,7 @@ export const ProjectDetailPage: React.FC = () => {
                 Remove your access to this project. You will need to be re-invited to regain access.
               </p>
               {isSoleOwner && (
-                <p className="text-xs text-red-600 mb-4">
+                <p className="text-caption mb-4" style={{ color: 'var(--status-danger)' }}>
                   Promote another member to Owner before leaving. Projects require at least one active owner.
                 </p>
               )}
@@ -1737,7 +1809,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Archive Modal */}
       <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
             the archived projects view.
           </p>
@@ -1755,15 +1827,15 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Transfer Ownership Modal */}
       <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
           </p>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Select new owner</label>
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Select new owner</label>
             <select
               value={transferTarget}
               onChange={(e) => setTransferTarget(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             >
               <option value="">Choose member</option>
               {transferableMembers.map((member) => (
@@ -1795,7 +1867,7 @@ export const ProjectDetailPage: React.FC = () => {
         title="Delete Selected Secrets"
       >
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to delete <strong>{selectedSecrets.size}</strong> secret{selectedSecrets.size !== 1 ? 's' : ''}? This action cannot be undone.
           </p>
           <div className="flex justify-end space-x-3">
@@ -1816,7 +1888,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Delete Project Modal */}
       <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
             action cannot be undone.
           </p>
@@ -1834,7 +1906,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Restore Modal */}
       <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title="Restore Project">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Restore <strong>{project?.name}</strong> to make it active again.
           </p>
           <div className="flex justify-end space-x-3">
@@ -1851,7 +1923,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Leave Modal */}
       <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
             access.
           </p>
@@ -1873,7 +1945,7 @@ export const ProjectDetailPage: React.FC = () => {
         title="Delete Secret"
       >
         <div className="space-y-4">
-          <p className="text-gray-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to delete <strong>{showDeleteSecretModal}</strong>?
             This action cannot be undone.
           </p>
@@ -1908,13 +1980,13 @@ export const ProjectDetailPage: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
               Role
             </label>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             >
               <option value="VIEWER">Viewer - Read-only access</option>
               <option value="MEMBER">Member - Can create and update secrets</option>
@@ -1939,7 +2011,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {inviteMutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
               Failed to send invitation. Please try again.
             </p>
           )}
@@ -1957,12 +2029,12 @@ export const ProjectDetailPage: React.FC = () => {
         title="Import Secrets"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="bg-gray-100 px-1 rounded">key</code> and <code className="bg-gray-100 px-1 rounded">value</code> fields.
+          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="px-1 rounded" style={{ backgroundColor: 'var(--elevation-2)' }}>key</code> and <code className="px-1 rounded" style={{ backgroundColor: 'var(--elevation-2)' }}>value</code> fields.
           </p>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
               Select File
             </label>
             <input
@@ -1975,18 +2047,24 @@ export const ProjectDetailPage: React.FC = () => {
                   setImportError(null);
                 }
               }}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             />
             {importFile && (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 Selected: {importFile.name}
               </p>
             )}
           </div>
 
           {importError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-600">{importError}</p>
+            <div 
+              className="border rounded-lg p-3"
+              style={{
+                backgroundColor: 'var(--status-danger-bg)',
+                borderColor: 'var(--status-danger)',
+              }}
+            >
+              <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>{importError}</p>
             </div>
           )}
 

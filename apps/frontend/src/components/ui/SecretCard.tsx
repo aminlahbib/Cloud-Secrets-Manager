@@ -137,7 +137,7 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
           </Button>
         )}
         {canDeleteSecrets && (
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-600 hover:text-red-700">
+          <Button variant="ghost" size="sm" onClick={onDelete} style={{ color: 'var(--status-danger)' }}>
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

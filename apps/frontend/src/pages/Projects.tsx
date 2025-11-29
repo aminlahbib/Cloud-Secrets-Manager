@@ -226,7 +226,7 @@ export const ProjectsPage: React.FC = () => {
         </div>
       ) : projects.length === 0 ? (
         <EmptyState
-          icon={<Folder className="h-16 w-16 text-gray-400" />}
+          icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title={searchTerm ? 'No projects match your search' : 'No projects yet'}
           description={
             searchTerm
@@ -460,7 +460,7 @@ export const ProjectsPage: React.FC = () => {
 
       {/* Pagination info */}
       {data && data.totalElements > 0 && (
-        <div className="text-center text-sm text-gray-500">
+        <div className="text-center text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
           Showing {projects.length} of {data.totalElements} projects
         </div>
       )}
