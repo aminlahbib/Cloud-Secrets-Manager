@@ -70,25 +70,31 @@
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy)
        ============================================ */
-    --elevation-0: #f9fafb;  /* Page background - light gray */
+    --elevation-0: #fafafa;  /* Page background - very light neutral */
     --elevation-1: #ffffff;  /* Sidebar, main containers */
-    --elevation-2: #ffffff;  /* Cards, elevated surfaces */
+    --elevation-2: #fefefe;  /* Cards, elevated surfaces - slightly warm */
     --elevation-3: #f9fafb;  /* Hover states, active cards */
-    --elevation-4: #f3f4f6;  /* Pressed states, modals */
+    --elevation-4: #f5f5f5;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds (light mode - minimal) */
+    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
     
     /* ============================================
        SEMANTIC COLORS
        ============================================ */
-    /* Primary Accent - Warm Orange/Amber */
-    --accent-primary: #f97316;        /* Primary CTA, active states */
-    --accent-primary-hover: #ea580c;  /* Hover state */
-    --accent-primary-active: #c2410c; /* Pressed state */
-    --accent-primary-glow: rgba(249, 115, 22, 0.15); /* Soft glow */
+    /* Primary Accent - Rich Violet */
+    --accent-primary: #6366F1;        /* Primary CTA, active states, buttons, switches, progress, selection */
+    --accent-primary-hover: #4F46E5;  /* Hover state */
+    --accent-primary-active: #4338CA; /* Pressed state */
+    --accent-primary-glow: rgba(99, 102, 241, 0.15); /* Soft glow */
+    --accent-primary-light: #818CF8;  /* Lighter violet for links and icons */
+    --accent-primary-muted: #A5B4FC;  /* Muted violet for section headers */
     
-    /* Secondary Accent - Cool Slate */
-    --accent-secondary: #64748b;      /* Secondary actions, icons */
-    --accent-secondary-hover: #475569;
-    --accent-secondary-muted: #94a3b8;
+    /* Secondary Accent - Soft Magenta */
+    --accent-secondary: #EC4899;      /* Secondary actions, important statuses, owner/admin chips */
+    --accent-secondary-hover: #DB2777;
+    --accent-secondary-muted: #F472B6;
     
     /* Status Colors */
     --status-success: #10b981;        /* Success text */
@@ -115,7 +121,7 @@
     --border-subtle: #e5e7eb;         /* Subtle borders */
     --border-default: #d1d5db;        /* Default borders */
     --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(249, 115, 22, 0.3);     /* Accent borders */
+    --border-accent: rgba(99, 102, 241, 0.3);     /* Accent borders - violet */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -136,9 +142,12 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(249, 115, 22, 0.1);
-    --sidebar-active-border: var(--accent-primary);
+    --sidebar-active-bg: rgba(99, 102, 241, 0.1);  /* Violet pill background */
+    --sidebar-active-border: var(--accent-primary); /* Violet pill border */
     --sidebar-hover-bg: var(--elevation-3);
+    --sidebar-link-color: var(--accent-primary-light); /* Lighter violet for links */
+    --sidebar-icon-color: var(--accent-primary-light); /* Lighter violet for icons */
+    --sidebar-section-header: var(--accent-primary-muted); /* Muted violet for section headers */
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -163,6 +172,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.1);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -190,25 +200,31 @@
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy)
        ============================================ */
-    --elevation-0: #050608;  /* Page background - almost black */
-    --elevation-1: #0A0D10;  /* Sidebar, main containers */
-    --elevation-2: #0F1316;  /* Cards, elevated surfaces */
-    --elevation-3: #14181C;  /* Hover states, active cards */
-    --elevation-4: #1A1F24;  /* Pressed states, modals */
+    --elevation-0: #0F0F0F;  /* Page background - deep charcoal */
+    --elevation-1: #1A1A1A;  /* Sidebar, main containers */
+    --elevation-2: #1F1F1F;  /* Cards, elevated surfaces */
+    --elevation-3: #252525;  /* Hover states, active cards */
+    --elevation-4: #2A2A2A;  /* Pressed states, modals */
+    
+    /* Gradient backgrounds for hero and quick actions */
+    --gradient-hero: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS
        ============================================ */
-    /* Primary Accent - Warm Orange/Amber */
-    --accent-primary: #FF8C42;        /* Primary CTA, active states */
-    --accent-primary-hover: #FF9D5C;  /* Hover state */
-    --accent-primary-active: #E67A35; /* Pressed state */
-    --accent-primary-glow: rgba(255, 140, 66, 0.15); /* Soft glow */
+    /* Primary Accent - Rich Violet */
+    --accent-primary: #6366F1;        /* Primary CTA, active states, buttons, switches, progress, selection */
+    --accent-primary-hover: #818CF8;  /* Hover state - lighter violet */
+    --accent-primary-active: #4F46E5; /* Pressed state - darker violet */
+    --accent-primary-glow: rgba(99, 102, 241, 0.2); /* Faint violet glow for hover states */
+    --accent-primary-light: #A5B4FC;  /* Lighter violet for links and icons */
+    --accent-primary-muted: #818CF8;  /* Muted violet for section headers */
     
-    /* Secondary Accent - Cool Slate */
-    --accent-secondary: #6B7F9F;      /* Secondary actions, icons */
-    --accent-secondary-hover: #7A8FAF;
-    --accent-secondary-muted: #4A5568;
+    /* Secondary Accent - Soft Magenta */
+    --accent-secondary: #EC4899;      /* Important statuses, owner/admin chips */
+    --accent-secondary-hover: #F472B6;
+    --accent-secondary-muted: #F9A8D4;
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #4ADE80;        /* Success text */
@@ -235,7 +251,7 @@
     --border-subtle: rgba(255, 255, 255, 0.03);    /* Subtle borders - very subtle for dark mode */
     --border-default: rgba(255, 255, 255, 0.06);   /* Default borders */
     --border-strong: rgba(255, 255, 255, 0.10);    /* Strong borders */
-    --border-accent: rgba(255, 140, 66, 0.30);     /* Accent borders */
+    --border-accent: rgba(99, 102, 241, 0.30);     /* Accent borders - violet */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -256,9 +272,12 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(255, 140, 66, 0.12);
-    --sidebar-active-border: var(--accent-primary);
+    --sidebar-active-bg: rgba(99, 102, 241, 0.15);  /* Violet pill background */
+    --sidebar-active-border: var(--accent-primary); /* Violet pill border */
     --sidebar-hover-bg: var(--elevation-2);
+    --sidebar-link-color: var(--accent-primary-light); /* Lighter violet for links */
+    --sidebar-icon-color: var(--accent-primary-light); /* Lighter violet for icons */
+    --sidebar-section-header: var(--accent-primary-muted); /* Muted violet for section headers */
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -283,6 +302,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
+    --input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.1);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -519,7 +539,7 @@
   .input-theme:focus {
     outline: none;
     border-color: var(--input-border-focus);
-    box-shadow: 0 0 0 3px var(--accent-primary-glow);
+    box-shadow: var(--input-focus-ring);
   }
   
   .input-theme:hover:not(:focus) {
@@ -598,21 +618,13 @@
     gap: 0.75rem;
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 44px;
-    color: var(--text-secondary);
+    color: var(--sidebar-link-color, var(--text-secondary));
     position: relative;
   }
   
-  .nav-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%) scaleY(0);
-    width: 3px;
-    height: 60%;
-    background-color: var(--accent-primary);
-    border-radius: 0 2px 2px 0;
-    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  .nav-item svg {
+    color: var(--sidebar-icon-color, var(--text-secondary));
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .nav-item:hover {
@@ -620,13 +632,18 @@
     color: var(--text-primary);
   }
   
-  .nav-item-active {
-    background-color: var(--sidebar-active-bg);
-    color: var(--text-primary);
+  .nav-item:hover svg {
+    color: var(--accent-primary-light);
   }
   
-  .nav-item-active::before {
-    transform: translateY(-50%) scaleY(1);
+  .nav-item-active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--accent-primary);
+    border-radius: 9999px; /* Pill shape */
+  }
+  
+  .nav-item-active svg {
+    color: var(--accent-primary);
   }
   
   /* ============================================
@@ -668,6 +685,18 @@
   .badge-danger {
     background-color: var(--status-danger-bg);
     color: var(--status-danger);
+  }
+  
+  .badge-owner-admin {
+    background-color: rgba(236, 72, 153, 0.15);
+    color: var(--accent-secondary);
+    border: 1px solid rgba(236, 72, 153, 0.3);
+  }
+  
+  [data-theme="dark"] .badge-owner-admin {
+    background-color: rgba(236, 72, 153, 0.2);
+    color: var(--accent-secondary);
+    border: 1px solid rgba(236, 72, 153, 0.4);
   }
   
   /* ============================================
@@ -775,7 +804,11 @@
   
   /* Subtle gradient backgrounds */
   .gradient-hero {
-    background: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    background: var(--gradient-hero, linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%));
+  }
+  
+  .gradient-quick-actions {
+    background: var(--gradient-quick-actions, linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%));
   }
   
   /* Ambient glow effect */

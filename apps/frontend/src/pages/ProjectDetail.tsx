@@ -56,9 +56,9 @@ import {
 } from '../utils/analytics';
 import { useDebounce } from '../utils/debounce';
 
-const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
-  OWNER: 'danger',
-  ADMIN: 'warning',
+const ROLE_COLORS: Record<ProjectRole, 'owner-admin' | 'owner-admin' | 'info' | 'default'> = {
+  OWNER: 'owner-admin',
+  ADMIN: 'owner-admin',
   MEMBER: 'info',
   VIEWER: 'default',
 };

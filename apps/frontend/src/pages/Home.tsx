@@ -456,8 +456,8 @@ export const HomePage: React.FC = () => {
                     {project.currentUserRole && (
                       <Badge 
                         variant={
-                          project.currentUserRole === 'OWNER' ? 'danger' :
-                          project.currentUserRole === 'ADMIN' ? 'warning' :
+                          project.currentUserRole === 'OWNER' ? 'owner-admin' :
+                          project.currentUserRole === 'ADMIN' ? 'owner-admin' :
                           'default'
                         }
                         className="text-xs"
@@ -474,7 +474,7 @@ export const HomePage: React.FC = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="card">
+      <div className="card gradient-quick-actions">
         <h2 className="text-h3 font-semibold text-primary mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button

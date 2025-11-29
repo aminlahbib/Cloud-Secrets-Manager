@@ -159,7 +159,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
 
             <div className="mt-10" ref={workflowSelectorRef}>
-              <div className="flex items-center justify-between text-label text-tertiary px-1 mb-3">
+              <div className="flex items-center justify-between text-label px-1 mb-3" style={{ color: 'var(--sidebar-section-header, var(--text-tertiary))' }}>
                 <span>Workspace</span>
                 <button
                   onClick={() => navigate('/workflows/new')}

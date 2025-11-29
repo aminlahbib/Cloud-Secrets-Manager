@@ -104,7 +104,7 @@ export const TeamsPage: React.FC = () => {
                 {user?.email}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <Badge variant={user?.platformRole === 'PLATFORM_ADMIN' ? 'danger' : 'default'}>
+                <Badge variant={user?.platformRole === 'PLATFORM_ADMIN' ? 'owner-admin' : 'default'}>
                   {user?.platformRole || 'USER'}
                 </Badge>
                 {user?.createdAt && (
