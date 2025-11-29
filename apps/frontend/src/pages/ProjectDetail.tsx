@@ -302,6 +302,28 @@ export const ProjectDetailPage: React.FC = () => {
       setShowImportModal(false);
       setImportFile(null);
       setImportError(null);
+      const successCount = results.filter((r) => r.status === 'fulfilled').length;
+      const errorCount = results.filter((r) => r.status === 'rejected').length;
+      if (errorCount > 0) {
+        showNotification({
+          type: 'warning',
+          title: 'Import completed with errors',
+          message: `Imported ${successCount} secrets. ${errorCount} failed.`,
+        });
+      } else {
+        showNotification({
+          type: 'success',
+          title: 'Secrets imported',
+          message: `Successfully imported ${successCount} secret${successCount !== 1 ? 's' : ''}`,
+        });
+      }
+    },
+    onError: (error) => {
+      showNotification({
+        type: 'error',
+        title: 'Import failed',
+        message: error instanceof Error ? error.message : 'Failed to import secrets',
+      });
     },
   });
 
@@ -343,6 +365,11 @@ export const ProjectDetailPage: React.FC = () => {
       }
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       setShowDeleteSecretModal(null);
+      showNotification({
+        type: 'success',
+        title: 'Secret deleted',
+        message: 'The secret has been successfully deleted',
+      });
     },
   });
 
