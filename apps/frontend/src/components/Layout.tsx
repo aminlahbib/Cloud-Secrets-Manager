@@ -108,7 +108,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div>
             <Link to="/home" className="flex items-center space-x-3">
               <img 
-                src="/assets/csm.jpeg" 
+                src="/assets/csm-2.webp" 
                 alt="Cloud Secrets Manager Logo" 
                 className="h-12 w-12 rounded-2xl object-contain"
                 onError={(e) => {
