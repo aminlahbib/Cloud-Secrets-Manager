@@ -55,9 +55,21 @@ export const LoginPage: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-2xl p-8">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="text-4xl mb-2">🔐</div>
-            <h1 className="text-2xl font-bold text-gray-900">Cloud Secrets Manager</h1>
-            <p className="text-gray-600 mt-2">Sign in to manage your secrets</p>
+            <img 
+              src="/assets/csm.jpeg" 
+              alt="Cloud Secrets Manager Logo" 
+              className="h-16 w-16 mx-auto mb-4 object-contain"
+              onError={(e) => {
+                // Fallback to emoji if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const fallback = target.nextElementSibling as HTMLElement;
+                if (fallback) fallback.style.display = 'block';
+              }}
+            />
+            <div className="text-4xl mb-2 hidden">🔐</div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cloud Secrets Manager</h1>
+            <p className="text-gray-600 dark:text-neutral-400 mt-2">Sign in to manage your secrets</p>
           </div>
 
           {/* Error Alert */}
