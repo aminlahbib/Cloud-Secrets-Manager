@@ -129,6 +129,9 @@ logs/
 tmp/
 temp/
 
+# Scripts
+scripts/
+
 # Node modules (for future frontend)
 node_modules/
 npm-debug.log*
@@ -143,7 +146,7 @@ apps/frontend/build/
 # Test files
 testing/
 
-# Documents
+# Documents (keep documentation, ignore generated docs)
 docs
 
 # PDF files

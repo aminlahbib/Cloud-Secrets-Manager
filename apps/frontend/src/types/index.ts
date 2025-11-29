@@ -306,17 +306,8 @@ export interface ProjectStats {
 }
 
 // ----------------------------------------------------------------------------
-// Shared/Legacy Types (for backwards compatibility)
+// Form Types
 // ----------------------------------------------------------------------------
-
-export interface SharedSecret {
-  id: string | number;
-  secretKey: string;
-  sharedWith: string;
-  sharedBy: string;
-  permission: Permission | string;
-  sharedAt: string;
-}
 
 export interface SecretFormValues {
   key: string;

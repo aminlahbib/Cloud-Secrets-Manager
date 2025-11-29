@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useDebounce } from '../utils/debounce';
 import { Link } from 'react-router-dom';
 import {
   Folder,
@@ -19,6 +20,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
+import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
 import { useAuth } from '../contexts/AuthContext';
 import type { Project, ProjectRole } from '../types';
 
@@ -33,24 +35,30 @@ export const ProjectsPage: React.FC = () => {
   const { user } = useAuth(); // For authentication check
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
+    workflow: null,
+    role: null,
+  });
 
   // Fetch projects
   const { data, isLoading, error } = useProjects({
-    search: searchTerm,
+    search: debouncedSearchTerm,
     includeArchived: showArchived,
   });
 
   // Fetch workflows to match with projects
   const { data: workflows } = useWorkflows(user?.id);
 
-  // Enrich projects with workflow information
+  // Enrich projects with workflow information and apply filters
   const projects = useMemo(() => {
-    const projectList = data?.content ?? [];
+    let projectList = data?.content ?? [];
     if (!workflows || workflows.length === 0) return projectList;
 
-    return projectList.map((project: Project) => {
+    // Enrich with workflow info
+    projectList = projectList.map((project: Project) => {
       // Find which workflow contains this project
       for (const workflow of workflows) {
         if (workflow.projects?.some(wp => wp.projectId === project.id)) {
@@ -63,7 +71,29 @@ export const ProjectsPage: React.FC = () => {
       }
       return project;
     });
-  }, [data?.content, workflows]);
+
+    // Apply workflow filter
+    if (projectFilters.workflow) {
+      projectList = projectList.filter((project: Project) => project.workflowId === projectFilters.workflow);
+    }
+
+    return projectList;
+  }, [data?.content, workflows, projectFilters.workflow]);
+
+  const projectFilterConfigs: FilterConfig[] = useMemo(() => {
+    const workflowOptions = workflows?.map(w => ({ label: w.name, value: w.id })) || [];
+    return [
+      {
+        key: 'workflow',
+        label: 'Workflow',
+        type: 'select',
+        options: [
+          { label: 'All Workflows', value: '' },
+          ...workflowOptions,
+        ],
+      },
+    ];
+  }, [workflows]);
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -93,26 +123,34 @@ export const ProjectsPage: React.FC = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search projects..."
-            className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search projects..."
+              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+            />
+          </div>
+          <FilterPanel
+            filters={projectFilterConfigs}
+            values={projectFilters}
+            onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
+            onClear={() => setProjectFilters({ workflow: null, role: null })}
           />
+          <label className="flex items-center space-x-2 text-sm text-gray-600">
+            <input
+              type="checkbox"
+              checked={showArchived}
+              onChange={(e) => setShowArchived(e.target.checked)}
+              className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
+            />
+            <span>Show archived</span>
+          </label>
         </div>
-        <label className="flex items-center space-x-2 text-sm text-gray-600">
-          <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(e) => setShowArchived(e.target.checked)}
-            className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
-          />
-          <span>Show archived</span>
-        </label>
       </div>
 
       {/* Projects Grid */}
