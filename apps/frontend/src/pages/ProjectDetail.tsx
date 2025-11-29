@@ -689,6 +689,7 @@ export const ProjectDetailPage: React.FC = () => {
         onImportSecrets={handleImportSecrets}
         onAddSecret={handleAddSecret}
         onInviteMember={handleInviteMember}
+        onTabChange={setActiveTab}
         secretsCount={secrets.length}
       />
 

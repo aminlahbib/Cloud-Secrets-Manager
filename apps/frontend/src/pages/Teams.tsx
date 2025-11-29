@@ -16,7 +16,7 @@ export const TeamsPage: React.FC = () => {
           <h1 className="text-2xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Teams</h1>
           <p className="mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>Manage team members and access controls</p>
         </div>
-        <Button disabled>
+        <Button disabled title="Teams feature is coming soon. See details below.">
           <UserPlus className="w-5 h-5 mr-2" />
           Create Team
           <Badge variant="info" className="ml-2">Coming Soon</Badge>
@@ -29,12 +29,26 @@ export const TeamsPage: React.FC = () => {
           <div className="p-3 border rounded-2xl transition-colors duration-300" style={{ borderColor: 'var(--tab-border)', color: 'var(--tab-text-muted)' }}>
             <Sparkles className="h-8 w-8" />
           </div>
-          <div>
-            <h2 className="text-2xl font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Teams feature coming soon</h2>
-            <p className="max-w-2xl transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+          <div className="flex-1">
+            <h2 className="text-2xl font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Teams Feature - Coming Soon</h2>
+            <p className="max-w-2xl mb-4 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
               We're building powerful team management features to help you collaborate more effectively. 
               Create teams, assign roles, and manage access across multiple projects with ease.
             </p>
+            <div className="mt-4 p-4 rounded-xl border" style={{ backgroundColor: 'var(--elevation-1)', borderColor: 'var(--border-subtle)' }}>
+              <h3 className="text-sm font-semibold mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>What to expect:</h3>
+              <ul className="space-y-1.5 text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                <li>• <strong>Team Workspaces:</strong> Organize projects by team with shared access controls</li>
+                <li>• <strong>Bulk Member Management:</strong> Add multiple members to teams at once</li>
+                <li>• <strong>Team-Level Permissions:</strong> Set default roles that apply across all team projects</li>
+                <li>• <strong>Team Analytics:</strong> Track activity and usage across team projects</li>
+                <li>• <strong>Cross-Project Collaboration:</strong> Manage access to multiple projects from a single team view</li>
+              </ul>
+              <p className="mt-3 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                <strong>Current workaround:</strong> You can still collaborate by inviting members directly to individual projects. 
+                Go to any project → Members tab → Invite Member.
+              </p>
+            </div>
           </div>
         </div>
       </div>
