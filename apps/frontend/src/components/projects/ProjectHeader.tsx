@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, UserPlus, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, UserPlus, Download, Upload, Crown, Shield } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import type { Project, ProjectRole } from '../../types';
@@ -13,8 +13,8 @@ const ROLE_COLORS: Record<ProjectRole, 'owner-admin' | 'owner-admin' | 'info' | 
 };
 
 const ROLE_ICONS: Record<ProjectRole, React.ReactNode> = {
-  OWNER: <span className="text-xs">👑</span>,
-  ADMIN: <span className="text-xs">🛡️</span>,
+  OWNER: <Crown className="h-3 w-3" />,
+  ADMIN: <Shield className="h-3 w-3" />,
   MEMBER: null,
   VIEWER: null,
 };
@@ -63,7 +63,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
               <h1 className="text-h1 font-bold text-theme-primary">{project.name}</h1>
               {currentUserRole && (
                 <Badge variant={ROLE_COLORS[currentUserRole]}>
-                  {ROLE_ICONS[currentUserRole]}
+                  {ROLE_ICONS[currentUserRole] && (
+                    <span className="mr-1">{ROLE_ICONS[currentUserRole]}</span>
+                  )}
                   {currentUserRole}
                 </Badge>
               )}
