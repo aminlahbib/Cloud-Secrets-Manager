@@ -60,13 +60,7 @@ management:
     tags:
       application: ${spring.application.name}
       environment: ${ENVIRONMENT:dev}
-  tracing:
-    enabled: ${TRACING_ENABLED:false}  # Disabled in dev, enable in prod with TRACING_ENABLED=true
-    sampling:
-      probability: ${TRACING_SAMPLING_PROBABILITY:1.0}
-  zipkin:
-    tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:}  # Empty by default to prevent connection errors in dev
+  # Tracing removed - not needed for this environment
   health:
     redis:
       enabled: false
