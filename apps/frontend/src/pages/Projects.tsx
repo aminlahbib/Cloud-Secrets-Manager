@@ -113,8 +113,8 @@ export const ProjectsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-500 mt-1">Manage your projects and secret collections</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Projects</h1>
+          <p className="text-gray-500 dark:text-neutral-400 mt-1">Manage your projects and secret collections</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="w-5 h-5 mr-2" />
@@ -126,13 +126,13 @@ export const ProjectsPage: React.FC = () => {
       <div className="flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
           <div className="relative flex-1 max-w-md">
-            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+            <Search className="w-5 h-5 text-gray-400 dark:text-neutral-500 absolute left-3 top-1/2 transform -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search projects..."
-              className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors"
             />
           </div>
           <FilterPanel
@@ -141,12 +141,12 @@ export const ProjectsPage: React.FC = () => {
             onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
             onClear={() => setProjectFilters({ workflow: null, role: null })}
           />
-          <label className="flex items-center space-x-2 text-sm text-gray-600">
+          <label className="flex items-center space-x-2 text-sm text-gray-600 dark:text-neutral-400">
             <input
               type="checkbox"
               checked={showArchived}
               onChange={(e) => setShowArchived(e.target.checked)}
-              className="rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
+              className="rounded border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 focus:ring-neutral-500 dark:focus:ring-neutral-400"
             />
             <span>Show archived</span>
           </label>
@@ -161,8 +161,8 @@ export const ProjectsPage: React.FC = () => {
           ))}
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">Failed to load projects. Please try again.</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+          <p className="text-sm text-red-800 dark:text-red-300">Failed to load projects. Please try again.</p>
         </div>
       ) : projects.length === 0 ? (
         <EmptyState
@@ -186,25 +186,25 @@ export const ProjectsPage: React.FC = () => {
               to={`/projects/${project.id}`}
               className="block group"
             >
-              <div className={`
-                bg-white rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
+              <div               className={`
+                bg-white dark:bg-[#111111] rounded-xl p-6 shadow-sm border transition-all h-full flex flex-col
                 ${project.isArchived
-                  ? 'border-gray-200 opacity-75'
-                  : 'border-neutral-200 hover:shadow-md hover:border-neutral-900'
+                  ? 'border-gray-200 dark:border-neutral-800 opacity-75'
+                  : 'border-neutral-200 dark:border-neutral-800 hover:shadow-md hover:border-neutral-900 dark:hover:border-neutral-700'
                 }
               `}>
                 <div className="flex justify-between items-start mb-4">
                   <div className={`
                     p-3 rounded-lg transition-colors
                     ${project.isArchived
-                      ? 'bg-gray-100'
-                      : 'bg-neutral-100 group-hover:bg-neutral-900 group-hover:text-white transition-colors'
+                      ? 'bg-gray-100 dark:bg-neutral-800'
+                      : 'bg-neutral-100 dark:bg-neutral-800 group-hover:bg-neutral-900 dark:group-hover:bg-neutral-700 group-hover:text-white transition-colors'
                     }
                   `}>
                     {project.isArchived ? (
-                      <Archive className="w-8 h-8 text-gray-400" />
+                      <Archive className="w-8 h-8 text-gray-400 dark:text-neutral-500" />
                     ) : (
-                      <Folder className="w-8 h-8" />
+                      <Folder className="w-8 h-8 text-neutral-600 dark:text-neutral-400" />
                     )}
                   </div>
                   <div className="flex items-center gap-2">
@@ -222,26 +222,26 @@ export const ProjectsPage: React.FC = () => {
                 </div>
 
                 <div className="flex-1">
-                  <h3 className="text-lg font-bold text-neutral-900 mb-2 group-hover:text-neutral-900">
+                  <h3 className="text-lg font-bold text-neutral-900 dark:text-white mb-2">
                     {project.name}
                   </h3>
                   {project.description && (
-                    <p className="text-gray-500 text-sm line-clamp-2 mb-3">
+                    <p className="text-gray-500 dark:text-neutral-400 text-sm line-clamp-2 mb-3">
                       {project.description}
                     </p>
                   )}
                   {project.workflowName && (
                     <div className="flex items-center gap-1.5 mb-3">
-                      <LayoutGrid className="h-3.5 w-3.5 text-neutral-400" />
-                      <span className="text-xs text-neutral-500 font-medium">
+                      <LayoutGrid className="h-3.5 w-3.5 text-neutral-400 dark:text-neutral-500" />
+                      <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">
                         {project.workflowName}
                       </span>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-4 text-gray-400">
+                <div className="mt-4 pt-4 border-t border-gray-100 dark:border-neutral-800 flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-4 text-gray-400 dark:text-neutral-500">
                     <span className="flex items-center" title="Secrets">
                       <Key className="h-4 w-4 mr-1" />
                       {project.secretCount ?? 0}
@@ -251,7 +251,7 @@ export const ProjectsPage: React.FC = () => {
                       {project.memberCount ?? 1}
                     </span>
                   </div>
-                  <span className="flex items-center text-gray-400" title="Last updated">
+                  <span className="flex items-center text-gray-400 dark:text-neutral-500" title="Last updated">
                     <Clock className="h-4 w-4 mr-1" />
                     {getTimeAgo(project.updatedAt)}
                   </span>

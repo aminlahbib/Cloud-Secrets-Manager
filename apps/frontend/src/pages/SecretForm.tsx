@@ -67,19 +67,19 @@ export const SecretFormPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-neutral-50 min-h-screen py-10 px-4">
+    <div className="bg-neutral-50 dark:bg-[#0a0a0a] min-h-screen py-10 px-4 transition-colors">
       <div className="max-w-3xl mx-auto space-y-6">
         <button
           onClick={() => navigate(`/projects/${projectId}`)}
-          className="inline-flex items-center text-sm font-medium text-neutral-600 hover:text-neutral-900"
+          className="inline-flex items-center text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Project
         </button>
 
-        <div className="bg-white border border-neutral-200 rounded-[24px] shadow-sm p-8 space-y-6">
+        <div className="bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 rounded-[24px] shadow-sm p-8 space-y-6 transition-colors">
           <div>
-            <h1 className="text-3xl font-semibold text-neutral-900">
+            <h1 className="text-3xl font-semibold text-neutral-900 dark:text-white">
               {isEditMode ? 'Edit Secret' : 'Create New Secret'}
             </h1>
           </div>

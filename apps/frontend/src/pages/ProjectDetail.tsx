@@ -706,9 +706,9 @@ export const ProjectDetailPage: React.FC = () => {
   if (projectError || !project) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h2 className="text-lg font-semibold text-red-800 mb-2">Project Not Found</h2>
-          <p className="text-sm text-red-700 mb-4">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 transition-colors">
+          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Project Not Found</h2>
+          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
             This project may have been deleted or you don't have access to it.
           </p>
           <Button variant="secondary" onClick={() => navigate('/projects')}>
@@ -739,7 +739,7 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.name}</h1>
                 {currentUserRole && (
                   <Badge variant={ROLE_COLORS[currentUserRole]}>
                     {ROLE_ICONS[currentUserRole]}
@@ -748,7 +748,7 @@ export const ProjectDetailPage: React.FC = () => {
                 )}
                 {project.isArchived && <Badge variant="warning">Archived</Badge>}
               </div>
-              {project.description && <p className="mt-1 text-gray-500">{project.description}</p>}
+              {project.description && <p className="mt-1 text-gray-500 dark:text-neutral-400">{project.description}</p>}
             </div>
 
             <div className="flex gap-2">
@@ -808,7 +808,7 @@ export const ProjectDetailPage: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="rounded-3xl border border-neutral-200 bg-neutral-50 px-6 py-4 text-sm text-neutral-600">
+          <div className="rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 transition-colors">
             <p>
               Need help?{' '}
               <button className="underline" type="button" onClick={() => setActiveTab('activity')}>
@@ -839,13 +839,13 @@ export const ProjectDetailPage: React.FC = () => {
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search secrets..."
-                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+                className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors"
               />
             </div>
             <FilterPanel
@@ -860,10 +860,10 @@ export const ProjectDetailPage: React.FC = () => {
           {selectedSecrets.size > 0 && canDeleteSecrets && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-blue-900">
+                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
                   {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
                 </span>
-                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700">
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700 dark:text-blue-400">
                   Clear
                 </Button>
               </div>
@@ -883,7 +883,7 @@ export const ProjectDetailPage: React.FC = () => {
             <SkeletonTable rows={5} cols={6} />
           ) : secrets.length === 0 ? (
             <EmptyState
-              icon={<Key className="h-16 w-16 text-gray-400" />}
+              icon={<Key className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
               title={searchTerm ? 'No secrets match your search' : 'No secrets yet'}
               description={
                 searchTerm
@@ -902,7 +902,7 @@ export const ProjectDetailPage: React.FC = () => {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 overflow-hidden transition-colors">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
@@ -916,7 +916,7 @@ export const ProjectDetailPage: React.FC = () => {
                           />
                         </th>
                       )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider bg-white dark:bg-[#111111]">Key</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
                       </th>
@@ -934,7 +934,7 @@ export const ProjectDetailPage: React.FC = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-[#111111] divide-y divide-gray-200 dark:divide-neutral-800">
                     {secrets.map((secret: Secret) => {
                       const isExpired =
                         secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
@@ -967,21 +967,21 @@ export const ProjectDetailPage: React.FC = () => {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <Link
                               to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-                              className="text-sm font-medium text-neutral-900 hover:underline"
+                              className="text-sm font-medium text-neutral-900 dark:text-white hover:underline transition-colors"
                             >
                               {secret.secretKey}
                             </Link>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-neutral-400">
                             {new Date(secret.createdAt).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{new Date(lastChangeDate).toLocaleDateString()}</div>
-                            {lastChangeUser && <div className="text-xs text-gray-500">by {lastChangeUser}</div>}
+                            <div className="text-sm text-gray-900 dark:text-white">{new Date(lastChangeDate).toLocaleDateString()}</div>
+                            {lastChangeUser && <div className="text-xs text-gray-500 dark:text-neutral-400">by {lastChangeUser}</div>}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">v{versionNumber}</div>
-                            <Link to={historyLink} className="text-xs text-neutral-500 hover:text-neutral-900">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">v{versionNumber}</div>
+                            <Link to={historyLink} className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
                               View history
                             </Link>
                           </td>
@@ -1073,7 +1073,7 @@ export const ProjectDetailPage: React.FC = () => {
             </div>
           ) : !members || members.length === 0 ? (
             <EmptyState
-              icon={<Users className="h-16 w-16 text-gray-400" />}
+              icon={<Users className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
               title="No members"
               description="Invite team members to collaborate on this project"
               action={
@@ -1086,7 +1086,7 @@ export const ProjectDetailPage: React.FC = () => {
               }
             />
           ) : (
-            <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-200">
+            <div className="bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 divide-y divide-gray-200 dark:divide-neutral-800 transition-colors">
               {members.map((member) => (
                 <div
                   key={member.id}
@@ -1167,17 +1167,17 @@ export const ProjectDetailPage: React.FC = () => {
           <div className="space-y-6">
             {/* Header with view toggle and date filter */}
             <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-lg font-semibold text-gray-900">Project Activity</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Project Activity</h2>
               <div className="flex items-center gap-3">
                 {/* Date Range Filter and Export (only for analytics) */}
                 {activityView === 'analytics' && (
                   <>
                     <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Calendar className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
                       <select
                         value={dateRange}
                         onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                        className="bg-transparent border-none text-sm font-medium text-gray-700 focus:outline-none cursor-pointer"
+                        className="bg-transparent border-none text-sm font-medium text-gray-700 dark:text-neutral-300 focus:outline-none cursor-pointer transition-colors"
                       >
                         <option value="7d">Last 7 days</option>
                         <option value="30d">Last 30 days</option>
@@ -1230,11 +1230,11 @@ export const ProjectDetailPage: React.FC = () => {
                   <div className="space-y-6">
                     <SkeletonStats />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
-                      <div className="bg-white border border-gray-200 rounded-lg p-6">
+                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
@@ -1246,8 +1246,8 @@ export const ProjectDetailPage: React.FC = () => {
                       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                         <AlertTriangle className="h-6 w-6 text-red-600" />
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Analytics</h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Error Loading Analytics</h3>
+                      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-4">
                         {analyticsError instanceof Error
                           ? analyticsError.message
                           : 'An error occurred while loading analytics. Please try again.'}
@@ -1305,9 +1305,9 @@ export const ProjectDetailPage: React.FC = () => {
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                           {/* Top Users */}
                           <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Contributors</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Contributors</h3>
                             {analyticsStats.topUsers.length === 0 ? (
-                              <p className="text-gray-500 text-sm">No user data available</p>
+                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No user data available</p>
                             ) : (
                               <div className="space-y-3">
                                 {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
@@ -1331,9 +1331,9 @@ export const ProjectDetailPage: React.FC = () => {
 
                           {/* Top Actions */}
                           <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Common Actions</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Most Common Actions</h3>
                             {analyticsStats.topActions.length === 0 ? (
-                              <p className="text-gray-500 text-sm">No action data available</p>
+                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No action data available</p>
                             ) : (
                               <div className="space-y-3">
                                 {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (

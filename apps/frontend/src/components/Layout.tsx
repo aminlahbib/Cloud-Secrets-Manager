@@ -97,17 +97,29 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 text-neutral-900">
+    <div className="min-h-screen bg-neutral-100 dark:bg-[#0a0a0a] text-neutral-900 dark:text-neutral-100 transition-colors duration-200">
       <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-40 w-72 bg-white border-r border-neutral-200 flex flex-col justify-between px-6 py-8 transition-transform duration-300 md:translate-x-0
+            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-[#111111] border-r border-neutral-200 dark:border-neutral-800 flex flex-col justify-between px-6 py-8 transition-all duration-300 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
         >
           <div>
             <Link to="/home" className="flex items-center space-x-3">
-              <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold">
+              <img 
+                src="/assets/csm-2.webp" 
+                alt="Cloud Secrets Manager Logo" 
+                className="h-12 w-12 rounded-2xl object-contain"
+                onError={(e) => {
+                  // Fallback to text logo if image fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold hidden">
                 CSM
               </div>
               <span className="text-lg font-semibold tracking-tight">Cloud Secrets</span>
@@ -135,11 +147,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
 
             <div className="mt-10" ref={workflowSelectorRef}>
-              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 px-1 mb-3">
+              <div className="flex items-center justify-between text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500 px-1 mb-3">
                 <span>Workspace</span>
                 <button
                   onClick={() => navigate('/workflows/new')}
-                  className="text-xs font-medium text-neutral-600 hover:text-neutral-900 flex items-center gap-1"
+                  className="text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 flex items-center gap-1"
                 >
                   <Plus className="h-4 w-4" />
                   New
@@ -178,16 +190,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                             <button
                               key={workflow.id}
                               onClick={() => handleWorkflowSelect(workflow.id)}
-                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm ${isSelected ? 'bg-neutral-100 text-neutral-900' : 'text-neutral-600 hover:bg-neutral-50'
+                              className={`w-full px-4 py-3 text-left flex items-center justify-between text-sm transition-colors ${isSelected ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white' : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                                 }`}
                             >
                               <div>
                                 <p className="font-medium">{workflow.name}</p>
-                                <p className="text-xs text-neutral-500">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400">
                                   {(workflow.projects?.length || 0)} Projects
                                 </p>
                               </div>
-                              {isSelected && <span className="text-neutral-900 text-lg">•</span>}
+                              {isSelected && <span className="text-neutral-900 dark:text-neutral-100 text-lg">•</span>}
                             </button>
                           );
                         })}
@@ -197,7 +209,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                           setIsWorkflowMenuOpen(false);
                           navigate('/workflows/new');
                         }}
-                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 border-t border-neutral-100 text-left hover:bg-neutral-50 flex items-center gap-2"
+                        className="w-full px-4 py-3 text-sm font-medium text-neutral-600 dark:text-neutral-300 border-t border-neutral-100 dark:border-neutral-800 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 flex items-center gap-2 transition-colors"
                       >
                         <Plus className="h-4 w-4" />
                         Create Workflow
@@ -245,22 +257,22 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/admin"
                   onClick={() => setIsSidebarOpen(false)}
-                  className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActiveLink('/admin')
-                    ? 'bg-neutral-100 text-neutral-900'
-                    : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900'
+                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActiveLink('/admin')
+                    ? 'bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
+                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100'
                     }`}
                 >
-                  <Shield className={`mr-3 h-5 w-5 ${isActiveLink('/admin') ? 'text-neutral-900' : 'text-neutral-400'}`} />
+                  <Shield className={`mr-3 h-5 w-5 ${isActiveLink('/admin') ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-500'}`} />
                   Admin
                 </Link>
               )}
             </div>
 
-            <div className="border-t border-neutral-200 pt-6 space-y-3">
+            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-6 space-y-3">
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
-                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                className="w-full flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800/50 hover:text-neutral-900 dark:hover:text-white"
               >
                 {theme === 'dark' ? (
                   <>
@@ -284,13 +296,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium">{user?.displayName || user?.email?.split('@')[0]}</p>
-                  <p className="text-xs text-neutral-500">{user?.email}</p>
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{user?.displayName || user?.email?.split('@')[0]}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{user?.email}</p>
                 </div>
               </div>
               <button
                 onClick={logout}
-                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition-colors"
+                className="mt-4 w-full flex items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-700 px-3 py-2 text-sm font-medium text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
@@ -300,11 +312,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
 
         <div className="flex-1 flex flex-col md:ml-72">
-          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 bg-white">
-            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation">
+          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111111] transition-colors">
+            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-white transition-colors">
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-            <span className="text-sm font-semibold tracking-tight uppercase">Cloud Secrets</span>
+            <span className="text-sm font-semibold tracking-tight uppercase text-neutral-900 dark:text-neutral-100">Cloud Secrets</span>
             <div className="h-8 w-8 rounded-full bg-neutral-900 text-white flex items-center justify-center">
               {user?.displayName?.[0] || user?.email?.[0] || 'U'}
             </div>
