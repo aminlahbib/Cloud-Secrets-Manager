@@ -17,6 +17,7 @@ export const useProjects = ({ search, includeArchived = false, enabled = true }:
         }),
         placeholderData: (previousData) => previousData,
         enabled,
+        staleTime: 60 * 1000, // 1 minute - projects list changes moderately
     });
 };
 
