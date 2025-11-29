@@ -26,8 +26,14 @@ export const SecretDetailPage: React.FC = () => {
   if (!secretKey || !projectId) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">
+        <div 
+          className="border rounded-lg p-4"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
             Invalid URL. Please navigate from a project page.
           </p>
           <Button
@@ -147,8 +153,14 @@ export const SecretDetailPage: React.FC = () => {
   if (error || !secret) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">
+        <div 
+          className="border rounded-lg p-4"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
             Failed to load secret. It may have been deleted or you do not have access.
           </p>
           <Button variant="secondary" onClick={() => navigate(`/projects/${projectId}`)} className="mt-4">
@@ -183,10 +195,10 @@ export const SecretDetailPage: React.FC = () => {
             <Card className="p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-1">Secret</p>
-                  <h1 className="text-3xl font-semibold text-neutral-900 dark:text-white break-all">{secret.secretKey}</h1>
+                  <p className="text-caption uppercase tracking-wide mb-1" style={{ color: 'var(--text-tertiary)' }}>Secret</p>
+                  <h1 className="text-h1 font-semibold break-all" style={{ color: 'var(--text-primary)' }}>{secret.secretKey}</h1>
                   {secret.description && (
-                    <p className="text-neutral-600 dark:text-neutral-400 mt-2 max-w-2xl">{secret.description}</p>
+                    <p className="text-body-sm mt-2 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>{secret.description}</p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -228,9 +240,15 @@ export const SecretDetailPage: React.FC = () => {
                 </Button>
               </div>
 
-              <div className="mt-6 rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+              <div 
+                className="mt-6 rounded-xl border p-4"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  backgroundColor: 'var(--elevation-1)',
+                }}
+              >
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Value</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>Value</p>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -266,32 +284,32 @@ export const SecretDetailPage: React.FC = () => {
                     type={showValue ? 'text' : 'password'}
                     value={secret.value || ''}
                     readOnly
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-[#111111] font-mono text-sm text-neutral-900 dark:text-white transition-colors"
+                    className="input-theme w-full px-4 py-3 font-mono text-body-sm transition-colors"
                   />
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">Created</p>
-                  <p className="text-sm font-medium text-neutral-900">{formatDateTime(secret.createdAt)}</p>
+                <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Created</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{formatDateTime(secret.createdAt)}</p>
                   {secret.creator && (
-                    <p className="text-xs text-neutral-500 mt-1">{secret.creator.email}</p>
+                    <p className="text-caption mt-1" style={{ color: 'var(--text-tertiary)' }}>{secret.creator.email}</p>
                   )}
                 </div>
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">Last Updated</p>
-                  <p className="text-sm font-medium text-neutral-900">{formatDateTime(secret.updatedAt)}</p>
+                <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Last Updated</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{formatDateTime(secret.updatedAt)}</p>
                 </div>
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">Expires</p>
-                  <p className={`text-sm font-medium ${isExpired ? 'text-red-600' : 'text-neutral-900'}`}>
+                <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Expires</p>
+                  <p className="text-body-sm font-medium" style={{ color: isExpired ? 'var(--status-danger)' : 'var(--text-primary)' }}>
                     {secret.expiresAt ? formatDateTime(secret.expiresAt) : 'Not set'}
                   </p>
                 </div>
-                <div className="rounded-lg border border-neutral-200 p-3">
-                  <p className="text-xs uppercase tracking-wide text-neutral-500">Your Role</p>
-                  <p className="text-sm font-medium text-neutral-900">{currentUserRole || 'Member'}</p>
+                <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Your Role</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{currentUserRole || 'Member'}</p>
                 </div>
               </div>
             </Card>
@@ -300,9 +318,9 @@ export const SecretDetailPage: React.FC = () => {
           <div className="space-y-6">
             <Card className="p-6 h-full">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-neutral-900">Version History</h2>
+                <h2 className="text-h3 font-semibold" style={{ color: 'var(--text-primary)' }}>Version History</h2>
                 {versions && versions.length > 10 && (
-                  <span className="text-xs text-neutral-500">Showing latest 10</span>
+                  <span className="text-caption" style={{ color: 'var(--text-tertiary)' }}>Showing latest 10</span>
                 )}
               </div>
               {versions && versions.length > 0 ? (
@@ -310,26 +328,41 @@ export const SecretDetailPage: React.FC = () => {
                   {versions.slice(0, 10).map((version) => (
                     <div
                       key={`${version.id}-${version.versionNumber}`}
-                      className="rounded-lg border border-neutral-200 px-4 py-3"
+                      className="rounded-lg border px-4 py-3"
+                      style={{ borderColor: 'var(--border-subtle)' }}
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-neutral-900 dark:text-white">Version {version.versionNumber}</p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{formatDateTime(version.createdAt)}</p>
+                          <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Version {version.versionNumber}</p>
+                          <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>{formatDateTime(version.createdAt)}</p>
                           {version.changeNote && (
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 truncate">{version.changeNote}</p>
+                            <p className="text-caption mt-1 truncate" style={{ color: 'var(--text-tertiary)' }}>{version.changeNote}</p>
                           )}
                         </div>
-                        <div className="flex gap-3 text-xs font-medium text-neutral-700">
+                        <div className="flex gap-3 text-caption font-medium" style={{ color: 'var(--text-secondary)' }}>
                           <button
-                            className="hover:text-neutral-900"
+                            className="transition-colors"
+                            style={{ color: 'var(--text-secondary)' }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = 'var(--text-primary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = 'var(--text-secondary)';
+                            }}
                             onClick={() => openVersionModal(version.versionNumber)}
                           >
                             View
                           </button>
                           {canRestoreVersions && version.versionNumber !== latestVersionNumber && (
                             <button
-                              className="hover:text-neutral-900"
+                              className="transition-colors"
+                              style={{ color: 'var(--text-secondary)' }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.color = 'var(--text-primary)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.color = 'var(--text-secondary)';
+                              }}
                               onClick={() => openVersionModal(version.versionNumber)}
                             >
                               Restore
@@ -341,7 +374,7 @@ export const SecretDetailPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-neutral-500 text-sm">No version history available</p>
+                <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>No version history available</p>
               )}
             </Card>
           </div>
@@ -359,22 +392,22 @@ export const SecretDetailPage: React.FC = () => {
           )}
           {!versionDetailMutation.isPending && versionDetail && (
             <div className="space-y-4">
-              <div className="text-sm text-neutral-600">
+              <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 Saved {formatDateTime(versionDetail.createdAt)}
                 {versionDetail.changedBy && <span className="ml-1">by {versionDetail.changedBy}</span>}
                 {versionDetail.changeNote && (
-                  <p className="text-xs text-neutral-500 mt-1">{versionDetail.changeNote}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>{versionDetail.changeNote}</p>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Value</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Value</label>
                 <div className="flex space-x-2">
                   <div className="flex-1 relative">
                     <input
                       type={showVersionValue ? 'text' : 'password'}
                       value={versionDetail.value}
                       readOnly
-                      className="w-full px-3 py-2 border border-neutral-200 rounded-md bg-neutral-50 font-mono text-sm"
+                      className="w-full px-3 py-2 border rounded-md font-mono text-sm input-theme"
                     />
                   </div>
                   <div className="flex flex-col gap-2">

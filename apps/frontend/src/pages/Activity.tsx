@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
-import { auditService, type AuditLogsResponse } from '../services/audit';
+import { auditService } from '../services/audit';
+import { projectsService } from '../services/projects';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
-import type { AuditLog } from '../types';
+import type { AuditLog, Project } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -60,66 +60,151 @@ interface FilterState {
   action: string;
   startDate: string;
   endDate: string;
+  projectId: string;
 }
 
 export const ActivityPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { isPlatformAdmin } = useAuth();
-
-  // Redirect non-platform admins
-  useEffect(() => {
-    if (!isPlatformAdmin) {
-      navigate('/home');
-    }
-  }, [isPlatformAdmin, navigate]);
-
-  if (!isPlatformAdmin) {
-    return null;
-  }
-
+  const { user, isPlatformAdmin } = useAuth();
   const [page, setPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const itemsPerPage = 50;
+
   const [filters, setFilters] = useState<FilterState>({
     action: '',
     startDate: '',
     endDate: '',
-  });
-  const [showFilters, setShowFilters] = useState(false);
-
-  const { data, isLoading, error } = useQuery<AuditLogsResponse>({
-    queryKey: ['activity', page, filters],
-    queryFn: () =>
-      auditService.listAuditLogs({
-        page: page - 1,
-        size: 50,
-        action: filters.action || undefined,
-        startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
-        endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
-      }),
-    placeholderData: (previousData) => previousData,
+    projectId: '',
   });
 
-  const handleFilterChange = (key: keyof FilterState, value: string) => {
+  // Fetch all projects the user has access to
+  const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
+    queryKey: ['projects', 'all'],
+    queryFn: () => projectsService.listProjects({ size: 1000 }), // Get all projects
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  const projects = projectsData?.content ?? [];
+
+  // Fetch activities from all accessible projects
+  const { data: activitiesData, isLoading: isActivitiesLoading, error } = useQuery<{
+    logs: AuditLog[];
+    totalCount: number;
+  }>({
+    queryKey: ['activity', 'all-projects', filters, projects.length],
+    queryFn: async () => {
+      if (projects.length === 0) {
+        return { logs: [], totalCount: 0 };
+      }
+
+      // If platform admin, use the global endpoint (more efficient)
+      if (isPlatformAdmin) {
+        try {
+          const response = await auditService.listAuditLogs({
+            page: 0,
+            size: 1000, // Get more items to filter client-side
+            action: filters.action || undefined,
+            startDate: filters.startDate ? `${filters.startDate}T00:00:00` : undefined,
+            endDate: filters.endDate ? `${filters.endDate}T23:59:59` : undefined,
+          });
+          return {
+            logs: response.content || [],
+            totalCount: response.totalElements || 0,
+          };
+        } catch (err: any) {
+          // If 403, fall through to project-by-project fetching
+          if (err.response?.status !== 403) {
+            throw err;
+          }
+        }
+      }
+
+      // For regular users or if admin endpoint fails, fetch from each project
+      const projectIds = filters.projectId
+        ? [filters.projectId]
+        : projects.map((p: Project) => p.id);
+
+      // Fetch activities from all projects in parallel
+      const activityPromises = projectIds.map(async (projectId: string) => {
+        try {
+          const params: any = {
+            page: 0,
+            size: 100, // Get more items per project
+            action: filters.action || undefined,
+          };
+
+          if (filters.startDate && filters.endDate) {
+            params.startDate = `${filters.startDate}T00:00:00`;
+            params.endDate = `${filters.endDate}T23:59:59`;
+          }
+
+          const response = await auditService.getProjectAuditLogs(projectId, params);
+          return response.content || [];
+        } catch (err: any) {
+          // Skip projects user doesn't have access to
+          if (err.response?.status === 403 || err.response?.status === 404) {
+            return [];
+          }
+          throw err;
+        }
+      });
+
+      const allActivities = await Promise.all(activityPromises);
+      const flattened = allActivities.flat();
+
+      // Sort by date (newest first)
+      const sorted = flattened.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
+      // Apply date filter if not already applied server-side
+      let filtered = sorted;
+      if (filters.startDate && !filters.endDate) {
+        const startDate = new Date(`${filters.startDate}T00:00:00`);
+        filtered = filtered.filter((log) => new Date(log.createdAt || 0) >= startDate);
+      }
+      if (filters.endDate && !filters.startDate) {
+        const endDate = new Date(`${filters.endDate}T23:59:59`);
+        filtered = filtered.filter((log) => new Date(log.createdAt || 0) <= endDate);
+      }
+
+      return {
+        logs: filtered,
+        totalCount: filtered.length,
+      };
+    },
+    enabled: !!user?.id && (projects.length > 0 || isProjectsLoading === false),
+    staleTime: 30 * 1000, // 30 seconds - activity is real-time data
+  });
+
+  const isLoading = isProjectsLoading || isActivitiesLoading;
+
+  const handleFilterChange = useCallback((key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
-  };
+  }, []);
 
-  const handleClearFilters = () => {
+  const handleClearFilters = useCallback(() => {
     setFilters({
       action: '',
       startDate: '',
       endDate: '',
+      projectId: '',
     });
     setPage(1);
-  };
+  }, []);
 
-  const handleExport = () => {
-    if (!data?.content?.length) return;
-    const header = ['Timestamp', 'Action', 'Resource', 'User', 'IP Address'];
-    const rows = data.content.map((log: AuditLog) => [
+  const handleExport = useCallback(() => {
+    if (!activitiesData?.logs?.length) return;
+    const header = ['Timestamp', 'Action', 'Resource', 'User', 'Project', 'IP Address'];
+    const rows = activitiesData.logs.map((log: AuditLog) => [
       new Date(log.createdAt || '').toISOString(),
       log.action,
       log.resourceName || log.resourceId || '',
       log.userEmail || log.user?.email || '',
+      log.project?.name || '',
       log.ipAddress ?? '',
     ]);
 
@@ -127,7 +212,7 @@ export const ActivityPage: React.FC = () => {
       .map((row) =>
         row
           .map((value: string) => {
-            const safe = value.replace(/"/g, '""');
+            const safe = String(value).replace(/"/g, '""');
             return `"${safe}"`;
           })
           .join(',')
@@ -141,20 +226,31 @@ export const ActivityPage: React.FC = () => {
     link.download = `activity-${Date.now()}.csv`;
     link.click();
     URL.revokeObjectURL(url);
-  };
+  }, [activitiesData?.logs]);
 
   const hasActiveFilters = useMemo(
-    () => filters.action || filters.startDate || filters.endDate,
+    () => filters.action || filters.startDate || filters.endDate || filters.projectId,
     [filters]
   );
 
-  const logs = data?.content ?? [];
+  // Client-side pagination
+  const paginatedLogs = useMemo(() => {
+    if (!activitiesData?.logs) return [];
+    const start = (page - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return activitiesData.logs.slice(start, end);
+  }, [activitiesData?.logs, page, itemsPerPage]);
 
-  const formatAction = (action: string) => {
+  const totalPages = useMemo(() => {
+    if (!activitiesData?.totalCount) return 0;
+    return Math.ceil(activitiesData.totalCount / itemsPerPage);
+  }, [activitiesData?.totalCount, itemsPerPage]);
+
+  const formatAction = useCallback((action: string) => {
     return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  };
+  }, []);
 
-  const getTimeAgo = (timestamp: string) => {
+  const getTimeAgo = useCallback((timestamp: string) => {
     const now = new Date();
     const then = new Date(timestamp);
     const diffMs = now.getTime() - then.getTime();
@@ -167,16 +263,18 @@ export const ActivityPage: React.FC = () => {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays < 7) return `${diffDays}d ago`;
     return then.toLocaleDateString();
-  };
+  }, []);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Activity</h1>
-          <p className="mt-1 text-gray-500">
-            Track all actions across your projects and secrets
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Activity</h1>
+          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
+            {isPlatformAdmin 
+              ? 'Track all actions across all projects and secrets' 
+              : 'Track all actions across your accessible projects and secrets'}
           </p>
         </div>
         <div className="flex gap-2">
@@ -187,7 +285,7 @@ export const ActivityPage: React.FC = () => {
           <Button
             variant="secondary"
             onClick={handleExport}
-            disabled={!logs.length}
+            disabled={!paginatedLogs.length}
           >
             <Download className="h-5 w-5 mr-2" />
             Export
@@ -197,16 +295,33 @@ export const ActivityPage: React.FC = () => {
 
       {/* Filters */}
       {showFilters && (
-        <div className="bg-white border border-neutral-200 rounded-2xl p-4">
-          <div className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--card-bg)', border: '1px solid var(--border-subtle)' }}>
+          <div className="grid gap-4 md:grid-cols-5">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                Project
+              </label>
+              <select
+                value={filters.projectId}
+                onChange={(e) => handleFilterChange('projectId', e.target.value)}
+                className="input-theme"
+              >
+                <option value="">All Projects</option>
+                {projects.map((project: Project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Action Type
               </label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange('action', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               >
                 <option value="">All Actions</option>
                 <optgroup label="Secrets">
@@ -229,25 +344,25 @@ export const ActivityPage: React.FC = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 Start Date
               </label>
               <input
                 type="date"
                 value={filters.startDate}
                 onChange={(e) => handleFilterChange('startDate', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-1">
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
                 End Date
               </label>
               <input
                 type="date"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange('endDate', e.target.value)}
-                className="block w-full rounded-lg border border-neutral-300 shadow-sm focus:border-neutral-900 focus:ring-neutral-900 sm:text-sm"
+                className="input-theme"
               />
             </div>
             {hasActiveFilters && (
@@ -268,75 +383,90 @@ export const ActivityPage: React.FC = () => {
           <Spinner size="lg" />
         </div>
       ) : error ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">Failed to load activity. Please try again.</p>
+        <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
+          <p className="text-sm" style={{ color: 'var(--status-danger)' }}>
+            Failed to load activity. {error instanceof Error ? error.message : 'Please try again.'}
+          </p>
         </div>
-      ) : !logs.length ? (
+      ) : !paginatedLogs.length ? (
         <EmptyState
-          icon={<FileText className="h-16 w-16 text-gray-400" />}
+          icon={<FileText className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
           title="No activity yet"
           description={
             hasActiveFilters
               ? 'No activity matches your filters. Try adjusting them.'
-              : 'Your activity feed will show actions across all your projects.'
+              : projects.length === 0
+              ? 'You don\'t have access to any projects yet.'
+              : 'Your activity feed will show actions across all your accessible projects.'
           }
         />
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-            {logs.map((log: AuditLog) => (
-              <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-start gap-4">
-                  <div className={`p-2 rounded-lg ${
-                    ACTION_COLORS[log.action] === 'success' ? 'bg-green-100 text-green-600' :
-                    ACTION_COLORS[log.action] === 'danger' ? 'bg-red-100 text-red-600' :
-                    ACTION_COLORS[log.action] === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                    ACTION_COLORS[log.action] === 'info' ? 'bg-blue-100 text-blue-600' :
-                    'bg-gray-100 text-gray-600'
-                  }`}>
-                    {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant={ACTION_COLORS[log.action] || 'default'}>
-                        {formatAction(log.action)}
-                      </Badge>
-                      {log.resourceName && (
-                        <span className="text-sm font-medium text-gray-900">
-                          {log.resourceName}
-                        </span>
-                      )}
+          <div className="rounded-lg border divide-y" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-subtle)', borderTopColor: 'var(--border-subtle)' }}>
+            {paginatedLogs.map((log: AuditLog) => {
+              const actionColor = ACTION_COLORS[log.action] || 'default';
+              const iconBgStyles = {
+                success: { backgroundColor: 'var(--status-success-bg)', color: 'var(--status-success)' },
+                danger: { backgroundColor: 'var(--status-danger-bg)', color: 'var(--status-danger)' },
+                warning: { backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)' },
+                info: { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' },
+                default: { backgroundColor: 'var(--elevation-1)', color: 'var(--text-secondary)' },
+              };
+              return (
+                <div 
+                  key={log.id} 
+                  className="p-4 transition-colors"
+                  style={{ borderTopColor: 'var(--border-subtle)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--elevation-1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-lg" style={iconBgStyles[actionColor]}>
+                      {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                      by {log.userEmail || log.user?.email || 'Unknown'}
-                      {log.project && (
-                        <span className="text-gray-400"> in {log.project.name}</span>
-                      )}
-                    </p>
-                  </div>
-                  
-                  <div className="flex items-center text-sm text-gray-400">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {getTimeAgo(log.createdAt || '')}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={actionColor}>
+                          {formatAction(log.action)}
+                        </Badge>
+                        {log.resourceName && (
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {log.resourceName}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        by {log.userEmail || log.user?.email || 'Unknown'}
+                        {log.project && (
+                          <span style={{ color: 'var(--text-tertiary)' }}> in {log.project.name}</span>
+                        )}
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                      <Clock className="h-4 w-4 mr-1" />
+                      {getTimeAgo(log.createdAt || '')}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {data?.totalPages && data.totalPages > 1 && (
+          {totalPages > 1 && (
             <Pagination
               currentPage={page}
-              totalPages={data.totalPages}
+              totalPages={totalPages}
               onPageChange={setPage}
               className="mt-6"
             />
           )}
 
-          {data && (
-            <div className="text-center text-sm text-gray-500">
-              Showing {logs.length} of {data.totalElements || 0} activities
+          {activitiesData && (
+            <div className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+              Showing {paginatedLogs.length} of {activitiesData.totalCount || 0} activities
+              {projects.length > 0 && ` across ${projects.length} project${projects.length !== 1 ? 's' : ''}`}
             </div>
           )}
         </>

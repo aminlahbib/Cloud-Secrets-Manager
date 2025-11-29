@@ -54,14 +54,14 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
   );
 
   return (
-    <div className="bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 p-4 hover:shadow-md transition-all">
+    <div className="rounded-lg border border-theme-subtle p-4 hover:shadow-theme-md transition-all duration-150 bg-card">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <Link
             to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-            className="text-sm font-semibold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 hover:underline block truncate transition-colors"
+            className="text-body-sm font-semibold hover:underline block truncate transition-colors text-theme-primary hover:text-accent-primary"
           >
-            <Key className="h-4 w-4 inline-block mr-2 text-gray-400 dark:text-neutral-500" />
+            <Key className="h-4 w-4 inline-block mr-2 text-theme-tertiary" />
             {secret.secretKey}
           </Link>
         </div>
@@ -77,11 +77,11 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
       </div>
 
       <div className="space-y-2 mb-4">
-        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
+        <div className="flex items-center text-caption text-theme-tertiary">
           <Clock className="h-3 w-3 mr-1.5" />
           <span>Created: {new Date(secret.createdAt).toLocaleDateString()}</span>
         </div>
-        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
+        <div className="flex items-center text-caption text-theme-tertiary">
           <Clock className="h-3 w-3 mr-1.5" />
           <span>Last change: {new Date(lastChangeDate).toLocaleDateString()}</span>
           {lastChangeUser && (
@@ -91,15 +91,18 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
             </span>
           )}
         </div>
-        <div className="flex items-center text-xs text-gray-500 dark:text-neutral-400">
+        <div className="flex items-center text-caption text-theme-tertiary">
           <span>Version: v{versionNumber}</span>
-          <Link to={historyLink} className="ml-2 text-blue-600 dark:text-blue-400 hover:underline transition-colors">
+          <Link 
+            to={historyLink} 
+            className="ml-2 hover:underline transition-colors text-accent-primary hover:text-accent-primary"
+          >
             View history
           </Link>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100 dark:border-neutral-800">
+      <div className="flex items-center gap-2 pt-3 border-t border-theme-subtle">
         <Button variant="ghost" size="sm" onClick={onView} className="flex-1">
           <Eye className="h-4 w-4 mr-1" />
           View
@@ -111,7 +114,7 @@ export const SecretCard: React.FC<SecretCardProps> = React.memo(({
           </Button>
         )}
         {canDeleteSecrets && (
-          <Button variant="ghost" size="sm" onClick={onDelete} className="text-red-600 hover:text-red-700">
+          <Button variant="ghost" size="sm" onClick={onDelete} className="text-status-danger">
             <Trash2 className="h-4 w-4" />
           </Button>
         )}

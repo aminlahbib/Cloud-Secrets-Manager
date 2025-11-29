@@ -84,45 +84,45 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             placeholder="e.g., Backend Services"
                             required
                             autoFocus
-                            icon={<Folder className="h-4 w-4 text-gray-400" />}
+                            icon={<Folder className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />}
                         />
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                             Choose a unique and descriptive name for your project.
                         </p>
                     </div>
 
                     {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Description <span className="text-gray-400 font-normal">(optional)</span>
+                        <label className="block text-sm font-medium mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                            Description <span className="font-normal transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>(optional)</span>
                         </label>
                         <div className="relative">
                             <div className="absolute top-3 left-3 pointer-events-none">
-                                <FileText className="h-4 w-4 text-gray-400" />
+                                <FileText className="h-4 w-4 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }} />
                             </div>
                             <textarea
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Briefly describe the purpose of this project..."
                                 rows={3}
-                                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white resize-none"
+                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg resize-none"
                             />
                         </div>
                     </div>
 
                     {/* Workflow Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
                             Workflow
                         </label>
                         <div className="relative">
                             <div className="absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none">
-                                <LayoutGrid className="h-4 w-4 text-gray-400" />
+                                <LayoutGrid className="h-4 w-4 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }} />
                             </div>
                             <select
                                 value={workflowId}
                                 onChange={(e) => setWorkflowId(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white appearance-none"
+                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg appearance-none"
                                 required
                                 disabled={!workflows || workflows.length === 0}
                             >
@@ -137,19 +137,19 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 )}
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-4 h-4 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </div>
                         </div>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                             Projects are automatically assigned to a workflow. Select which workflow to use.
                         </p>
                     </div>
                 </div>
 
                 {/* Footer Actions */}
-                <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+                <div className="flex items-center justify-end gap-3 pt-2 border-t transition-colors duration-300" style={{ borderColor: 'var(--tab-border)' }}>
                     <Button
                         type="button"
                         variant="secondary"
@@ -167,8 +167,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
 
                 {createMutation.isError && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <p className="text-sm text-red-600">
+                    <div 
+                        className="p-3 border rounded-lg transition-colors duration-300"
+                        style={{
+                            backgroundColor: 'var(--status-danger-bg)',
+                            borderColor: 'var(--status-danger)',
+                        }}
+                    >
+                        <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
                             Failed to create project. Please try again.
                         </p>
                     </div>

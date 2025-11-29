@@ -16,8 +16,8 @@ export const ActivityChart: React.FC<ActivityChartProps> = React.memo(({
   if (data.length === 0) {
     return (
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
-        <div className="flex items-center justify-center h-64 text-gray-500">
+        <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
+        <div className="flex items-center justify-center h-64" style={{ color: 'var(--text-tertiary)' }}>
           No data available
         </div>
       </Card>
@@ -29,31 +29,32 @@ export const ActivityChart: React.FC<ActivityChartProps> = React.memo(({
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
+      <h3 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>{title}</h3>
       <ResponsiveContainer width="100%" height={300}>
         <ChartComponent data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
           <XAxis 
             dataKey="label" 
-            stroke="#6b7280"
+            stroke="var(--text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <YAxis 
-            stroke="#6b7280"
+            stroke="var(--text-secondary)"
             style={{ fontSize: '12px' }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#fff',
-              border: '1px solid #e5e7eb',
+              backgroundColor: 'var(--card-bg)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: '8px',
+              color: 'var(--text-primary)',
             }}
           />
           <DataComponent 
             type="monotone" 
             dataKey="count" 
-            stroke="#3b82f6" 
-            fill="#3b82f6"
+            stroke="var(--status-info)" 
+            fill="var(--status-info)"
             strokeWidth={2}
           />
         </ChartComponent>

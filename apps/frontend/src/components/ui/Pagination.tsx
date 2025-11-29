@@ -43,7 +43,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-md border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 rounded-md border border-theme-default text-theme-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-elevation-1"
       >
         <ChevronLeft className="h-5 w-5" />
       </button>
@@ -54,16 +54,16 @@ export const Pagination: React.FC<PaginationProps> = ({
           {typeof page === 'number' ? (
             <button
               onClick={() => onPageChange(page)}
-              className={`px-4 py-2 rounded-md border ${
-                currentPage === page
-                  ? 'bg-neutral-900 text-white border-neutral-900'
-                  : 'border-neutral-300 hover:bg-neutral-50'
+              className={`px-4 py-2 rounded-md border transition-colors ${
+                currentPage === page 
+                  ? 'bg-accent-primary text-theme-inverse border-accent-primary' 
+                  : 'bg-transparent text-theme-primary border-theme-default hover:bg-elevation-1'
               }`}
             >
               {page}
             </button>
           ) : (
-            <span className="px-2">...</span>
+            <span className="px-2 text-theme-secondary">...</span>
           )}
         </React.Fragment>
       ))}
@@ -72,7 +72,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-md border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="p-2 rounded-md border border-theme-default text-theme-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-elevation-1"
       >
         <ChevronRight className="h-5 w-5" />
       </button>

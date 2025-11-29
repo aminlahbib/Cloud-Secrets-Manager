@@ -1,28 +1,11 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ArrowLeft,
   Key,
   Users,
   Settings as SettingsIcon,
   Activity,
-  Plus,
-  Search,
-  Eye,
-  Edit,
-  Trash2,
-  Shield,
-  Crown,
-  UserPlus,
-  Mail,
-  Clock,
-  BarChart3,
-  List,
-  Calendar,
-  AlertTriangle,
-  LayoutGrid,
-  Download,
   Upload,
 } from 'lucide-react';
 import { projectsService } from '../services/projects';
@@ -33,42 +16,25 @@ import { workflowsService } from '../services/workflows';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
-import { EmptyState } from '../components/ui/EmptyState';
-import { Card } from '../components/ui/Card';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import type { Project, Secret, ProjectMember, ProjectRole, AuditLog } from '../types';
-import { StatsCards } from '../components/analytics/StatsCards';
-import { ActivityChart } from '../components/analytics/ActivityChart';
-import { ActionDistributionChart } from '../components/analytics/ActionDistributionChart';
-import { ErrorBoundary } from '../components/ErrorBoundary';
-import { Skeleton, SkeletonTable, SkeletonStats } from '../components/ui/Skeleton';
-import { SecretCard } from '../components/ui/SecretCard';
-import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
+import { FilterConfig } from '../components/ui/FilterPanel';
+import { ProjectHeader } from '../components/projects/ProjectHeader';
+import { SecretsTab } from '../components/projects/SecretsTab';
+import { MembersTab } from '../components/projects/MembersTab';
+import { ActivityTab } from '../components/projects/ActivityTab';
+import { SettingsTab } from '../components/projects/SettingsTab';
 import {
   getLastNDays,
   prepareChartData,
-  formatActionName,
 } from '../utils/analytics';
 import { useDebounce } from '../utils/debounce';
+import { invalidateProjectQueries } from '../utils/queryInvalidation';
 
-const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
-  OWNER: 'danger',
-  ADMIN: 'warning',
-  MEMBER: 'info',
-  VIEWER: 'default',
-};
-
-const ROLE_ICONS: Record<ProjectRole, React.ReactNode> = {
-  OWNER: <Crown className="h-3 w-3 mr-1" />,
-  ADMIN: <Shield className="h-3 w-3 mr-1" />,
-  MEMBER: null,
-  VIEWER: null,
-};
 
 export const ProjectDetailPage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -124,6 +90,7 @@ export const ProjectDetailPage: React.FC = () => {
     queryKey: ['project', projectId],
     queryFn: () => projectsService.getProject(projectId!),
     enabled: !!projectId,
+    staleTime: 2 * 60 * 1000, // 2 minutes - project details rarely change
   });
 
   // Fetch workflows to find current workflow and allow selection
@@ -158,6 +125,7 @@ export const ProjectDetailPage: React.FC = () => {
       sortDir: secretFilters.sortDir || 'DESC',
     }),
     enabled: !!projectId && activeTab === 'secrets',
+    staleTime: 60 * 1000, // 1 minute - secrets change more frequently
   });
 
   // Fetch members
@@ -165,10 +133,11 @@ export const ProjectDetailPage: React.FC = () => {
     queryKey: ['project-members', projectId],
     queryFn: () => membersService.listMembers(projectId!),
     enabled: !!projectId,
+    staleTime: 2 * 60 * 1000, // 2 minutes - members rarely change
   });
 
-  // Calculate date range for analytics
-  const getDateRangeParams = () => {
+  // Calculate date range for analytics (memoized)
+  const dateRangeParams = useMemo(() => {
     if (dateRange === 'all') return {};
     const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
     const endDate = new Date();
@@ -178,30 +147,44 @@ export const ProjectDetailPage: React.FC = () => {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
     };
-  };
+  }, [dateRange]);
+
+  // Track if tab is visible to disable polling when hidden
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsTabVisible(!document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
 
   // Fetch project activity logs for list view (paginated)
+  const shouldPollActivity = activeTab === 'activity' && activityView === 'list' && isTabVisible;
   const { data: activityData, isLoading: isActivityLoading, error: activityError } = useQuery<AuditLogsResponse>({
     queryKey: ['project-activity', projectId, activityPage],
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
     enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
     retry: false,
-    refetchInterval: 5000, // Poll every 5 seconds
+    staleTime: 30 * 1000, // 30 seconds - real-time data
+    refetchInterval: shouldPollActivity ? 30000 : false, // Only poll when tab is active and visible
   });
 
   // Fetch analytics using server-side aggregation
+  const shouldPollAnalytics = activeTab === 'activity' && activityView === 'analytics' && isTabVisible;
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['project-activity-analytics', projectId, dateRange],
     queryFn: () => {
-      const dateParams = getDateRangeParams();
-      if (!dateParams.startDate || !dateParams.endDate) {
+      if (!dateRangeParams.startDate || !dateRangeParams.endDate) {
         throw new Error('Date range is required for analytics');
       }
-      return auditService.getProjectAnalytics(projectId!, dateParams.startDate, dateParams.endDate);
+      return auditService.getProjectAnalytics(projectId!, dateRangeParams.startDate, dateRangeParams.endDate);
     },
-    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics' && !!dateRangeParams.startDate,
     retry: false,
-    refetchInterval: 5000, // Poll every 5 seconds
+    staleTime: 60 * 1000, // 1 minute - aggregated data changes less frequently
+    refetchInterval: shouldPollAnalytics ? 60000 : false, // Poll every 60 seconds when active and visible
   });
 
   // Transform server-side analytics to match frontend format
@@ -273,15 +256,7 @@ export const ProjectDetailPage: React.FC = () => {
       await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setSelectedSecrets(new Set());
       setShowBulkDeleteModal(false);
     },
@@ -303,15 +278,7 @@ export const ProjectDetailPage: React.FC = () => {
       return results;
     },
     onSuccess: (results) => {
-      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowImportModal(false);
       setImportFile(null);
       setImportError(null);
@@ -368,15 +335,7 @@ export const ProjectDetailPage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowDeleteSecretModal(null);
       showNotification({
         type: 'success',
@@ -390,14 +349,7 @@ export const ProjectDetailPage: React.FC = () => {
   const inviteMutation = useMutation({
     mutationFn: () => membersService.inviteMember(projectId!, { email: inviteEmail, role: inviteRole }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowInviteModal(false);
       setInviteEmail('');
       setInviteRole('MEMBER');
@@ -408,14 +360,7 @@ export const ProjectDetailPage: React.FC = () => {
   const removeMemberMutation = useMutation({
     mutationFn: (userId: string) => membersService.removeMember(projectId!, userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
@@ -423,29 +368,14 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: ({ userId, role }: { userId: string; role: ProjectRole }) =>
       membersService.updateMemberRole(projectId!, userId, { role }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
   const transferOwnershipMutation = useMutation({
     mutationFn: () => membersService.transferOwnership(projectId!, { newOwnerUserId: transferTarget }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowTransferModal(false);
       setTransferTarget('');
     },
@@ -473,12 +403,7 @@ export const ProjectDetailPage: React.FC = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workflows'] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-      }
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
@@ -627,28 +552,14 @@ export const ProjectDetailPage: React.FC = () => {
         description: projectDescription.trim() || undefined,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
   const archiveProjectMutation = useMutation({
     mutationFn: () => projectsService.archiveProject(projectId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowArchiveModal(false);
     },
   });
@@ -656,11 +567,7 @@ export const ProjectDetailPage: React.FC = () => {
   const deleteProjectMutation = useMutation({
     mutationFn: () => projectsService.deleteProjectPermanently(projectId!),
     onSuccess: () => {
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowDeleteProjectModal(false);
       navigate('/projects');
     },
@@ -669,14 +576,7 @@ export const ProjectDetailPage: React.FC = () => {
   const restoreProjectMutation = useMutation({
     mutationFn: () => projectsService.restoreProject(projectId!),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowRestoreModal(false);
     },
   });
@@ -684,17 +584,63 @@ export const ProjectDetailPage: React.FC = () => {
   const leaveProjectMutation = useMutation({
     mutationFn: () => projectsService.leaveProject(projectId!),
     onSuccess: () => {
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
-        queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowLeaveModal(false);
       navigate('/projects');
     },
   });
 
+  // All hooks must be called before any early returns
+  const handleExportSecrets = useCallback(() => {
+    if (!project) return;
+    const exportData = {
+      project: {
+        id: project.id,
+        name: project.name,
+      },
+      exportedAt: new Date().toISOString(),
+      secrets: secrets.map((s: Secret) => ({
+        key: s.secretKey,
+        description: s.description || '',
+        expiresAt: s.expiresAt || null,
+      })),
+    };
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `secrets-${project.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [project, secrets]);
+
+  const handleImportSecrets = useCallback(() => setShowImportModal(true), []);
+  const handleAddSecret = useCallback(() => navigate(`/projects/${projectId}/secrets/new`), [navigate, projectId]);
+  const handleInviteMember = useCallback(() => setShowInviteModal(true), []);
+  const handleFilterChange = useCallback((key: string, value: any) => setSecretFilters(prev => ({ ...prev, [key]: value })), []);
+  const handleFilterClear = useCallback(() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' }), []);
+  const handleDeleteSecret = useCallback((key: string) => setShowDeleteSecretModal(key), []);
+  const handleBulkDelete = useCallback(() => setShowBulkDeleteModal(true), []);
+  const handleRemoveMember = useCallback((userId: string) => removeMemberMutation.mutate(userId), [removeMemberMutation]);
+  const handleWorkflowChange = useCallback((workflowId: string | null) => {
+    const oldWorkflowId = currentWorkflow?.id || null;
+    setSelectedWorkflowId(workflowId || '');
+    moveProjectToWorkflowMutation.mutate({
+      fromWorkflowId: oldWorkflowId,
+      toWorkflowId: workflowId,
+    });
+  }, [currentWorkflow, moveProjectToWorkflowMutation]);
+  const handleTransferOwnership = useCallback(() => setShowTransferModal(true), []);
+  const handleArchive = useCallback(() => setShowArchiveModal(true), []);
+  const handleRestore = useCallback(() => setShowRestoreModal(true), []);
+  const handleDeleteProject = useCallback(() => setShowDeleteProjectModal(true), []);
+  const handleLeave = useCallback(() => setShowLeaveModal(true), []);
+  const handleSave = useCallback(() => updateProjectMutation.mutate(), [updateProjectMutation]);
+
+  // Early returns after all hooks
   if (isProjectLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -706,9 +652,15 @@ export const ProjectDetailPage: React.FC = () => {
   if (projectError || !project) {
     return (
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 transition-colors">
-          <h2 className="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Project Not Found</h2>
-          <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+        <div 
+          className="border rounded-lg p-6 transition-colors"
+          style={{
+            backgroundColor: 'var(--status-danger-bg)',
+            borderColor: 'var(--status-danger)',
+          }}
+        >
+          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Project Not Found</h2>
+          <p className="text-body-sm mb-4" style={{ color: 'var(--status-danger)' }}>
             This project may have been deleted or you don't have access to it.
           </p>
           <Button variant="secondary" onClick={() => navigate('/projects')}>
@@ -728,101 +680,17 @@ export const ProjectDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <Button variant="ghost" onClick={() => navigate('/projects')} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Projects
-        </Button>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{project.name}</h1>
-                {currentUserRole && (
-                  <Badge variant={ROLE_COLORS[currentUserRole]}>
-                    {ROLE_ICONS[currentUserRole]}
-                    {currentUserRole}
-                  </Badge>
-                )}
-                {project.isArchived && <Badge variant="warning">Archived</Badge>}
-              </div>
-              {project.description && <p className="mt-1 text-gray-500 dark:text-neutral-400">{project.description}</p>}
-            </div>
-
-            <div className="flex gap-2">
-              {activeTab === 'secrets' && canManageSecrets && (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      // Export secrets to JSON
-                      const exportData = {
-                        project: {
-                          id: project?.id,
-                          name: project?.name,
-                        },
-                        exportedAt: new Date().toISOString(),
-                        secrets: secrets.map((s: Secret) => ({
-                          key: s.secretKey,
-                          description: s.description || '',
-                          expiresAt: s.expiresAt || null,
-                        })),
-                      };
-                      const json = JSON.stringify(exportData, null, 2);
-                      const blob = new Blob([json], { type: 'application/json' });
-                      const url = URL.createObjectURL(blob);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = `secrets-${project?.name.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                      URL.revokeObjectURL(url);
-                    }}
-                    disabled={secrets.length === 0}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowImportModal(true)}
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Import
-                  </Button>
-                  <Button onClick={() => navigate(`/projects/${projectId}/secrets/new`)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Secret
-                  </Button>
-                </>
-              )}
-
-              {activeTab === 'members' && canManageMembers && (
-                <Button onClick={() => setShowInviteModal(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Invite Member
-                </Button>
-              )}
-            </div>
-          </div>
-          <div className="rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 px-6 py-4 text-sm text-neutral-600 dark:text-neutral-400 transition-colors">
-            <p>
-              Need help?{' '}
-              <button className="underline" type="button" onClick={() => setActiveTab('activity')}>
-                View project activity
-              </button>{' '}
-              or visit{' '}
-              <button className="underline" type="button" onClick={() => setActiveTab('settings')}>
-                project settings
-              </button>{' '}
-              for more tools.
-            </p>
-          </div>
-        </div>
-      </div>
+      <ProjectHeader
+        project={project}
+        activeTab={activeTab}
+        canManageSecrets={canManageSecrets}
+        canManageMembers={canManageMembers}
+        onExportSecrets={handleExportSecrets}
+        onImportSecrets={handleImportSecrets}
+        onAddSecret={handleAddSecret}
+        onInviteMember={handleInviteMember}
+        secretsCount={secrets.length}
+      />
 
       {/* Tabs */}
       <Tabs
@@ -835,861 +703,97 @@ export const ProjectDetailPage: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'secrets' && (
-        <div className="space-y-4">
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-neutral-500" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search secrets..."
-                className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors"
-              />
-            </div>
-            <FilterPanel
-              filters={secretFilterConfigs}
-              values={secretFilters}
-              onChange={(key, value) => setSecretFilters(prev => ({ ...prev, [key]: value }))}
-              onClear={() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' })}
-            />
-          </div>
-
-          {/* Bulk Actions Toolbar */}
-          {selectedSecrets.size > 0 && canDeleteSecrets && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
-                  {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
-                </span>
-                <Button variant="ghost" size="sm" onClick={clearSelection} className="text-blue-700 dark:text-blue-400">
-                  Clear
-                </Button>
-              </div>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => setShowBulkDeleteModal(true)}
-                disabled={bulkDeleteSecretsMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected
-              </Button>
-            </div>
-          )}
-
-          {isSecretsLoading ? (
-            <SkeletonTable rows={5} cols={6} />
-          ) : secrets.length === 0 ? (
-            <EmptyState
-              icon={<Key className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
-              title={searchTerm ? 'No secrets match your search' : 'No secrets yet'}
-              description={
-                searchTerm
-                  ? 'Try a different search term'
-                  : 'Add your first secret to this project'
-              }
-              action={
-                canManageSecrets
-                  ? {
-                    label: 'Add Secret',
-                    onClick: () => navigate(`/projects/${projectId}/secrets/new`),
-                  }
-                  : undefined
-              }
-            />
-          ) : (
-            <>
-              {/* Desktop Table View */}
-              <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 overflow-hidden transition-colors">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      {canDeleteSecrets && (
-                        <th className="px-6 py-3 text-left">
-                          <input
-                            type="checkbox"
-                            checked={selectedSecrets.size === secrets.length && secrets.length > 0}
-                            onChange={selectAllSecrets}
-                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                          />
-                        </th>
-                      )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider bg-white dark:bg-[#111111]">Key</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Created
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Change
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Version
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white dark:bg-[#111111] divide-y divide-gray-200 dark:divide-neutral-800">
-                    {secrets.map((secret: Secret) => {
-                      const isExpired =
-                        secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
-                      const versionList = secret.secretVersions;
-                      const lastVersionEntry =
-                        versionList && versionList.length > 0 ? versionList[versionList.length - 1] : undefined;
-                      const versionNumber = secret.version ?? lastVersionEntry?.versionNumber ?? 1;
-                      const lastChangeDate = lastVersionEntry?.createdAt ?? secret.updatedAt;
-                      const lastChangeUser =
-                        lastVersionEntry?.creator?.displayName ||
-                        lastVersionEntry?.creator?.email ||
-                        secret.creator?.displayName ||
-                        secret.creator?.email;
-                      const historyLink = `/projects/${projectId}/secrets/${encodeURIComponent(
-                        secret.secretKey
-                      )}#versions`;
-
-                      return (
-                        <tr key={secret.id || secret.secretKey} className="hover:bg-gray-50">
-                          {canDeleteSecrets && (
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <input
-                                type="checkbox"
-                                checked={selectedSecrets.has(secret.secretKey)}
-                                onChange={() => toggleSecretSelection(secret.secretKey)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                            </td>
-                          )}
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <Link
-                              to={`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`}
-                              className="text-sm font-medium text-neutral-900 dark:text-white hover:underline transition-colors"
-                            >
-                              {secret.secretKey}
-                            </Link>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-neutral-400">
-                            {new Date(secret.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900 dark:text-white">{new Date(lastChangeDate).toLocaleDateString()}</div>
-                            {lastChangeUser && <div className="text-xs text-gray-500 dark:text-neutral-400">by {lastChangeUser}</div>}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">v{versionNumber}</div>
-                            <Link to={historyLink} className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors">
-                              View history
-                            </Link>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            {isExpired ? (
-                              <Badge variant="danger">Expired</Badge>
-                            ) : secret.expiresAt ? (
-                              <Badge variant="warning">
-                                Expires {new Date(secret.expiresAt).toLocaleDateString()}
-                              </Badge>
-                            ) : (
-                              <Badge variant="default">Active</Badge>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)
-                              }
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            {canManageSecrets && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)
-                                }
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canDeleteSecrets && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setShowDeleteSecretModal(secret.secretKey)}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden grid grid-cols-1 gap-4">
-                {secrets.map((secret: Secret) => (
-                  <div key={secret.id || secret.secretKey} className="relative">
-                    {canDeleteSecrets && (
-                      <div className="absolute top-4 left-4 z-10">
-                        <input
-                          type="checkbox"
-                          checked={selectedSecrets.has(secret.secretKey)}
-                          onChange={() => toggleSecretSelection(secret.secretKey)}
-                          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                        />
-                      </div>
-                    )}
-                    <SecretCard
-                      secret={secret}
-                      projectId={projectId!}
-                      canManageSecrets={canManageSecrets}
-                      canDeleteSecrets={canDeleteSecrets}
-                      onView={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}`)}
-                      onEdit={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secret.secretKey)}/edit`)}
-                      onDelete={() => setShowDeleteSecretModal(secret.secretKey)}
-                    />
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        <SecretsTab
+          projectId={projectId!}
+          secrets={secrets}
+          isLoading={isSecretsLoading}
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          secretFilters={secretFilters}
+          onFilterChange={handleFilterChange}
+          onFilterClear={handleFilterClear}
+          secretFilterConfigs={secretFilterConfigs}
+          selectedSecrets={selectedSecrets}
+          onToggleSelection={toggleSecretSelection}
+          onSelectAll={selectAllSecrets}
+          onClearSelection={clearSelection}
+          canManageSecrets={canManageSecrets}
+          canDeleteSecrets={canDeleteSecrets}
+          onDeleteSecret={handleDeleteSecret}
+          onBulkDelete={handleBulkDelete}
+          isBulkDeleting={bulkDeleteSecretsMutation.isPending}
+        />
       )}
 
       {activeTab === 'members' && (
-        <div className="space-y-4">
-          {isMembersLoading && activeTab === 'members' ? (
-            <div className="flex justify-center py-8">
-              <Spinner size="lg" />
-            </div>
-          ) : !members || members.length === 0 ? (
-            <EmptyState
-              icon={<Users className="h-16 w-16 text-gray-400 dark:text-neutral-600" />}
-              title="No members"
-              description="Invite team members to collaborate on this project"
-              action={
-                canManageMembers
-                  ? {
-                    label: 'Invite Member',
-                    onClick: () => setShowInviteModal(true),
-                  }
-                  : undefined
-              }
-            />
-          ) : (
-            <div className="bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 divide-y divide-gray-200 dark:divide-neutral-800 transition-colors">
-              {members.map((member) => (
-                <div
-                  key={member.id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50"
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
-                      <span className="text-neutral-700 font-medium">
-                        {(member.user?.displayName || member.user?.email || 'U').charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {member.user?.displayName || member.user?.email}
-                        {member.userId === user?.id && (
-                          <span className="ml-2 text-xs text-gray-400">(You)</span>
-                        )}
-                      </p>
-                      <p className="text-sm text-gray-500 flex items-center">
-                        <Mail className="h-3 w-3 mr-1" />
-                        {member.user?.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    {canEditMemberRole(member) ? (
-                      <select
-                        value={member.role}
-                        onChange={(e) => handleMemberRoleChange(member, e.target.value as ProjectRole)}
-                        className="px-3 py-1.5 border border-neutral-200 rounded-lg text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-900"
-                        disabled={roleChangeTarget === member.userId && updateMemberRoleMutation.isPending}
-                      >
-                        {availableRoleOptions.map((role) => (
-                          <option key={role} value={role}>
-                            {role.charAt(0) + role.slice(1).toLowerCase()}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <Badge variant={ROLE_COLORS[member.role]}>
-                        {ROLE_ICONS[member.role]}
-                        {member.role}
-                      </Badge>
-                    )}
-                    {canManageMembers && member.userId !== user?.id && member.role !== 'OWNER' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeMemberMutation.mutate(member.userId)}
-                        isLoading={removeMemberMutation.isPending}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <MembersTab
+          members={members}
+          isLoading={isMembersLoading}
+          currentUserId={user?.id}
+          canManageMembers={canManageMembers}
+          canEditMemberRole={canEditMemberRole}
+          availableRoleOptions={availableRoleOptions}
+          roleChangeTarget={roleChangeTarget}
+          isUpdatingRole={updateMemberRoleMutation.isPending}
+          onRoleChange={handleMemberRoleChange}
+          onRemoveMember={handleRemoveMember}
+          onInviteMember={handleInviteMember}
+        />
       )}
 
       {activeTab === 'activity' && (
-        <ErrorBoundary
-          resetKeys={[projectId || '', activityView]}
-          fallback={
-            <Card className="p-6">
-              <div className="text-center">
-                <p className="text-red-600 mb-2">Error loading activity tab</p>
-                <p className="text-sm text-gray-500 mb-4">
-                  There was an error displaying the activity tab. Please try refreshing the page.
-                </p>
-                <Button onClick={() => window.location.reload()}>Refresh Page</Button>
-              </div>
-            </Card>
-          }
-        >
-          <div className="space-y-6">
-            {/* Header with view toggle and date filter */}
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Project Activity</h2>
-              <div className="flex items-center gap-3">
-                {/* Date Range Filter and Export (only for analytics) */}
-                {activityView === 'analytics' && (
-                  <>
-                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                      <Calendar className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
-                      <select
-                        value={dateRange}
-                        onChange={(e) => setDateRange(e.target.value as '7d' | '30d' | '90d' | 'all')}
-                        className="bg-transparent border-none text-sm font-medium text-gray-700 dark:text-neutral-300 focus:outline-none cursor-pointer transition-colors"
-                      >
-                        <option value="7d">Last 7 days</option>
-                        <option value="30d">Last 30 days</option>
-                        <option value="90d">Last 90 days</option>
-                        <option value="all">All time</option>
-                      </select>
-                    </div>
-                    {analyticsStats && (
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={exportAnalytics}
-                        className="!m-0"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Export
-                      </Button>
-                    )}
-                  </>
-                )}
-
-                {/* View Toggle */}
-                <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                  <Button
-                    variant={activityView === 'analytics' ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setActivityView('analytics')}
-                    className="!m-0"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Analytics
-                  </Button>
-                  <Button
-                    variant={activityView === 'list' ? 'primary' : 'secondary'}
-                    size="sm"
-                    onClick={() => setActivityView('list')}
-                    className="!m-0"
-                  >
-                    <List className="h-4 w-4 mr-2" />
-                    List
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* Analytics View */}
-            {activityView === 'analytics' && (
-              <>
-                {isAnalyticsLoading ? (
-                  <div className="space-y-6">
-                    <SkeletonStats />
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
-                        <Skeleton variant="text" width="40%" height={24} className="mb-4" />
-                        <Skeleton variant="rectangular" width="100%" height={300} />
-                      </div>
-                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
-                        <Skeleton variant="text" width="40%" height={24} className="mb-4" />
-                        <Skeleton variant="rectangular" width="100%" height={300} />
-                      </div>
-                    </div>
-                  </div>
-                ) : analyticsError ? (
-                  <Card className="p-6">
-                    <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Error Loading Analytics</h3>
-                      <p className="text-sm text-gray-600 dark:text-neutral-400 mb-4">
-                        {analyticsError instanceof Error
-                          ? analyticsError.message
-                          : 'An error occurred while loading analytics. Please try again.'}
-                      </p>
-                      {(analyticsError as any)?.isPermissionError && (
-                        <p className="text-xs text-gray-500 mb-4">
-                          You may not have permission to view analytics for this project.
-                        </p>
-                      )}
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.location.reload()}
-                      >
-                        Refresh Page
-                      </Button>
-                    </div>
-                  </Card>
-                ) : !analyticsStats ? (
-                  <Card className="p-6">
-                    <EmptyState
-                      icon={<Activity className="h-16 w-16 text-gray-400" />}
-                      title="No Activity"
-                      description="Activity for this project will appear here as actions are performed"
-                    />
-                  </Card>
-                ) : (() => {
-                  try {
-                    if (!analyticsStats) {
-                      return (
-                        <Card className="p-6">
-                          <EmptyState
-                            icon={<Activity className="h-16 w-16 text-gray-400" />}
-                            title="No Activity"
-                            description="Activity for this project will appear here as actions are performed"
-                          />
-                        </Card>
-                      );
-                    }
-                    return (
-                      <div className="space-y-6">
-                        {/* Stats Cards */}
-                        <StatsCards stats={analyticsStats} />
-
-                        {/* Charts */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          <ActivityChart data={chartData} title="Activity Over Time" type="line" />
-                          <ActionDistributionChart
-                            actionsByType={analyticsStats.actionsByType}
-                            title="Actions Distribution"
-                          />
-                        </div>
-
-                        {/* Top Users and Actions */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          {/* Top Users */}
-                          <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Contributors</h3>
-                            {analyticsStats.topUsers.length === 0 ? (
-                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No user data available</p>
-                            ) : (
-                              <div className="space-y-3">
-                                {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
-                                  <div key={user.userId} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600">
-                                        {index + 1}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                          {user.email || 'Unknown User'}
-                                        </p>
-                                        <p className="text-xs text-gray-500">{user.count} actions</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </Card>
-
-                          {/* Top Actions */}
-                          <Card className="p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Most Common Actions</h3>
-                            {analyticsStats.topActions.length === 0 ? (
-                              <p className="text-gray-500 dark:text-neutral-400 text-sm">No action data available</p>
-                            ) : (
-                              <div className="space-y-3">
-                                {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (
-                                  <div key={action.action} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-600">
-                                        {index + 1}
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                          {formatActionName(action.action)}
-                                        </p>
-                                        <p className="text-xs text-gray-500">{action.count} occurrences</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </Card>
-                        </div>
-                      </div>
-                    );
-                  } catch (error) {
-                    // console.error('Error rendering analytics:', error);
-
-                    return (
-                      <Card className="p-6">
-                        <div className="text-center">
-                          <p className="text-red-600 mb-2">Error rendering analytics</p>
-                          <p className="text-sm text-gray-500">{String(error)}</p>
-                        </div>
-                      </Card>
-                    );
-                  }
-                })()}
-              </>
-            )}
-
-            {/* List View */}
-            {activityView === 'list' && (
-              <>
-                {isActivityLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
-                  </div>
-                ) : activityError ? (
-                  <Card className="p-6">
-                    <div className="text-center">
-                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                        <AlertTriangle className="h-6 w-6 text-red-600" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Activity</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        {activityError instanceof Error
-                          ? activityError.message
-                          : 'An error occurred while loading activity data. Please try again.'}
-                      </p>
-                      {(activityError as any)?.isPermissionError && (
-                        <p className="text-xs text-gray-500 mb-4">
-                          You may not have permission to view audit logs for this project.
-                        </p>
-                      )}
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => window.location.reload()}
-                      >
-                        Refresh Page
-                      </Button>
-                    </div>
-                  </Card>
-                ) : !activityData || !('content' in activityData) || activityData.content.length === 0 ? (
-                  <Card className="p-6">
-                    <EmptyState
-                      icon={<Activity className="h-16 w-16 text-gray-400" />}
-                      title="No Activity"
-                      description="Activity for this project will appear here as actions are performed"
-                    />
-                  </Card>
-                ) : (
-                  <>
-                    <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
-                      {activityData.content.map((log: AuditLog) => {
-                        const getTimeAgo = (timestamp: string) => {
-                          const date = new Date(timestamp);
-                          const now = new Date();
-                          const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-                          if (diffInSeconds < 60) return 'just now';
-                          if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-                          if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-                          if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-                          return date.toLocaleDateString();
-                        };
-
-                        const formatAction = (action: string) => {
-                          return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-                        };
-
-                        const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
-                          if (action.includes('CREATE')) return 'success';
-                          if (action.includes('DELETE')) return 'danger';
-                          if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
-                          if (action.includes('READ')) return 'info';
-                          return 'default';
-                        };
-
-                        return (
-                          <div key={log.id} className="p-4 hover:bg-gray-50 transition-colors">
-                            <div className="flex items-start gap-4">
-                              <div className={`p-2 rounded-lg ${getActionColor(log.action) === 'success' ? 'bg-green-100 text-green-600' :
-                                getActionColor(log.action) === 'danger' ? 'bg-red-100 text-red-600' :
-                                  getActionColor(log.action) === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                    getActionColor(log.action) === 'info' ? 'bg-blue-100 text-blue-600' :
-                                      'bg-gray-100 text-gray-600'
-                                }`}>
-                                <Activity className="h-4 w-4" />
-                              </div>
-
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant={getActionColor(log.action)}>
-                                    {formatAction(log.action)}
-                                  </Badge>
-                                  {log.resourceName && (
-                                    <span className="text-sm font-medium text-gray-900">
-                                      {log.resourceName}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="mt-1 text-sm text-gray-500">
-                                  by {log.userEmail || log.user?.email || 'Unknown'}
-                                </p>
-                              </div>
-
-                              <div className="flex items-center text-sm text-gray-400">
-                                <Clock className="h-4 w-4 mr-1" />
-                                {getTimeAgo(log.createdAt || '')}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {activityData.totalPages > 1 && (
-                      <div className="flex justify-center">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setActivityPage(p => Math.max(1, p - 1))}
-                            disabled={activityPage === 1}
-                          >
-                            Previous
-                          </Button>
-                          <span className="flex items-center px-4 text-sm text-gray-600">
-                            Page {activityPage} of {activityData.totalPages}
-                          </span>
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setActivityPage(p => Math.min(activityData.totalPages, p + 1))}
-                            disabled={activityPage >= activityData.totalPages}
-                          >
-                            Next
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </ErrorBoundary>
+        <ActivityTab
+          projectId={projectId}
+          activityView={activityView}
+          onViewChange={setActivityView}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          analyticsStats={analyticsStats}
+          isAnalyticsLoading={isAnalyticsLoading}
+          analyticsError={analyticsError}
+          chartData={chartData}
+          onExportAnalytics={exportAnalytics}
+          activityData={activityData}
+          isActivityLoading={isActivityLoading}
+          activityError={activityError}
+          activityPage={activityPage}
+          onPageChange={setActivityPage}
+        />
       )}
 
       {activeTab === 'settings' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Project Overview</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {metaPairs.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-neutral-100 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-neutral-900">{item.value}</p>
-                </div>
-              ))}
-              <div className="rounded-2xl border border-neutral-100 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">Status</p>
-                <p className="mt-2 text-lg font-semibold text-neutral-900">
-                  {isArchived ? 'Archived' : 'Active'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-neutral-900">General Settings</h2>
-              {canManageProject && (
-                <Button
-                  onClick={() => updateProjectMutation.mutate()}
-                  disabled={!hasFormChanges || updateProjectMutation.isPending}
-                >
-                  {updateProjectMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-5 max-w-2xl">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Project Name</label>
-                <Input
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                  disabled={!canManageProject}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
-                <textarea
-                  className="w-full px-4 py-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
-                  rows={4}
-                  value={projectDescription}
-                  onChange={(e) => setProjectDescription(e.target.value)}
-                  placeholder="Describe the scope, environments, or use cases for this project."
-                  disabled={!canManageProject}
-                />
-              </div>
-
-              {/* Workflow Selection */}
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                  Workflow
-                  <span className="text-gray-400 font-normal ml-1">(optional)</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none">
-                    <LayoutGrid className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <select
-                    value={selectedWorkflowId}
-                    onChange={(e) => {
-                      const newWorkflowId = e.target.value || null;
-                      const oldWorkflowId = currentWorkflow?.id || null;
-                      setSelectedWorkflowId(newWorkflowId || '');
-                      moveProjectToWorkflowMutation.mutate({
-                        fromWorkflowId: oldWorkflowId,
-                        toWorkflowId: newWorkflowId,
-                      });
-                    }}
-                    disabled={!canManageProject || moveProjectToWorkflowMutation.isPending}
-                    className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">No Workflow (Unassigned)</option>
-                    {workflows?.map((w) => (
-                      <option key={w.id} value={w.id}>
-                        {w.name} {w.isDefault && '(Default)'}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  Organize this project by assigning it to a workflow. Projects can be moved between workflows at any time.
-                </p>
-                {moveProjectToWorkflowMutation.isPending && (
-                  <p className="mt-1 text-xs text-blue-600">Moving project...</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {canManageProject ? (
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 space-y-6">
-              <div>
-                <p className="text-sm font-semibold text-neutral-900">Project Lifecycle</p>
-                <p className="text-sm text-neutral-500 mt-1">
-                  Archive projects you no longer need but may want to restore later. Permanently deleting removes all
-                  secrets and activity forever.
-                </p>
-              </div>
-              {transferableMembers.length > 0 && (
-                <div className="flex flex-col gap-3 md:flex-row">
-                  <Button variant="secondary" className="flex-1" onClick={() => setShowTransferModal(true)}>
-                    Transfer Ownership
-                  </Button>
-                </div>
-              )}
-              <div className="flex flex-col gap-3 md:flex-row">
-                {!isArchived ? (
-                  <>
-                    <Button
-                      variant="secondary"
-                      className="flex-1"
-                      onClick={() => setShowArchiveModal(true)}
-                      isLoading={archiveProjectMutation.isPending}
-                    >
-                      Archive Project
-                    </Button>
-                    <Button variant="danger" className="flex-1" onClick={() => setShowDeleteProjectModal(true)}>
-                      Delete Project
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      className="flex-1"
-                      onClick={() => setShowRestoreModal(true)}
-                      isLoading={restoreProjectMutation.isPending}
-                    >
-                      Restore Project
-                    </Button>
-                    <Button variant="danger" className="flex-1" onClick={() => setShowDeleteProjectModal(true)}>
-                      Delete Permanently
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6">
-              <p className="text-sm font-semibold text-neutral-900 mb-2">Leave Project</p>
-              <p className="text-sm text-neutral-500 mb-2">
-                Remove your access to this project. You will need to be re-invited to regain access.
-              </p>
-              {isSoleOwner && (
-                <p className="text-xs text-red-600 mb-4">
-                  Promote another member to Owner before leaving. Projects require at least one active owner.
-                </p>
-              )}
-              {canLeaveProject && (
-                <Button
-                  variant="secondary"
-                  onClick={() => setShowLeaveModal(true)}
-                  isLoading={leaveProjectMutation.isPending}
-                >
-                  Leave Project
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
+        <SettingsTab
+          metaPairs={metaPairs}
+          isArchived={isArchived}
+          canManageProject={canManageProject}
+          canLeaveProject={canLeaveProject ?? false}
+          isSoleOwner={isSoleOwner}
+          projectName={projectName}
+          projectDescription={projectDescription}
+          onProjectNameChange={setProjectName}
+          onProjectDescriptionChange={setProjectDescription}
+          hasFormChanges={hasFormChanges ?? false}
+          isSaving={updateProjectMutation.isPending}
+          onSave={handleSave}
+          workflows={workflows}
+          selectedWorkflowId={selectedWorkflowId}
+          onWorkflowChange={handleWorkflowChange}
+          isMovingWorkflow={moveProjectToWorkflowMutation.isPending}
+          transferableMembers={transferableMembers}
+          onTransferOwnership={handleTransferOwnership}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
+          onDelete={handleDeleteProject}
+          onLeave={handleLeave}
+          isArchiving={archiveProjectMutation.isPending}
+          isRestoring={restoreProjectMutation.isPending}
+          isLeaving={leaveProjectMutation.isPending}
+        />
       )}
       {/* Archive Modal */}
       <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
             the archived projects view.
           </p>
@@ -1707,15 +811,15 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Transfer Ownership Modal */}
       <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
           </p>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Select new owner</label>
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>Select new owner</label>
             <select
               value={transferTarget}
               onChange={(e) => setTransferTarget(e.target.value)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             >
               <option value="">Choose member</option>
               {transferableMembers.map((member) => (
@@ -1747,7 +851,7 @@ export const ProjectDetailPage: React.FC = () => {
         title="Delete Selected Secrets"
       >
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to delete <strong>{selectedSecrets.size}</strong> secret{selectedSecrets.size !== 1 ? 's' : ''}? This action cannot be undone.
           </p>
           <div className="flex justify-end space-x-3">
@@ -1768,7 +872,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Delete Project Modal */}
       <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
             action cannot be undone.
           </p>
@@ -1786,7 +890,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Restore Modal */}
       <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title="Restore Project">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Restore <strong>{project?.name}</strong> to make it active again.
           </p>
           <div className="flex justify-end space-x-3">
@@ -1803,7 +907,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Leave Modal */}
       <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p className="text-neutral-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
             access.
           </p>
@@ -1825,7 +929,7 @@ export const ProjectDetailPage: React.FC = () => {
         title="Delete Secret"
       >
         <div className="space-y-4">
-          <p className="text-gray-700">
+          <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to delete <strong>{showDeleteSecretModal}</strong>?
             This action cannot be undone.
           </p>
@@ -1860,13 +964,13 @@ export const ProjectDetailPage: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
               Role
             </label>
             <select
               value={inviteRole}
               onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             >
               <option value="VIEWER">Viewer - Read-only access</option>
               <option value="MEMBER">Member - Can create and update secrets</option>
@@ -1891,7 +995,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {inviteMutation.isError && (
-            <p className="text-sm text-red-600">
+            <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
               Failed to send invitation. Please try again.
             </p>
           )}
@@ -1909,12 +1013,12 @@ export const ProjectDetailPage: React.FC = () => {
         title="Import Secrets"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
-            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="bg-gray-100 px-1 rounded">key</code> and <code className="bg-gray-100 px-1 rounded">value</code> fields.
+          <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+            Upload a JSON file to import secrets. The file should contain an array of secrets with <code className="px-1 rounded" style={{ backgroundColor: 'var(--elevation-2)' }}>key</code> and <code className="px-1 rounded" style={{ backgroundColor: 'var(--elevation-2)' }}>value</code> fields.
           </p>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
               Select File
             </label>
             <input
@@ -1927,18 +1031,24 @@ export const ProjectDetailPage: React.FC = () => {
                   setImportError(null);
                 }
               }}
-              className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white"
+              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
             />
             {importFile && (
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
                 Selected: {importFile.name}
               </p>
             )}
           </div>
 
           {importError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-600">{importError}</p>
+            <div 
+              className="border rounded-lg p-3"
+              style={{
+                backgroundColor: 'var(--status-danger-bg)',
+                borderColor: 'var(--status-danger)',
+              }}
+            >
+              <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>{importError}</p>
             </div>
           )}
 

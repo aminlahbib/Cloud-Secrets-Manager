@@ -14,7 +14,7 @@ export const Spinner: React.FC<SpinnerProps> = ({ size = 'md', className = '' })
 
   return (
     <div
-      className={`animate-spin rounded-full border-t-neutral-900 border-r-neutral-900 border-b-neutral-200 border-l-neutral-200 ${sizeClasses[size]} ${className}`}
+      className={`animate-spin rounded-full ${sizeClasses[size]} ${className} border-t-accent-primary border-r-accent-primary border-b-border-subtle border-l-border-subtle`}
       role="status"
       aria-label="Loading"
     >

@@ -28,7 +28,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
   return (
     <div>
       {/* Tab Headers */}
-      <div className="border-b border-gray-200 dark:border-neutral-800">
+      <div className="tab-container">
         <nav className="-mb-px flex space-x-8 overflow-x-auto">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -38,24 +38,21 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
               <button
                 key={tab.id}
                 onClick={() => handleChange(tab.id)}
-                className={`
-                  py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap flex items-center gap-2 transition-colors min-h-[44px] touch-manipulation
-                  ${isActive
-                    ? 'border-neutral-900 dark:border-white text-neutral-900 dark:text-white'
-                    : 'border-transparent text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200 hover:border-neutral-300 dark:hover:border-neutral-600'
-                  }
-                `}
+                className={`tab-button ${isActive ? 'tab-button-active' : 'border-transparent'} ${isActive ? 'text-theme-primary' : 'text-theme-secondary'}`}
+                style={{
+                  borderBottomColor: isActive ? 'var(--tab-active-border)' : 'transparent',
+                }}
               >
-                {Icon && <Icon className="h-4 w-4" />}
+                {Icon && (
+                  <Icon 
+                    className={`h-4 w-4 transition-colors duration-300 ${isActive ? 'text-theme-primary' : 'text-theme-secondary'}`}
+                  />
+                )}
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`
-                    px-2 py-0.5 rounded-full text-xs font-medium transition-colors
-                    ${isActive 
-                      ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900' 
-                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
-                    }
-                  `}>
+                  <span 
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${isActive ? 'bg-accent-primary text-theme-inverse' : 'bg-elevation-2 text-theme-secondary'}`}
+                  >
                     {tab.count}
                   </span>
                 )}

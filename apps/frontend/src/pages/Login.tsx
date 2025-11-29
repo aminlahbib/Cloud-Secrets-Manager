@@ -50,9 +50,18 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-100 px-4">
+    <div 
+      className="min-h-screen flex items-center justify-center px-4"
+      style={{ backgroundColor: 'var(--page-bg)' }}
+    >
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        <div 
+          className="rounded-2xl shadow-2xl p-8"
+          style={{
+            backgroundColor: 'var(--card-bg)',
+            boxShadow: 'var(--shadow-xl)',
+          }}
+        >
           {/* Header */}
           <div className="text-center mb-8">
             <img 
@@ -68,14 +77,20 @@ export const LoginPage: React.FC = () => {
               }}
             />
             <div className="text-4xl mb-2 hidden">🔐</div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cloud Secrets Manager</h1>
-            <p className="text-gray-600 dark:text-neutral-400 mt-2">Sign in to manage your secrets</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Cloud Secrets Manager</h1>
+            <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to manage your secrets</p>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
+            <div 
+              className="mb-4 p-3 border rounded-lg"
+              style={{
+                backgroundColor: 'var(--status-danger-bg)',
+                borderColor: 'var(--status-danger)',
+              }}
+            >
+              <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>{error}</p>
             </div>
           )}
 
@@ -115,13 +130,14 @@ export const LoginPage: React.FC = () => {
                 type="checkbox"
                 checked={keepSignedIn}
                 onChange={(e) => setKeepSignedIn(e.target.checked)}
-                className="h-4 w-4 rounded border-neutral-300 text-neutral-600 focus:ring-neutral-500"
+                className="h-4 w-4 rounded input-theme"
+                style={{ borderColor: 'var(--border-default)' }}
               />
-              <label htmlFor="keep-signed-in" className="ml-2 block text-sm text-gray-700 dark:text-neutral-300">
+              <label htmlFor="keep-signed-in" className="ml-2 block text-body-sm" style={{ color: 'var(--text-primary)' }}>
                 Keep me signed in
               </label>
             </div>
-            <p className="text-xs text-gray-500 dark:text-neutral-400 -mt-2 mb-2">
+            <p className="text-caption -mt-2 mb-2" style={{ color: 'var(--text-secondary)' }}>
               {keepSignedIn 
                 ? 'Your session will persist across browser restarts and tabs will stay synchronized.'
                 : 'Your session will end when you close the browser. Each tab has its own session.'}
@@ -137,10 +153,18 @@ export const LoginPage: React.FC = () => {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-neutral-700" />
+                  <div className="w-full border-t" style={{ borderTopColor: 'var(--border-default)' }} />
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-[#111111] text-gray-500 dark:text-neutral-400">Or continue with</span>
+                <div className="relative flex justify-center text-body-sm">
+                  <span 
+                    className="px-2"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -176,7 +200,7 @@ export const LoginPage: React.FC = () => {
           )}
 
           {/* Footer */}
-          <p className="mt-6 text-center text-sm text-gray-600">
+          <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
             Don't have an account? Contact your administrator.
           </p>
         </div>
