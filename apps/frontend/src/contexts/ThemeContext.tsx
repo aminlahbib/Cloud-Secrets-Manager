@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type ColorScheme = 'orange' | 'violet' | 'emerald' | 'minimal' | 'blue';
+export type ColorScheme = 'orange' | 'violet' | 'emerald' | 'minimal' | 'blue' | 'neomint' | 'plum';
 export type ThemeMode = 'light' | 'dark';
 export type Theme = `${ThemeMode}-${ColorScheme}`;
 
@@ -23,6 +23,10 @@ export const AVAILABLE_THEMES: ThemeInfo[] = [
   { id: 'dark-minimal', name: 'Dark (Minimal)', mode: 'dark', colorScheme: 'minimal', description: 'Minimal grayscale + subtle accent' },
   { id: 'light-blue', name: 'Light (Cool Blue)', mode: 'light', colorScheme: 'blue', description: 'Cool blue cloud theme' },
   { id: 'dark-blue', name: 'Dark (Cool Blue)', mode: 'dark', colorScheme: 'blue', description: 'Cool blue cloud theme' },
+  { id: 'light-neomint', name: 'Light (Neo-Mint)', mode: 'light', colorScheme: 'neomint', description: 'Futuristic cyber theme' },
+  { id: 'dark-neomint', name: 'Dark (Neo-Mint)', mode: 'dark', colorScheme: 'neomint', description: 'Futuristic cyber theme' },
+  { id: 'dark-plum', name: 'Dark (Plum & Sand)', mode: 'dark', colorScheme: 'plum', description: 'Sophisticated editorial theme' },
+  { id: 'light-plum', name: 'Light (Plum & Sand)', mode: 'light', colorScheme: 'plum', description: 'Sophisticated editorial theme' },
 ];
 
 interface ThemeContextType {
