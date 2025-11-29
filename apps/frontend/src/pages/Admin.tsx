@@ -11,10 +11,10 @@ import { Modal } from '../components/ui/Modal';
 
 const ROLES = ['USER', 'MANAGER', 'ADMIN'];
 
-const ROLE_COLORS: Record<string, 'default' | 'info' | 'warning' | 'danger'> = {
+const ROLE_COLORS: Record<string, 'default' | 'info' | 'warning' | 'owner-admin'> = {
   USER: 'default',
   MANAGER: 'info',
-  ADMIN: 'danger',
+  ADMIN: 'owner-admin',
 };
 
 export const AdminPage: React.FC = () => {

@@ -134,7 +134,7 @@ export const SettingsPage: React.FC = () => {
                       <label className="block text-body-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                         Account Type
                       </label>
-                      <Badge variant={isPlatformAdmin ? 'danger' : 'default'}>
+                      <Badge variant={isPlatformAdmin ? 'owner-admin' : 'default'}>
                         {user?.platformRole || 'USER'}
                       </Badge>
                     </div>
