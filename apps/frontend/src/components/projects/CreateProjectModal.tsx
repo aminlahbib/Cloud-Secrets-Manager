@@ -37,9 +37,17 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         if (isOpen) {
             setName('');
             setDescription('');
-            setWorkflowId(initialWorkflowId || '');
+            // Default to initialWorkflowId if provided, otherwise default to default workflow
+            if (initialWorkflowId) {
+                setWorkflowId(initialWorkflowId);
+            } else if (workflows && workflows.length > 0) {
+                const defaultWorkflow = workflows.find(w => w.isDefault) || workflows[0];
+                setWorkflowId(defaultWorkflow.id);
+            } else {
+                setWorkflowId('');
+            }
         }
-    }, [isOpen, initialWorkflowId]);
+    }, [isOpen, initialWorkflowId, workflows]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -48,7 +56,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             {
                 name,
                 description: description || undefined,
-                workflowId: workflowId || undefined,
+                workflowId: workflowId, // Always send workflowId (will default to default workflow on backend if not provided, but we always have one selected)
             },
             {
                 onSuccess: (project) => {
@@ -105,7 +113,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                     {/* Workflow Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Workflow <span className="text-gray-400 font-normal">(optional)</span>
+                            Workflow
                         </label>
                         <div className="relative">
                             <div className="absolute top-1/2 -translate-y-1/2 left-3 pointer-events-none">
@@ -115,13 +123,18 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 value={workflowId}
                                 onChange={(e) => setWorkflowId(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-neutral-900 focus:border-neutral-900 bg-white appearance-none"
+                                required
+                                disabled={!workflows || workflows.length === 0}
                             >
-                                <option value="">No Workflow (Unassigned)</option>
-                                {workflows?.map((w) => (
-                                    <option key={w.id} value={w.id}>
-                                        {w.name} {w.isDefault && '(Default)'}
-                                    </option>
-                                ))}
+                                {!workflows || workflows.length === 0 ? (
+                                    <option value="">Loading workflows...</option>
+                                ) : (
+                                    workflows.map((w) => (
+                                        <option key={w.id} value={w.id}>
+                                            {w.name} {w.isDefault && '(Default)'}
+                                        </option>
+                                    ))
+                                )}
                             </select>
                             <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,7 +143,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             </div>
                         </div>
                         <p className="mt-1 text-xs text-gray-500">
-                            Organize this project by assigning it to a workflow.
+                            Projects are automatically assigned to a workflow. Select which workflow to use.
                         </p>
                     </div>
                 </div>
