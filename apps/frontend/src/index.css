@@ -38,36 +38,141 @@
 
 @layer base {
   body {
-    @apply bg-gray-50 dark:bg-[#050608] text-gray-900 dark:text-[#E8EAED] antialiased transition-colors duration-200;
+    background-color: var(--page-bg);
+    color: var(--text-primary);
     font-feature-settings: "kern" 1, "liga" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color 200ms ease, color 200ms ease;
   }
   
   /* ============================================
-     HIGH-END DARK MODE DESIGN SYSTEM
+     MODERN THEME MANAGEMENT WITH CSS VARIABLES
+     Single source of truth - No class duplication
      ============================================ */
   
-  /* Light Mode Colors (unchanged) */
+  /* Light Theme (Default) */
   :root {
-    --tab-bg: #ffffff;
-    --tab-content-bg: #ffffff;
-    --tab-border: #e5e7eb;
-    --tab-active-border: #f97316;
-    --tab-text: #111827;
-    --tab-text-muted: #6b7280;
-    --tab-hover-bg: #f9fafb;
-    --card-bg: #ffffff;
-    --card-border: #e5e7eb;
-    --input-bg: #ffffff;
-    --input-border: #d1d5db;
-    --table-header-bg: #f9fafb;
-    --table-body-bg: #ffffff;
-    --table-divider: #e5e7eb;
+    /* ============================================
+       ELEVATION LAYERS (Background Hierarchy)
+       ============================================ */
+    --elevation-0: #f9fafb;  /* Page background - light gray */
+    --elevation-1: #ffffff;  /* Sidebar, main containers */
+    --elevation-2: #ffffff;  /* Cards, elevated surfaces */
+    --elevation-3: #f9fafb;  /* Hover states, active cards */
+    --elevation-4: #f3f4f6;  /* Pressed states, modals */
+    
+    /* ============================================
+       SEMANTIC COLORS
+       ============================================ */
+    /* Primary Accent - Warm Orange/Amber */
+    --accent-primary: #f97316;        /* Primary CTA, active states */
+    --accent-primary-hover: #ea580c;  /* Hover state */
+    --accent-primary-active: #c2410c; /* Pressed state */
+    --accent-primary-glow: rgba(249, 115, 22, 0.15); /* Soft glow */
+    
+    /* Secondary Accent - Cool Slate */
+    --accent-secondary: #64748b;      /* Secondary actions, icons */
+    --accent-secondary-hover: #475569;
+    --accent-secondary-muted: #94a3b8;
+    
+    /* Status Colors */
+    --status-success: #10b981;        /* Success text */
+    --status-success-bg: rgba(16, 185, 129, 0.1); /* Success background */
+    --status-warning: #f59e0b;        /* Warning text */
+    --status-warning-bg: rgba(245, 158, 11, 0.1); /* Warning background */
+    --status-danger: #ef4444;         /* Danger text */
+    --status-danger-bg: rgba(239, 68, 68, 0.1); /* Danger background */
+    --status-info: #3b82f6;           /* Info text */
+    --status-info-bg: rgba(59, 130, 246, 0.1);    /* Info background */
+    
+    /* ============================================
+       TEXT COLORS (WCAG AA Compliant)
+       ============================================ */
+    --text-primary: #111827;          /* Primary text */
+    --text-secondary: #4b5563;        /* Secondary text */
+    --text-tertiary: #6b7280;         /* Tertiary text */
+    --text-disabled: #9ca3af;         /* Disabled text */
+    --text-inverse: #ffffff;          /* Text on dark backgrounds */
+    
+    /* ============================================
+       BORDERS & DIVIDERS
+       ============================================ */
+    --border-subtle: #e5e7eb;         /* Subtle borders */
+    --border-default: #d1d5db;        /* Default borders */
+    --border-strong: #9ca3af;         /* Strong borders */
+    --border-accent: rgba(249, 115, 22, 0.3);     /* Accent borders */
+    
+    /* ============================================
+       SHADOWS & GLOWS
+       ============================================ */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    
+    /* ============================================
+       COMPONENT-SPECIFIC TOKENS
+       ============================================ */
+    /* Page Background */
+    --page-bg: var(--elevation-0);
+    
+    /* Sidebar */
+    --sidebar-bg: var(--elevation-1);
+    --sidebar-border: var(--border-subtle);
+    --sidebar-active-bg: rgba(249, 115, 22, 0.1);
+    --sidebar-active-border: var(--accent-primary);
+    --sidebar-hover-bg: var(--elevation-3);
+    
+    /* Cards */
+    --card-bg: var(--elevation-2);
+    --card-border: var(--border-subtle);
+    --card-hover-bg: var(--elevation-3);
+    --card-hover-border: var(--border-default);
+    --card-shadow: var(--shadow-md);
+    --card-shadow-hover: var(--shadow-lg);
+    
+    /* Tabs */
+    --tab-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-2);
+    --tab-border: var(--border-subtle);
+    --tab-active-border: var(--accent-primary);
+    --tab-text: var(--text-primary);
+    --tab-text-muted: var(--text-secondary);
+    --tab-hover-bg: var(--elevation-3);
+    
+    /* Inputs */
+    --input-bg: var(--elevation-1);
+    --input-border: var(--border-subtle);
+    --input-border-focus: var(--accent-primary);
+    --input-text: var(--text-primary);
+    --input-placeholder: var(--text-tertiary);
+    
+    /* Tables */
+    --table-header-bg: var(--elevation-1);
+    --table-body-bg: var(--elevation-0);
+    --table-divider: var(--border-subtle);
+    --table-row-hover: var(--elevation-1);
+    
+    /* Buttons */
+    --btn-primary-bg: var(--accent-primary);
+    --btn-primary-hover: var(--accent-primary-hover);
+    --btn-primary-active: var(--accent-primary-active);
+    --btn-primary-text: var(--text-inverse);
+    
+    --btn-secondary-bg: var(--elevation-2);
+    --btn-secondary-hover: var(--elevation-3);
+    --btn-secondary-border: var(--border-default);
+    --btn-secondary-text: var(--text-primary);
+    
+    --btn-ghost-hover: var(--elevation-2);
+    --btn-ghost-text: var(--text-secondary);
   }
   
-  /* Dark Mode - Layered Palette */
-  .dark {
+  /* Dark Theme */
+  [data-theme="dark"] {
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy)
        ============================================ */

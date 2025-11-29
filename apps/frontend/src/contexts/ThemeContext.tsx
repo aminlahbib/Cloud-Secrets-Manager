@@ -34,15 +34,25 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return 'light';
   });
 
+  // Initialize theme on mount and update on change
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    // Set data-theme attribute instead of class for better CSS variable management
+    // This allows CSS variables to be theme-aware without class duplication
+    root.setAttribute('data-theme', theme);
+    // Persist theme preference
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Initialize theme immediately on mount (before first render to prevent flash)
+  useEffect(() => {
+    const root = window.document.documentElement;
+    const saved = localStorage.getItem('theme') as Theme;
+    const initialTheme = (saved === 'light' || saved === 'dark') 
+      ? saved 
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    root.setAttribute('data-theme', initialTheme);
+  }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);

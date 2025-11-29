@@ -57,13 +57,27 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg shadow-lg p-4 z-20 min-w-[300px] transition-colors">
+          <div 
+            className="absolute top-full left-0 mt-2 border rounded-lg shadow-lg p-4 z-20 min-w-[300px] transition-colors"
+            style={{
+              backgroundColor: 'var(--elevation-4)',
+              borderColor: 'var(--border-subtle)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Filters</h3>
+              <h3 className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Filters</h3>
               {activeFiltersCount > 0 && (
                 <button
                   onClick={onClear}
-                  className="text-xs text-blue-600 hover:text-blue-700"
+                  className="text-caption transition-colors"
+                  style={{ color: 'var(--accent-primary)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--accent-primary-hover)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--accent-primary)';
+                  }}
                 >
                   Clear all
                 </button>
@@ -73,14 +87,14 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             <div className="space-y-4">
               {filters.map((filter) => (
                 <div key={filter.key}>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-neutral-300 mb-1">
+                  <label className="block text-caption font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                     {filter.label}
                   </label>
                   {filter.type === 'select' && filter.options && (
                     <select
                       value={values[filter.key] || ''}
                       onChange={(e) => onChange(filter.key, e.target.value || null)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-[#111111] text-gray-900 dark:text-white transition-colors"
+                      className="input-theme w-full px-3 py-2 text-body-sm"
                     >
                       <option value="">All</option>
                       {filter.options.map((option) => (
@@ -95,7 +109,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
                       type="date"
                       value={values[filter.key] || ''}
                       onChange={(e) => onChange(filter.key, e.target.value || null)}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-[#111111] text-gray-900 dark:text-white transition-colors"
+                      className="input-theme w-full px-3 py-2 text-body-sm"
                     />
                   )}
                   {filter.type === 'dateRange' && (
@@ -105,14 +119,14 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
                         placeholder="From"
                         value={values[`${filter.key}From`] || ''}
                         onChange={(e) => onChange(`${filter.key}From`, e.target.value || null)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-[#111111] text-gray-900 dark:text-white transition-colors"
+                        className="input-theme w-full px-3 py-2 text-body-sm"
                       />
                       <input
                         type="date"
                         placeholder="To"
                         value={values[`${filter.key}To`] || ''}
                         onChange={(e) => onChange(`${filter.key}To`, e.target.value || null)}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-[#111111] text-gray-900 dark:text-white transition-colors"
+                        className="input-theme w-full px-3 py-2 text-body-sm"
                       />
                     </div>
                   )}
@@ -120,7 +134,10 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-neutral-800 flex justify-end">
+            <div 
+              className="mt-4 pt-4 border-t flex justify-end"
+              style={{ borderTopColor: 'var(--border-subtle)' }}
+            >
               <Button
                 variant="ghost"
                 size="sm"

@@ -67,19 +67,34 @@ export const SecretFormPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-neutral-50 dark:bg-[#0a0a0a] min-h-screen py-10 px-4 transition-colors">
+    <div 
+      className="min-h-screen py-10 px-4 transition-colors"
+      style={{ backgroundColor: 'var(--page-bg)' }}
+    >
       <div className="max-w-3xl mx-auto space-y-6">
         <button
           onClick={() => navigate(`/projects/${projectId}`)}
-          className="inline-flex items-center text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+          className="inline-flex items-center text-body-sm font-medium transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'var(--text-secondary)';
+          }}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Project
         </button>
 
-        <div className="bg-white dark:bg-[#111111] border border-neutral-200 dark:border-neutral-800 rounded-[24px] shadow-sm p-8 space-y-6 transition-colors">
+        <div 
+          className="border rounded-[24px] shadow-sm p-8 space-y-6 transition-colors card"
+          style={{
+            borderColor: 'var(--card-border)',
+          }}
+        >
           <div>
-            <h1 className="text-3xl font-semibold text-neutral-900 dark:text-white">
+            <h1 className="text-h1 font-semibold" style={{ color: 'var(--text-primary)' }}>
               {isEditMode ? 'Edit Secret' : 'Create New Secret'}
             </h1>
           </div>
@@ -98,7 +113,7 @@ export const SecretFormPage: React.FC = () => {
                 required={!isEditMode}
               />
               {isEditMode && (
-                <p className="text-sm text-gray-500 mt-1">Key cannot be changed when editing</p>
+                <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Key cannot be changed when editing</p>
               )}
             </div>
 

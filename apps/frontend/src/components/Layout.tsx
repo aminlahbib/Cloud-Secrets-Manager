@@ -97,15 +97,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100 dark:bg-elevation-0 text-neutral-900 dark:text-primary transition-colors duration-200">
+    <div 
+      className="min-h-screen transition-colors duration-200"
+      style={{
+        backgroundColor: 'var(--page-bg)',
+        color: 'var(--text-primary)',
+      }}
+    >
       <div className="flex min-h-screen">
         <aside
           className={`
-            fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-elevation-1 border-r border-neutral-200 dark:border-subtle flex flex-col justify-between padding-sidebar transition-all duration-200 md:translate-x-0
+            fixed inset-y-0 left-0 z-40 w-72 flex flex-col justify-between padding-sidebar transition-all duration-200 md:translate-x-0
             ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
           style={{
+            backgroundColor: 'var(--sidebar-bg)',
             borderRightColor: 'var(--sidebar-border)',
+            borderRightWidth: '1px',
+            borderRightStyle: 'solid',
           }}
         >
           <div>
@@ -125,7 +134,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="h-12 w-12 rounded-2xl bg-neutral-900 text-white flex items-center justify-center text-xl font-semibold hidden">
                 CSM
               </div>
-              <span className="text-lg font-semibold tracking-tight text-primary dark:text-primary">Cloud Secrets</span>
+              <span className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Cloud Secrets</span>
             </Link>
 
             <div className="mt-10 space-y-1">
@@ -276,18 +285,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <Link
                   to="/admin"
                   onClick={() => setIsSidebarOpen(false)}
-                    className={`flex items-center px-3 py-2 rounded-xl text-sm font-medium transition-colors min-h-[44px] touch-manipulation ${isActiveLink('/admin')
-                    ? 'bg-neutral-100 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100'
-                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100'
-                    }`}
+                  className={`nav-item ${isActiveLink('/admin') ? 'nav-item-active' : ''}`}
                 >
-                  <Shield className={`mr-3 h-5 w-5 ${isActiveLink('/admin') ? 'text-neutral-900 dark:text-neutral-100' : 'text-neutral-400 dark:text-neutral-500'}`} />
+                  <Shield className="h-5 w-5" />
                   Admin
                 </Link>
               )}
             </div>
 
-            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-6 space-y-3">
+            <div 
+              className="border-t pt-6 space-y-3"
+              style={{ borderTopColor: 'var(--border-subtle)' }}
+            >
               {/* Dark Mode Toggle */}
               <button
                 onClick={toggleTheme}
@@ -310,13 +319,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {user?.avatarUrl ? (
                   <img src={user.avatarUrl} alt={user.displayName || user.email} className="h-10 w-10 rounded-full" />
                 ) : (
-                  <div className="h-10 w-10 rounded-full bg-neutral-900 text-white flex items-center justify-center">
-                    <User className="h-5 w-5" />
+                  <div 
+                    className="h-10 w-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--elevation-2)' }}
+                  >
+                    <User className="h-5 w-5" style={{ color: 'var(--text-primary)' }} />
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{user?.displayName || user?.email?.split('@')[0]}</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{user?.email}</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{user?.displayName || user?.email?.split('@')[0]}</p>
+                  <p className="text-caption" style={{ color: 'var(--text-secondary)' }}>{user?.email}</p>
                 </div>
               </div>
               <button
@@ -343,8 +355,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </aside>
 
         <div className="flex-1 flex flex-col md:ml-72">
-          <header className="md:hidden flex items-center justify-between px-4 py-4 border-b bg-white dark:bg-elevation-1 transition-colors" style={{ borderBottomColor: 'var(--border-subtle)' }}>
-            <button onClick={toggleSidebar} className="p-2 rounded-lg border border-neutral-200 dark:border-neutral-800 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation text-neutral-900 dark:text-white transition-colors">
+          <header 
+            className="md:hidden flex items-center justify-between px-4 py-4 border-b transition-colors"
+            style={{
+              backgroundColor: 'var(--sidebar-bg)',
+              borderBottomColor: 'var(--border-subtle)',
+            }}
+          >
+            <button 
+              onClick={toggleSidebar} 
+              className="p-2 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation transition-colors"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                color: 'var(--text-primary)',
+              }}
+            >
               {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
             <span className="text-body-sm font-semibold tracking-tight uppercase text-primary">Cloud Secrets</span>

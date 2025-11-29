@@ -84,7 +84,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             placeholder="e.g., Backend Services"
                             required
                             autoFocus
-                            icon={<Folder className="h-4 w-4 text-gray-400" />}
+                            icon={<Folder className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />}
                         />
                         <p className="mt-1 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
                             Choose a unique and descriptive name for your project.
@@ -105,7 +105,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Briefly describe the purpose of this project..."
                                 rows={3}
-                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 resize-none"
+                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg resize-none"
                             />
                         </div>
                     </div>
@@ -122,7 +122,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                             <select
                                 value={workflowId}
                                 onChange={(e) => setWorkflowId(e.target.value)}
-                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 appearance-none"
+                                className="input-theme w-full pl-10 pr-4 py-2 rounded-lg appearance-none"
                                 required
                                 disabled={!workflows || workflows.length === 0}
                             >
@@ -167,8 +167,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                 </div>
 
                 {createMutation.isError && (
-                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg transition-colors duration-300">
-                        <p className="text-sm text-red-600 dark:text-red-300">
+                    <div 
+                        className="p-3 border rounded-lg transition-colors duration-300"
+                        style={{
+                            backgroundColor: 'var(--status-danger-bg)',
+                            borderColor: 'var(--status-danger)',
+                        }}
+                    >
+                        <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
                             Failed to create project. Please try again.
                         </p>
                     </div>

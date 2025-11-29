@@ -74,7 +74,7 @@ export const WorkflowFormPage: React.FC = () => {
               {...register('description')}
               rows={3}
               placeholder="Describe what this workflow is for..."
-              className="input-theme block w-full rounded-md shadow-sm focus:border-neutral-900 dark:focus:border-orange-500/30 focus:ring-neutral-900 dark:focus:ring-orange-500 sm:text-sm"
+              className="input-theme block w-full rounded-md shadow-sm sm:text-sm"
             />
           </div>
         </Card>
@@ -94,8 +94,14 @@ export const WorkflowFormPage: React.FC = () => {
         </div>
 
         {mutation.isError && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 transition-colors duration-300">
-            <p className="text-sm text-red-800 dark:text-red-300">
+          <div 
+            className="border rounded-lg p-4 transition-colors duration-300"
+            style={{
+              backgroundColor: 'var(--status-danger-bg)',
+              borderColor: 'var(--status-danger)',
+            }}
+          >
+            <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
               Failed to create workflow. Please try again.
             </p>
           </div>
