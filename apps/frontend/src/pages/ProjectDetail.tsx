@@ -54,6 +54,7 @@ import {
   prepareChartData,
   formatActionName,
 } from '../utils/analytics';
+import { useDebounce } from '../utils/debounce';
 
 const ROLE_COLORS: Record<ProjectRole, 'danger' | 'warning' | 'info' | 'default'> = {
   OWNER: 'danger',
@@ -89,6 +90,7 @@ export const ProjectDetailPage: React.FC = () => {
     }
   }, [activeTab, projectId]);
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -149,9 +151,9 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Fetch secrets
   const { data: secretsData, isLoading: isSecretsLoading } = useQuery({
-    queryKey: ['project-secrets', projectId, searchTerm, secretFilters],
+    queryKey: ['project-secrets', projectId, debouncedSearchTerm, secretFilters],
     queryFn: () => secretsService.listProjectSecrets(projectId!, {
-      keyword: searchTerm || undefined,
+      keyword: debouncedSearchTerm || undefined,
       sortBy: secretFilters.sortBy || 'createdAt',
       sortDir: secretFilters.sortDir || 'DESC',
     }),
