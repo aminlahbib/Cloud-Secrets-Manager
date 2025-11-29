@@ -856,8 +856,18 @@ export const ProjectDetailPage: React.FC = () => {
               {/* Mobile Card View */}
               <div className="md:hidden grid grid-cols-1 gap-4">
                 {secrets.map((secret: Secret) => (
+                  <div key={secret.id || secret.secretKey} className="relative">
+                    {canDeleteSecrets && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedSecrets.has(secret.secretKey)}
+                          onChange={() => toggleSecretSelection(secret.secretKey)}
+                          className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                      </div>
+                    )}
                     <SecretCard
-                      key={secret.id || secret.secretKey}
                       secret={secret}
                       projectId={projectId!}
                       canManageSecrets={canManageSecrets}
