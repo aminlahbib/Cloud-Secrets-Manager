@@ -45,6 +45,8 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
             // Invalidate secret-related queries
             queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
             queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, targetKey] });
+            // Invalidate project query to update secret count
+            queryClient.invalidateQueries({ queryKey: ['project', projectId] });
             // Invalidate activity and analytics
             queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
             queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });

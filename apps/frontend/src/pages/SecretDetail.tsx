@@ -64,6 +64,7 @@ export const SecretDetailPage: React.FC = () => {
     mutationFn: () => secretsService.deleteProjectSecret(projectId, secretKey),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
@@ -78,6 +79,7 @@ export const SecretDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
