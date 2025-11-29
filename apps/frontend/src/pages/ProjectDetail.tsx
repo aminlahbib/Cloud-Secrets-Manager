@@ -835,7 +835,7 @@ export const ProjectDetailPage: React.FC = () => {
 
       {/* Tab Content */}
       {activeTab === 'secrets' && (
-        <div className="space-y-4">
+        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-4">
           {/* Search and Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1 max-w-md">
@@ -845,7 +845,7 @@ export const ProjectDetailPage: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search secrets..."
-                className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-neutral-800 rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-neutral-500 focus:border-neutral-900 dark:focus:border-neutral-500 bg-white dark:bg-[#111111] text-neutral-900 dark:text-white transition-colors"
+                className="w-full pl-10 pr-4 py-2 border border-neutral-300 dark:border-[rgba(255,255,255,0.05)] rounded-lg focus:ring-2 focus:ring-neutral-900 dark:focus:ring-orange-500 focus:border-neutral-900 dark:focus:border-orange-500/30 bg-white dark:bg-[#0a0a0a] text-neutral-900 dark:text-white transition-colors"
               />
             </div>
             <FilterPanel
@@ -858,7 +858,7 @@ export const ProjectDetailPage: React.FC = () => {
 
           {/* Bulk Actions Toolbar */}
           {selectedSecrets.size > 0 && canDeleteSecrets && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
                   {selectedSecrets.size} secret{selectedSecrets.size !== 1 ? 's' : ''} selected
@@ -902,9 +902,9 @@ export const ProjectDetailPage: React.FC = () => {
           ) : (
             <>
               {/* Desktop Table View */}
-              <div className="hidden md:block bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 overflow-hidden transition-colors">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="hidden md:block bg-white dark:bg-[#0a0a0a] rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.05)] overflow-hidden transition-colors">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)]">
+                  <thead className="bg-gray-50 dark:bg-[#1a1a1a]">
                     <tr>
                       {canDeleteSecrets && (
                         <th className="px-6 py-3 text-left">
@@ -916,7 +916,7 @@ export const ProjectDetailPage: React.FC = () => {
                           />
                         </th>
                       )}
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider bg-white dark:bg-[#111111]">Key</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-neutral-400 uppercase tracking-wider bg-white dark:bg-[#1a1a1a]">Key</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Created
                       </th>
@@ -934,7 +934,7 @@ export const ProjectDetailPage: React.FC = () => {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white dark:bg-[#111111] divide-y divide-gray-200 dark:divide-neutral-800">
+                  <tbody className="bg-white dark:bg-[#0a0a0a] divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)]">
                     {secrets.map((secret: Secret) => {
                       const isExpired =
                         secret.expired || (secret.expiresAt && new Date(secret.expiresAt) < new Date());
@@ -1066,7 +1066,7 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'members' && (
-        <div className="space-y-4">
+        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-4">
           {isMembersLoading && activeTab === 'members' ? (
             <div className="flex justify-center py-8">
               <Spinner size="lg" />
@@ -1086,11 +1086,11 @@ export const ProjectDetailPage: React.FC = () => {
               }
             />
           ) : (
-            <div className="bg-white dark:bg-[#111111] rounded-lg border border-gray-200 dark:border-neutral-800 divide-y divide-gray-200 dark:divide-neutral-800 transition-colors">
+            <div className="bg-white dark:bg-[#0a0a0a] rounded-lg border border-gray-200 dark:border-[rgba(255,255,255,0.05)] divide-y divide-gray-200 dark:divide-[rgba(255,255,255,0.05)] transition-colors">
               {members.map((member) => (
                 <div
                   key={member.id}
-                  className="p-4 flex items-center justify-between hover:bg-gray-50"
+                  className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.08)] transition-colors"
                 >
                   <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center">
@@ -1099,13 +1099,13 @@ export const ProjectDetailPage: React.FC = () => {
                       </span>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {member.user?.displayName || member.user?.email}
                         {member.userId === user?.id && (
-                          <span className="ml-2 text-xs text-gray-400">(You)</span>
+                          <span className="ml-2 text-xs text-gray-400 dark:text-neutral-500">(You)</span>
                         )}
                       </p>
-                      <p className="text-sm text-gray-500 flex items-center">
+                      <p className="text-sm text-gray-500 dark:text-neutral-400 flex items-center">
                         <Mail className="h-3 w-3 mr-1" />
                         {member.user?.email}
                       </p>
@@ -1153,10 +1153,10 @@ export const ProjectDetailPage: React.FC = () => {
         <ErrorBoundary
           resetKeys={[projectId || '', activityView]}
           fallback={
-            <Card className="p-6">
+            <Card className="p-6 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)]">
               <div className="text-center">
-                <p className="text-red-600 mb-2">Error loading activity tab</p>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-red-600 dark:text-red-400 mb-2">Error loading activity tab</p>
+                <p className="text-sm text-gray-500 dark:text-neutral-400 mb-4">
                   There was an error displaying the activity tab. Please try refreshing the page.
                 </p>
                 <Button onClick={() => window.location.reload()}>Refresh Page</Button>
@@ -1164,7 +1164,7 @@ export const ProjectDetailPage: React.FC = () => {
             </Card>
           }
         >
-          <div className="space-y-6">
+          <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-6">
             {/* Header with view toggle and date filter */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Project Activity</h2>
@@ -1230,11 +1230,11 @@ export const ProjectDetailPage: React.FC = () => {
                   <div className="space-y-6">
                     <SkeletonStats />
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
+                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[rgba(255,255,255,0.05)] rounded-lg p-6 transition-colors">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
-                      <div className="bg-white dark:bg-[#111111] border border-gray-200 dark:border-neutral-800 rounded-lg p-6 transition-colors">
+                      <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-[rgba(255,255,255,0.05)] rounded-lg p-6 transition-colors">
                         <Skeleton variant="text" width="40%" height={24} className="mb-4" />
                         <Skeleton variant="rectangular" width="100%" height={300} />
                       </div>
@@ -1514,28 +1514,28 @@ export const ProjectDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'settings' && (
-        <div className="space-y-6">
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
-            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Project Overview</h2>
+        <div className="bg-white dark:bg-[#1a1a1a] border-x border-b border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-b-xl p-6 space-y-6">
+          <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-6">Project Overview</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {metaPairs.map((item) => (
-                <div key={item.label} className="rounded-2xl border border-neutral-100 p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">{item.label}</p>
-                  <p className="mt-2 text-lg font-semibold text-neutral-900">{item.value}</p>
+                <div key={item.label} className="rounded-2xl border border-neutral-100 dark:border-[rgba(255,255,255,0.05)] p-4 bg-white dark:bg-[#1a1a1a]">
+                  <p className="text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">{item.value}</p>
                 </div>
               ))}
-              <div className="rounded-2xl border border-neutral-100 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400">Status</p>
-                <p className="mt-2 text-lg font-semibold text-neutral-900">
+              <div className="rounded-2xl border border-neutral-100 dark:border-[rgba(255,255,255,0.05)] p-4 bg-white dark:bg-[#1a1a1a]">
+                <p className="text-xs uppercase tracking-[0.2em] text-neutral-400 dark:text-neutral-500">Status</p>
+                <p className="mt-2 text-lg font-semibold text-neutral-900 dark:text-white">
                   {isArchived ? 'Archived' : 'Active'}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white border border-neutral-200 rounded-3xl p-6">
+          <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-neutral-900">General Settings</h2>
+              <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">General Settings</h2>
               {canManageProject && (
                 <Button
                   onClick={() => updateProjectMutation.mutate()}
@@ -1616,10 +1616,10 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
 
           {canManageProject ? (
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6 space-y-6">
+            <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6 space-y-6">
               <div>
-                <p className="text-sm font-semibold text-neutral-900">Project Lifecycle</p>
-                <p className="text-sm text-neutral-500 mt-1">
+                <p className="text-sm font-semibold text-neutral-900 dark:text-white">Project Lifecycle</p>
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                   Archive projects you no longer need but may want to restore later. Permanently deleting removes all
                   secrets and activity forever.
                 </p>
@@ -1663,9 +1663,9 @@ export const ProjectDetailPage: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="bg-white border border-neutral-200 rounded-3xl p-6">
-              <p className="text-sm font-semibold text-neutral-900 mb-2">Leave Project</p>
-              <p className="text-sm text-neutral-500 mb-2">
+            <div className="bg-white dark:bg-[#0a0a0a] border border-neutral-200 dark:border-[rgba(255,255,255,0.05)] rounded-3xl p-6">
+              <p className="text-sm font-semibold text-neutral-900 dark:text-white mb-2">Leave Project</p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-2">
                 Remove your access to this project. You will need to be re-invited to regain access.
               </p>
               {isSoleOwner && (
