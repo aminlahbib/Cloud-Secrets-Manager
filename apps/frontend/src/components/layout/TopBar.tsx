@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, HelpCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button } from '../ui/Button';
+import { ThemeControls } from './ThemeControls';
 
 export const TopBar: React.FC = () => {
   const { user, logout, isPlatformAdmin } = useAuth();
@@ -50,8 +50,13 @@ export const TopBar: React.FC = () => {
           </div>
         </form>
 
-        {/* Right Side: Notifications, Help, Profile */}
-        <div className="flex items-center gap-4">
+        {/* Right Side: Theme Controls, Notifications, Help, Profile */}
+        <div className="flex items-center gap-3">
+          {/* Theme Controls */}
+          <div className="hidden md:flex items-center gap-2">
+            <ThemeControls />
+          </div>
+
           {/* Notifications */}
           <button
             className="p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"

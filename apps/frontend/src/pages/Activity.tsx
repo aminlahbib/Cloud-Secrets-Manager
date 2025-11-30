@@ -284,8 +284,8 @@ export const ActivityPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Activity</h1>
-          <p className="mt-1" style={{ color: 'var(--text-secondary)' }}>
+          <h1 className="text-2xl font-bold text-theme-primary">Activity</h1>
+          <p className="text-body-sm text-theme-secondary mt-1">
             {isPlatformAdmin 
               ? 'Track all actions across all projects and secrets' 
               : 'Track all actions across your accessible projects and secrets'}

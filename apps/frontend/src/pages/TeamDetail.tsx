@@ -178,7 +178,7 @@ export const TeamDetailPage: React.FC = () => {
           </Button>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+              <h1 className="text-2xl font-bold text-theme-primary">
                 {team.name}
               </h1>
               {team.currentUserRole && (
@@ -197,7 +197,7 @@ export const TeamDetailPage: React.FC = () => {
               )}
             </div>
             {team.description && (
-              <p className="mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+              <p className="text-body-sm text-theme-secondary mt-1">
                 {team.description}
               </p>
             )}
@@ -227,10 +227,10 @@ export const TeamDetailPage: React.FC = () => {
               <Users className="h-5 w-5 text-theme-tertiary" />
             </div>
             <div>
-              <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+              <p className="text-sm text-theme-secondary">
                 Members
               </p>
-              <p className="text-2xl font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+              <p className="text-2xl font-semibold text-theme-primary">
                 {team.memberCount || 0}
               </p>
             </div>
@@ -242,10 +242,10 @@ export const TeamDetailPage: React.FC = () => {
               <Folder className="h-5 w-5 text-theme-tertiary" />
             </div>
             <div>
-              <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+              <p className="text-sm text-theme-secondary">
                 Projects
               </p>
-              <p className="text-2xl font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+              <p className="text-2xl font-semibold text-theme-primary">
                 {team.projectCount || 0}
               </p>
             </div>
@@ -257,7 +257,7 @@ export const TeamDetailPage: React.FC = () => {
       <div className="card">
         <div className="padding-card border-b border-theme-subtle">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+            <h2 className="text-lg font-semibold text-theme-primary">
               Members ({members?.length || 0})
             </h2>
             {canManageTeam() && (
@@ -295,15 +295,15 @@ export const TeamDetailPage: React.FC = () => {
                     </span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                    <p className="text-sm font-medium text-theme-primary">
                       {member.displayName || member.email}
                       {member.userId === user?.id && (
-                        <span className="ml-2 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                        <span className="ml-2 text-xs text-theme-secondary">
                           (You)
                         </span>
                       )}
                     </p>
-                    <p className="text-xs flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                    <p className="text-xs flex items-center gap-1 text-theme-secondary">
                       <Mail className="h-3 w-3" />
                       {member.email}
                     </p>
@@ -346,7 +346,7 @@ export const TeamDetailPage: React.FC = () => {
       <div className="card">
         <div className="padding-card border-b border-theme-subtle">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+            <h2 className="text-lg font-semibold text-theme-primary">
               Projects ({teamProjects?.length || 0})
             </h2>
             {canManageTeam() && (
@@ -385,11 +385,11 @@ export const TeamDetailPage: React.FC = () => {
                     <Folder className="h-4 w-4 text-theme-tertiary" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                    <p className="text-sm font-medium text-theme-primary">
                       {teamProject.projectName}
                     </p>
                     {teamProject.projectDescription && (
-                      <p className="text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                      <p className="text-xs text-theme-secondary">
                         {teamProject.projectDescription}
                       </p>
                     )}
@@ -470,7 +470,7 @@ export const TeamDetailPage: React.FC = () => {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+          <p className="text-sm text-theme-primary">
             Are you sure you want to delete <strong>{team.name}</strong>? This action cannot be undone.
           </p>
           <div className="flex justify-end gap-3 pt-4 border-t border-theme-subtle">
