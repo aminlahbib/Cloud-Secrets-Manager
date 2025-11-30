@@ -22,69 +22,61 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
     return location.pathname.startsWith(href);
   };
 
-  const mainNavigation: NavItem[] = [
-    { name: 'Home', href: '/home', icon: LayoutDashboard },
+  const navigation: NavItem[] = [
+    { name: 'Overview', href: '/home', icon: LayoutDashboard },
     { name: 'Projects', href: '/projects', icon: Folder },
-    { name: 'Activity', href: '/activity', icon: Activity },
-  ];
-
-  const bottomNavigation: NavItem[] = [
+    { name: 'Activity Logs', href: '/activity', icon: Activity },
     { name: 'Teams', href: '/teams', icon: Building2 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
   return (
-    <>
-      <div className="mt-10 space-y-1">
-        {mainNavigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = isActiveLink(item.href);
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={onNavigate}
-              className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
-            >
-              <Icon className="h-5 w-5" />
-              {item.name}
-            </Link>
-          );
-        })}
-      </div>
-
-      <div className="mt-10 space-y-2">
-        {bottomNavigation.map((item) => {
-          const Icon = item.icon;
-          const isActive = isActiveLink(item.href);
-          return (
-            <Link
-              key={item.name}
-              to={item.href}
-              onClick={onNavigate}
-              className={`nav-item ${isActive ? 'nav-item-active' : ''}`}
-            >
-              <Icon className="h-5 w-5" />
-              {item.name}
-              {item.badge && (
-                <span className="ml-auto text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>{item.badge}</span>
-              )}
-            </Link>
-          );
-        })}
-
-        {isPlatformAdmin && (
+    <div className="space-y-1">
+      {navigation.map((item) => {
+        const Icon = item.icon;
+        const isActive = isActiveLink(item.href);
+        return (
           <Link
-            to="/admin"
+            key={item.name}
+            to={item.href}
             onClick={onNavigate}
-            className={`nav-item ${isActiveLink('/admin') ? 'nav-item-active' : ''}`}
+            className={`
+              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+              ${isActive 
+                ? 'text-accent-primary' 
+                : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
+              }
+            `}
+            style={isActive ? {
+              backgroundColor: 'var(--accent-primary-glow)',
+            } : {}}
           >
-            <Shield className="h-5 w-5" />
-            Admin
+            <Icon className="h-5 w-5" />
+            {item.name}
           </Link>
-        )}
-      </div>
-    </>
+        );
+      })}
+
+      {isPlatformAdmin && (
+        <Link
+          to="/admin"
+          onClick={onNavigate}
+          className={`
+            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+            ${isActiveLink('/admin')
+              ? 'text-accent-primary'
+              : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
+            }
+          `}
+          style={isActiveLink('/admin') ? {
+            backgroundColor: 'var(--accent-primary-glow)',
+          } : {}}
+        >
+          <Shield className="h-5 w-5" />
+          Admin
+        </Link>
+      )}
+    </div>
   );
 };
 

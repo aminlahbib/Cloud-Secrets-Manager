@@ -134,15 +134,20 @@ export const HomePage: React.FC = () => {
       {/* Header with Title and Primary CTA */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-theme-primary">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-theme-primary">Overview</h1>
           <p className="text-body text-theme-secondary mt-1">
-            Welcome back, {user?.displayName || user?.email?.split('@')[0]}
+            Manage your organization's secrets and access controls.
           </p>
         </div>
-        <Button onClick={() => navigate('/projects')} size="lg">
-          <Plus className="w-5 h-5 mr-2" />
-          New Project
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => navigate('/activity')}>
+            View Audit Logs
+          </Button>
+          <Button onClick={() => navigate('/projects')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Project
+          </Button>
+        </div>
       </div>
 
       {/* Stats Strip */}
