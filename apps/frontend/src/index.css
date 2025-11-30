@@ -37,6 +37,12 @@
 }
 
 @layer base {
+  html {
+    /* Always reserve space for scrollbar to prevent layout shift */
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
+  
   body {
     background-color: var(--page-bg);
     color: var(--text-primary);
@@ -44,6 +50,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background-color 200ms ease, color 200ms ease;
+    /* Ensure scrollbar is always visible */
+    overflow-y: scroll;
   }
   
   /* Make all borders theme-aware by default */

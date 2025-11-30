@@ -76,7 +76,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </button>
 
           {/* Main Content */}
-          <main className="flex-1 overflow-y-auto">
+          <main 
+            className="flex-1"
+            style={{
+              overflowY: 'scroll',
+              scrollbarGutter: 'stable',
+            }}
+          >
             <div className="max-w-7xl mx-auto px-4 py-8 md:px-8">
               {children}
             </div>
