@@ -131,20 +131,20 @@
     /* ============================================
        BORDERS & DIVIDERS - Enhanced with warm tones
        ============================================ */
-    --border-subtle: #f3e8d3;         /* Subtle borders - warm beige */
-    --border-default: #e8d5c4;        /* Default borders - warm tan */
-    --border-strong: #d4a574;         /* Strong borders - warm brown */
-    --border-accent: rgba(249, 115, 22, 0.35);     /* Accent borders - orange with more opacity */
+    --border-subtle: #f0e6d8;         /* Subtle borders - refined warm beige */
+    --border-default: #e5d4c0;        /* Default borders - refined warm tan */
+    --border-strong: #d1b890;         /* Strong borders - refined warm brown */
+    --border-accent: rgba(249, 115, 22, 0.4);     /* Accent borders - orange with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS - Enhanced with warm color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(249, 115, 22, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(249, 115, 22, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(249, 115, 22, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(249, 115, 22, 0.08);
-    --shadow-xl: 0 20px 25px -5px rgba(249, 115, 22, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(249, 115, 22, 0.1);
-    --glow-accent: 0 0 20px rgba(249, 115, 22, 0.2), 0 0 40px rgba(251, 146, 60, 0.1);
-    --glow-soft: 0 0 40px rgba(249, 115, 22, 0.08);
+    --shadow-sm: 0 1px 3px 0 rgba(249, 115, 22, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(249, 115, 22, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(249, 115, 22, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(249, 115, 22, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(249, 115, 22, 0.12);
+    --glow-accent: 0 0 24px rgba(249, 115, 22, 0.25), 0 0 48px rgba(251, 146, 60, 0.12);
+    --glow-soft: 0 0 48px rgba(249, 115, 22, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -403,12 +403,12 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(99, 102, 241, 0.3);     /* Accent borders - violet */
+    --border-subtle: #e8e5f0;         /* Subtle borders - refined violet tint */
+    --border-default: #d4d0e0;        /* Default borders - refined violet tint */
+    --border-strong: #b8b0c8;         /* Strong borders - refined violet tint */
+    --border-accent: rgba(99, 102, 241, 0.4);     /* Accent borders - violet with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -679,20 +679,20 @@
     /* ============================================
        BORDERS & DIVIDERS - Enhanced with emerald tones
        ============================================ */
-    --border-subtle: #d1fae5;         /* Subtle borders - light emerald */
-    --border-default: #a7f3d0;        /* Default borders - soft emerald */
-    --border-strong: #6ee7b7;         /* Strong borders - medium emerald */
-    --border-accent: rgba(16, 185, 129, 0.35);     /* Accent borders - emerald with more opacity */
+    --border-subtle: #d4fae8;         /* Subtle borders - refined light emerald */
+    --border-default: #aef3d4;        /* Default borders - refined soft emerald */
+    --border-strong: #6ee7b7;         /* Strong borders - refined medium emerald */
+    --border-accent: rgba(16, 185, 129, 0.4);     /* Accent borders - emerald with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS - Enhanced with emerald color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(16, 185, 129, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 185, 129, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(16, 185, 129, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 185, 129, 0.08);
-    --shadow-xl: 0 20px 25px -5px rgba(16, 185, 129, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(16, 185, 129, 0.1);
-    --glow-accent: 0 0 20px rgba(16, 185, 129, 0.2), 0 0 40px rgba(52, 211, 153, 0.1);
-    --glow-soft: 0 0 40px rgba(16, 185, 129, 0.08);
+    --shadow-sm: 0 1px 3px 0 rgba(16, 185, 129, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(16, 185, 129, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 185, 129, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(16, 185, 129, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 185, 129, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(16, 185, 129, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 185, 129, 0.12);
+    --glow-accent: 0 0 24px rgba(16, 185, 129, 0.25), 0 0 48px rgba(52, 211, 153, 0.12);
+    --glow-soft: 0 0 48px rgba(16, 185, 129, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -949,22 +949,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(75, 123, 236, 0.2);     /* Accent borders - very subtle */
+    --border-subtle: #e8eaf0;         /* Subtle borders - refined blue-grey */
+    --border-default: #d4d8e0;        /* Default borders - refined blue-grey */
+    --border-strong: #b8c0d0;         /* Strong borders - refined blue-grey */
+    --border-accent: rgba(75, 123, 236, 0.3);     /* Accent borders - refined subtle */
     
     /* ============================================
-       SHADOWS & GLOWS (gentle shadows)
+       SHADOWS & GLOWS - Enhanced with blue-grey hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
-    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(75, 123, 236, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(75, 123, 236, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(75, 123, 236, 0.05);
+    --shadow-lg: 0 12px 20px -4px rgba(75, 123, 236, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(75, 123, 236, 0.08);
+    --shadow-xl: 0 24px 32px -6px rgba(75, 123, 236, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(75, 123, 236, 0.1);
+    --glow-accent: 0 0 24px rgba(75, 123, 236, 0.2), 0 0 48px rgba(107, 149, 240, 0.1);
+    --glow-soft: 0 0 48px rgba(75, 123, 236, 0.08);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1221,12 +1221,12 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #E2E8F0;         /* Subtle borders */
-    --border-default: #CBD5E1;        /* Default borders */
-    --border-strong: #94A3B8;         /* Strong borders */
-    --border-accent: rgba(59, 130, 246, 0.3);     /* Accent borders - blue */
+    --border-subtle: #E5EBF2;         /* Subtle borders - refined blue */
+    --border-default: #D1DBE5;        /* Default borders - refined blue */
+    --border-strong: #A8B8CC;         /* Strong borders - refined blue */
+    --border-accent: rgba(59, 130, 246, 0.4);     /* Accent borders - blue with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -1632,20 +1632,20 @@
     /* ============================================
        BORDERS & DIVIDERS - Enhanced with mint/cyan tones
        ============================================ */
-    --border-subtle: #cffafe;         /* Subtle borders - light cyan */
-    --border-default: #a5f3fc;        /* Default borders - soft cyan */
-    --border-strong: #67e8f9;         /* Strong borders - medium cyan */
-    --border-accent: rgba(16, 217, 196, 0.35);     /* Accent borders - mint with more opacity */
+    --border-subtle: #d2fafc;         /* Subtle borders - refined light cyan */
+    --border-default: #aef5fc;        /* Default borders - refined soft cyan */
+    --border-strong: #6ee8f9;         /* Strong borders - refined medium cyan */
+    --border-accent: rgba(16, 217, 196, 0.4);     /* Accent borders - mint with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS - Enhanced with mint/cyan color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(16, 217, 196, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(16, 217, 196, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.05);
-    --shadow-lg: 0 10px 15px -3px rgba(16, 217, 196, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 217, 196, 0.08);
-    --shadow-xl: 0 20px 25px -5px rgba(16, 217, 196, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(16, 217, 196, 0.1);
-    --glow-accent: 0 0 20px rgba(16, 217, 196, 0.2), 0 0 40px rgba(6, 182, 212, 0.1);
-    --glow-soft: 0 0 40px rgba(16, 217, 196, 0.08);
+    --shadow-sm: 0 1px 3px 0 rgba(16, 217, 196, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(16, 217, 196, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(16, 217, 196, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(16, 217, 196, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 217, 196, 0.12);
+    --glow-accent: 0 0 24px rgba(16, 217, 196, 0.25), 0 0 48px rgba(6, 182, 212, 0.12);
+    --glow-soft: 0 0 48px rgba(16, 217, 196, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1904,12 +1904,12 @@
     --text-inverse: #FFFFFF;
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #F3E8FF;         /* Subtle borders */
-    --border-default: #E9D5FF;        /* Default borders */
-    --border-strong: #DDD6FE;         /* Strong borders */
-    --border-accent: rgba(139, 92, 246, 0.3);
+    --border-subtle: #F5EBFF;         /* Subtle borders - refined plum */
+    --border-default: #EDD5FF;        /* Default borders - refined plum */
+    --border-strong: #E1D6FE;         /* Strong borders - refined plum */
+    --border-accent: rgba(139, 92, 246, 0.4);
     
     /* ============================================
        SHADOWS & GLOWS
@@ -2352,7 +2352,7 @@
   }
   
   /* ============================================
-     SIDEBAR NAVIGATION
+     SIDEBAR NAVIGATION - Enhanced Modern Style
      ============================================ */
   .nav-item {
     padding: 0.75rem 1rem;
@@ -2362,34 +2362,66 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 44px;
     color: var(--sidebar-link-color, var(--text-secondary));
     position: relative;
+    margin-bottom: 0.25rem;
+  }
+  
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, var(--accent-primary), var(--accent-primary-light));
+    border-radius: 0 2px 2px 0;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .nav-item svg {
     color: var(--sidebar-icon-color, var(--text-secondary));
-    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    width: 1.25rem;
+    height: 1.25rem;
   }
   
   .nav-item:hover {
     background-color: var(--sidebar-hover-bg);
     color: var(--text-primary);
+    transform: translateX(2px);
+  }
+  
+  .nav-item:hover::before {
+    transform: translateY(-50%) scaleY(1);
+    height: 60%;
   }
   
   .nav-item:hover svg {
-    color: var(--accent-primary-light);
+    color: var(--accent-primary);
+    transform: scale(1.1);
   }
   
   .nav-item-active {
-    background-color: var(--sidebar-active-bg);
+    background: linear-gradient(90deg, var(--sidebar-active-bg), transparent);
     color: var(--accent-primary);
-    border-radius: 9999px; /* Pill shape */
+    border-radius: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px var(--accent-primary-glow);
+  }
+  
+  .nav-item-active::before {
+    transform: translateY(-50%) scaleY(1);
+    height: 70%;
+    box-shadow: 0 0 8px var(--accent-primary-glow);
   }
   
   .nav-item-active svg {
     color: var(--accent-primary);
+    filter: drop-shadow(0 0 4px var(--accent-primary-glow));
   }
   
   /* ============================================
@@ -2588,7 +2620,9 @@
   }
   
   [data-theme="light-orange"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-violet"] .glass,
@@ -2602,7 +2636,9 @@
   }
   
   [data-theme="light-violet"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-emerald"] .glass,
@@ -2616,7 +2652,9 @@
   }
   
   [data-theme="light-emerald"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-minimal"] .glass,
@@ -2630,7 +2668,9 @@
   }
   
   [data-theme="light-minimal"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-blue"] .glass,
@@ -2644,7 +2684,9 @@
   }
   
   [data-theme="light-blue"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-neomint"] .glass,
@@ -2658,7 +2700,9 @@
   }
   
   [data-theme="light-neomint"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   [data-theme="light-plum"] .glass,
@@ -2672,7 +2716,9 @@
   }
   
   [data-theme="light-plum"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
   }
   
   /* Dark mode adjustments for glass effects */
