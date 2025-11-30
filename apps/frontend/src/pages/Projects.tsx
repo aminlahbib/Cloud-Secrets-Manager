@@ -30,7 +30,7 @@ export const ProjectsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showArchived] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
     workflow: null,
     role: null,
@@ -136,7 +136,14 @@ export const ProjectsPage: React.FC = () => {
     return { filteredProjects: projectList, groupedProjects: grouped };
   }, [data?.content, workflows, teams, projectFilters.workflow, projectFilters.team, projectFilters.accessSource, groupBy]);
   
-  const projects = filteredProjects;
+  // Separate active and archived projects
+  const { activeProjects, archivedProjects } = useMemo(() => {
+    const active = filteredProjects.filter((p: Project) => !p.isArchived);
+    const archived = filteredProjects.filter((p: Project) => p.isArchived);
+    return { activeProjects: active, archivedProjects: archived };
+  }, [filteredProjects]);
+  
+  const projects = showArchived ? filteredProjects : activeProjects;
 
   const projectFilterConfigs: FilterConfig[] = useMemo(() => {
     const workflowOptions = workflows?.map(w => ({ label: w.name, value: w.id })) || [];
@@ -309,11 +316,12 @@ export const ProjectsPage: React.FC = () => {
         />
       </div>
         
-      {/* Group By Selector with Info Icon */}
-      <div className="flex items-center gap-3">
-        <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          Group by:
-        </span>
+      {/* Group By Selector and Archived Toggle */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Group by:
+          </span>
         <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ borderColor: 'var(--border-subtle)' }}>
           <button
             onClick={() => setGroupBy('none')}
@@ -381,6 +389,28 @@ export const ProjectsPage: React.FC = () => {
         </div>
         {/* Info Icon for Guidance */}
         <TeamsVsDirectGuidance compact />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+              Show archived
+            </span>
+            <div
+              className="relative inline-flex items-center w-11 h-6 rounded-full transition-colors cursor-pointer"
+              style={{
+                backgroundColor: showArchived ? 'var(--accent-primary)' : 'var(--elevation-2)',
+              }}
+              onClick={() => setShowArchived(!showArchived)}
+            >
+              <span
+                className="inline-block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform"
+                style={{
+                  transform: showArchived ? 'translateX(1.25rem)' : 'translateX(0.25rem)',
+                }}
+              />
+            </div>
+          </label>
+        </div>
       </div>
 
       {/* Projects Grid/List */}
@@ -458,78 +488,134 @@ export const ProjectsPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : projectView === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project: Project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              view="grid"
-              getTimeAgo={getTimeAgo}
-            />
-          ))}
-
-          {/* Create New Project Card */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-150 min-h-[200px]"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              backgroundColor: 'var(--card-bg)',
-              color: 'var(--text-tertiary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-accent)';
-              e.currentTarget.style.color = 'var(--accent-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            <Plus className="w-12 h-12 mb-3 opacity-50" />
-            <span className="font-medium">Create new project</span>
-          </button>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {projects.map((project: Project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              view="list"
-              getTimeAgo={getTimeAgo}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* Active Projects */}
+          {activeProjects.length > 0 && (
+            <div className="space-y-4">
+              {projectView === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="grid"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                  {/* Create New Project Card */}
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-150 min-h-[200px]"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-tertiary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }}
+                  >
+                    <Plus className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Create new project</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activeProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="list"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                  {/* Create New Project Card (List View) */}
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="w-full border-2 border-dashed rounded-xl p-6 flex items-center justify-center gap-3 transition-all duration-150"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-tertiary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }}
+                  >
+                    <Plus className="w-6 h-6" />
+                    <span className="font-medium">Create new project</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Create New Project Card (List View) */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full border-2 border-dashed rounded-xl p-6 flex items-center justify-center gap-3 transition-all duration-150"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              backgroundColor: 'var(--card-bg)',
-              color: 'var(--text-tertiary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-accent)';
-              e.currentTarget.style.color = 'var(--accent-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            <Plus className="w-6 h-6 opacity-50" />
-            <span className="font-medium">Create new project</span>
-          </button>
+          {/* Archived Projects - Separated with subtle line */}
+          {showArchived && archivedProjects.length > 0 && (
+            <div className="space-y-4">
+              <div 
+                className="pt-6 border-t"
+                style={{ borderTopColor: 'var(--border-subtle)' }}
+              >
+                {projectView === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {archivedProjects.map((project: Project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        view="grid"
+                        getTimeAgo={getTimeAgo}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {archivedProjects.map((project: Project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        view="list"
+                        getTimeAgo={getTimeAgo}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state when no active projects */}
+          {activeProjects.length === 0 && !showArchived && (
+            <EmptyState
+              icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
+              title="No active projects"
+              description="Create your first project to start managing secrets"
+              action={{
+                label: 'Create Project',
+                onClick: () => setShowCreateModal(true),
+              }}
+            />
+          )}
         </div>
       )}
 
       {/* Pagination info */}
       {data && data.totalElements > 0 && (
         <div className="text-center text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
-          Showing {projects.length} of {data.totalElements} projects
+          Showing {activeProjects.length} active{showArchived && archivedProjects.length > 0 ? ` and ${archivedProjects.length} archived` : ''} of {data.totalElements} projects
         </div>
       )}
 

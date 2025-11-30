@@ -10,7 +10,6 @@ import {
   Clock,
   LayoutGrid,
   Building2,
-  MoreHorizontal,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { ProjectSourceIndicator } from './ProjectSourceIndicator';
@@ -98,26 +97,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                 </div>
               </div>
             </div>
-            <button 
-              className="p-1 rounded transition-colors flex-shrink-0"
-              style={{
-                color: 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-primary)';
-                e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
           </div>
 
           {/* Description */}
