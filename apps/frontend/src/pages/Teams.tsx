@@ -159,7 +159,7 @@ export const TeamsPage: React.FC = () => {
             return (
               <div 
                 key={team.id} 
-                className="card rounded-xl p-6 shadow-sm transition-all group"
+                className="card rounded-xl p-6 shadow-sm transition-all group flex flex-col h-full"
                 style={{
                   borderColor: 'var(--border-subtle)',
                 }}
@@ -170,10 +170,11 @@ export const TeamsPage: React.FC = () => {
                   e.currentTarget.style.borderColor = 'var(--border-subtle)';
                 }}
               >
+                {/* Header Section */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg"
+                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg flex-shrink-0"
                       style={{ 
                         ...teamGradientStyle,
                         borderColor: 'var(--border-subtle)',
@@ -181,8 +182,8 @@ export const TeamsPage: React.FC = () => {
                     >
                       {teamInitials}
                     </div>
-                    <div>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>
                         {team.name}
                       </h3>
                       {team.currentUserRole && (
@@ -200,12 +201,20 @@ export const TeamsPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {team.description && (
-                  <p className="text-sm mb-6 h-10 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                    {team.description || "No description provided for this team."}
-                  </p>
-                )}
+                {/* Description Section */}
+                <div className="mb-4 min-h-[2.5rem]">
+                  {team.description ? (
+                    <p className="text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                      {team.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
+                      No description provided for this team.
+                    </p>
+                  )}
+                </div>
 
+                {/* Stats Section */}
                 <div 
                   className="flex items-center gap-4 mb-6 border-t border-b py-3"
                   style={{
@@ -214,17 +223,18 @@ export const TeamsPage: React.FC = () => {
                   }}
                 >
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <Users className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
                     <span>{team.memberCount || 0} members</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <Building2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
                     <span>{team.projectCount || 0} projects</span>
                   </div>
                 </div>
 
+                {/* Action Buttons - Pushed to Bottom */}
                 {canManageTeam(team) && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
