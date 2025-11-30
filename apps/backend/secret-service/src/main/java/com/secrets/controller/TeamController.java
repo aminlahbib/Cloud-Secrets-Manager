@@ -1,7 +1,6 @@
 package com.secrets.controller;
 
-import com.secrets.dto.team.TeamRequest;
-import com.secrets.dto.team.TeamResponse;
+import com.secrets.dto.team.*;
 import com.secrets.service.TeamService;
 import com.secrets.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,6 +78,65 @@ public class TeamController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         teamService.deleteTeam(id, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    // =========================================================================
+    // Member Management Endpoints
+    // =========================================================================
+
+    @GetMapping("/{id}/members")
+    @Operation(summary = "List team members", description = "Get all members of a team")
+    public ResponseEntity<List<TeamMemberResponse>> listTeamMembers(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        List<TeamMemberResponse> members = teamService.listTeamMembers(id, userId);
+        return ResponseEntity.ok(members);
+    }
+
+    @PostMapping("/{id}/members")
+    @Operation(summary = "Add team member", description = "Add a member to a team by email (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<TeamMemberResponse> addTeamMember(
+            @PathVariable UUID id,
+            @Valid @RequestBody TeamMemberRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        TeamMemberResponse member = teamService.addTeamMember(id, request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(member);
+    }
+
+    @DeleteMapping("/{id}/members/{memberId}")
+    @Operation(summary = "Remove team member", description = "Remove a member from a team (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<Void> removeTeamMember(
+            @PathVariable UUID id,
+            @PathVariable UUID memberId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        teamService.removeTeamMember(id, memberId, userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/members/{memberId}/role")
+    @Operation(summary = "Update member role", description = "Update a team member's role (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<TeamMemberResponse> updateMemberRole(
+            @PathVariable UUID id,
+            @PathVariable UUID memberId,
+            @Valid @RequestBody UpdateMemberRoleRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        TeamMemberResponse member = teamService.updateMemberRole(id, memberId, request, userId);
+        return ResponseEntity.ok(member);
+    }
+
+    @PostMapping("/{id}/members/bulk-invite")
+    @Operation(summary = "Bulk invite members", description = "Invite multiple members to a team at once (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<List<TeamMemberResponse>> bulkInviteMembers(
+            @PathVariable UUID id,
+            @Valid @RequestBody BulkInviteRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        List<TeamMemberResponse> members = teamService.bulkInviteMembers(id, request, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(members);
     }
 }
 
