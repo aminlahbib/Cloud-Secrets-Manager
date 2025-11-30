@@ -1,6 +1,8 @@
 package com.secrets.repository;
 
 import com.secrets.entity.Project;
+import com.secrets.entity.TeamProject;
+import com.secrets.entity.TeamMembership;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
