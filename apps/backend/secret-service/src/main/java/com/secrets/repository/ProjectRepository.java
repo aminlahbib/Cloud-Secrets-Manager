@@ -18,19 +18,25 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     List<Project> findByCreatedByAndIsArchivedFalse(UUID createdBy);
     Page<Project> findByIsArchivedFalse(Pageable pageable);
     
-    @Query("SELECT p FROM Project p " +
-           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
-           "WHERE pm.userId = :userId AND p.isArchived = false")
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
+           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
+           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
+           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) AND p.isArchived = false")
     Page<Project> findAccessibleProjectsByUserId(@Param("userId") UUID userId, Pageable pageable);
     
-    @Query("SELECT p FROM Project p " +
-           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
-           "WHERE pm.userId = :userId")
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
+           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
+           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
+           "WHERE pm.userId IS NOT NULL OR tm.userId IS NOT NULL")
     Page<Project> findAccessibleProjectsByUserIdIncludingArchived(@Param("userId") UUID userId, Pageable pageable);
     
-    @Query("SELECT p FROM Project p " +
-           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
-           "WHERE pm.userId = :userId AND p.isArchived = false " +
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
+           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
+           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
+           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) AND p.isArchived = false " +
            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Project> findAccessibleProjectsByUserIdAndSearch(
@@ -39,9 +45,11 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
         Pageable pageable
     );
     
-    @Query("SELECT p FROM Project p " +
-           "JOIN ProjectMembership pm ON pm.projectId = p.id " +
-           "WHERE pm.userId = :userId " +
+    @Query("SELECT DISTINCT p FROM Project p " +
+           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
+           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
+           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
+           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) " +
            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Project> findAccessibleProjectsByUserIdAndSearchIncludingArchived(
