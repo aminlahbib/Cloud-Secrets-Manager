@@ -2,6 +2,7 @@ package com.secrets.service;
 
 import com.secrets.entity.ProjectMembership;
 import com.secrets.repository.ProjectMembershipRepository;
+import com.secrets.repository.TeamMembershipRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,24 +13,58 @@ import java.util.UUID;
 /**
  * Service for checking project-level permissions based on user roles.
  * Implements the v3 Resource-Scoped RBAC model.
+ * Also checks team-based access: if a project is in a team and user is a team member,
+ * they get VIEWER access to the project.
  */
 @Service
 @Transactional(readOnly = true)
 public class ProjectPermissionService {
     
     private final ProjectMembershipRepository membershipRepository;
+    private final TeamMembershipRepository teamMembershipRepository;
 
-    public ProjectPermissionService(ProjectMembershipRepository membershipRepository) {
+    public ProjectPermissionService(
+            ProjectMembershipRepository membershipRepository,
+            TeamMembershipRepository teamMembershipRepository) {
         this.membershipRepository = membershipRepository;
+        this.teamMembershipRepository = teamMembershipRepository;
+    }
+
+    /**
+     * Check if user has access to project (either direct membership or via team)
+     * Optimized to use single query for team-based access check
+     */
+    public boolean hasProjectAccess(UUID projectId, UUID userId) {
+        // Check direct project membership first (fastest check)
+        if (membershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            return true;
+        }
+        
+        // Check team-based access with single optimized query
+        return teamMembershipRepository.hasTeamAccessToProject(projectId, userId);
     }
 
     /**
      * Get user's role in a project
+     * Returns direct project role if exists, otherwise VIEWER if user has team access
+     * Cached to avoid repeated database queries
      */
     @Cacheable(cacheNames = "projectMemberships", key = "T(java.lang.String).format('%s:%s', #projectId, #userId)")
     public Optional<ProjectMembership.ProjectRole> getUserRole(UUID projectId, UUID userId) {
-        return membershipRepository.findByProjectIdAndUserId(projectId, userId)
+        // First check direct project membership (takes precedence)
+        Optional<ProjectMembership.ProjectRole> directRole = membershipRepository.findByProjectIdAndUserId(projectId, userId)
             .map(ProjectMembership::getRole);
+        
+        if (directRole.isPresent()) {
+            return directRole;
+        }
+        
+        // Check team-based access with optimized single query - team members get VIEWER access
+        if (teamMembershipRepository.hasTeamAccessToProject(projectId, userId)) {
+            return Optional.of(ProjectMembership.ProjectRole.VIEWER);
+        }
+        
+        return Optional.empty();
     }
 
     /**
@@ -68,7 +103,7 @@ public class ProjectPermissionService {
      * Check if user can view project
      */
     public boolean canViewProject(UUID projectId, UUID userId) {
-        return hasRole(projectId, userId, ProjectMembership.ProjectRole.VIEWER);
+        return hasProjectAccess(projectId, userId);
     }
 
     /**
