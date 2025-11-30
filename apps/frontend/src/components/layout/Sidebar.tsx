@@ -31,15 +31,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-40 w-64 flex flex-col padding-sidebar transition-all duration-200 md:translate-x-0
+        fixed inset-y-0 left-0 z-40 w-64 flex flex-col padding-sidebar transition-all duration-200 md:translate-x-0 sidebar-glass
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
-      style={{
-        backgroundColor: 'var(--sidebar-bg)',
-        borderRightColor: 'var(--sidebar-border)',
-        borderRightWidth: '1px',
-        borderRightStyle: 'solid',
-      }}
     >
       {/* Logo */}
       <div className="mb-8">
