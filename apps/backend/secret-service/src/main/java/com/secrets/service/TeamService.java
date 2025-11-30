@@ -260,7 +260,7 @@ public class TeamService {
      */
     public void removeTeamMember(UUID teamId, UUID memberId, UUID userId) {
         // Verify team exists
-        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+        teamRepository.findByIdAndIsActiveTrue(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("Team not found"));
 
         // Check permission (TEAM_OWNER or TEAM_ADMIN can remove members)
@@ -291,7 +291,7 @@ public class TeamService {
         }
 
         membershipRepository.delete(membership);
-        log.info("Removed user {} from team {}", memberId, team.getName());
+        log.info("Removed user {} from team {}", memberId, teamId);
     }
 
     /**
@@ -497,7 +497,7 @@ public class TeamService {
      */
     public void removeProjectFromTeam(UUID teamId, UUID projectId, UUID userId) {
         // Verify team exists
-        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+        teamRepository.findByIdAndIsActiveTrue(teamId)
                 .orElseThrow(() -> new IllegalArgumentException("Team not found"));
 
         // Check permission (TEAM_OWNER or TEAM_ADMIN can remove projects)
@@ -514,7 +514,7 @@ public class TeamService {
                 .orElseThrow(() -> new IllegalArgumentException("Project is not in this team"));
 
         teamProjectRepository.delete(teamProject);
-        log.info("Removed project {} from team {}", projectId, team.getName());
+        log.info("Removed project {} from team {}", projectId, teamId);
     }
 
     /**
