@@ -1,26 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { teamsService } from '../../services/teams';
-import type { CreateTeamRequest } from '../../types';
+import type { CreateTeamRequest, Team } from '../../types';
 
 interface CreateTeamModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  team?: Team; // If provided, modal is in edit mode
 }
 
 export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
+  team,
 }) => {
   const { showNotification } = useNotifications();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const isEditMode = !!team;
+
+  // Initialize form with team data when editing
+  useEffect(() => {
+    if (team) {
+      setName(team.name);
+      setDescription(team.description || '');
+    } else {
+      setName('');
+      setDescription('');
+    }
+  }, [team, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +54,23 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
         name: name.trim(),
         description: description.trim() || undefined,
       };
-      await teamsService.createTeam(request);
-      showNotification({
-        type: 'success',
-        title: 'Team created',
-        message: `Team "${name}" has been created successfully`,
-      });
+      
+      if (isEditMode && team) {
+        await teamsService.updateTeam(team.id, request);
+        showNotification({
+          type: 'success',
+          title: 'Team updated',
+          message: `Team "${name}" has been updated successfully`,
+        });
+      } else {
+        await teamsService.createTeam(request);
+        showNotification({
+          type: 'success',
+          title: 'Team created',
+          message: `Team "${name}" has been created successfully`,
+        });
+      }
+      
       setName('');
       setDescription('');
       onSuccess();
@@ -53,7 +78,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
     } catch (error: any) {
       showNotification({
         type: 'error',
-        title: 'Failed to create team',
+        title: isEditMode ? 'Failed to update team' : 'Failed to create team',
         message: error?.response?.data?.message || error?.message || 'An error occurred',
       });
     } finally {
@@ -70,7 +95,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Team" size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} title={isEditMode ? "Edit Team" : "Create Team"} size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Team Name"
@@ -107,7 +132,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
             Cancel
           </Button>
           <Button type="submit" variant="primary" isLoading={isCreating}>
-            Create Team
+            {isEditMode ? 'Update Team' : 'Create Team'}
           </Button>
         </div>
       </form>

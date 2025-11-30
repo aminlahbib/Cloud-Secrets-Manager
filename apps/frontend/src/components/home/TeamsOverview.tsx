@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Building2, Users, Folder, Plus, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '../ui/Spinner';
@@ -27,25 +27,25 @@ export const TeamsOverview: React.FC<TeamsOverviewProps> = ({ maxTeams = 3 }) =>
   const displayTeams = teams?.slice(0, maxTeams) ?? [];
 
   return (
-    <div className="card">
-      <div className="padding-card border-b border-theme-subtle">
+    <div className="card h-full flex flex-col">
+      <div className="padding-card border-b border-theme-subtle flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-h3 font-semibold text-theme-primary">Your Teams</h2>
-          <Link 
-            to="/teams" 
-            className="text-body-sm font-medium flex items-center transition-all duration-150 hover:scale-105 text-accent-primary"
+          <button
+            onClick={() => navigate('/teams')}
+            className="text-body-sm font-medium flex items-center gap-1 transition-all duration-200 hover:gap-2 text-accent-primary hover:text-accent-primary-hover"
           >
-            View all <ArrowRight className="w-4 h-4 ml-1" />
-          </Link>
+            View all <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
       
       {isLoading ? (
-        <div className="padding-card flex justify-center">
+        <div className="padding-card flex justify-center items-center flex-1 min-h-[150px]">
           <Spinner size="lg" />
         </div>
       ) : !teams || teams.length === 0 ? (
-        <div className="p-12 text-center">
+        <div className="p-8 text-center flex-1 flex flex-col items-center justify-center min-h-[250px]">
           <Building2 className="h-12 w-12 mx-auto mb-4 text-theme-tertiary" />
           <h3 className="text-h3 font-medium text-theme-primary mb-2">No teams yet</h3>
           <p className="text-body-sm text-theme-secondary mb-6">
@@ -57,58 +57,60 @@ export const TeamsOverview: React.FC<TeamsOverviewProps> = ({ maxTeams = 3 }) =>
           </Button>
         </div>
       ) : (
-        <div className="space-y-3 padding-card">
-          {displayTeams.map((team) => (
-            <Link
-              key={team.id}
-              to={`/teams/${team.id}`}
-              className="group block p-4 rounded-xl border border-theme-subtle transition-all duration-150 card hover:border-theme-default"
-            >
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl transition-all duration-150 bg-elevation-1 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-theme-primary truncate text-body-sm">
-                      {team.name}
-                    </h3>
-                    {team.currentUserRole === 'TEAM_OWNER' && (
-                      <Badge variant="owner-admin" className="text-xs">Owner</Badge>
-                    )}
-                    {team.currentUserRole === 'TEAM_ADMIN' && (
-                      <Badge variant="info" className="text-xs">Admin</Badge>
-                    )}
+        <div className="flex-1 overflow-y-auto">
+          <div className="space-y-3 padding-card">
+            {displayTeams.map((team) => (
+              <div
+                key={team.id}
+                onClick={() => navigate(`/teams/${team.id}`)}
+                className="group block p-4 rounded-xl border border-theme-subtle bg-elevation-1 transition-all duration-200 hover:border-theme-default hover:shadow-md hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-lg transition-all duration-200 bg-elevation-2 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary group-hover:scale-110">
+                    <Building2 className="h-5 w-5" />
                   </div>
-                  {team.description && (
-                    <p className="text-caption text-theme-secondary line-clamp-1 mb-1.5">
-                      {team.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-1 text-body-sm text-theme-secondary">
-                    <span className="flex items-center">
-                      <Users className="h-3.5 w-3.5 mr-1" />
-                      {team.memberCount ?? 0} members
-                    </span>
-                    <span className="flex items-center">
-                      <Folder className="h-3.5 w-3.5 mr-1" />
-                      {team.projectCount ?? 0} projects
-                    </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <h3 className="font-semibold text-theme-primary truncate text-body-sm group-hover:text-accent-primary transition-colors">
+                        {team.name}
+                      </h3>
+                      {team.currentUserRole === 'TEAM_OWNER' && (
+                        <Badge variant="owner-admin" className="text-xs flex-shrink-0">Owner</Badge>
+                      )}
+                      {team.currentUserRole === 'TEAM_ADMIN' && (
+                        <Badge variant="info" className="text-xs flex-shrink-0">Admin</Badge>
+                      )}
+                    </div>
+                    {team.description && (
+                      <p className="text-caption text-theme-secondary line-clamp-1 mb-2">
+                        {team.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-4 text-body-sm text-theme-secondary">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" />
+                        <span className="font-medium">{team.memberCount ?? 0}</span>
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <Folder className="h-3.5 w-3.5" />
+                        <span className="font-medium">{team.projectCount ?? 0}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </Link>
-          ))}
-          {teams.length > maxTeams && (
-            <div className="pt-2">
-              <Link
-                to="/teams"
-                className="block text-center text-body-sm font-medium text-accent-primary hover:underline"
-              >
-                View {teams.length - maxTeams} more team{teams.length - maxTeams !== 1 ? 's' : ''}
-              </Link>
-            </div>
-          )}
+            ))}
+            {teams.length > maxTeams && (
+              <div className="pt-2">
+                <button
+                  onClick={() => navigate('/teams')}
+                  className="block w-full text-center text-body-sm font-medium text-accent-primary hover:underline transition-colors"
+                >
+                  View {teams.length - maxTeams} more team{teams.length - maxTeams !== 1 ? 's' : ''}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

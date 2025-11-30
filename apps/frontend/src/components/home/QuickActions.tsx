@@ -48,21 +48,25 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   return (
     <div className="card gradient-quick-actions">
       <h2 className="text-h3 font-semibold text-theme-primary mb-6">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
               onClick={action.onClick}
-              className="group flex items-center p-4 rounded-xl border border-theme-subtle text-left transition-all duration-150 card hover:border-theme-default"
+              className="group flex flex-col items-start p-5 rounded-xl border border-theme-subtle bg-elevation-1 text-left transition-all duration-200 hover:border-theme-default hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
             >
-              <div className="p-2 rounded-xl mr-4 transition-all duration-150 bg-elevation-1 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary">
+              <div className="p-3 rounded-lg mb-3 transition-all duration-200 bg-elevation-2 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary group-hover:scale-110">
                 <Icon className="h-5 w-5" />
               </div>
-              <div>
-                <p className="font-medium text-theme-primary text-body-sm">{action.label}</p>
-                <p className="text-caption text-theme-secondary">{action.description}</p>
+              <div className="w-full">
+                <p className="font-semibold text-theme-primary text-body-sm mb-1 group-hover:text-accent-primary transition-colors">
+                  {action.label}
+                </p>
+                <p className="text-caption text-theme-secondary line-clamp-2">
+                  {action.description}
+                </p>
               </div>
             </button>
           );

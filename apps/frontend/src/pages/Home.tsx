@@ -95,11 +95,11 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       <WelcomeSection />
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <StatsCard
           label="Total Projects"
           value={projectsData?.totalElements ?? 0}
@@ -126,12 +126,21 @@ export const HomePage: React.FC = () => {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <WorkflowsList workflows={workflows} isLoading={isWorkflowsLoading} />
-        <TeamsOverview maxTeams={3} />
-        <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
+      {/* Main Content Grid - Better responsive layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Column - Workflows & Teams */}
+        <div className="xl:col-span-4 space-y-6">
+          <WorkflowsList workflows={workflows} isLoading={isWorkflowsLoading} />
+          <TeamsOverview maxTeams={3} />
+        </div>
+
+        {/* Right Column - Projects (takes more space) */}
+        <div className="xl:col-span-8">
+          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
+        </div>
       </div>
 
+      {/* Admin Activity Section */}
       {isPlatformAdmin && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentActivity
@@ -143,6 +152,7 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Actions */}
       <QuickActions isPlatformAdmin={isPlatformAdmin} />
     </div>
   );
