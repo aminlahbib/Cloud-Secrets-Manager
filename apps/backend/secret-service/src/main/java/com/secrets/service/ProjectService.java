@@ -8,7 +8,6 @@ import com.secrets.entity.Workflow;
 import com.secrets.repository.ProjectMembershipRepository;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
-import com.secrets.repository.TeamProjectRepository;
 import com.secrets.repository.WorkflowProjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +33,6 @@ public class ProjectService {
     private final WorkflowProjectRepository workflowProjectRepository;
     private final SecretRepository secretRepository;
     private final WorkflowService workflowService;
-    private final TeamProjectRepository teamProjectRepository;
     private final ProjectPermissionService permissionService;
 
     public ProjectService(ProjectRepository projectRepository,
@@ -42,14 +40,12 @@ public class ProjectService {
                          WorkflowProjectRepository workflowProjectRepository,
                          SecretRepository secretRepository,
                          WorkflowService workflowService,
-                         TeamProjectRepository teamProjectRepository,
                          ProjectPermissionService permissionService) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.secretRepository = secretRepository;
         this.workflowService = workflowService;
-        this.teamProjectRepository = teamProjectRepository;
         this.permissionService = permissionService;
     }
 

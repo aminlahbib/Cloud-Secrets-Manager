@@ -22,15 +22,12 @@ import java.util.UUID;
 public class ProjectPermissionService {
     
     private final ProjectMembershipRepository membershipRepository;
-    private final TeamProjectRepository teamProjectRepository;
     private final TeamMembershipRepository teamMembershipRepository;
 
     public ProjectPermissionService(
             ProjectMembershipRepository membershipRepository,
-            TeamProjectRepository teamProjectRepository,
             TeamMembershipRepository teamMembershipRepository) {
         this.membershipRepository = membershipRepository;
-        this.teamProjectRepository = teamProjectRepository;
         this.teamMembershipRepository = teamMembershipRepository;
     }
 
