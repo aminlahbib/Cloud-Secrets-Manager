@@ -11,6 +11,8 @@ import {
   Trash2,
   Plus,
   X,
+  Folder,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -23,7 +25,8 @@ import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
-import type { Team, TeamMember, TeamRole } from '../types';
+import type { Team, TeamMember, TeamRole, TeamProject } from '../types';
+import { Link } from 'react-router-dom';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
@@ -53,6 +56,13 @@ export const TeamsPage: React.FC = () => {
   const { data: members, isLoading: isMembersLoading } = useQuery<TeamMember[]>({
     queryKey: ['teams', selectedTeam?.id, 'members'],
     queryFn: () => teamsService.listTeamMembers(selectedTeam!.id),
+    enabled: !!selectedTeam?.id,
+  });
+
+  // Fetch team projects when a team is selected
+  const { data: teamProjects, isLoading: isProjectsLoading } = useQuery<TeamProject[]>({
+    queryKey: ['teams', selectedTeam?.id, 'projects'],
+    queryFn: () => teamsService.listTeamProjects(selectedTeam!.id),
     enabled: !!selectedTeam?.id,
   });
 
