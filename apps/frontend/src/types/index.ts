@@ -89,6 +89,13 @@ export interface ReorderWorkflowsRequest {
 // Projects (Collaboration Unit)
 // ----------------------------------------------------------------------------
 
+export interface ProjectTeamInfo {
+  teamId: string;
+  teamName: string;
+}
+
+export type ProjectAccessSource = 'DIRECT' | 'TEAM' | 'BOTH';
+
 export interface Project {
   id: string;
   name: string;
@@ -105,6 +112,8 @@ export interface Project {
   currentUserRole?: ProjectRole;
   workflowId?: string; // Optional: ID of the workflow this project belongs to (computed on frontend)
   workflowName?: string; // Optional: Name of the workflow (computed on frontend)
+  teams?: ProjectTeamInfo[]; // Teams this project belongs to (where user is a member)
+  accessSource?: ProjectAccessSource; // How user accesses this project: DIRECT, TEAM, or BOTH
 }
 
 export interface CreateProjectRequest {

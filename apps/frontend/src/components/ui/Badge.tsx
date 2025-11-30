@@ -4,12 +4,14 @@ interface BadgeProps {
   children: React.ReactNode;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info' | 'owner-admin';
   className?: string;
+  title?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({ 
   children, 
   variant = 'default',
-  className = '' 
+  className = '',
+  title
 }) => {
   const badgeClasses: Record<string, string> = {
     default: 'badge badge-default',
@@ -21,7 +23,7 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   return (
-    <span className={`${badgeClasses[variant]} ${className}`}>
+    <span className={`${badgeClasses[variant]} ${className}`} title={title}>
       {children}
     </span>
   );
