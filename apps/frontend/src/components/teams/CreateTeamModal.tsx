@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
+import { Users, CheckCircle2 } from 'lucide-react';
+import { MultiStepSlider, type Step } from '../ui/MultiStepSlider';
 import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { teamsService } from '../../services/teams';
@@ -20,6 +20,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
   team,
 }) => {
   const { showNotification } = useNotifications();
+  const [currentStep, setCurrentStep] = useState(0);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -34,11 +35,12 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
       setName('');
       setDescription('');
     }
+    if (isOpen) {
+      setCurrentStep(0);
+    }
   }, [team, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleComplete = async () => {
     if (!name.trim()) {
       showNotification({
         type: 'error',
@@ -73,6 +75,7 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
       
       setName('');
       setDescription('');
+      setCurrentStep(0);
       onSuccess();
       onClose();
     } catch (error: any) {
@@ -90,53 +93,98 @@ export const CreateTeamModal: React.FC<CreateTeamModalProps> = ({
     if (!isCreating) {
       setName('');
       setDescription('');
+      setCurrentStep(0);
       onClose();
     }
   };
 
+  const steps: Step[] = [
+    {
+      id: 'basic-info',
+      title: isEditMode ? 'Edit Team Details' : 'Team Details',
+      subtitle: isEditMode ? 'Update your team information' : 'Tell us about your team',
+      isValid: !!name.trim(),
+      content: (
+        <div className="space-y-6">
+          <div>
+            <Input
+              label="Team Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g., Engineering Team"
+              required
+              disabled={isCreating}
+              autoFocus
+              icon={<Users className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />}
+            />
+            <p className="mt-2 text-sm text-theme-secondary">
+              Choose a clear and descriptive name for your team.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-theme-primary">
+              Description <span className="font-normal text-theme-tertiary">(optional)</span>
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe the team's purpose and responsibilities..."
+              rows={4}
+              className="input-theme w-full px-3 py-3 rounded-lg resize-none"
+              disabled={isCreating}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: 'review',
+      title: isEditMode ? 'Review Changes' : 'Review & Create',
+      subtitle: isEditMode ? 'Review your changes before updating' : 'Review your team details before creating',
+      isValid: true,
+      content: (
+        <div className="space-y-6">
+          <div className="p-4 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-2)' }}>
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--accent-primary-glow)' }}>
+                <Users className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-theme-primary mb-1">{name || 'Untitled Team'}</h4>
+                {description && (
+                  <p className="text-sm text-theme-secondary">{description}</p>
+                )}
+                {!description && (
+                  <p className="text-sm text-theme-tertiary italic">No description provided</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 p-4 rounded-lg" style={{ backgroundColor: 'var(--status-success-bg)' }}>
+            <CheckCircle2 className="h-5 w-5 flex-shrink-0" style={{ color: 'var(--status-success)' }} />
+            <p className="text-sm" style={{ color: 'var(--status-success)' }}>
+              {isEditMode 
+                ? 'Ready to update your team. Click "Complete" to finish.'
+                : 'Ready to create your team. Click "Complete" to finish.'}
+            </p>
+          </div>
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={isEditMode ? "Edit Team" : "Create Team"} size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Team Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g., Engineering Team"
-          required
-          disabled={isCreating}
-          autoFocus
-        />
-
-        <div>
-          <label className="block text-body-sm font-medium mb-1 text-theme-primary">
-            Description
-            <span className="font-normal ml-1 text-theme-tertiary">(optional)</span>
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the team's purpose..."
-            rows={3}
-            className="input-theme w-full px-3 py-2 rounded-lg resize-none"
-            disabled={isCreating}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-theme-subtle">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleClose}
-            disabled={isCreating}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" variant="primary" isLoading={isCreating}>
-            {isEditMode ? 'Update Team' : 'Create Team'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+    <MultiStepSlider
+      isOpen={isOpen}
+      onClose={handleClose}
+      steps={steps}
+      currentStep={currentStep}
+      onStepChange={setCurrentStep}
+      onComplete={handleComplete}
+      title={isEditMode ? 'Edit Team' : 'Create Team'}
+      width="w-[500px]"
+    />
   );
 };
-

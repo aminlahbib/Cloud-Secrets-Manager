@@ -28,6 +28,7 @@ import { SecretsTab } from '../components/projects/SecretsTab';
 import { MembersTab } from '../components/projects/MembersTab';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
+import { CreateSecretModal } from '../components/secrets/CreateSecretModal';
 import {
   getLastNDays,
   prepareChartData,
@@ -79,6 +80,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [showCreateSecretModal, setShowCreateSecretModal] = useState(false);
   const [secretFilters, setSecretFilters] = useState<Record<string, any>>({
     status: null,
     sortBy: 'createdAt',
@@ -618,7 +620,7 @@ export const ProjectDetailPage: React.FC = () => {
   }, [project, secrets]);
 
   const handleImportSecrets = useCallback(() => setShowImportModal(true), []);
-  const handleAddSecret = useCallback(() => navigate(`/projects/${projectId}/secrets/new`), [navigate, projectId]);
+  const handleAddSecret = useCallback(() => setShowCreateSecretModal(true), []);
   const handleInviteMember = useCallback(() => setShowInviteModal(true), []);
   const handleFilterChange = useCallback((key: string, value: any) => setSecretFilters(prev => ({ ...prev, [key]: value })), []);
   const handleFilterClear = useCallback(() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' }), []);
@@ -1114,6 +1116,18 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Create Secret Modal */}
+      {projectId && (
+        <CreateSecretModal
+          isOpen={showCreateSecretModal}
+          onClose={() => setShowCreateSecretModal(false)}
+          projectId={projectId}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['project', projectId, 'secrets'] });
+          }}
+        />
+      )}
     </div>
   );
 };

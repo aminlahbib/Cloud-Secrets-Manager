@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, ChevronDown, Settings } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { CreateWorkflowModal } from '../workflows/CreateWorkflowModal';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Workflow } from '../../types';
 
 interface WorkflowSelectorProps {
@@ -15,8 +16,9 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
   selectedWorkflowId,
   onSelectWorkflow,
 }) => {
-  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const selectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
       <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide px-1 mb-3" style={{ color: 'var(--text-tertiary)' }}>
         <span>Workspace</span>
         <button
-          onClick={() => navigate('/workflows/new')}
+          onClick={() => setShowCreateModal(true)}
           className="text-xs font-medium flex items-center gap-1 transition-all duration-150 hover:opacity-80"
           style={{ color: 'var(--accent-primary)' }}
         >
@@ -81,12 +83,12 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate('/workflows/new');
+                  setShowCreateModal(true);
                 }}
                 className="p-1 rounded hover:bg-elevation-2 transition-colors"
-                title="Settings"
+                title="Create Workflow"
               >
-                <Settings className="h-4 w-4 text-theme-tertiary" />
+                <Plus className="h-4 w-4 text-theme-tertiary" />
               </button>
               <ChevronDown
                 className="h-4 w-4 transition-transform duration-200"
@@ -143,7 +145,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
               <button
                 onClick={() => {
                   setIsOpen(false);
-                  navigate('/workflows/new');
+                  setShowCreateModal(true);
                 }}
                 className="w-full px-3 py-2.5 text-sm font-medium border-t text-left flex items-center gap-2 transition-all duration-200 hover:bg-elevation-1"
                 style={{ 
@@ -163,12 +165,20 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
           style={{ borderColor: 'var(--border-subtle)' }}
         >
           <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>No workflows yet</p>
-          <Button onClick={() => navigate('/workflows/new')} size="sm">
+          <Button onClick={() => setShowCreateModal(true)} size="sm">
             <Plus className="h-4 w-4 mr-2" />
             Create Workflow
           </Button>
         </div>
       )}
+
+      <CreateWorkflowModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['workflows'] });
+        }}
+      />
     </div>
   );
 };
