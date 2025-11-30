@@ -334,3 +334,66 @@ export interface SecretFormData {
   tags?: string;
   expiresAt?: Date;
 }
+
+// ----------------------------------------------------------------------------
+// Teams (Team Collaboration)
+// ----------------------------------------------------------------------------
+
+export type TeamRole = 'TEAM_OWNER' | 'TEAM_ADMIN' | 'TEAM_MEMBER';
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  creatorName?: string;
+  creatorEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+  memberCount?: number;
+  projectCount?: number;
+  currentUserRole?: string;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  userId: string;
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  joinedAt: string;
+}
+
+export interface TeamMemberRequest {
+  email: string;
+  role: TeamRole;
+}
+
+export interface UpdateTeamMemberRoleRequest {
+  role: TeamRole;
+}
+
+export interface BulkInviteRequest {
+  members: TeamMemberRequest[];
+}
+
+export interface TeamProject {
+  id: string;
+  projectId: string;
+  projectName: string;
+  projectDescription?: string;
+  addedBy: string;
+  addedByName?: string;
+  addedAt: string;
+}
