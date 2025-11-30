@@ -46,25 +46,27 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   ];
 
   return (
-    <div className="card gradient-quick-actions">
-      <h2 className="text-h3 font-semibold text-theme-primary mb-6">Quick Actions</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="card">
+      <div className="padding-card border-b border-theme-subtle">
+        <h2 className="text-body font-semibold text-theme-primary">Shortcuts</h2>
+      </div>
+      <div className="padding-card space-y-2">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
               onClick={action.onClick}
-              className="group flex flex-col items-start p-5 rounded-xl border border-theme-subtle bg-elevation-1 text-left transition-all duration-200 hover:border-theme-default hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98]"
+              className="group w-full flex items-center gap-3 p-3 rounded-lg hover:bg-elevation-1 text-left transition-colors"
             >
-              <div className="p-3 rounded-lg mb-3 transition-all duration-200 bg-elevation-2 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary group-hover:scale-110">
-                <Icon className="h-5 w-5" />
+              <div className="p-2 rounded-md bg-elevation-1 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary transition-colors">
+                <Icon className="h-4 w-4" />
               </div>
-              <div className="w-full">
-                <p className="font-semibold text-theme-primary text-body-sm mb-1 group-hover:text-accent-primary transition-colors">
+              <div className="flex-1 min-w-0">
+                <p className="text-body-sm font-medium text-theme-primary group-hover:text-accent-primary transition-colors">
                   {action.label}
                 </p>
-                <p className="text-caption text-theme-secondary line-clamp-2">
+                <p className="text-caption text-theme-secondary truncate">
                   {action.description}
                 </p>
               </div>
