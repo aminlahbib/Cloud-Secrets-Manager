@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { teamsService } from '../../services/teams';
-import type { TeamMemberRequest, TeamRole, UpdateTeamMemberRoleRequest } from '../../types';
+import type { TeamMemberRequest, TeamRole } from '../../types';
 
 interface AddMemberModalProps {
   isOpen: boolean;
