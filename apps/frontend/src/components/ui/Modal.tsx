@@ -38,9 +38,14 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop */}
+      {/* Backdrop - Apple-like blur */}
       <div
-        className="fixed inset-0 transition-opacity bg-overlay"
+        className="fixed inset-0 transition-opacity"
+        style={{
+          backgroundColor: 'var(--overlay-bg)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+        }}
         onClick={onClose}
       />
 

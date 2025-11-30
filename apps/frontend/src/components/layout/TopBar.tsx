@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, HelpCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,24 @@ export const TopBar: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const html = document.documentElement;
+      const theme = html.getAttribute('data-theme') || '';
+      setIsDark(theme.includes('dark'));
+    };
+    
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +49,14 @@ export const TopBar: React.FC = () => {
     <header
       className="sticky top-0 z-50 w-full border-b transition-colors duration-200"
       style={{
-        backgroundColor: 'var(--page-bg)',
-        borderBottomColor: 'var(--border-subtle)',
+        backgroundColor: isDark ? 'rgba(20, 20, 20, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+        backdropFilter: 'blur(50px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(50px) saturate(200%)',
+        borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+        borderBottomWidth: '1px',
+        boxShadow: isDark 
+          ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)' 
+          : '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
       }}
     >
       <div className="flex items-center justify-between h-16 px-4 md:px-8">
@@ -104,10 +128,9 @@ export const TopBar: React.FC = () => {
                   onClick={() => setShowProfileDropdown(false)}
                 />
                 <div
-                  className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg border z-20"
+                  className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg border z-20 dropdown-glass"
                   style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-subtle)',
+                    borderWidth: '0.5px',
                   }}
                 >
                   <div className="p-2">
