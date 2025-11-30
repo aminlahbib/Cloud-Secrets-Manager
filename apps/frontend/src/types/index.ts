@@ -380,7 +380,7 @@ export interface TeamMemberRequest {
   role: TeamRole;
 }
 
-export interface UpdateMemberRoleRequest {
+export interface UpdateTeamMemberRoleRequest {
   role: TeamRole;
 }
 

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import {
   Users,
   UserPlus,
@@ -22,7 +21,6 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import type { Team, TeamMember, TeamRole } from '../types';
@@ -295,7 +293,6 @@ export const TeamsPage: React.FC = () => {
                   icon={<Users className="h-12 w-12 text-theme-tertiary" />}
                   title="No members"
                   description="Add members to start collaborating"
-                  size="sm"
                 />
               ) : (
                 <div className="space-y-2">

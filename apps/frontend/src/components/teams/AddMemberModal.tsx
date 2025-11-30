@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { teamsService } from '../../services/teams';
-import type { TeamMemberRequest, TeamRole } from '../../types';
+import type { TeamMemberRequest, TeamRole, UpdateTeamMemberRoleRequest } from '../../types';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -76,7 +76,7 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
   const roleOptions: { value: TeamRole; label: string }[] = [
     { value: 'TEAM_MEMBER', label: 'Member' },
     { value: 'TEAM_ADMIN', label: 'Admin' },
-    ...(canAssignOwner ? [{ value: 'TEAM_OWNER', label: 'Owner' }] : []),
+    ...(canAssignOwner ? [{ value: 'TEAM_OWNER' as TeamRole, label: 'Owner' }] : []),
   ];
 
   return (
