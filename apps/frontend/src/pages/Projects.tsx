@@ -1,21 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from '../utils/debounce';
-import { Link } from 'react-router-dom';
 import {
   Folder,
   Plus,
   Search,
-  Users,
-  Key,
-  Archive,
-  Crown,
-  Shield,
-  Clock,
   LayoutGrid,
   List,
   Building2,
-  Link as LinkIcon,
-  Group,
   Layers
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -28,17 +19,10 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
-import { ProjectSourceIndicator } from '../components/projects/ProjectSourceIndicator';
 import { TeamsVsDirectGuidance } from '../components/projects/TeamsVsDirectGuidance';
+import { ProjectCard } from '../components/projects/ProjectCard';
 import { useAuth } from '../contexts/AuthContext';
-import type { Project, ProjectRole } from '../types';
-
-const ROLE_COLORS: Record<ProjectRole, 'owner-admin' | 'owner-admin' | 'info' | 'default'> = {
-  OWNER: 'owner-admin',
-  ADMIN: 'owner-admin',
-  MEMBER: 'info',
-  VIEWER: 'default',
-};
+import type { Project, ProjectTeamInfo } from '../types';
 
 export const ProjectsPage: React.FC = () => {
   const { user } = useAuth(); // For authentication check
@@ -103,7 +87,7 @@ export const ProjectsPage: React.FC = () => {
     // Apply team filter
     if (projectFilters.team) {
       projectList = projectList.filter((project: Project) => 
-        project.teams?.some(team => team.teamId === projectFilters.team)
+        project.teams?.some((team: ProjectTeamInfo) => team.teamId === projectFilters.team)
       );
     }
     
@@ -121,7 +105,7 @@ export const ProjectsPage: React.FC = () => {
       // Add projects to their teams
       projectList.forEach((project) => {
         if (project.teams && project.teams.length > 0) {
-          project.teams.forEach((team) => {
+          project.teams.forEach((team: ProjectTeamInfo) => {
             if (!grouped![team.teamName]) {
               grouped![team.teamName] = [];
             }

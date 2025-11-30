@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { ProjectSourceIndicator } from './ProjectSourceIndicator';
-import type { Project, ProjectRole } from '../../types';
+import type { Project, ProjectRole, ProjectTeamInfo } from '../../types';
 
 const ROLE_COLORS: Record<ProjectRole, 'owner-admin' | 'owner-admin' | 'info' | 'default'> = {
   OWNER: 'owner-admin',
@@ -104,7 +104,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                 <div className="flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
                   <span className="text-caption text-tertiary font-medium">
-                    {project.teams.map(t => t.teamName).join(', ')}
+                    {project.teams.map((t: ProjectTeamInfo) => t.teamName).join(', ')}
                   </span>
                 </div>
               )}
@@ -194,12 +194,12 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                 <span className="text-xs font-medium">{project.workflowName}</span>
               </div>
             )}
-            {project.teams && project.teams.length > 0 && (
-              <div className="flex items-center gap-1.5">
-                <Building2 className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">{project.teams.map(t => t.teamName).join(', ')}</span>
-              </div>
-            )}
+                    {project.teams && project.teams.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5" />
+                        <span className="text-xs font-medium">{project.teams.map((t: ProjectTeamInfo) => t.teamName).join(', ')}</span>
+                      </div>
+                    )}
             <span className="flex items-center">
               <Key className="h-4 w-4 mr-1" />
               {project.secretCount ?? 0} secrets

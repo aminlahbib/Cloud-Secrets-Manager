@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Info, X, Building2, User, Users, CheckCircle2 } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { Info, X, Building2, User, CheckCircle2 } from 'lucide-react';
 
 export const TeamsVsDirectGuidance: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);

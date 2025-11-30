@@ -1,7 +1,7 @@
 import React from 'react';
-import { Building2, User, Link as LinkIcon, Info } from 'lucide-react';
+import { Building2, User, Link as LinkIcon } from 'lucide-react';
 import { Badge } from '../ui/Badge';
-import type { Project } from '../../types';
+import type { Project, ProjectTeamInfo } from '../../types';
 
 interface ProjectSourceIndicatorProps {
   project: Project;
@@ -45,7 +45,7 @@ export const ProjectSourceIndicator: React.FC<ProjectSourceIndicatorProps> = ({
               </span>
             </div>
             <div className="flex flex-wrap gap-1.5 ml-5">
-              {project.teams?.map((team) => (
+              {project.teams?.map((team: ProjectTeamInfo) => (
                 <Badge key={team.teamId} variant="info" className="text-xs">
                   <Building2 className="h-2.5 w-2.5 mr-1" />
                   {team.teamName}
@@ -81,7 +81,7 @@ export const ProjectSourceIndicator: React.FC<ProjectSourceIndicatorProps> = ({
       )}
       {project.teams && project.teams.length > 0 && (
         <div className="flex items-center gap-1 flex-wrap">
-          {project.teams.slice(0, 2).map((team) => (
+          {project.teams.slice(0, 2).map((team: ProjectTeamInfo) => (
             <Badge key={team.teamId} variant="default" className="text-xs">
               <Building2 className="h-2.5 w-2.5 mr-1" />
               {team.teamName}
