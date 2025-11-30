@@ -1,9 +1,13 @@
 package com.secrets.service;
 
 import com.secrets.dto.team.*;
+import com.secrets.entity.Project;
 import com.secrets.entity.Team;
 import com.secrets.entity.TeamMembership;
+import com.secrets.entity.TeamProject;
 import com.secrets.entity.User;
+import com.secrets.repository.ProjectMembershipRepository;
+import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.TeamMembershipRepository;
 import com.secrets.repository.TeamProjectRepository;
 import com.secrets.repository.TeamRepository;
@@ -29,16 +33,22 @@ public class TeamService {
     private final TeamMembershipRepository membershipRepository;
     private final TeamProjectRepository teamProjectRepository;
     private final UserRepository userRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectMembershipRepository projectMembershipRepository;
 
     public TeamService(
             TeamRepository teamRepository,
             TeamMembershipRepository membershipRepository,
             TeamProjectRepository teamProjectRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            ProjectRepository projectRepository,
+            ProjectMembershipRepository projectMembershipRepository) {
         this.teamRepository = teamRepository;
         this.membershipRepository = membershipRepository;
         this.teamProjectRepository = teamProjectRepository;
         this.userRepository = userRepository;
+        this.projectRepository = projectRepository;
+        this.projectMembershipRepository = projectMembershipRepository;
     }
 
     /**
@@ -411,6 +421,123 @@ public class TeamService {
         if (user.isPresent()) {
             response.setEmail(user.get().getEmail());
             response.setDisplayName(user.get().getDisplayName());
+        }
+
+        return response;
+    }
+
+    // =========================================================================
+    // Project Management Methods
+    // =========================================================================
+
+    /**
+     * List all projects in a team
+     */
+    @Transactional(readOnly = true)
+    public List<TeamProjectResponse> listTeamProjects(UUID teamId, UUID userId) {
+        // Verify team exists and user is a member
+        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found"));
+
+        if (!membershipRepository.existsByTeamIdAndUserId(teamId, userId)) {
+            throw new SecurityException("Access denied: You are not a member of this team");
+        }
+
+        List<TeamProject> teamProjects = teamProjectRepository.findByTeamId(teamId);
+        return teamProjects.stream()
+                .map(this::toProjectResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Add a project to a team
+     * User must have access to the project (be a member)
+     */
+    public TeamProjectResponse addProjectToTeam(UUID teamId, UUID projectId, UUID userId) {
+        // Verify team exists
+        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found"));
+
+        // Check permission (TEAM_OWNER or TEAM_ADMIN can add projects)
+        TeamMembership requesterMembership = membershipRepository.findByTeamIdAndUserId(teamId, userId)
+                .orElseThrow(() -> new SecurityException("Access denied: You are not a member of this team"));
+
+        if (requesterMembership.getRole() != TeamMembership.TeamRole.TEAM_OWNER &&
+            requesterMembership.getRole() != TeamMembership.TeamRole.TEAM_ADMIN) {
+            throw new SecurityException("Access denied: Only team owners and admins can add projects");
+        }
+
+        // Verify project exists and is not archived
+        Project project = projectRepository.findByIdAndIsArchivedFalse(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found or is archived"));
+
+        // Verify user has access to the project
+        if (!projectMembershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
+            throw new SecurityException("Access denied: You do not have access to this project");
+        }
+
+        // Check if project is already in team
+        if (teamProjectRepository.existsByTeamIdAndProjectId(teamId, projectId)) {
+            throw new IllegalStateException("Project is already in this team");
+        }
+
+        // Create team-project relationship
+        TeamProject teamProject = new TeamProject();
+        teamProject.setTeamId(teamId);
+        teamProject.setProjectId(projectId);
+        teamProject.setAddedBy(userId);
+
+        TeamProject saved = teamProjectRepository.save(teamProject);
+        log.info("Added project {} to team {}", project.getName(), team.getName());
+        return toProjectResponse(saved);
+    }
+
+    /**
+     * Remove a project from a team
+     */
+    public void removeProjectFromTeam(UUID teamId, UUID projectId, UUID userId) {
+        // Verify team exists
+        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found"));
+
+        // Check permission (TEAM_OWNER or TEAM_ADMIN can remove projects)
+        TeamMembership requesterMembership = membershipRepository.findByTeamIdAndUserId(teamId, userId)
+                .orElseThrow(() -> new SecurityException("Access denied: You are not a member of this team"));
+
+        if (requesterMembership.getRole() != TeamMembership.TeamRole.TEAM_OWNER &&
+            requesterMembership.getRole() != TeamMembership.TeamRole.TEAM_ADMIN) {
+            throw new SecurityException("Access denied: Only team owners and admins can remove projects");
+        }
+
+        // Find team-project relationship
+        TeamProject teamProject = teamProjectRepository.findByTeamIdAndProjectId(teamId, projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project is not in this team"));
+
+        teamProjectRepository.delete(teamProject);
+        log.info("Removed project {} from team {}", projectId, team.getName());
+    }
+
+    /**
+     * Convert TeamProject entity to TeamProjectResponse DTO
+     */
+    private TeamProjectResponse toProjectResponse(TeamProject teamProject) {
+        TeamProjectResponse response = new TeamProjectResponse();
+        response.setId(teamProject.getId());
+        response.setProjectId(teamProject.getProjectId());
+        response.setAddedBy(teamProject.getAddedBy());
+        response.setAddedAt(teamProject.getAddedAt());
+
+        // Get project info
+        Optional<Project> project = projectRepository.findById(teamProject.getProjectId());
+        if (project.isPresent()) {
+            response.setProjectName(project.get().getName());
+            response.setProjectDescription(project.get().getDescription());
+        }
+
+        // Get adder info
+        Optional<User> adder = userRepository.findById(teamProject.getAddedBy());
+        if (adder.isPresent()) {
+            response.setAddedByName(adder.get().getDisplayName());
         }
 
         return response;
