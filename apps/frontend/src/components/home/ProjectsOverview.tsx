@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Folder, Key, Users, Plus, LayoutGrid, ArrowRight, Building2 } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
 import type { Project } from '../../types';
 
 interface ProjectsOverviewProps {
