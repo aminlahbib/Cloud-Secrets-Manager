@@ -1,5 +1,5 @@
 import React from 'react';
-import { Folder, Key, Users, Building2, LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 
 interface StatItem {
   label: string;
