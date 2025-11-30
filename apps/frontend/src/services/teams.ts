@@ -5,7 +5,7 @@ import type {
   UpdateTeamRequest,
   TeamMember,
   TeamMemberRequest,
-  UpdateMemberRoleRequest,
+  UpdateTeamMemberRoleRequest,
   BulkInviteRequest,
   TeamProject
 } from '../types';
@@ -79,7 +79,7 @@ export const teamsService = {
   async updateMemberRole(
     teamId: string, 
     memberId: string, 
-    request: UpdateMemberRoleRequest
+    request: UpdateTeamMemberRoleRequest
   ): Promise<TeamMember> {
     const { data } = await api.put<TeamMember>(
       `/api/teams/${teamId}/members/${memberId}/role`, 
