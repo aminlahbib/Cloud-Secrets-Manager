@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,10 +14,15 @@ import {
   ExternalLink,
   ArrowLeft,
   Edit,
+  Search,
+  ChevronDown,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { teamsService } from '../services/teams';
+import { auditService } from '../services/audit';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -26,7 +31,7 @@ import { Modal } from '../components/ui/Modal';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
-import type { Team, TeamMember, TeamRole, TeamProject } from '../types';
+import type { Team, TeamMember, TeamRole, TeamProject, AuditLog } from '../types';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
@@ -44,6 +49,8 @@ export const TeamDetailPage: React.FC = () => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [memberSearchTerm, setMemberSearchTerm] = useState('');
+  const [editingMemberRole, setEditingMemberRole] = useState<{ memberId: string; role: TeamRole } | null>(null);
 
   // Fetch team details
   const { data: team, isLoading: isTeamLoading, error: teamError } = useQuery<Team>({
@@ -66,6 +73,52 @@ export const TeamDetailPage: React.FC = () => {
     queryFn: () => teamsService.listTeamProjects(teamId!),
     enabled: !!teamId,
   });
+
+  const canManageTeam = () => {
+    return team?.currentUserRole === 'TEAM_OWNER' || team?.currentUserRole === 'TEAM_ADMIN';
+  };
+
+  // Fetch team activity
+  const { data: activityData } = useQuery({
+    queryKey: ['teams', teamId, 'activity'],
+    queryFn: () => auditService.listAuditLogs({ resourceType: 'TEAM', userId: teamId, size: 10 }),
+    enabled: !!teamId && canManageTeam(),
+    staleTime: 30 * 1000,
+  });
+
+  // Update member role mutation
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
+      teamsService.updateMemberRole(teamId!, memberId, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      setEditingMemberRole(null);
+      showNotification({
+        type: 'success',
+        title: 'Role updated',
+        message: 'The member role has been updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to update role',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
+
+  // Filter members by search term
+  const filteredMembers = useMemo(() => {
+    if (!members) return [];
+    if (!memberSearchTerm.trim()) return members;
+    const search = memberSearchTerm.toLowerCase();
+    return members.filter(member =>
+      member.email.toLowerCase().includes(search) ||
+      (member.displayName && member.displayName.toLowerCase().includes(search))
+    );
+  }, [members, memberSearchTerm]);
 
   // Delete team mutation
   const deleteTeamMutation = useMutation({
@@ -134,10 +187,6 @@ export const TeamDetailPage: React.FC = () => {
       });
     },
   });
-
-  const canManageTeam = () => {
-    return team?.currentUserRole === 'TEAM_OWNER' || team?.currentUserRole === 'TEAM_ADMIN';
-  };
 
   const canDeleteTeam = () => {
     return team?.currentUserRole === 'TEAM_OWNER';
@@ -256,16 +305,41 @@ export const TeamDetailPage: React.FC = () => {
       {/* Members Section */}
       <div className="card">
         <div className="padding-card border-b border-theme-subtle">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-theme-primary">
               Members ({members?.length || 0})
             </h2>
-            {canManageTeam() && (
-              <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Member
-              </Button>
-            )}
+            <div className="flex items-center gap-3">
+              {members && members.length > 0 && (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary" />
+                  <input
+                    type="text"
+                    value={memberSearchTerm}
+                    onChange={(e) => setMemberSearchTerm(e.target.value)}
+                    placeholder="Search members..."
+                    className="pl-9 pr-3 py-1.5 text-sm border rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    }}
+                  />
+                </div>
+              )}
+              {canManageTeam() && (
+                <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Member
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -283,64 +357,179 @@ export const TeamDetailPage: React.FC = () => {
           </div>
         ) : (
           <div className="divide-y divide-theme-subtle">
-            {members.map((member) => (
-              <div
-                key={member.id}
-                className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center bg-elevation-1 text-theme-tertiary">
-                    <span className="font-medium">
-                      {(member.displayName || member.email || 'U').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-theme-primary">
-                      {member.displayName || member.email}
-                      {member.userId === user?.id && (
-                        <span className="ml-2 text-xs text-theme-secondary">
-                          (You)
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs flex items-center gap-1 text-theme-secondary">
-                      <Mail className="h-3 w-3" />
-                      {member.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      member.role === 'TEAM_OWNER' || member.role === 'TEAM_ADMIN'
-                        ? 'owner-admin'
-                        : 'default'
-                    }
-                  >
-                    {ROLE_ICONS[member.role] && <span className="mr-1">{ROLE_ICONS[member.role]}</span>}
-                    {member.role.replace('TEAM_', '')}
-                  </Badge>
-                  {canManageTeam() && member.userId !== user?.id && (
-                    <button
-                      onClick={() =>
-                        removeMemberMutation.mutate({
-                          teamId: team.id,
-                          memberId: member.userId,
-                        })
-                      }
-                      className="p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                      title="Remove member"
-                      disabled={removeMemberMutation.isPending}
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
+            {filteredMembers.length === 0 ? (
+              <div className="padding-card text-center text-theme-tertiary text-sm">
+                {memberSearchTerm ? 'No members match your search' : 'No members'}
               </div>
-            ))}
+            ) : (
+              filteredMembers.map((member) => {
+                const isEditing = editingMemberRole?.memberId === member.userId;
+                const canChangeRole = canManageTeam() && 
+                  member.userId !== user?.id &&
+                  (team?.currentUserRole === 'TEAM_OWNER' || member.role !== 'TEAM_OWNER');
+                
+                return (
+                  <div
+                    key={member.id}
+                    className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium flex-shrink-0">
+                        <span>
+                          {(member.displayName || member.email || 'U')
+                            .split(' ')
+                            .map(n => n[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2)}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-theme-primary truncate">
+                          {member.displayName || member.email}
+                          {member.userId === user?.id && (
+                            <span className="ml-2 text-xs text-theme-secondary">
+                              (You)
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs flex items-center gap-1 text-theme-secondary truncate">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          {member.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isEditing ? (
+                        <div className="relative">
+                          <select
+                            value={editingMemberRole?.role || member.role}
+                            onChange={(e) => {
+                              const newRole = e.target.value as TeamRole;
+                              updateMemberRoleMutation.mutate({
+                                memberId: member.userId,
+                                role: newRole,
+                              });
+                            }}
+                            className="text-xs px-2 py-1 border rounded transition-colors"
+                            style={{
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--border-subtle)',
+                              color: 'var(--text-primary)',
+                            }}
+                            onBlur={() => setEditingMemberRole(null)}
+                            autoFocus
+                          >
+                            {team?.currentUserRole === 'TEAM_OWNER' && (
+                              <option value="TEAM_OWNER">Owner</option>
+                            )}
+                            <option value="TEAM_ADMIN">Admin</option>
+                            <option value="TEAM_MEMBER">Member</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <>
+                          <div
+                            className="cursor-pointer inline-block"
+                            onClick={() => canChangeRole && setEditingMemberRole({ memberId: member.userId, role: member.role })}
+                            title={canChangeRole ? 'Click to change role' : ''}
+                          >
+                            <Badge
+                              variant={
+                                member.role === 'TEAM_OWNER' || member.role === 'TEAM_ADMIN'
+                                  ? 'owner-admin'
+                                  : 'default'
+                              }
+                            >
+                              {ROLE_ICONS[member.role] && <span className="mr-1">{ROLE_ICONS[member.role]}</span>}
+                              {member.role.replace('TEAM_', '')}
+                              {canChangeRole && <ChevronDown className="h-3 w-3 ml-1 inline" />}
+                            </Badge>
+                          </div>
+                          {canManageTeam() && member.userId !== user?.id && (
+                            <button
+                              onClick={() =>
+                                removeMemberMutation.mutate({
+                                  teamId: team.id,
+                                  memberId: member.userId,
+                                })
+                              }
+                              className="p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
+                              title="Remove member"
+                              disabled={removeMemberMutation.isPending}
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>
+
+      {/* Recent Activity Section */}
+      {canManageTeam() && activityData && activityData.content && activityData.content.length > 0 && (
+        <div className="card">
+          <div className="padding-card border-b border-theme-subtle">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
+              </h2>
+              <Link
+                to="/activity"
+                className="text-sm font-medium transition-colors"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+          <div className="divide-y divide-theme-subtle">
+            {activityData.content.slice(0, 5).map((log: AuditLog) => {
+              const userName = log.userDisplayName || log.userEmail || 'System';
+              const userInitials = userName
+                .split(' ')
+                .map((n: string) => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2);
+              
+              return (
+                <div key={log.id} className="padding-card">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
+                      {userInitials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-theme-primary">
+                        <span className="font-medium">{userName}</span>
+                        {' '}
+                        {log.action.replace(/_/g, ' ').toLowerCase()}
+                        {' '}
+                        {log.resourceName && (
+                          <span style={{ color: 'var(--accent-primary)' }}>
+                            {log.resourceName}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-theme-tertiary mt-0.5 flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {new Date(log.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Projects Section */}
       <div className="card">

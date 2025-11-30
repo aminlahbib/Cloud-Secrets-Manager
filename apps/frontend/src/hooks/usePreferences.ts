@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
 
 export type ProjectView = 'grid' | 'list';
+export type TeamView = 'grid' | 'list';
 
 const PREFERENCES_KEY = 'csm-preferences';
 
 interface Preferences {
   projectView: ProjectView;
+  teamView: TeamView;
 }
 
 const defaultPreferences: Preferences = {
   projectView: 'grid',
+  teamView: 'grid',
 };
 
 export const usePreferences = () => {
@@ -44,11 +47,17 @@ export const usePreferences = () => {
     setPreferences({ projectView: view });
   };
 
+  const setTeamView = (view: TeamView) => {
+    setPreferences({ teamView: view });
+  };
+
   return {
     preferences,
     setPreferences,
     setProjectView,
     projectView: preferences.projectView,
+    setTeamView,
+    teamView: preferences.teamView,
   };
 };
 

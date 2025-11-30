@@ -5,17 +5,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
 import { workflowsService } from '../services/workflows';
-import { auditService, type AuditLogsResponse } from '../services/audit';
+import { auditService } from '../services/audit';
+import type { AuditLog } from '../types';
 import { StatsStrip } from '../components/home/StatsStrip';
 import { CollaborationSection } from '../components/home/CollaborationSection';
 import { RecentActivity } from '../components/home/RecentActivity';
 import { ProjectsOverview } from '../components/home/ProjectsOverview';
-import { QuickActions } from '../components/home/QuickActions';
 import { Button } from '../components/ui/Button';
 import type { Project, Workflow } from '../types';
 
 export const HomePage: React.FC = () => {
-  const { user, isPlatformAdmin } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // Fetch recent projects
@@ -42,17 +42,49 @@ export const HomePage: React.FC = () => {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  // Fetch recent activity (only for platform admins)
-  const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
-    queryKey: ['activity', 'recent'],
-    queryFn: () => auditService.listAuditLogs({ size: 5 }),
-    enabled: isPlatformAdmin, // Only fetch for platform admins
+  const projectsList = projectsData?.content ?? [];
+
+  // Fetch recent activity from all user's projects
+  const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLog[]>({
+    queryKey: ['activity', 'recent', projectsList.length],
+    queryFn: async () => {
+      if (projectsList.length === 0) return [];
+      
+      // Fetch activities from all projects in parallel
+      const activityPromises = projectsList.map(async (project: Project) => {
+        try {
+          const response = await auditService.getProjectAuditLogs(project.id, {
+            page: 0,
+            size: 20, // Get more items per project to find most recent
+          });
+          return response.content || [];
+        } catch (err: any) {
+          // Skip projects user doesn't have access to
+          if (err.response?.status === 403 || err.response?.status === 404) {
+            return [];
+          }
+          return [];
+        }
+      });
+
+      const allActivities = await Promise.all(activityPromises);
+      const flattened = allActivities.flat();
+
+      // Sort by date (newest first) and take top 3
+      const sorted = flattened.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
+      return sorted.slice(0, 3);
+    },
+    enabled: !!user?.id && projectsList.length > 0,
     retry: false,
     staleTime: 30 * 1000, // 30 seconds - activity is real-time data
   });
 
-  const projectsList = projectsData?.content ?? [];
-  const recentActivity = activityData?.content ?? [];
+  const recentActivity = activityData ?? [];
 
   // Enrich projects with workflow information
   const projects = useMemo(() => {
@@ -155,25 +187,18 @@ export const HomePage: React.FC = () => {
 
       {/* Main Content: Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-        {/* Left Column: Projects Hero Section (65-70%) */}
-        <div className="lg:col-span-7 space-y-6">
-          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
-          <QuickActions isPlatformAdmin={isPlatformAdmin} />
+        {/* Left Column: Projects Hero Section (70%) */}
+        <div className="lg:col-span-7">
+          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} getTimeAgo={getTimeAgo} />
         </div>
 
-        {/* Right Column: Collaboration (30-35%) */}
-        <div className="lg:col-span-3">
+        {/* Right Column: Teams and Recent Activity (30%) */}
+        <div className="lg:col-span-3 space-y-4">
           <CollaborationSection
             workflows={workflows}
             isWorkflowsLoading={isWorkflowsLoading}
-            maxTeams={3}
+            maxTeams={2}
           />
-        </div>
-      </div>
-
-      {/* Admin Activity Section */}
-      {isPlatformAdmin && (
-        <div className="mt-8">
           <RecentActivity
             activity={recentActivity}
             isLoading={isActivityLoading}
@@ -181,7 +206,7 @@ export const HomePage: React.FC = () => {
             getTimeAgo={getTimeAgo}
           />
         </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -6,9 +6,12 @@ import {
   Building2,
   Settings,
   Trash2,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { usePreferences } from '../hooks/usePreferences';
 import { teamsService } from '../services/teams';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -45,6 +48,7 @@ export const TeamsPage: React.FC = () => {
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { teamView, setTeamView } = usePreferences();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
@@ -122,15 +126,71 @@ export const TeamsPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-theme-primary">Teams</h1>
-          <p className="text-body-sm text-theme-secondary mt-1">
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+            Teams
+          </h1>
+          <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
             Manage team members and access controls
           </p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <UserPlus className="w-5 h-5 mr-2" />
-          Create Team
-        </Button>
+        <div className="flex items-center gap-2">
+          <div 
+            className="border rounded-lg p-1 flex gap-1 shadow-sm"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <button 
+              onClick={() => setTeamView('grid')}
+              className="p-1.5 rounded transition-colors"
+              style={{
+                backgroundColor: teamView === 'grid' ? 'var(--elevation-1)' : 'transparent',
+                color: teamView === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              }}
+              onMouseEnter={(e) => {
+                if (teamView !== 'grid') {
+                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (teamView !== 'grid') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
+                }
+              }}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setTeamView('list')}
+              className="p-1.5 rounded transition-colors"
+              style={{
+                backgroundColor: teamView === 'list' ? 'var(--elevation-1)' : 'transparent',
+                color: teamView === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+              }}
+              onMouseEnter={(e) => {
+                if (teamView !== 'list') {
+                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (teamView !== 'list') {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
+                }
+              }}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <UserPlus className="w-5 h-5 mr-2" />
+            Create Team
+          </Button>
+        </div>
       </div>
 
       {/* Teams List */}
@@ -144,7 +204,7 @@ export const TeamsPage: React.FC = () => {
             onClick: () => setShowCreateModal(true),
           }}
         />
-      ) : (
+      ) : teamView === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {teams.map((team) => {
             const teamInitials = team.name
@@ -282,6 +342,132 @@ export const TeamsPage: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {teams.map((team) => {
+            const teamInitials = team.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2);
+            
+            const teamGradientStyle = getTeamGradientStyle(team.name);
+            
+            return (
+              <div
+                key={team.id}
+                onClick={() => navigate(`/teams/${team.id}`)}
+                className="card rounded-xl p-4 shadow-sm transition-all cursor-pointer hover:shadow-theme-md"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-default)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div 
+                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg flex-shrink-0"
+                      style={{ 
+                        ...teamGradientStyle,
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      {teamInitials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                          {team.name}
+                        </h3>
+                        {team.currentUserRole && (
+                          <span 
+                            className="text-xs uppercase tracking-wide font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                            style={{
+                              backgroundColor: 'var(--elevation-1)',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            {team.currentUserRole.replace('TEAM_', '')}
+                          </span>
+                        )}
+                      </div>
+                      {team.description && (
+                        <p className="text-sm truncate mb-2" style={{ color: 'var(--text-secondary)' }}>
+                          {team.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                          {team.memberCount || 0} members
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                          {team.projectCount || 0} projects
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {canManageTeam(team) && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/teams/${team.id}`);
+                        }}
+                        className="py-2 px-3 border rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                        }}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Manage
+                      </button>
+                      {canDeleteTeam(team) && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTeam(team);
+                          }}
+                          className="py-2 px-3 border rounded-lg text-sm font-medium transition-colors"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--status-danger)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--status-danger-bg)';
+                            e.currentTarget.style.borderColor = 'var(--status-danger)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
