@@ -2,7 +2,6 @@ package com.secrets.service;
 
 import com.secrets.entity.ProjectMembership;
 import com.secrets.repository.ProjectMembershipRepository;
-import com.secrets.repository.TeamProjectRepository;
 import com.secrets.repository.TeamMembershipRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
