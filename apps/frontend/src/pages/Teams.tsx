@@ -363,6 +363,71 @@ export const TeamsPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Projects Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                  Projects ({teamProjects?.length || 0})
+                </h3>
+                {canManageTeam(selectedTeam) && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      // TODO: Open add project modal
+                      showNotification({
+                        type: 'info',
+                        title: 'Coming soon',
+                        message: 'Project management UI will be added in the next update',
+                      });
+                    }}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Project
+                  </Button>
+                )}
+              </div>
+
+              {isProjectsLoading ? (
+                <div className="flex justify-center py-4">
+                  <Spinner size="md" />
+                </div>
+              ) : !teamProjects || teamProjects.length === 0 ? (
+                <EmptyState
+                  icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
+                  title="No projects"
+                  description="Add projects to this team to share access with all team members"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {teamProjects.map((teamProject) => (
+                    <Link
+                      key={teamProject.id}
+                      to={`/projects/${teamProject.projectId}`}
+                      className="flex items-center justify-between p-3 rounded-lg border border-theme-subtle hover:bg-elevation-1 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-elevation-1">
+                          <Folder className="h-4 w-4 text-theme-tertiary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                            {teamProject.projectName}
+                          </p>
+                          {teamProject.projectDescription && (
+                            <p className="text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                              {teamProject.projectDescription}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-theme-tertiary" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Modal>
       )}
