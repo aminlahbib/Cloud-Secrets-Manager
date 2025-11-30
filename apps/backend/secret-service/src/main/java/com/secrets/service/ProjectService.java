@@ -8,6 +8,7 @@ import com.secrets.entity.Workflow;
 import com.secrets.repository.ProjectMembershipRepository;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
+import com.secrets.repository.TeamProjectRepository;
 import com.secrets.repository.WorkflowProjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +34,23 @@ public class ProjectService {
     private final WorkflowProjectRepository workflowProjectRepository;
     private final SecretRepository secretRepository;
     private final WorkflowService workflowService;
+    private final TeamProjectRepository teamProjectRepository;
+    private final ProjectPermissionService permissionService;
 
     public ProjectService(ProjectRepository projectRepository,
                          ProjectMembershipRepository membershipRepository,
                          WorkflowProjectRepository workflowProjectRepository,
                          SecretRepository secretRepository,
-                         WorkflowService workflowService) {
+                         WorkflowService workflowService,
+                         TeamProjectRepository teamProjectRepository,
+                         ProjectPermissionService permissionService) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.secretRepository = secretRepository;
         this.workflowService = workflowService;
+        this.teamProjectRepository = teamProjectRepository;
+        this.permissionService = permissionService;
     }
 
     /**
@@ -78,8 +85,8 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
-        // Check if user has access
-        if (!membershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
+        // Check if user has access (direct membership or via team)
+        if (!permissionService.hasProjectAccess(projectId, userId)) {
             throw new SecurityException("Access denied to project");
         }
 
