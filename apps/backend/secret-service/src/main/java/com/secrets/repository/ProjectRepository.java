@@ -1,8 +1,6 @@
 package com.secrets.repository;
 
 import com.secrets.entity.Project;
-import com.secrets.entity.TeamProject;
-import com.secrets.entity.TeamMembership;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,25 +19,22 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     Page<Project> findByIsArchivedFalse(Pageable pageable);
     
     @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
-           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
-           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
-           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) AND p.isArchived = false")
+           "WHERE p.isArchived = false AND (" +
+           "  EXISTS (SELECT 1 FROM ProjectMembership pm WHERE pm.projectId = p.id AND pm.userId = :userId) OR " +
+           "  EXISTS (SELECT 1 FROM TeamProject tp JOIN TeamMembership tm ON tm.teamId = tp.teamId WHERE tp.projectId = p.id AND tm.userId = :userId)" +
+           ")")
     Page<Project> findAccessibleProjectsByUserId(@Param("userId") UUID userId, Pageable pageable);
     
     @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
-           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
-           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
-           "WHERE pm.userId IS NOT NULL OR tm.userId IS NOT NULL")
+           "WHERE EXISTS (SELECT 1 FROM ProjectMembership pm WHERE pm.projectId = p.id AND pm.userId = :userId) OR " +
+           "      EXISTS (SELECT 1 FROM TeamProject tp JOIN TeamMembership tm ON tm.teamId = tp.teamId WHERE tp.projectId = p.id AND tm.userId = :userId)")
     Page<Project> findAccessibleProjectsByUserIdIncludingArchived(@Param("userId") UUID userId, Pageable pageable);
     
     @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
-           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
-           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
-           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) AND p.isArchived = false " +
-           "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "WHERE p.isArchived = false AND (" +
+           "  EXISTS (SELECT 1 FROM ProjectMembership pm WHERE pm.projectId = p.id AND pm.userId = :userId) OR " +
+           "  EXISTS (SELECT 1 FROM TeamProject tp JOIN TeamMembership tm ON tm.teamId = tp.teamId WHERE tp.projectId = p.id AND tm.userId = :userId)" +
+           ") AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Project> findAccessibleProjectsByUserIdAndSearch(
         @Param("userId") UUID userId, 
@@ -48,10 +43,8 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     );
     
     @Query("SELECT DISTINCT p FROM Project p " +
-           "LEFT JOIN ProjectMembership pm ON pm.projectId = p.id AND pm.userId = :userId " +
-           "LEFT JOIN TeamProject tp ON tp.projectId = p.id " +
-           "LEFT JOIN TeamMembership tm ON tm.teamId = tp.teamId AND tm.userId = :userId " +
-           "WHERE (pm.userId IS NOT NULL OR tm.userId IS NOT NULL) " +
+           "WHERE (EXISTS (SELECT 1 FROM ProjectMembership pm WHERE pm.projectId = p.id AND pm.userId = :userId) OR " +
+           "       EXISTS (SELECT 1 FROM TeamProject tp JOIN TeamMembership tm ON tm.teamId = tp.teamId WHERE tp.projectId = p.id AND tm.userId = :userId)) " +
            "AND (LOWER(p.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(p.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<Project> findAccessibleProjectsByUserIdAndSearchIncludingArchived(
