@@ -56,7 +56,7 @@ export const ThemeControls: React.FC = () => {
         {/* Theme Dropdown - Only 7 color schemes */}
         {isThemeSelectorOpen && (
           <div 
-            className="absolute bottom-full left-0 right-0 mb-2 rounded-lg border shadow-xl z-50"
+            className="absolute top-full left-0 right-0 mt-2 rounded-lg border shadow-xl z-50"
             style={{
               backgroundColor: 'var(--elevation-4)',
               borderColor: 'var(--border-default)',

@@ -176,8 +176,8 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-h1 font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
-        <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Manage your account and application preferences</p>
+        <h1 className="text-2xl font-bold text-theme-primary">Settings</h1>
+        <p className="text-body-sm text-theme-secondary mt-1">Manage your account and application preferences</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -223,7 +223,7 @@ export const SettingsPage: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'profile' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Profile Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Profile Settings</h2>
               
               <div className="space-y-6">
                 {/* Avatar */}
@@ -324,7 +324,7 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'security' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Security Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Security Settings</h2>
               
               <div className="space-y-6 max-w-xl">
                 <div 
@@ -352,7 +352,7 @@ export const SettingsPage: React.FC = () => {
                     borderColor: 'var(--border-subtle)' 
                   }}
                 >
-                  <h3 className="text-h3 font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Two-Factor Authentication</h3>
+                  <h3 className="text-lg font-medium mb-2 text-theme-primary">Two-Factor Authentication</h3>
                   <p className="text-body-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                     Add an extra layer of security to your account by enabling 2FA.
                   </p>
@@ -375,7 +375,7 @@ export const SettingsPage: React.FC = () => {
                   className="pt-6 border-t"
                   style={{ borderTopColor: 'var(--border-subtle)' }}
                 >
-                  <h3 className="text-h3 font-medium mb-4" style={{ color: 'var(--text-primary)' }}>Active Sessions</h3>
+                  <h3 className="text-lg font-medium mb-4 text-theme-primary">Active Sessions</h3>
                   <div className="space-y-3">
                     <div 
                       className="flex items-center justify-between p-3 rounded-lg transition-colors"
@@ -398,7 +398,7 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'notifications' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Notification Preferences</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Notification Preferences</h2>
               
               {isLoadingPreferences ? (
                 <div className="flex justify-center py-8">
@@ -491,7 +491,7 @@ export const SettingsPage: React.FC = () => {
               <Card className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-h3 font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                    <h2 className="text-xl font-semibold flex items-center gap-2 text-theme-primary">
                       <Palette className="h-5 w-5" />
                       Theme
                     </h2>
@@ -567,7 +567,7 @@ export const SettingsPage: React.FC = () => {
 
               {/* Display & View Settings */}
               <Card className="p-6">
-                <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Display & View</h2>
+                <h2 className="text-xl font-semibold mb-6 text-theme-primary">Display & View</h2>
                 
                 {isLoadingPreferences ? (
                   <div className="flex justify-center py-8">
@@ -609,7 +609,7 @@ export const SettingsPage: React.FC = () => {
 
               {/* Regional Settings */}
               <Card className="p-6">
-                <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Regional Settings</h2>
+                <h2 className="text-xl font-semibold mb-6 text-theme-primary">Regional Settings</h2>
                 
                 {isLoadingPreferences ? (
                   <div className="flex justify-center py-8">

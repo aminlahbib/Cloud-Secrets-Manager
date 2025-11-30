@@ -128,12 +128,12 @@ export const WorkflowDetailPage: React.FC = () => {
               </div>
             ) : (
               <>
-                <h1 className="text-2xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>{workflow.name}</h1>
+                <h1 className="text-2xl font-bold text-theme-primary">{workflow.name}</h1>
                 {workflow.description && (
-                  <p className="mt-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>{workflow.description}</p>
+                  <p className="text-body-sm text-theme-secondary mt-1">{workflow.description}</p>
                 )}
                 {workflow.isDefault && (
-                  <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full transition-colors duration-300" style={{ color: 'var(--tab-text-muted)', backgroundColor: 'var(--tab-hover-bg)' }}>
+                  <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full text-theme-secondary bg-elevation-1">
                     Default Workflow
                   </span>
                 )}
@@ -165,9 +165,9 @@ export const WorkflowDetailPage: React.FC = () => {
 
       {/* Projects List */}
       <div className="card rounded-2xl">
-        <div className="p-6 border-b transition-colors duration-300" style={{ borderColor: 'var(--tab-border)' }}>
+        <div className="p-6 border-b border-theme-subtle">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+            <h2 className="text-lg font-semibold text-theme-primary">
               Projects ({projects.length})
             </h2>
             <Button onClick={() => setShowCreateModal(true)}>
@@ -190,37 +190,28 @@ export const WorkflowDetailPage: React.FC = () => {
             />
           </div>
         ) : (
-          <div className="divide-y transition-colors duration-300" style={{ borderColor: 'var(--table-divider)' }}>
+          <div className="divide-y divide-theme-subtle">
             {projects.map((wp) => (
               <Link
                 key={wp.projectId}
                 to={`/projects/${wp.projectId}`}
-                className="block p-6 transition-colors duration-300"
-                style={{
-                  '--hover-bg': 'var(--tab-hover-bg)',
-                } as React.CSSProperties}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--tab-hover-bg)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
+                className="block p-6 transition-colors hover:bg-elevation-1"
               >
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg transition-colors duration-300" style={{ backgroundColor: 'var(--tab-hover-bg)', color: 'var(--tab-text-muted)' }}>
+                  <div className="p-3 rounded-lg bg-elevation-1 text-theme-tertiary">
                     <Folder className="h-6 w-6" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold truncate transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                    <h3 className="text-lg font-semibold truncate text-theme-primary">
                       {wp.project?.name || 'Project'}
                     </h3>
                     {wp.project?.description && (
-                      <p className="mt-1 text-sm truncate transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                      <p className="mt-1 text-sm truncate text-theme-secondary">
                         {wp.project.description}
                       </p>
                     )}
                   </div>
-                  <div className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                  <div className="text-sm text-theme-secondary">
                     Added {wp.addedAt ? new Date(wp.addedAt).toLocaleDateString() : ''}
                   </div>
                 </div>
@@ -243,10 +234,10 @@ export const WorkflowDetailPage: React.FC = () => {
         title="Delete Workflow"
       >
         <div className="space-y-4">
-          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+          <p className="text-sm text-theme-primary">
             Are you sure you want to delete <strong>{workflow.name}</strong>?
           </p>
-          <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+          <p className="text-sm text-theme-secondary">
             This will remove the workflow, but projects in this workflow will not be deleted. 
             They will become unassigned and can be moved to other workflows.
           </p>
