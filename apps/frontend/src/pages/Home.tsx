@@ -21,7 +21,7 @@ export const HomePage: React.FC = () => {
   // Fetch recent projects
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
     queryKey: ['projects', 'recent', user?.id],
-    queryFn: () => projectsService.listProjects({ size: 6 }),
+    queryFn: () => projectsService.listProjects({ size: 8 }),
     enabled: !!user?.id,
     staleTime: 60 * 1000, // 1 minute - recent projects change moderately
   });
