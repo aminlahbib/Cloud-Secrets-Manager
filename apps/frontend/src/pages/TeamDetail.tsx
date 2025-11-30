@@ -19,7 +19,6 @@ import {
   Clock,
   Settings as SettingsIcon,
   LayoutGrid,
-  List,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -36,7 +35,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { Tabs } from '../components/ui/Tabs';
-import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import { FilterConfig } from '../components/ui/FilterPanel';
+import { PageHeader } from '../components/shared/PageHeader';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { TeamHeader } from '../components/teams/TeamHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
@@ -57,16 +57,27 @@ export const TeamDetailPage: React.FC = () => {
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
   
-  // Persist activeTab in sessionStorage
+  // Persist activeTab in sessionStorage and URL query params
   const [activeTab, setActiveTab] = useState(() => {
+    // Check URL query params first
+    const urlParams = new URLSearchParams(window.location.search);
+    const tabFromUrl = urlParams.get('tab');
+    if (tabFromUrl) {
+      return tabFromUrl;
+    }
+    // Fallback to sessionStorage
     const saved = sessionStorage.getItem(`team-${teamId}-activeTab`);
     return saved || 'overview';
   });
 
-  // Update sessionStorage when tab changes
+  // Update sessionStorage and URL when tab changes
   useEffect(() => {
     if (teamId) {
       sessionStorage.setItem(`team-${teamId}-activeTab`, activeTab);
+      // Update URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', activeTab);
+      window.history.replaceState({}, '', url.toString());
     }
   }, [activeTab, teamId]);
 
@@ -618,92 +629,24 @@ export const TeamDetailPage: React.FC = () => {
 
       {activeTab === 'projects' && (
         <div className="space-y-6">
-          {/* Search and Filters */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary" />
-                <input
-                  type="text"
-                  value={projectSearchTerm}
-                  onChange={(e) => setProjectSearchTerm(e.target.value)}
-                  placeholder="Search projects..."
-                  className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg transition-colors"
-                  style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-subtle)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                    e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-primary-glow)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setProjectView('grid')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    projectView === 'grid' ? 'bg-elevation-1' : ''
-                  }`}
-                  style={{
-                    color: projectView === 'grid' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                  }}
-                >
-                  <LayoutGrid className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setProjectView('list')}
-                  className={`p-2 rounded-lg transition-colors ${
-                    projectView === 'list' ? 'bg-elevation-1' : ''
-                  }`}
-                  style={{
-                    color: projectView === 'list' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                  }}
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-              {canManageTeam() && (
-                <Button size="sm" onClick={() => setShowAddProjectModal(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Project
-                </Button>
-              )}
-            </div>
-            <FilterPanel
-              filters={projectFilterConfigs}
-              values={projectFilters}
-              onChange={handleProjectFilterChange}
-              onClear={handleProjectFilterClear}
-            />
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    Show archived
-                  </span>
-                  <div
-                    className="relative inline-flex items-center w-11 h-6 rounded-full transition-colors cursor-pointer"
-                    style={{
-                      backgroundColor: showArchived ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                    }}
-                    onClick={() => setShowArchived(!showArchived)}
-                  >
-                    <span
-                      className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${
-                        showArchived ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </div>
-                </label>
-              </div>
-            </div>
-          </div>
+          <PageHeader
+            title="Projects"
+            description="Manage team projects"
+            view={projectView}
+            onViewChange={setProjectView}
+            onCreateNew={() => setShowAddProjectModal(true)}
+            createButtonLabel="New Project"
+            searchTerm={projectSearchTerm}
+            onSearchChange={setProjectSearchTerm}
+            searchPlaceholder="Search projects..."
+            filters={projectFilterConfigs}
+            filterValues={projectFilters}
+            onFilterChange={handleProjectFilterChange}
+            onFilterClear={handleProjectFilterClear}
+            showArchivedToggle={true}
+            showArchived={showArchived}
+            onShowArchivedChange={setShowArchived}
+          />
 
           {/* Projects Display */}
           {isAllProjectsLoading ? (

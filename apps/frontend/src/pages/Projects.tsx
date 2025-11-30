@@ -3,11 +3,8 @@ import { useDebounce } from '../utils/debounce';
 import {
   Folder,
   Plus,
-  Search,
   LayoutGrid,
-  List,
   Building2,
-  Layers
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useProjects';
@@ -17,7 +14,8 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
-import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import { FilterConfig } from '../components/ui/FilterPanel';
+import { PageHeader } from '../components/shared/PageHeader';
 import { TeamsVsDirectGuidance } from '../components/projects/TeamsVsDirectGuidance';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { useAuth } from '../contexts/AuthContext';
@@ -197,221 +195,28 @@ export const ProjectsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Projects
-          </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Manage your projects and secret collections.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div 
-            className="border rounded-lg p-1 flex gap-1 shadow-sm"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            <button 
-              onClick={() => setProjectView('grid')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: projectView === 'grid' ? 'var(--elevation-1)' : 'transparent',
-                color: projectView === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (projectView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (projectView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setProjectView('list')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: projectView === 'list' ? 'var(--elevation-1)' : 'transparent',
-                color: projectView === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (projectView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (projectView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-          <button 
-            className="px-4 py-2 font-medium rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
-            style={{
-              backgroundColor: 'var(--accent-primary)',
-              color: 'var(--text-inverse)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-            onClick={() => setShowCreateModal(true)}
-          >
-            <Plus className="w-4 h-4" />
-            New Project
-          </button>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search 
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" 
-            style={{ color: 'var(--text-tertiary)' }}
-          />
-          <input 
-            type="text" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search projects..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all shadow-sm"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--text-primary)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-primary)';
-              e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-primary-glow)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
-        </div>
-        <FilterPanel
-          filters={projectFilterConfigs}
-          values={projectFilters}
-          onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
-          onClear={() => setProjectFilters({ workflow: null, role: null, team: null, accessSource: null })}
-        />
-      </div>
-        
-      {/* Group By Selector and Archived Toggle */}
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-3">
-          <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-            Group by:
-          </span>
-        <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ borderColor: 'var(--border-subtle)' }}>
-          <button
-            onClick={() => setGroupBy('none')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'none' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'none' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'none') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'none') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <Layers className="h-4 w-4 inline mr-1.5" />
-            None
-          </button>
-          <button
-            onClick={() => setGroupBy('workflow')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'workflow' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'workflow' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'workflow') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'workflow') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <LayoutGrid className="h-4 w-4 inline mr-1.5" />
-            Workflow
-          </button>
-          <button
-            onClick={() => setGroupBy('team')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'team' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'team' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'team') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'team') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <Building2 className="h-4 w-4 inline mr-1.5" />
-            Team
-          </button>
-        </div>
-        {/* Info Icon for Guidance */}
-        <TeamsVsDirectGuidance compact />
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-              Show archived
-            </span>
-            <div
-              className="relative inline-flex items-center w-11 h-6 rounded-full transition-colors cursor-pointer"
-              style={{
-                backgroundColor: showArchived ? 'var(--accent-primary)' : 'var(--elevation-2)',
-              }}
-              onClick={() => setShowArchived(!showArchived)}
-            >
-              <span
-                className="inline-block w-4 h-4 bg-white rounded-full shadow-sm transform transition-transform"
-                style={{
-                  transform: showArchived ? 'translateX(1.25rem)' : 'translateX(0.25rem)',
-                }}
-              />
-            </div>
-          </label>
-        </div>
-      </div>
+      <PageHeader
+        title="Projects"
+        description="Manage your projects and secret collections."
+        view={projectView}
+        onViewChange={setProjectView}
+        onCreateNew={() => setShowCreateModal(true)}
+        createButtonLabel="New Project"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search projects..."
+        filters={projectFilterConfigs}
+        filterValues={projectFilters}
+        onFilterChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
+        onFilterClear={() => setProjectFilters({ workflow: null, role: null, team: null, accessSource: null })}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
+        showGroupBy={true}
+        showArchived={showArchived}
+        onShowArchivedChange={setShowArchived}
+        showArchivedToggle={true}
+        additionalActions={<TeamsVsDirectGuidance compact />}
+      />
 
       {/* Projects Grid/List */}
       {isLoading ? (
