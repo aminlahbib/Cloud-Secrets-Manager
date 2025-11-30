@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Filter, X, Download, Key, Folder, Users, Clock } from 'lucide-react';
+import { FileText, Filter, X, Download, Key, Folder, Users, Clock, Building2 } from 'lucide-react';
 import { auditService } from '../services/audit';
 import { projectsService } from '../services/projects';
 import { Spinner } from '../components/ui/Spinner';
@@ -32,6 +32,13 @@ const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger'
   WORKFLOW_CREATE: 'success',
   WORKFLOW_UPDATE: 'warning',
   WORKFLOW_DELETE: 'danger',
+  TEAM_CREATE: 'success',
+  TEAM_UPDATE: 'warning',
+  TEAM_DELETE: 'danger',
+  TEAM_MEMBER_ADD: 'success',
+  TEAM_MEMBER_REMOVE: 'danger',
+  TEAM_PROJECT_ADD: 'info',
+  TEAM_PROJECT_REMOVE: 'warning',
   // Legacy actions
   CREATE: 'success',
   READ: 'info',
@@ -54,6 +61,13 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   MEMBER_INVITE: <Users className="h-4 w-4" />,
   MEMBER_JOIN: <Users className="h-4 w-4" />,
   MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_CREATE: <Building2 className="h-4 w-4" />,
+  TEAM_UPDATE: <Building2 className="h-4 w-4" />,
+  TEAM_DELETE: <Building2 className="h-4 w-4" />,
+  TEAM_MEMBER_ADD: <Users className="h-4 w-4" />,
+  TEAM_MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_PROJECT_ADD: <Folder className="h-4 w-4" />,
+  TEAM_PROJECT_REMOVE: <Folder className="h-4 w-4" />,
 };
 
 interface FilterState {

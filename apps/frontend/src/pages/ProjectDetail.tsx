@@ -764,6 +764,7 @@ export const ProjectDetailPage: React.FC = () => {
 
       {activeTab === 'settings' && (
         <SettingsTab
+          project={project}
           metaPairs={metaPairs}
           isArchived={isArchived}
           canManageProject={canManageProject}

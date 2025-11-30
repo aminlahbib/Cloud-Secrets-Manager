@@ -17,7 +17,7 @@ export const WelcomeSection: React.FC = () => {
             Welcome back, {user?.displayName || user?.email?.split('@')[0]}
           </h1>
           <p className="text-body text-theme-secondary mt-3 max-w-2xl">
-            Everything you need to organise secrets, workflows and teams now lives in one calm, focused surface.
+            Organize secrets, collaborate with teams, and manage workflows in one unified platform.
           </p>
           {isPlatformAdmin && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-caption font-medium badge-primary">
