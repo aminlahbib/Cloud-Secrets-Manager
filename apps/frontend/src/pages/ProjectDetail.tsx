@@ -689,6 +689,7 @@ export const ProjectDetailPage: React.FC = () => {
         onImportSecrets={handleImportSecrets}
         onAddSecret={handleAddSecret}
         onInviteMember={handleInviteMember}
+        onTabChange={setActiveTab}
         secretsCount={secrets.length}
       />
 
@@ -763,6 +764,7 @@ export const ProjectDetailPage: React.FC = () => {
 
       {activeTab === 'settings' && (
         <SettingsTab
+          project={project}
           metaPairs={metaPairs}
           isArchived={isArchived}
           canManageProject={canManageProject}

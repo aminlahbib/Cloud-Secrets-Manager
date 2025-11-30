@@ -1,9 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
 import { WorkflowSelector } from './WorkflowSelector';
-import { ThemeControls } from './ThemeControls';
-import { UserMenu } from './UserMenu';
+import { Key, LogOut } from 'lucide-react';
+import { Button } from '../ui/Button';
 import type { Workflow } from '../../types';
 
 interface SidebarProps {
@@ -25,10 +26,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isPlatformAdmin = false,
   onLogout,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-40 w-72 flex flex-col justify-between padding-sidebar transition-all duration-200 md:translate-x-0
+        fixed inset-y-0 left-0 z-40 w-64 flex flex-col padding-sidebar transition-all duration-200 md:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       style={{
@@ -38,9 +41,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         borderRightStyle: 'solid',
       }}
     >
-      <div>
+      {/* Logo */}
+      <div className="mb-8">
         <SidebarLogo />
-        <SidebarNav onNavigate={onNavigate} isPlatformAdmin={isPlatformAdmin} />
+      </div>
+
+      {/* Workspace Selector - First */}
+      <div className="mb-8">
         <WorkflowSelector
           workflows={workflows}
           selectedWorkflowId={selectedWorkflowId}
@@ -48,14 +55,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </div>
 
-      <div className="space-y-6">
-        <div 
-          className="border-t pt-6 space-y-3"
-          style={{ borderTopColor: 'var(--border-subtle)' }}
+      {/* Navigation */}
+      <div className="flex-1">
+        <SidebarNav onNavigate={onNavigate} isPlatformAdmin={isPlatformAdmin} />
+      </div>
+
+      {/* Bottom Actions */}
+      <div className="mt-auto pt-6 space-y-3 border-t border-theme-subtle">
+        <Button
+          onClick={() => {
+            navigate('/projects');
+            onNavigate?.();
+          }}
+          className="w-full"
+          variant="primary"
         >
-          <ThemeControls />
-          <UserMenu onLogout={onLogout} />
-        </div>
+          <Key className="h-4 w-4 mr-2" />
+          New Secret
+        </Button>
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-theme-secondary hover:text-theme-primary transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );

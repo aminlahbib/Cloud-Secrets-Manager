@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
   Settings as SettingsIcon, 
   Shield, 
@@ -15,6 +15,10 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePreferences } from '../hooks/usePreferences';
+import { useNotifications } from '../contexts/NotificationContext';
+import { firebaseAuthService } from '../services/firebase-auth';
+import { preferencesService } from '../services/preferences';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -23,10 +27,50 @@ import { Badge } from '../components/ui/Badge';
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 
 export const SettingsPage: React.FC = () => {
-  const { user, isPlatformAdmin } = useAuth();
+  const { user, isPlatformAdmin, isFirebaseEnabled, refreshUser } = useAuth();
   const { theme, themeInfo, setTheme, availableThemes } = useTheme();
   const { projectView, setProjectView } = usePreferences();
+  const { showNotification } = useNotifications();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  
+  // Profile form state
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  
+  // Fetch preferences from backend
+  const { data: preferences, isLoading: isLoadingPreferences } = useQuery({
+    queryKey: ['user-preferences'],
+    queryFn: () => preferencesService.getPreferences(),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+  
+  // Notification preferences state (initialized from backend)
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [secretExpirationAlerts, setSecretExpirationAlerts] = useState(true);
+  const [projectInvitations, setProjectInvitations] = useState(true);
+  const [securityAlerts, setSecurityAlerts] = useState(true);
+  
+  // Regional preferences state (initialized from backend)
+  const [timezone, setTimezone] = useState('UTC');
+  const [dateFormat, setDateFormat] = useState('MM/DD/YYYY');
+  
+  // Update display name when user changes
+  React.useEffect(() => {
+    setDisplayName(user?.displayName || '');
+  }, [user?.displayName]);
+  
+  // Initialize preferences from backend when loaded
+  React.useEffect(() => {
+    if (preferences) {
+      setEmailNotifications(preferences.notifications.email);
+      setSecretExpirationAlerts(preferences.notifications.secretExpiration);
+      setProjectInvitations(preferences.notifications.projectInvitations);
+      setSecurityAlerts(preferences.notifications.securityAlerts);
+      setTimezone(preferences.timezone);
+      setDateFormat(preferences.dateFormat);
+    }
+  }, [preferences]);
 
   const tabs = [
     { id: 'profile' as const, label: 'Profile', icon: User },
@@ -35,11 +79,105 @@ export const SettingsPage: React.FC = () => {
     { id: 'preferences' as const, label: 'Preferences', icon: SettingsIcon },
   ];
 
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      if (isFirebaseEnabled) {
+        await firebaseAuthService.updateUserProfile({ displayName: displayName.trim() });
+        await refreshUser();
+      }
+    },
+    onSuccess: () => {
+      showNotification({
+        type: 'success',
+        title: 'Profile updated',
+        message: 'Your profile has been updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Update failed',
+        message: error?.message || 'Failed to update profile. Please try again.',
+      });
+    },
+  });
+
+  const handleSaveProfile = useCallback(async () => {
+    if (!displayName.trim()) {
+      showNotification({
+        type: 'error',
+        title: 'Validation Error',
+        message: 'Display name cannot be empty',
+      });
+      return;
+    }
+
+    saveProfileMutation.mutate();
+  }, [displayName, showNotification, saveProfileMutation]);
+
+  const handleChangeAvatar = useCallback(() => {
+    showNotification({
+      type: 'info',
+      title: 'Avatar Upload - Coming Soon',
+      message: 'We\'re working on secure avatar upload functionality. This feature will allow you to upload and manage your profile picture with support for JPG, PNG, and GIF formats (max 2MB). Expected in a future release.',
+      duration: 6000,
+    });
+  }, [showNotification]);
+
+  const handleEnable2FA = useCallback(() => {
+    showNotification({
+      type: 'info',
+      title: 'Two-Factor Authentication - Coming Soon',
+      message: 'Enhanced security with 2FA is in development. This will add an extra layer of protection to your account using time-based one-time passwords (TOTP) via authenticator apps like Google Authenticator or Authy. Expected in a future release.',
+      duration: 6000,
+    });
+  }, [showNotification]);
+
+  // Save preferences mutation
+  const savePreferencesMutation = useMutation({
+    mutationFn: (prefs: { notifications?: any; timezone?: string; dateFormat?: string }) => 
+      preferencesService.updatePreferences(prefs),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-preferences'] });
+      showNotification({
+        type: 'success',
+        title: 'Preferences saved',
+        message: 'Your preferences have been saved successfully',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Save failed',
+        message: error?.response?.data?.message || 'Failed to save preferences. Please try again.',
+      });
+    },
+  });
+
+  const handleSaveNotifications = useCallback(async () => {
+    savePreferencesMutation.mutate({
+      notifications: {
+        email: emailNotifications,
+        secretExpiration: secretExpirationAlerts,
+        projectInvitations,
+        securityAlerts,
+      },
+    });
+  }, [emailNotifications, secretExpirationAlerts, projectInvitations, securityAlerts, savePreferencesMutation]);
+
+  const handleSavePreferences = useCallback(async () => {
+    savePreferencesMutation.mutate({
+      timezone,
+      dateFormat,
+    });
+  }, [timezone, dateFormat, savePreferencesMutation]);
+  
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-h1 font-bold" style={{ color: 'var(--text-primary)' }}>Settings</h1>
-        <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>Manage your account and application preferences</p>
+        <h1 className="text-2xl font-bold text-theme-primary">Settings</h1>
+        <p className="text-body-sm text-theme-secondary mt-1">Manage your account and application preferences</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -85,33 +223,52 @@ export const SettingsPage: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'profile' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Profile Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Profile Settings</h2>
               
               <div className="space-y-6">
                 {/* Avatar */}
-                <div className="flex items-center gap-6">
-                  {user?.avatarUrl ? (
-                    <img 
-                      src={user.avatarUrl} 
-                      alt={user.displayName || user.email}
-                      className="w-20 h-20 rounded-full"
-                    />
-                  ) : (
-                    <div 
-                      className="w-20 h-20 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: 'var(--elevation-1)' }}
-                    >
-                      <span 
-                        className="text-3xl font-bold"
-                        style={{ color: 'var(--text-primary)' }}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-6">
+                    {user?.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.displayName || user.email}
+                        className="w-20 h-20 rounded-full"
+                      />
+                    ) : (
+                      <div 
+                        className="w-20 h-20 rounded-full flex items-center justify-center"
+                        style={{ backgroundColor: 'var(--elevation-1)' }}
                       >
-                        {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
-                      </span>
+                        <span 
+                          className="text-3xl font-bold"
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          {(user?.displayName || user?.email || 'U').charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div>
+                      <Button variant="secondary" size="sm" onClick={handleChangeAvatar}>Change Avatar</Button>
+                      <p className="text-caption mt-2" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 2MB.</p>
                     </div>
-                  )}
-                  <div>
-                    <Button variant="secondary" size="sm">Change Avatar</Button>
-                    <p className="text-caption mt-2" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 2MB.</p>
+                  </div>
+                  <div 
+                    className="p-3 rounded-lg text-xs"
+                    style={{ 
+                      backgroundColor: 'var(--elevation-1)', 
+                      borderColor: 'var(--border-subtle)',
+                      borderWidth: '1px',
+                      borderStyle: 'solid'
+                    }}
+                  >
+                    <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Coming Soon:</p>
+                    <ul className="space-y-1 ml-4 list-disc" style={{ color: 'var(--text-tertiary)' }}>
+                      <li>Secure file upload with automatic image optimization</li>
+                      <li>Support for JPG, PNG, and GIF formats (max 2MB)</li>
+                      <li>Automatic cropping and resizing for optimal display</li>
+                      <li>CDN integration for fast global delivery</li>
+                    </ul>
                   </div>
                 </div>
 
@@ -119,7 +276,8 @@ export const SettingsPage: React.FC = () => {
                 <div className="grid gap-6 max-w-xl">
                   <Input
                     label="Display Name"
-                    defaultValue={user?.displayName || ''}
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="Your name"
                   />
                   
@@ -158,7 +316,7 @@ export const SettingsPage: React.FC = () => {
                   className="pt-6 border-t"
                   style={{ borderTopColor: 'var(--border-subtle)' }}
                 >
-                  <Button>Save Changes</Button>
+                  <Button onClick={handleSaveProfile} isLoading={saveProfileMutation.isPending}>Save Changes</Button>
                 </div>
               </div>
             </Card>
@@ -166,7 +324,7 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'security' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Security Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Security Settings</h2>
               
               <div className="space-y-6 max-w-xl">
                 <div 
@@ -187,12 +345,27 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-h3 font-medium mb-4" style={{ color: 'var(--text-primary)' }}>Two-Factor Authentication</h3>
-                  <p className="text-body-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                <div 
+                  className="p-4 border rounded-lg"
+                  style={{ 
+                    backgroundColor: 'var(--elevation-1)', 
+                    borderColor: 'var(--border-subtle)' 
+                  }}
+                >
+                  <h3 className="text-lg font-medium mb-2 text-theme-primary">Two-Factor Authentication</h3>
+                  <p className="text-body-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                     Add an extra layer of security to your account by enabling 2FA.
                   </p>
-                  <Button variant="secondary">
+                  <div className="mb-4 p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--elevation-2)', color: 'var(--text-tertiary)' }}>
+                    <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Coming Soon:</p>
+                    <ul className="space-y-1 ml-4 list-disc">
+                      <li>Time-based one-time passwords (TOTP) via authenticator apps</li>
+                      <li>Support for Google Authenticator, Authy, and similar apps</li>
+                      <li>Backup codes for account recovery</li>
+                      <li>Optional enforcement for platform admins</li>
+                    </ul>
+                  </div>
+                  <Button variant="secondary" onClick={handleEnable2FA}>
                     <Key className="h-4 w-4 mr-2" />
                     Enable 2FA
                   </Button>
@@ -202,7 +375,7 @@ export const SettingsPage: React.FC = () => {
                   className="pt-6 border-t"
                   style={{ borderTopColor: 'var(--border-subtle)' }}
                 >
-                  <h3 className="text-h3 font-medium mb-4" style={{ color: 'var(--text-primary)' }}>Active Sessions</h3>
+                  <h3 className="text-lg font-medium mb-4 text-theme-primary">Active Sessions</h3>
                   <div className="space-y-3">
                     <div 
                       className="flex items-center justify-between p-3 rounded-lg transition-colors"
@@ -225,8 +398,13 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'notifications' && (
             <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Notification Preferences</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Notification Preferences</h2>
               
+              {isLoadingPreferences ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
+                </div>
+              ) : (
               <div className="space-y-6 max-w-xl">
                 <div 
                   className="flex items-center justify-between py-4 border-b"
@@ -237,7 +415,12 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Receive email updates about your projects</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={emailNotifications}
+                      onChange={(e) => setEmailNotifications(e.target.checked)}
+                    />
                     <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
@@ -251,7 +434,12 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Get notified before secrets expire</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={secretExpirationAlerts}
+                      onChange={(e) => setSecretExpirationAlerts(e.target.checked)}
+                    />
                     <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
@@ -265,7 +453,12 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Notify when invited to new projects</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={projectInvitations}
+                      onChange={(e) => setProjectInvitations(e.target.checked)}
+                    />
                     <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                   </label>
                 </div>
@@ -276,7 +469,7 @@ export const SettingsPage: React.FC = () => {
                     <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Important security notifications</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" defaultChecked disabled />
+                    <input type="checkbox" className="sr-only peer" checked={securityAlerts} disabled />
                     <div className="toggle-switch w-11 h-6 rounded-full peer after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all after:translate-x-full" style={{ backgroundColor: 'var(--accent-primary)' }}></div>
                   </label>
                 </div>
@@ -285,186 +478,169 @@ export const SettingsPage: React.FC = () => {
                   className="pt-6 border-t"
                   style={{ borderTopColor: 'var(--border-subtle)' }}
                 >
-                  <Button>Save Preferences</Button>
+                  <Button onClick={handleSaveNotifications} isLoading={savePreferencesMutation.isPending} disabled={isLoadingPreferences}>Save Preferences</Button>
                 </div>
               </div>
+              )}
             </Card>
           )}
 
           {activeTab === 'preferences' && (
-            <Card className="p-6">
-              <h2 className="text-h3 font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>Application Preferences</h2>
-              
-              <div className="space-y-6 max-w-4xl">
-                <div>
-                  <label className="block text-body-sm font-medium mb-4" style={{ color: 'var(--text-primary)' }}>
-                    <div className="flex items-center gap-2">
-                      <Palette className="h-4 w-4" />
+            <div className="space-y-6">
+              {/* Theme Selection - Compact Visual Grid */}
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-semibold flex items-center gap-2 text-theme-primary">
+                      <Palette className="h-5 w-5" />
                       Theme
-                    </div>
-                  </label>
-                  
-                  {/* Group themes by color scheme */}
-                  <div className="space-y-6">
-                    {['orange', 'violet', 'emerald', 'minimal', 'blue', 'neomint', 'plum'].map((scheme) => {
-                      const schemeThemes = availableThemes.filter(t => t.colorScheme === scheme);
-                      if (schemeThemes.length === 0) return null;
-                      
-                      const schemeName = scheme.charAt(0).toUpperCase() + scheme.slice(1).replace(/-/g, ' ');
-                      // Use CSS variables for colors instead of hardcoded values
-                      const schemeColors: Record<string, { primary: string; secondary?: string }> = {
-                        orange: { primary: 'var(--accent-primary)' },
-                        violet: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
-                        emerald: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
-                        minimal: { primary: 'var(--accent-primary)' },
-                        blue: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
-                        neomint: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
-                        plum: { primary: 'var(--accent-primary)', secondary: 'var(--accent-secondary)' },
-                      };
-                      
-                      return (
-                        <div key={scheme} className="space-y-3">
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-4 h-4 rounded-full border-2"
-                                style={{ 
-                                  backgroundColor: schemeColors[scheme].primary,
-                                  borderColor: 'var(--border-default)'
-                                }}
-                              />
-                              {schemeColors[scheme].secondary && (
-                                <div 
-                                  className="w-4 h-4 rounded-full border-2"
-                                  style={{ 
-                                    backgroundColor: schemeColors[scheme].secondary,
-                                    borderColor: 'var(--border-default)'
-                                  }}
-                                />
-                              )}
-                            </div>
-                            <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                              {schemeName}
-                            </h3>
-                            {schemeThemes[0].description && (
-                              <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                                - {schemeThemes[0].description}
-                              </span>
+                    </h2>
+                    <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      Choose your preferred color scheme and mode
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Current</div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{themeInfo.name}</div>
+                  </div>
+                </div>
+                
+                {/* Compact theme grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                  {availableThemes.map((t) => {
+                    const isActive = theme === t.id;
+                    const schemeName = t.colorScheme.charAt(0).toUpperCase() + t.colorScheme.slice(1).replace(/-/g, ' ');
+                    
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setTheme(t.id)}
+                        className="relative p-3 rounded-lg border-2 transition-all duration-200 group"
+                        style={{
+                          borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                          backgroundColor: isActive ? 'var(--accent-primary-glow)' : 'var(--elevation-1)',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.borderColor = 'var(--border-default)';
+                            e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isActive) {
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                            e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                          }
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {t.mode === 'light' ? (
+                              <Sun className="h-4 w-4" style={{ color: 'var(--text-secondary)' }} />
+                            ) : (
+                              <Moon className="h-4 w-4" style={{ color: 'var(--text-secondary)' }} />
                             )}
+                            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+                              {t.mode === 'light' ? 'Light' : 'Dark'}
+                            </span>
                           </div>
-                          
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {schemeThemes.map((t) => {
-                              const isActive = theme === t.id;
-                              return (
-                                <button
-                                  key={t.id}
-                                  onClick={() => setTheme(t.id)}
-                                  className="relative p-4 rounded-xl border-2 transition-all duration-200 text-left group"
-                                  style={{
-                                    borderColor: isActive ? 'var(--accent-primary)' : 'var(--border-default)',
-                                    backgroundColor: isActive ? 'var(--accent-primary-glow)' : 'var(--elevation-1)',
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!isActive) {
-                                      e.currentTarget.style.borderColor = 'var(--border-strong)';
-                                      e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!isActive) {
-                                      e.currentTarget.style.borderColor = 'var(--border-default)';
-                                      e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                                    }
-                                  }}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      {t.mode === 'light' ? (
-                                        <Sun className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-                                      ) : (
-                                        <Moon className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
-                                      )}
-                                      <div>
-                                        <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                                          {t.mode === 'light' ? 'Light' : 'Dark'}
-                                        </div>
-                                        <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                                          {schemeName}
-                                        </div>
-                                      </div>
-                                    </div>
-                                    {isActive && (
-                                      <div 
-                                        className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center"
-                                        style={{ backgroundColor: 'var(--accent-primary)' }}
-                                      >
-                                        <Check className="h-3 w-3" style={{ color: 'var(--text-inverse)' }} />
-                                      </div>
-                                    )}
-                                  </div>
-                                </button>
-                              );
-                            })}
+                          <div className="text-xs truncate w-full text-center" style={{ color: 'var(--text-tertiary)' }}>
+                            {schemeName}
                           </div>
                         </div>
-                      );
-                    })}
+                        {isActive && (
+                          <div 
+                            className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full flex items-center justify-center border-2"
+                            style={{ 
+                              borderColor: 'var(--accent-primary)',
+                              backgroundColor: 'var(--accent-primary-glow)',
+                            }}
+                          >
+                            <Check className="h-2.5 w-2.5" style={{ color: 'var(--accent-primary)' }} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Card>
+
+              {/* Display & View Settings */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6 text-theme-primary">Display & View</h2>
+                
+                {isLoadingPreferences ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
                   </div>
-                  
-                  <p className="text-xs mt-4 pt-4 border-t" style={{ color: 'var(--text-tertiary)', borderColor: 'var(--border-subtle)' }}>
-                    Current theme: <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{themeInfo.name}</span>
-                    {themeInfo.description && ` - ${themeInfo.description}`}
-                  </p>
-                </div>
+                ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl">
+                  <div>
+                    <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Default Project View
+                    </label>
+                    <select 
+                      value={projectView}
+                      onChange={(e) => setProjectView(e.target.value as 'grid' | 'list')}
+                      className="input-theme w-full px-4 py-2"
+                    >
+                      <option value="grid">Grid View</option>
+                      <option value="list">List View</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Default Project View
-                  </label>
-                  <select 
-                    value={projectView}
-                    onChange={(e) => setProjectView(e.target.value as 'grid' | 'list')}
-                    className="input-theme w-full px-4 py-2"
-                  >
-                    <option value="grid">Grid View</option>
-                    <option value="list">List View</option>
-                  </select>
+                  <div>
+                    <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Date Format
+                    </label>
+                    <select 
+                      className="input-theme w-full px-4 py-2"
+                      value={dateFormat}
+                      onChange={(e) => setDateFormat(e.target.value)}
+                    >
+                      <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                      <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                    </select>
+                  </div>
                 </div>
+                )}
+              </Card>
 
-                <div>
+              {/* Regional Settings */}
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-6 text-theme-primary">Regional Settings</h2>
+                
+                {isLoadingPreferences ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
+                  </div>
+                ) : (
+                <div className="max-w-md">
                   <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
                     Timezone
                   </label>
-                  <select className="input-theme w-full px-4 py-2">
-                    <option>UTC (Coordinated Universal Time)</option>
-                    <option>America/New_York (Eastern Time)</option>
-                    <option>America/Los_Angeles (Pacific Time)</option>
-                    <option>Europe/London (GMT)</option>
-                    <option>Europe/Paris (Central European Time)</option>
-                    <option>Asia/Tokyo (Japan Standard Time)</option>
+                  <select 
+                    className="input-theme w-full px-4 py-2"
+                    value={timezone}
+                    onChange={(e) => setTimezone(e.target.value)}
+                  >
+                    <option value="UTC">UTC (Coordinated Universal Time)</option>
+                    <option value="America/New_York">America/New_York (Eastern Time)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (Pacific Time)</option>
+                    <option value="Europe/London">Europe/London (GMT)</option>
+                    <option value="Europe/Paris">Europe/Paris (Central European Time)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (Japan Standard Time)</option>
                   </select>
                 </div>
+                )}
+              </Card>
 
-                <div>
-                  <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Date Format
-                  </label>
-                  <select className="input-theme w-full px-4 py-2">
-                    <option>MM/DD/YYYY</option>
-                    <option>DD/MM/YYYY</option>
-                    <option>YYYY-MM-DD</option>
-                  </select>
-                </div>
-
-                <div 
-                  className="pt-6 border-t"
-                  style={{ borderTopColor: 'var(--border-subtle)' }}
-                >
-                  <Button>Save Preferences</Button>
-                </div>
+              {/* Save Button */}
+              <div className="flex justify-end">
+                <Button onClick={handleSavePreferences} isLoading={savePreferencesMutation.isPending} disabled={isLoadingPreferences}>Save Preferences</Button>
               </div>
-            </Card>
+            </div>
           )}
         </div>
       </div>

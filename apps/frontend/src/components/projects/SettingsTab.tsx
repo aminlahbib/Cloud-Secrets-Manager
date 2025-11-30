@@ -1,11 +1,14 @@
 import React, { useCallback } from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { LayoutGrid, Building2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { FormSection } from '../ui/FormSection';
-import type { Workflow, ProjectMember } from '../../types';
+import { ProjectSourceIndicator } from './ProjectSourceIndicator';
+import type { Workflow, ProjectMember, Project } from '../../types';
 
 interface SettingsTabProps {
+  project: Project;
   metaPairs: Array<{ label: string; value: string | number }>;
   isArchived: boolean;
   canManageProject: boolean;
@@ -37,6 +40,7 @@ interface SettingsTabProps {
 }
 
 export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
+  project,
   metaPairs,
   isArchived,
   canManageProject,
@@ -167,6 +171,71 @@ export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
               <p className="mt-1 text-caption text-status-info">Moving project...</p>
             )}
           </div>
+
+          {/* Team Information */}
+          {(project.teams && project.teams.length > 0) || project.accessSource ? (
+            <div>
+              <label className="block text-body-sm font-medium mb-2 text-theme-secondary">
+                Team Access
+              </label>
+              <div className="rounded-xl border border-theme-subtle p-4 bg-elevation-1">
+                {project.teams && project.teams.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Building2 className="h-4 w-4" style={{ color: 'var(--accent-primary)' }} />
+                      <span className="text-body-sm font-medium text-theme-primary">
+                        This project is in {project.teams.length} team{project.teams.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {project.teams.map((team) => (
+                        <Link
+                          key={team.teamId}
+                          to="/teams"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-150 text-body-sm"
+                          style={{
+                            borderColor: 'var(--border-subtle)',
+                            backgroundColor: 'var(--card-bg)',
+                            color: 'var(--accent-primary)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--border-accent)';
+                            e.currentTarget.style.backgroundColor = 'var(--accent-primary-glow)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                            e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                          }}
+                        >
+                          <Building2 className="h-3.5 w-3.5" />
+                          {team.teamName}
+                        </Link>
+                      ))}
+                    </div>
+                    <ProjectSourceIndicator project={project} showDetailed={true} />
+                    <p className="text-caption text-theme-tertiary mt-2">
+                      Team members automatically get VIEWER access to this project. Manage teams from the{' '}
+                      <Link to="/teams" className="underline hover:no-underline" style={{ color: 'var(--accent-primary)' }}>
+                        Teams page
+                      </Link>.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <Building2 className="h-8 w-8 mx-auto mb-2 text-theme-tertiary" />
+                    <p className="text-body-sm text-theme-secondary mb-2">Not in any teams</p>
+                    <p className="text-caption text-theme-tertiary">
+                      Add this project to a team from the{' '}
+                      <Link to="/teams" className="underline hover:no-underline" style={{ color: 'var(--accent-primary)' }}>
+                        Teams page
+                      </Link>{' '}
+                      to grant bulk access.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
         </div>
       </FormSection>
 

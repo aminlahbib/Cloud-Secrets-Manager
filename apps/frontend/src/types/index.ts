@@ -35,6 +35,17 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface UserPreferencesResponse {
+  notifications: {
+    email: boolean;
+    secretExpiration: boolean;
+    projectInvitations: boolean;
+    securityAlerts: boolean;
+  };
+  timezone: string;
+  dateFormat: string;
+}
+
 // ----------------------------------------------------------------------------
 // Workflows (Personal Organization)
 // ----------------------------------------------------------------------------
@@ -78,6 +89,13 @@ export interface ReorderWorkflowsRequest {
 // Projects (Collaboration Unit)
 // ----------------------------------------------------------------------------
 
+export interface ProjectTeamInfo {
+  teamId: string;
+  teamName: string;
+}
+
+export type ProjectAccessSource = 'DIRECT' | 'TEAM' | 'BOTH';
+
 export interface Project {
   id: string;
   name: string;
@@ -94,6 +112,8 @@ export interface Project {
   currentUserRole?: ProjectRole;
   workflowId?: string; // Optional: ID of the workflow this project belongs to (computed on frontend)
   workflowName?: string; // Optional: Name of the workflow (computed on frontend)
+  teams?: ProjectTeamInfo[]; // Teams this project belongs to (where user is a member)
+  accessSource?: ProjectAccessSource; // How user accesses this project: DIRECT, TEAM, or BOTH
 }
 
 export interface CreateProjectRequest {
@@ -322,4 +342,67 @@ export interface SecretFormData {
   description?: string;
   tags?: string;
   expiresAt?: Date;
+}
+
+// ----------------------------------------------------------------------------
+// Teams (Team Collaboration)
+// ----------------------------------------------------------------------------
+
+export type TeamRole = 'TEAM_OWNER' | 'TEAM_ADMIN' | 'TEAM_MEMBER';
+
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  createdBy: string;
+  creatorName?: string;
+  creatorEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+  memberCount?: number;
+  projectCount?: number;
+  currentUserRole?: string;
+}
+
+export interface CreateTeamRequest {
+  name: string;
+  description?: string;
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+  description?: string;
+}
+
+export interface TeamMember {
+  id: string;
+  userId: string;
+  email: string;
+  displayName?: string;
+  role: TeamRole;
+  joinedAt: string;
+}
+
+export interface TeamMemberRequest {
+  email: string;
+  role: TeamRole;
+}
+
+export interface UpdateTeamMemberRoleRequest {
+  role: TeamRole;
+}
+
+export interface BulkInviteRequest {
+  members: TeamMemberRequest[];
+}
+
+export interface TeamProject {
+  id: string;
+  projectId: string;
+  projectName: string;
+  projectDescription?: string;
+  addedBy: string;
+  addedByName?: string;
+  addedAt: string;
 }

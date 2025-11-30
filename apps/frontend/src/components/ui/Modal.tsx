@@ -47,7 +47,7 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={`relative w-full ${sizeClasses[size]} rounded-lg shadow-theme-xl transition-colors bg-elevation-4`}
+          className={`relative w-full ${sizeClasses[size]} rounded-lg shadow-theme-xl transition-colors modal-glass`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

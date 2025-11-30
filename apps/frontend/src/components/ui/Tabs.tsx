@@ -51,7 +51,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
                 {tab.label}
                 {tab.count !== undefined && (
                   <span 
-                    className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300 ${isActive ? 'bg-accent-primary text-theme-inverse' : 'bg-elevation-2 text-theme-secondary'}`}
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium transition-all duration-300 border ${isActive ? 'border-accent-primary text-accent-primary bg-accent-primary-glow' : 'border-theme-subtle bg-elevation-2 text-theme-secondary'}`}
+                    style={isActive ? { borderColor: 'var(--accent-primary)' } : {}}
                   >
                     {tab.count}
                   </span>

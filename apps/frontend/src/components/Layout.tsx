@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { Sidebar } from './layout/Sidebar';
-import { MobileHeader } from './layout/MobileHeader';
+import { TopBar } from './layout/TopBar';
 import { useAuth } from '../contexts/AuthContext';
-
+import { Menu, X } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -63,11 +63,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           onLogout={logout}
         />
 
-        <div className="flex-1 flex flex-col md:ml-72">
-          <MobileHeader isSidebarOpen={isSidebarOpen} onToggleSidebar={toggleSidebar} />
+        <div className="flex-1 flex flex-col md:ml-64">
+          {/* Top Bar - Persistent across pages */}
+          <TopBar />
 
-          <main className="flex-1 overflow-y-auto px-4 py-10 md:px-12">
-            <div className="max-w-4xl mx-auto w-full space-y-6">{children}</div>
+          {/* Mobile Menu Button */}
+          <button
+            onClick={toggleSidebar}
+            className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-elevation-1 border border-theme-subtle text-theme-primary"
+          >
+            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto">
+            <div className="max-w-7xl mx-auto px-4 py-8 md:px-8">
+              {children}
+            </div>
           </main>
         </div>
       </div>

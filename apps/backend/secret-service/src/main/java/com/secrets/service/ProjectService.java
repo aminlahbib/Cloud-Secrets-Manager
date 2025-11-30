@@ -5,9 +5,13 @@ import com.secrets.dto.project.ProjectResponse;
 import com.secrets.entity.Project;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.Workflow;
+import com.secrets.entity.TeamProject;
 import com.secrets.repository.ProjectMembershipRepository;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
+import com.secrets.repository.TeamMembershipRepository;
+import com.secrets.repository.TeamProjectRepository;
+import com.secrets.repository.TeamRepository;
 import com.secrets.repository.WorkflowProjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +37,29 @@ public class ProjectService {
     private final WorkflowProjectRepository workflowProjectRepository;
     private final SecretRepository secretRepository;
     private final WorkflowService workflowService;
+    private final ProjectPermissionService permissionService;
+    private final TeamProjectRepository teamProjectRepository;
+    private final TeamRepository teamRepository;
+    private final TeamMembershipRepository teamMembershipRepository;
 
     public ProjectService(ProjectRepository projectRepository,
                          ProjectMembershipRepository membershipRepository,
                          WorkflowProjectRepository workflowProjectRepository,
                          SecretRepository secretRepository,
-                         WorkflowService workflowService) {
+                         WorkflowService workflowService,
+                         ProjectPermissionService permissionService,
+                         TeamProjectRepository teamProjectRepository,
+                         TeamRepository teamRepository,
+                         TeamMembershipRepository teamMembershipRepository) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.secretRepository = secretRepository;
         this.workflowService = workflowService;
+        this.permissionService = permissionService;
+        this.teamProjectRepository = teamProjectRepository;
+        this.teamRepository = teamRepository;
+        this.teamMembershipRepository = teamMembershipRepository;
     }
 
     /**
@@ -78,8 +94,8 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
-        // Check if user has access
-        if (!membershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
+        // Check if user has access (direct membership or via team)
+        if (!permissionService.hasProjectAccess(projectId, userId)) {
             throw new SecurityException("Access denied to project");
         }
 
@@ -248,8 +264,44 @@ public class ProjectService {
         response.setMemberCount(membershipRepository.countByProjectId(project.getId()));
         
         // Add current user's role
-        membershipRepository.findByProjectIdAndUserId(project.getId(), userId)
-            .ifPresent(m -> response.setCurrentUserRole(m.getRole()));
+        boolean hasDirectAccess = membershipRepository.findByProjectIdAndUserId(project.getId(), userId)
+            .map(m -> {
+                response.setCurrentUserRole(m.getRole());
+                return true;
+            })
+            .orElse(false);
+        
+        // Add team information (only teams user is a member of)
+        java.util.List<TeamProject> teamProjects = teamProjectRepository.findByProjectId(project.getId());
+        if (!teamProjects.isEmpty()) {
+            java.util.List<ProjectResponse.TeamInfo> teamInfos = new java.util.ArrayList<>();
+            for (TeamProject tp : teamProjects) {
+                // Only include teams the user is a member of
+                if (teamMembershipRepository.existsByTeamIdAndUserId(tp.getTeamId(), userId)) {
+                    teamRepository.findById(tp.getTeamId())
+                        .ifPresent(team -> {
+                            teamInfos.add(new ProjectResponse.TeamInfo(team.getId(), team.getName()));
+                        });
+                }
+            }
+            if (!teamInfos.isEmpty()) {
+                response.setTeams(teamInfos);
+            }
+        }
+        
+        // Determine access source
+        boolean hasTeamAccess = !teamProjects.isEmpty() && 
+            teamProjects.stream().anyMatch(tp -> 
+                teamMembershipRepository.existsByTeamIdAndUserId(tp.getTeamId(), userId)
+            );
+        
+        if (hasDirectAccess && hasTeamAccess) {
+            response.setAccessSource(ProjectResponse.AccessSource.BOTH);
+        } else if (hasDirectAccess) {
+            response.setAccessSource(ProjectResponse.AccessSource.DIRECT);
+        } else if (hasTeamAccess) {
+            response.setAccessSource(ProjectResponse.AccessSource.TEAM);
+        }
         
         return response;
     }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Activity, Users, TrendingUp } from 'lucide-react';
+import { Plus, Activity, Building2, TrendingUp } from 'lucide-react';
 
 interface QuickAction {
   icon: React.ComponentType<{ className?: string }>;
@@ -32,9 +32,9 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       onClick: () => navigate('/activity'),
     }] : []),
     {
-      icon: Users,
-      label: 'Manage Team',
-      description: 'Invite collaborators',
+      icon: Building2,
+      label: 'Manage Teams',
+      description: 'Create and manage teams',
       onClick: () => navigate('/teams'),
     },
     {
@@ -46,23 +46,29 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   ];
 
   return (
-    <div className="card gradient-quick-actions">
-      <h2 className="text-h3 font-semibold text-theme-primary mb-6">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="card">
+      <div className="padding-card border-b border-theme-subtle">
+        <h2 className="text-body font-semibold text-theme-primary">Shortcuts</h2>
+      </div>
+      <div className="padding-card space-y-2">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
               onClick={action.onClick}
-              className="group flex items-center p-4 rounded-xl border border-theme-subtle text-left transition-all duration-150 card hover:border-theme-default"
+              className="group w-full flex items-center gap-3 p-3 rounded-lg hover:bg-elevation-1 text-left transition-colors"
             >
-              <div className="p-2 rounded-xl mr-4 transition-all duration-150 bg-elevation-1 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary">
-                <Icon className="h-5 w-5" />
+              <div className="p-2 rounded-md bg-elevation-1 text-theme-tertiary group-hover:bg-accent-primary-glow group-hover:text-accent-primary transition-colors">
+                <Icon className="h-4 w-4" />
               </div>
-              <div>
-                <p className="font-medium text-theme-primary text-body-sm">{action.label}</p>
-                <p className="text-caption text-theme-secondary">{action.description}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-body-sm font-medium text-theme-primary group-hover:text-accent-primary transition-colors">
+                  {action.label}
+                </p>
+                <p className="text-caption text-theme-secondary truncate">
+                  {action.description}
+                </p>
               </div>
             </button>
           );

@@ -74,22 +74,22 @@
      ============================================ */
   
   /* ============================================
-     ORANGE THEME - Light (Default)
+     ORANGE THEME - Light (Default) - Enhanced
      ============================================ */
   :root,
   [data-theme="light-orange"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with warm tints
        ============================================ */
-    --elevation-0: #f9fafb;  /* Page background - light gray */
-    --elevation-1: #ffffff;  /* Sidebar, main containers */
-    --elevation-2: #ffffff;  /* Cards, elevated surfaces */
-    --elevation-3: #f9fafb;  /* Hover states, active cards */
-    --elevation-4: #f3f4f6;  /* Pressed states, modals */
+    --elevation-0: #fefaf6;  /* Page background - warm off-white with orange tint */
+    --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
+    --elevation-2: #fffefb;  /* Cards, elevated surfaces - subtle warm tint */
+    --elevation-3: #fef7f0;  /* Hover states, active cards - warm beige */
+    --elevation-4: #fef3e8;  /* Pressed states, modals - light peach */
     
-    /* Gradient backgrounds (light mode - minimal) */
-    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with warm orange tints */
+    --gradient-hero: linear-gradient(135deg, rgba(249, 115, 22, 0.03) 0%, #ffffff 50%, rgba(251, 146, 60, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(249, 115, 22, 0.04) 0%, #fffefb 50%, rgba(251, 146, 60, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Orange Theme
@@ -129,22 +129,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced with warm tones
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(249, 115, 22, 0.3);     /* Accent borders - orange */
+    --border-subtle: #f0e6d8;         /* Subtle borders - refined warm beige */
+    --border-default: #e5d4c0;        /* Default borders - refined warm tan */
+    --border-strong: #d1b890;         /* Strong borders - refined warm brown */
+    --border-accent: rgba(249, 115, 22, 0.4);     /* Accent borders - orange with refined opacity */
     
     /* ============================================
-       SHADOWS & GLOWS
+       SHADOWS & GLOWS - Enhanced with warm color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
-    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(249, 115, 22, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(249, 115, 22, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(249, 115, 22, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(249, 115, 22, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(249, 115, 22, 0.12);
+    --glow-accent: 0 0 24px rgba(249, 115, 22, 0.25), 0 0 48px rgba(251, 146, 60, 0.12);
+    --glow-soft: 0 0 48px rgba(249, 115, 22, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -353,17 +353,17 @@
      ============================================ */
   [data-theme="light-violet"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with violet tints
        ============================================ */
-    --elevation-0: #fafafa;  /* Page background - very light neutral */
-    --elevation-1: #ffffff;  /* Sidebar, main containers */
-    --elevation-2: #fefefe;  /* Cards, elevated surfaces - slightly warm */
-    --elevation-3: #f9fafb;  /* Hover states, active cards */
-    --elevation-4: #f5f5f5;  /* Pressed states, modals */
+    --elevation-0: #faf9ff;  /* Page background - very light violet tint */
+    --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
+    --elevation-2: #fefeff;  /* Cards, elevated surfaces - subtle violet tint */
+    --elevation-3: #f5f3ff;  /* Hover states, active cards - light lavender */
+    --elevation-4: #ede9fe;  /* Pressed states, modals - soft violet */
     
-    /* Gradient backgrounds (light mode - minimal) */
-    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with violet tints */
+    --gradient-hero: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, #ffffff 50%, rgba(139, 92, 246, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(99, 102, 241, 0.04) 0%, #fefeff 50%, rgba(139, 92, 246, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Violet Theme
@@ -403,12 +403,12 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(99, 102, 241, 0.3);     /* Accent borders - violet */
+    --border-subtle: #e8e5f0;         /* Subtle borders - refined violet tint */
+    --border-default: #d4d0e0;        /* Default borders - refined violet tint */
+    --border-strong: #b8b0c8;         /* Strong borders - refined violet tint */
+    --border-accent: rgba(99, 102, 241, 0.4);     /* Accent borders - violet with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -627,17 +627,17 @@
      ============================================ */
   [data-theme="light-emerald"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with emerald tints
        ============================================ */
-    --elevation-0: #fafbfc;  /* Page background - neutral off-white */
-    --elevation-1: #ffffff;  /* Sidebar, main containers */
-    --elevation-2: #ffffff;  /* Cards, elevated surfaces */
-    --elevation-3: #f9fafb;  /* Hover states, active cards */
-    --elevation-4: #f3f4f6;  /* Pressed states, modals */
+    --elevation-0: #f0fdf9;  /* Page background - very light emerald tint */
+    --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
+    --elevation-2: #fafffe;  /* Cards, elevated surfaces - subtle emerald tint */
+    --elevation-3: #ecfdf5;  /* Hover states, active cards - light mint */
+    --elevation-4: #d1fae5;  /* Pressed states, modals - soft emerald */
     
-    /* Gradient backgrounds with subtle green tint */
-    --gradient-hero: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with emerald tints */
+    --gradient-hero: linear-gradient(135deg, rgba(16, 185, 129, 0.03) 0%, #ffffff 50%, rgba(52, 211, 153, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 185, 129, 0.04) 0%, #fafffe 50%, rgba(52, 211, 153, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Emerald Theme
@@ -677,22 +677,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced with emerald tones
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(16, 185, 129, 0.3);     /* Accent borders - emerald */
+    --border-subtle: #d4fae8;         /* Subtle borders - refined light emerald */
+    --border-default: #aef3d4;        /* Default borders - refined soft emerald */
+    --border-strong: #6ee7b7;         /* Strong borders - refined medium emerald */
+    --border-accent: rgba(16, 185, 129, 0.4);     /* Accent borders - emerald with refined opacity */
     
     /* ============================================
-       SHADOWS & GLOWS (subtle green-tinted shadows)
+       SHADOWS & GLOWS - Enhanced with emerald color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(16, 185, 129, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(16, 185, 129, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(16, 185, 129, 0.12), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
-    --glow-soft: 0 0 40px rgba(16, 185, 129, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(16, 185, 129, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(16, 185, 129, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 185, 129, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(16, 185, 129, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 185, 129, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(16, 185, 129, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 185, 129, 0.12);
+    --glow-accent: 0 0 24px rgba(16, 185, 129, 0.25), 0 0 48px rgba(52, 211, 153, 0.12);
+    --glow-soft: 0 0 48px rgba(16, 185, 129, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -899,17 +899,17 @@
      ============================================ */
   [data-theme="light-minimal"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with subtle blue-grey tints
        ============================================ */
-    --elevation-0: #f5f5f5;  /* Page background - soft grey */
+    --elevation-0: #f8f9fa;  /* Page background - soft cool grey */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
-    --elevation-2: #ffffff;  /* Cards - pure white with gentle shadow */
-    --elevation-3: #fafafa;  /* Hover states, active cards */
-    --elevation-4: #f5f5f5;  /* Pressed states, modals */
+    --elevation-2: #fefefe;  /* Cards - almost white with subtle cool tint */
+    --elevation-3: #f5f6f7;  /* Hover states, active cards - cool grey */
+    --elevation-4: #f0f1f2;  /* Pressed states, modals - slightly darker cool grey */
     
-    /* Gradient backgrounds - minimal */
-    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with subtle blue-grey tints */
+    --gradient-hero: linear-gradient(135deg, rgba(75, 123, 236, 0.02) 0%, #ffffff 50%, rgba(107, 114, 128, 0.01) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(75, 123, 236, 0.03) 0%, #fefefe 50%, rgba(107, 114, 128, 0.02) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Minimal Theme
@@ -949,22 +949,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #e5e7eb;         /* Subtle borders */
-    --border-default: #d1d5db;        /* Default borders */
-    --border-strong: #9ca3af;         /* Strong borders */
-    --border-accent: rgba(75, 123, 236, 0.2);     /* Accent borders - very subtle */
+    --border-subtle: #e8eaf0;         /* Subtle borders - refined blue-grey */
+    --border-default: #d4d8e0;        /* Default borders - refined blue-grey */
+    --border-strong: #b8c0d0;         /* Strong borders - refined blue-grey */
+    --border-accent: rgba(75, 123, 236, 0.3);     /* Accent borders - refined subtle */
     
     /* ============================================
-       SHADOWS & GLOWS (gentle shadows)
+       SHADOWS & GLOWS - Enhanced with blue-grey hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
-    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(75, 123, 236, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(75, 123, 236, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(75, 123, 236, 0.05);
+    --shadow-lg: 0 12px 20px -4px rgba(75, 123, 236, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(75, 123, 236, 0.08);
+    --shadow-xl: 0 24px 32px -6px rgba(75, 123, 236, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(75, 123, 236, 0.1);
+    --glow-accent: 0 0 24px rgba(75, 123, 236, 0.2), 0 0 48px rgba(107, 149, 240, 0.1);
+    --glow-soft: 0 0 48px rgba(75, 123, 236, 0.08);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1171,17 +1171,17 @@
      ============================================ */
   [data-theme="light-blue"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with blue tints
        ============================================ */
-    --elevation-0: #F8FAFC;  /* Page background - very light cool grey */
-    --elevation-1: #FFFFFF;  /* Sidebar, main containers */
-    --elevation-2: #FFFFFF;  /* Cards, elevated surfaces */
-    --elevation-3: #F1F5F9;  /* Hover states, active cards */
-    --elevation-4: #E2E8F0;  /* Pressed states, modals */
+    --elevation-0: #f0f7ff;  /* Page background - very light blue tint */
+    --elevation-1: #FFFFFF;  /* Sidebar, main containers - pure white */
+    --elevation-2: #fefeff;  /* Cards, elevated surfaces - subtle blue tint */
+    --elevation-3: #eff6ff;  /* Hover states, active cards - light blue */
+    --elevation-4: #dbeafe;  /* Pressed states, modals - soft blue */
     
-    /* Gradient backgrounds */
-    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with blue tints */
+    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, #ffffff 50%, rgba(96, 165, 250, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, #fefeff 50%, rgba(96, 165, 250, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Cool Blue Theme
@@ -1221,12 +1221,12 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #E2E8F0;         /* Subtle borders */
-    --border-default: #CBD5E1;        /* Default borders */
-    --border-strong: #94A3B8;         /* Strong borders */
-    --border-accent: rgba(59, 130, 246, 0.3);     /* Accent borders - blue */
+    --border-subtle: #E5EBF2;         /* Subtle borders - refined blue */
+    --border-default: #D1DBE5;        /* Default borders - refined blue */
+    --border-strong: #A8B8CC;         /* Strong borders - refined blue */
+    --border-accent: rgba(59, 130, 246, 0.4);     /* Accent borders - blue with refined opacity */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -1580,17 +1580,17 @@
      ============================================ */
   [data-theme="light-neomint"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Enhanced with mint tints
        ============================================ */
-    --elevation-0: #F8FAFC;  /* Page background - very light cool grey */
-    --elevation-1: #FFFFFF;  /* Sidebar, main containers */
-    --elevation-2: #FFFFFF;  /* Cards, elevated surfaces */
-    --elevation-3: #F1F5F9;  /* Hover states, active cards */
-    --elevation-4: #E2E8F0;  /* Pressed states, modals */
+    --elevation-0: #f0fdfc;  /* Page background - very light mint tint */
+    --elevation-1: #FFFFFF;  /* Sidebar, main containers - pure white */
+    --elevation-2: #fafffe;  /* Cards, elevated surfaces - subtle mint tint */
+    --elevation-3: #ecfeff;  /* Hover states, active cards - light cyan */
+    --elevation-4: #cffafe;  /* Pressed states, modals - soft mint */
     
-    /* Gradient backgrounds with subtle mint tint */
-    --gradient-hero: linear-gradient(135deg, rgba(16, 217, 196, 0.02) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 217, 196, 0.03) 0%, var(--elevation-1) 100%);
+    /* Enhanced gradient backgrounds with mint tints */
+    --gradient-hero: linear-gradient(135deg, rgba(16, 217, 196, 0.03) 0%, #ffffff 50%, rgba(46, 232, 214, 0.02) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 217, 196, 0.04) 0%, #fafffe 50%, rgba(46, 232, 214, 0.03) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Neo-Mint Cyber Theme (Light)
@@ -1630,22 +1630,22 @@
     --text-inverse: #FFFFFF;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced with mint/cyan tones
        ============================================ */
-    --border-subtle: #E2E8F0;         /* Subtle borders */
-    --border-default: #CBD5E1;        /* Default borders */
-    --border-strong: #94A3B8;         /* Strong borders */
-    --border-accent: rgba(16, 217, 196, 0.3);     /* Accent borders - mint */
+    --border-subtle: #d2fafc;         /* Subtle borders - refined light cyan */
+    --border-default: #aef5fc;        /* Default borders - refined soft cyan */
+    --border-strong: #6ee8f9;         /* Strong borders - refined medium cyan */
+    --border-accent: rgba(16, 217, 196, 0.4);     /* Accent borders - mint with refined opacity */
     
     /* ============================================
-       SHADOWS & GLOWS
+       SHADOWS & GLOWS - Enhanced with mint/cyan color hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
-    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(16, 217, 196, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 8px -2px rgba(16, 217, 196, 0.12), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.06);
+    --shadow-lg: 0 12px 20px -4px rgba(16, 217, 196, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.1);
+    --shadow-xl: 0 24px 32px -6px rgba(16, 217, 196, 0.18), 0 8px 16px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 217, 196, 0.12);
+    --glow-accent: 0 0 24px rgba(16, 217, 196, 0.25), 0 0 48px rgba(6, 182, 212, 0.12);
+    --glow-soft: 0 0 48px rgba(16, 217, 196, 0.1);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1904,12 +1904,12 @@
     --text-inverse: #FFFFFF;
     
     /* ============================================
-       BORDERS & DIVIDERS
+       BORDERS & DIVIDERS - Enhanced
        ============================================ */
-    --border-subtle: #F3E8FF;         /* Subtle borders */
-    --border-default: #E9D5FF;        /* Default borders */
-    --border-strong: #DDD6FE;         /* Strong borders */
-    --border-accent: rgba(139, 92, 246, 0.3);
+    --border-subtle: #F5EBFF;         /* Subtle borders - refined plum */
+    --border-default: #EDD5FF;        /* Default borders - refined plum */
+    --border-strong: #E1D6FE;         /* Strong borders - refined plum */
+    --border-accent: rgba(139, 92, 246, 0.4);
     
     /* ============================================
        SHADOWS & GLOWS
@@ -2092,19 +2092,25 @@
   }
 
   .btn-primary {
-    background-color: var(--btn-primary-bg);
-    color: var(--btn-primary-text);
+    background-color: transparent;
+    color: var(--accent-primary);
+    border: 1.5px solid var(--accent-primary);
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(8px);
   }
   
   .btn-primary:hover {
-    background-color: var(--btn-primary-hover);
+    background-color: var(--accent-primary-glow);
+    border-color: var(--accent-primary-hover);
+    color: var(--accent-primary-hover);
     box-shadow: var(--shadow-md), var(--glow-accent);
     transform: translateY(-1px);
   }
   
   .btn-primary:active {
-    background-color: var(--btn-primary-active);
+    background-color: var(--accent-primary-glow);
+    border-color: var(--accent-primary-active);
+    color: var(--accent-primary-active);
     transform: translateY(0);
     box-shadow: var(--shadow-sm);
   }
@@ -2115,10 +2121,11 @@
   }
 
   .btn-secondary {
-    background-color: var(--btn-secondary-bg);
+    background-color: transparent;
     color: var(--btn-secondary-text);
-    border: 1px solid var(--btn-secondary-border);
+    border: 1.5px solid var(--btn-secondary-border);
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(8px);
   }
   
   .btn-secondary:hover {
@@ -2143,21 +2150,33 @@
   }
 
   .btn-danger {
-    background-color: var(--status-danger);
-    color: var(--text-inverse);
+    background-color: transparent;
+    color: var(--status-danger);
+    border: 1.5px solid var(--status-danger);
     box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(8px);
   }
   
   .btn-danger:hover {
-    background-color: #EF4444;
-    box-shadow: var(--shadow-md), 0 0 20px rgba(248, 113, 113, 0.3);
+    background-color: var(--status-danger-bg);
+    border-color: var(--status-danger);
+    color: var(--status-danger);
+    box-shadow: var(--shadow-md), 0 0 20px rgba(239, 68, 68, 0.2);
     transform: translateY(-1px);
   }
   
+  .btn-danger:active {
+    background-color: var(--status-danger-bg);
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+  
   /* ============================================
-     CARDS
+     CARDS - Enhanced with glassmorphism
      ============================================ */
   .card {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 1rem;      /* 16px */
@@ -2171,6 +2190,72 @@
     border-color: var(--card-hover-border);
     box-shadow: var(--card-shadow-hover);
     transform: translateY(-2px);
+  }
+  
+  /* Light mode card glass adjustments - Theme-specific */
+  [data-theme="light-orange"] .card {
+    background-color: rgba(255, 254, 251, 0.85);
+  }
+  
+  [data-theme="light-orange"] .card:hover {
+    background-color: rgba(254, 247, 240, 0.95);
+  }
+  
+  [data-theme="light-violet"] .card {
+    background-color: rgba(254, 254, 255, 0.85);
+  }
+  
+  [data-theme="light-violet"] .card:hover {
+    background-color: rgba(245, 243, 255, 0.95);
+  }
+  
+  [data-theme="light-emerald"] .card {
+    background-color: rgba(250, 255, 254, 0.85);
+  }
+  
+  [data-theme="light-emerald"] .card:hover {
+    background-color: rgba(236, 253, 245, 0.95);
+  }
+  
+  [data-theme="light-minimal"] .card {
+    background-color: rgba(254, 254, 254, 0.85);
+  }
+  
+  [data-theme="light-minimal"] .card:hover {
+    background-color: rgba(245, 246, 247, 0.95);
+  }
+  
+  [data-theme="light-blue"] .card {
+    background-color: rgba(254, 254, 255, 0.85);
+  }
+  
+  [data-theme="light-blue"] .card:hover {
+    background-color: rgba(239, 246, 255, 0.95);
+  }
+  
+  [data-theme="light-neomint"] .card {
+    background-color: rgba(250, 255, 254, 0.85);
+  }
+  
+  [data-theme="light-neomint"] .card:hover {
+    background-color: rgba(236, 254, 255, 0.95);
+  }
+  
+  [data-theme="light-plum"] .card {
+    background-color: rgba(255, 254, 251, 0.85);
+  }
+  
+  [data-theme="light-plum"] .card:hover {
+    background-color: rgba(254, 243, 232, 0.95);
+  }
+  
+  /* Dark mode card glass adjustments */
+  [data-theme*="dark"] .card {
+    background-color: rgba(15, 19, 22, 0.7);
+  }
+  
+  [data-theme*="dark"] .card:hover {
+    background-color: rgba(20, 24, 28, 0.8);
   }
   
   .card-elevated {
@@ -2267,7 +2352,7 @@
   }
   
   /* ============================================
-     SIDEBAR NAVIGATION
+     SIDEBAR NAVIGATION - Enhanced Modern Style
      ============================================ */
   .nav-item {
     padding: 0.75rem 1rem;
@@ -2277,34 +2362,66 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
     min-height: 44px;
     color: var(--sidebar-link-color, var(--text-secondary));
     position: relative;
+    margin-bottom: 0.25rem;
+  }
+  
+  .nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0);
+    width: 3px;
+    height: 0;
+    background: linear-gradient(180deg, var(--accent-primary), var(--accent-primary-light));
+    border-radius: 0 2px 2px 0;
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .nav-item svg {
     color: var(--sidebar-icon-color, var(--text-secondary));
-    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    width: 1.25rem;
+    height: 1.25rem;
   }
   
   .nav-item:hover {
     background-color: var(--sidebar-hover-bg);
     color: var(--text-primary);
+    transform: translateX(2px);
+  }
+  
+  .nav-item:hover::before {
+    transform: translateY(-50%) scaleY(1);
+    height: 60%;
   }
   
   .nav-item:hover svg {
-    color: var(--accent-primary-light);
+    color: var(--accent-primary);
+    transform: scale(1.1);
   }
   
   .nav-item-active {
-    background-color: var(--sidebar-active-bg);
+    background: linear-gradient(90deg, var(--sidebar-active-bg), transparent);
     color: var(--accent-primary);
-    border-radius: 9999px; /* Pill shape */
+    border-radius: 0.75rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px var(--accent-primary-glow);
+  }
+  
+  .nav-item-active::before {
+    transform: translateY(-50%) scaleY(1);
+    height: 70%;
+    box-shadow: 0 0 8px var(--accent-primary-glow);
   }
   
   .nav-item-active svg {
     color: var(--accent-primary);
+    filter: drop-shadow(0 0 4px var(--accent-primary-glow));
   }
   
   /* ============================================
@@ -2449,12 +2566,174 @@
     border-color: var(--border-default);
   }
   
-  /* Glassmorphism effect */
+  /* Glassmorphism effect - Base */
   .glass {
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
     background-color: var(--elevation-2);
     border: 1px solid var(--border-subtle);
-    opacity: 0.95;
+    box-shadow: var(--shadow-md);
+  }
+  
+  /* Glass effect for cards - enhanced with backdrop blur */
+  .card-glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: var(--elevation-2);
+    border: 1px solid var(--border-subtle);
+  }
+  
+  /* Glass effect for modals */
+  .modal-glass {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background-color: var(--elevation-4);
+    border: 1px solid var(--border-subtle);
+  }
+  
+  /* Glass effect for sidebar */
+  .sidebar-glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: var(--elevation-1);
+    border-right: 1px solid var(--border-subtle);
+  }
+  
+  /* Glass effect for dropdowns */
+  .dropdown-glass {
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    background-color: var(--elevation-2);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+  }
+  
+  /* Light mode adjustments for glass effects - Enhanced with theme-aware tints */
+  [data-theme="light-orange"] .glass,
+  [data-theme="light-orange"] .card-glass,
+  [data-theme="light-orange"] .dropdown-glass {
+    background-color: rgba(255, 254, 251, 0.85);
+  }
+  
+  [data-theme="light-orange"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-orange"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-violet"] .glass,
+  [data-theme="light-violet"] .card-glass,
+  [data-theme="light-violet"] .dropdown-glass {
+    background-color: rgba(254, 254, 255, 0.85);
+  }
+  
+  [data-theme="light-violet"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-violet"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-emerald"] .glass,
+  [data-theme="light-emerald"] .card-glass,
+  [data-theme="light-emerald"] .dropdown-glass {
+    background-color: rgba(250, 255, 254, 0.85);
+  }
+  
+  [data-theme="light-emerald"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-emerald"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-minimal"] .glass,
+  [data-theme="light-minimal"] .card-glass,
+  [data-theme="light-minimal"] .dropdown-glass {
+    background-color: rgba(254, 254, 254, 0.85);
+  }
+  
+  [data-theme="light-minimal"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-minimal"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-blue"] .glass,
+  [data-theme="light-blue"] .card-glass,
+  [data-theme="light-blue"] .dropdown-glass {
+    background-color: rgba(254, 254, 255, 0.85);
+  }
+  
+  [data-theme="light-blue"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-blue"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-neomint"] .glass,
+  [data-theme="light-neomint"] .card-glass,
+  [data-theme="light-neomint"] .dropdown-glass {
+    background-color: rgba(250, 255, 254, 0.85);
+  }
+  
+  [data-theme="light-neomint"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-neomint"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  [data-theme="light-plum"] .glass,
+  [data-theme="light-plum"] .card-glass,
+  [data-theme="light-plum"] .dropdown-glass {
+    background-color: rgba(255, 254, 251, 0.85);
+  }
+  
+  [data-theme="light-plum"] .modal-glass {
+    background-color: rgba(255, 255, 255, 0.96);
+  }
+  
+  [data-theme="light-plum"] .sidebar-glass {
+    background-color: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+  
+  /* Dark mode adjustments for glass effects */
+  [data-theme*="dark"] .glass,
+  [data-theme*="dark"] .card-glass,
+  [data-theme*="dark"] .dropdown-glass {
+    background-color: rgba(15, 19, 22, 0.7);
+  }
+  
+  [data-theme*="dark"] .modal-glass {
+    background-color: rgba(26, 31, 36, 0.9);
+  }
+  
+  [data-theme*="dark"] .sidebar-glass {
+    background-color: rgba(10, 13, 16, 0.8);
   }
   
   /* Subtle gradient backgrounds */

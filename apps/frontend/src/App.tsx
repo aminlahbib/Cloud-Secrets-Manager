@@ -11,6 +11,7 @@ const ProjectsPage = lazy(() => import('./pages/Projects').then(m => ({ default:
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetail').then(m => ({ default: m.ProjectDetailPage })));
 const ActivityPage = lazy(() => import('./pages/Activity').then(m => ({ default: m.ActivityPage })));
 const TeamsPage = lazy(() => import('./pages/Teams').then(m => ({ default: m.TeamsPage })));
+const TeamDetailPage = lazy(() => import('./pages/TeamDetail').then(m => ({ default: m.TeamDetailPage })));
 const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.SettingsPage })));
 const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
 const InvitationAcceptPage = lazy(() => import('./pages/InvitationAccept').then(m => ({ default: m.InvitationAcceptPage })));
@@ -92,8 +93,9 @@ const App: React.FC = () => {
           {/* Activity */}
           <Route path="/activity" element={<ActivityPage />} />
 
-          {/* Teams (Future) */}
+          {/* Teams */}
           <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/teams/:teamId" element={<TeamDetailPage />} />
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />

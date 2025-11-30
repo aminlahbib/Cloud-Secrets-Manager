@@ -15,6 +15,7 @@ interface AuthContextType {
   login: (credentials: LoginRequest, keepSignedIn?: boolean) => Promise<void>;
   loginWithGoogle: (keepSignedIn?: boolean) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               tokenStorage.setAccessToken(idTokenResult.token);
 
               // Construct user object from Firebase user and claims
+              // Firebase profile is the source of truth when Firebase is enabled
               setUser({
                 id: firebaseUser.uid,
                 firebaseUid: firebaseUser.uid,
@@ -341,6 +343,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     navigate('/login');
   };
 
+  const refreshUser = async () => {
+    if (isFirebaseEnabled) {
+      const firebaseUser = firebaseAuthService.getCurrentUser();
+      if (firebaseUser) {
+        try {
+          // Force refresh the ID token to get latest claims
+          const idTokenResult = await firebaseUser.getIdTokenResult(true);
+          const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
+          
+          setUser({
+            id: firebaseUser.uid,
+            firebaseUid: firebaseUser.uid,
+            email: firebaseUser.email || '',
+            displayName: firebaseUser.displayName || undefined,
+            avatarUrl: firebaseUser.photoURL || undefined,
+            platformRole,
+            createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
+            lastLoginAt: firebaseUser.metadata.lastSignInTime || undefined,
+          });
+        } catch (error) {
+          console.error('Failed to refresh user:', error);
+        }
+      }
+    }
+  };
+
   const isPlatformAdmin = user?.platformRole === 'PLATFORM_ADMIN';
 
   return (
@@ -353,7 +381,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isPlatformAdmin,
         login,
         loginWithGoogle,
-        logout
+        logout,
+        refreshUser
       }}
     >
       {children}

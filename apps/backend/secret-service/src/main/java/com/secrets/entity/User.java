@@ -1,11 +1,14 @@
 package com.secrets.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Entity
@@ -50,6 +53,16 @@ public class User {
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "notification_preferences", columnDefinition = "jsonb")
+    private Map<String, Object> notificationPreferences;
+
+    @Column(name = "timezone", length = 50)
+    private String timezone;
+
+    @Column(name = "date_format", length = 20)
+    private String dateFormat;
 
     public enum PlatformRole {
         USER,
@@ -138,6 +151,30 @@ public class User {
 
     public void setLastLoginAt(LocalDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public Map<String, Object> getNotificationPreferences() {
+        return notificationPreferences;
+    }
+
+    public void setNotificationPreferences(Map<String, Object> notificationPreferences) {
+        this.notificationPreferences = notificationPreferences;
+    }
+
+    public String getTimezone() {
+        return timezone;
+    }
+
+    public void setTimezone(String timezone) {
+        this.timezone = timezone;
+    }
+
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
     }
 }
 

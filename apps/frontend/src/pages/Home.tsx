@@ -1,25 +1,27 @@
 import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Folder, Key, Users, Activity } from 'lucide-react';
+import { Folder, Key, Users, Building2, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
 import { workflowsService } from '../services/workflows';
 import { auditService, type AuditLogsResponse } from '../services/audit';
-import { WelcomeSection } from '../components/home/WelcomeSection';
-import { StatsCard } from '../components/home/StatsCard';
-import { WorkflowsList } from '../components/home/WorkflowsList';
+import { StatsStrip } from '../components/home/StatsStrip';
+import { CollaborationSection } from '../components/home/CollaborationSection';
 import { RecentActivity } from '../components/home/RecentActivity';
 import { ProjectsOverview } from '../components/home/ProjectsOverview';
 import { QuickActions } from '../components/home/QuickActions';
+import { Button } from '../components/ui/Button';
 import type { Project, Workflow } from '../types';
 
 export const HomePage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch recent projects
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
     queryKey: ['projects', 'recent', user?.id],
-    queryFn: () => projectsService.listProjects({ size: 6 }),
+    queryFn: () => projectsService.listProjects({ size: 8 }),
     enabled: !!user?.id,
     staleTime: 60 * 1000, // 1 minute - recent projects change moderately
   });
@@ -30,6 +32,14 @@ export const HomePage: React.FC = () => {
     queryFn: () => workflowsService.listWorkflows(),
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes - workflows rarely change
+  });
+
+  // Fetch teams for stats
+  const { data: teams } = useQuery({
+    queryKey: ['teams'],
+    queryFn: () => import('../services/teams').then(m => m.teamsService.listTeams()),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   // Fetch recent activity (only for platform admins)
@@ -63,8 +73,42 @@ export const HomePage: React.FC = () => {
     });
   }, [projectsList, workflows]);
 
-  const totalSecrets = projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0);
-  const totalMembers = projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0);
+  const totalSecrets = useMemo(() => 
+    projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0),
+    [projects]
+  );
+  const totalMembers = useMemo(() => 
+    projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0),
+    [projects]
+  );
+
+  // Prepare stats for the strip
+  const stats = useMemo(() => [
+    {
+      label: 'Projects',
+      value: projectsData?.totalElements ?? 0,
+      icon: Folder,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Secrets',
+      value: totalSecrets,
+      icon: Key,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Teams',
+      value: teams?.length ?? 0,
+      icon: Building2,
+      isLoading: false,
+    },
+    {
+      label: 'Members',
+      value: totalMembers,
+      icon: Users,
+      isLoading: isProjectsLoading,
+    },
+  ], [projectsData?.totalElements, totalSecrets, teams?.length, totalMembers, isProjectsLoading]);
 
   const getTimeAgo = useCallback((timestamp: string) => {
     const now = new Date();
@@ -87,54 +131,57 @@ export const HomePage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <WelcomeSection />
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          label="Total Projects"
-          value={projectsData?.totalElements ?? 0}
-          icon={Folder}
-          isLoading={isProjectsLoading}
-        />
-        <StatsCard
-          label="Total Secrets"
-          value={totalSecrets}
-          icon={Key}
-          isLoading={isProjectsLoading}
-        />
-        <StatsCard
-          label="Team Members"
-          value={totalMembers}
-          icon={Users}
-          isLoading={isProjectsLoading}
-        />
-        {isPlatformAdmin && (
-          <StatsCard
-            label="Recent Activity"
-            value={activityData?.totalElements ?? 0}
-            icon={Activity}
-            isLoading={isActivityLoading}
-          />
-        )}
+      {/* Header with Title and Primary CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-theme-primary">Overview</h1>
+          <p className="text-body text-theme-secondary mt-1">
+            Manage your organization's secrets and access controls.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="secondary" onClick={() => navigate('/activity')}>
+            View Audit Logs
+          </Button>
+          <Button onClick={() => navigate('/projects')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Project
+          </Button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <WorkflowsList workflows={workflows} isLoading={isWorkflowsLoading} />
-        
-        {isPlatformAdmin && (
+      {/* Stats Strip */}
+      <StatsStrip stats={stats} />
+
+      {/* Main Content: Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+        {/* Left Column: Projects Hero Section (65-70%) */}
+        <div className="lg:col-span-7 space-y-6">
+          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
+          <QuickActions isPlatformAdmin={isPlatformAdmin} />
+        </div>
+
+        {/* Right Column: Collaboration (30-35%) */}
+        <div className="lg:col-span-3">
+          <CollaborationSection
+            workflows={workflows}
+            isWorkflowsLoading={isWorkflowsLoading}
+            maxTeams={3}
+          />
+        </div>
+      </div>
+
+      {/* Admin Activity Section */}
+      {isPlatformAdmin && (
+        <div className="mt-8">
           <RecentActivity
             activity={recentActivity}
             isLoading={isActivityLoading}
             formatAction={formatAction}
             getTimeAgo={getTimeAgo}
           />
-        )}
-
-        <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
-      </div>
-
-      <QuickActions isPlatformAdmin={isPlatformAdmin} />
+        </div>
+      )}
     </div>
   );
 };

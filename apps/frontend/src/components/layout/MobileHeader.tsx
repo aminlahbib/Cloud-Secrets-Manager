@@ -12,9 +12,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ isSidebarOpen, onTog
 
   return (
     <header 
-      className="md:hidden flex items-center justify-between px-4 py-4 border-b transition-colors"
+      className="md:hidden flex items-center justify-between px-4 py-4 border-b transition-colors sidebar-glass"
       style={{
-        backgroundColor: 'var(--sidebar-bg)',
         borderBottomColor: 'var(--border-subtle)',
       }}
     >

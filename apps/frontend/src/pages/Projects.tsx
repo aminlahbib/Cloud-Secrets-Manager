@@ -1,37 +1,27 @@
 import React, { useState, useMemo } from 'react';
 import { useDebounce } from '../utils/debounce';
-import { Link } from 'react-router-dom';
 import {
   Folder,
   Plus,
   Search,
-  Users,
-  Key,
-  Archive,
-  Crown,
-  Shield,
-  Clock,
   LayoutGrid,
-  List
+  List,
+  Building2,
+  Layers
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkflows } from '../hooks/useWorkflows';
 import { usePreferences } from '../hooks/usePreferences';
-import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import { TeamsVsDirectGuidance } from '../components/projects/TeamsVsDirectGuidance';
+import { ProjectCard } from '../components/projects/ProjectCard';
 import { useAuth } from '../contexts/AuthContext';
-import type { Project, ProjectRole } from '../types';
-
-const ROLE_COLORS: Record<ProjectRole, 'owner-admin' | 'owner-admin' | 'info' | 'default'> = {
-  OWNER: 'owner-admin',
-  ADMIN: 'owner-admin',
-  MEMBER: 'info',
-  VIEWER: 'default',
-};
+import type { Project, ProjectTeamInfo } from '../types';
 
 export const ProjectsPage: React.FC = () => {
   const { user } = useAuth(); // For authentication check
@@ -40,11 +30,14 @@ export const ProjectsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showArchived, setShowArchived] = useState(false);
+  const [showArchived] = useState(false);
   const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
     workflow: null,
     role: null,
+    team: null,
+    accessSource: null, // 'DIRECT', 'TEAM', 'BOTH', or null for all
   });
+  const [groupBy, setGroupBy] = useState<'none' | 'team' | 'workflow'>('none');
 
   // Fetch projects
   const { data, isLoading, error } = useProjects({
@@ -54,11 +47,21 @@ export const ProjectsPage: React.FC = () => {
 
   // Fetch workflows to match with projects
   const { data: workflows } = useWorkflows(user?.id);
+  
+  // Fetch teams for filtering
+  const { data: teams } = useQuery({
+    queryKey: ['teams'],
+    queryFn: () => import('../services/teams').then(m => m.teamsService.listTeams()),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 
   // Enrich projects with workflow information and apply filters
-  const projects = useMemo(() => {
+  const { filteredProjects, groupedProjects } = useMemo(() => {
     let projectList = data?.content ?? [];
-    if (!workflows || workflows.length === 0) return projectList;
+    if (!workflows || workflows.length === 0) {
+      return { filteredProjects: projectList, groupedProjects: null };
+    }
 
     // Enrich with workflow info
     projectList = projectList.map((project: Project) => {
@@ -79,12 +82,66 @@ export const ProjectsPage: React.FC = () => {
     if (projectFilters.workflow) {
       projectList = projectList.filter((project: Project) => project.workflowId === projectFilters.workflow);
     }
+    
+    // Apply team filter
+    if (projectFilters.team) {
+      projectList = projectList.filter((project: Project) => 
+        project.teams?.some((team: ProjectTeamInfo) => team.teamId === projectFilters.team)
+      );
+    }
+    
+    // Apply access source filter
+    if (projectFilters.accessSource) {
+      projectList = projectList.filter((project: Project) => 
+        project.accessSource === projectFilters.accessSource
+      );
+    }
 
-    return projectList;
-  }, [data?.content, workflows, projectFilters.workflow]);
+    // Group projects if groupBy is set
+    let grouped: Record<string, Project[]> | null = null;
+    if (groupBy === 'team' && teams && teams.length > 0) {
+      grouped = {};
+      // Add projects to their teams
+      projectList.forEach((project) => {
+        if (project.teams && project.teams.length > 0) {
+          project.teams.forEach((team: ProjectTeamInfo) => {
+            if (!grouped![team.teamName]) {
+              grouped![team.teamName] = [];
+            }
+            // Avoid duplicates
+            if (!grouped![team.teamName].some(p => p.id === project.id)) {
+              grouped![team.teamName].push(project);
+            }
+          });
+        } else {
+          // Projects without teams go to "No Team"
+          if (!grouped!['No Team']) {
+            grouped!['No Team'] = [];
+          }
+          grouped!['No Team'].push(project);
+        }
+      });
+    } else if (groupBy === 'workflow' && workflows && workflows.length > 0) {
+      grouped = {};
+      // Add projects to their workflows
+      projectList.forEach((project) => {
+        const workflowName = project.workflowName || 'No Workflow';
+        if (!grouped![workflowName]) {
+          grouped![workflowName] = [];
+        }
+        grouped![workflowName].push(project);
+      });
+    }
+
+    return { filteredProjects: projectList, groupedProjects: grouped };
+  }, [data?.content, workflows, teams, projectFilters.workflow, projectFilters.team, projectFilters.accessSource, groupBy]);
+  
+  const projects = filteredProjects;
 
   const projectFilterConfigs: FilterConfig[] = useMemo(() => {
     const workflowOptions = workflows?.map(w => ({ label: w.name, value: w.id })) || [];
+    const teamOptions = teams?.map(t => ({ label: t.name, value: t.id })) || [];
+    
     return [
       {
         key: 'workflow',
@@ -95,8 +152,28 @@ export const ProjectsPage: React.FC = () => {
           ...workflowOptions,
         ],
       },
+      {
+        key: 'team',
+        label: 'Team',
+        type: 'select',
+        options: [
+          { label: 'All Teams', value: '' },
+          ...teamOptions,
+        ],
+      },
+      {
+        key: 'accessSource',
+        label: 'Access Source',
+        type: 'select',
+        options: [
+          { label: 'All Access', value: '' },
+          { label: 'Direct Access', value: 'DIRECT' },
+          { label: 'Team Access', value: 'TEAM' },
+          { label: 'Both', value: 'BOTH' },
+        ],
+      },
     ];
-  }, [workflows]);
+  }, [workflows, teams]);
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -114,97 +191,196 @@ export const ProjectsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-h1 text-primary">Projects</h1>
-          <p className="text-body-sm text-secondary mt-1">Manage your projects and secret collections</p>
+          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+            Projects
+          </h2>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+            Manage your projects and secret collections.
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ backgroundColor: 'var(--elevation-2)', borderColor: 'var(--border-subtle)' }}>
-            <button
+        <div className="flex items-center gap-2">
+          <div 
+            className="border rounded-lg p-1 flex gap-1 shadow-sm"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderColor: 'var(--border-subtle)',
+            }}
+          >
+            <button 
               onClick={() => setProjectView('grid')}
-              className="p-2 rounded transition-all duration-150"
+              className="p-1.5 rounded transition-colors"
               style={{
-                backgroundColor: projectView === 'grid' ? 'var(--accent-primary)' : 'transparent',
-                color: projectView === 'grid' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                backgroundColor: projectView === 'grid' ? 'var(--elevation-1)' : 'transparent',
+                color: projectView === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)',
               }}
               onMouseEnter={(e) => {
                 if (projectView !== 'grid') {
+                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
                   e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (projectView !== 'grid') {
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
                 }
               }}
-              title="Grid View"
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
-            <button
+            <button 
               onClick={() => setProjectView('list')}
-              className="p-2 rounded transition-all duration-150"
+              className="p-1.5 rounded transition-colors"
               style={{
-                backgroundColor: projectView === 'list' ? 'var(--accent-primary)' : 'transparent',
-                color: projectView === 'list' ? 'var(--text-inverse)' : 'var(--text-secondary)',
+                backgroundColor: projectView === 'list' ? 'var(--elevation-1)' : 'transparent',
+                color: projectView === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)',
               }}
               onMouseEnter={(e) => {
                 if (projectView !== 'list') {
+                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
                   e.currentTarget.style.color = 'var(--text-primary)';
                 }
               }}
               onMouseLeave={(e) => {
                 if (projectView !== 'list') {
-                  e.currentTarget.style.color = 'var(--text-secondary)';
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'var(--text-tertiary)';
                 }
               }}
-              title="List View"
             >
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-5 h-5 mr-2" />
+          <button 
+            className="px-4 py-2 font-medium rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
+            style={{
+              backgroundColor: 'var(--accent-primary)',
+              color: 'var(--text-inverse)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = '0.9';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = '1';
+            }}
+            onClick={() => setShowCreateModal(true)}
+          >
+            <Plus className="w-4 h-4" />
             New Project
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }} />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search projects..."
-              className="input-theme pl-10 pr-4 py-2"
-            />
-          </div>
-          <FilterPanel
-            filters={projectFilterConfigs}
-            values={projectFilters}
-            onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
-            onClear={() => setProjectFilters({ workflow: null, role: null })}
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search 
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" 
+            style={{ color: 'var(--text-tertiary)' }}
           />
-          <label className="flex items-center space-x-2 text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-              className="rounded transition-colors"
-              style={{
-                borderColor: 'var(--border-default)',
-                color: 'var(--accent-primary)',
-              }}
-            />
-            <span>Show archived</span>
-          </label>
+          <input 
+            type="text" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search projects..." 
+            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all shadow-sm"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderColor: 'var(--border-subtle)',
+              color: 'var(--text-primary)',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = 'var(--accent-primary)';
+              e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-primary-glow)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          />
         </div>
+        <FilterPanel
+          filters={projectFilterConfigs}
+          values={projectFilters}
+          onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
+          onClear={() => setProjectFilters({ workflow: null, role: null, team: null, accessSource: null })}
+        />
+      </div>
+        
+      {/* Group By Selector with Info Icon */}
+      <div className="flex items-center gap-3">
+        <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+          Group by:
+        </span>
+        <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ borderColor: 'var(--border-subtle)' }}>
+          <button
+            onClick={() => setGroupBy('none')}
+            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
+            style={{
+              backgroundColor: groupBy === 'none' ? 'var(--accent-primary-glow)' : 'transparent',
+              color: groupBy === 'none' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            }}
+            onMouseEnter={(e) => {
+              if (groupBy !== 'none') {
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (groupBy !== 'none') {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
+          >
+            <Layers className="h-4 w-4 inline mr-1.5" />
+            None
+          </button>
+          <button
+            onClick={() => setGroupBy('workflow')}
+            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
+            style={{
+              backgroundColor: groupBy === 'workflow' ? 'var(--accent-primary-glow)' : 'transparent',
+              color: groupBy === 'workflow' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            }}
+            onMouseEnter={(e) => {
+              if (groupBy !== 'workflow') {
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (groupBy !== 'workflow') {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
+          >
+            <LayoutGrid className="h-4 w-4 inline mr-1.5" />
+            Workflow
+          </button>
+          <button
+            onClick={() => setGroupBy('team')}
+            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
+            style={{
+              backgroundColor: groupBy === 'team' ? 'var(--accent-primary-glow)' : 'transparent',
+              color: groupBy === 'team' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+            }}
+            onMouseEnter={(e) => {
+              if (groupBy !== 'team') {
+                e.currentTarget.style.color = 'var(--text-primary)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (groupBy !== 'team') {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }
+            }}
+          >
+            <Building2 className="h-4 w-4 inline mr-1.5" />
+            Team
+          </button>
+        </div>
+        {/* Info Icon for Guidance */}
+        <TeamsVsDirectGuidance compact />
       </div>
 
       {/* Projects Grid/List */}
@@ -238,97 +414,59 @@ export const ProjectsPage: React.FC = () => {
             onClick: () => setShowCreateModal(true),
           }}
         />
+      ) : groupedProjects && Object.keys(groupedProjects).length > 0 ? (
+        // Grouped view
+        <div className="space-y-6">
+          {Object.entries(groupedProjects).map(([groupName, groupProjects]) => (
+            <div key={groupName} className="space-y-4">
+              <div className="flex items-center gap-3">
+                {groupBy === 'team' ? (
+                  <Building2 className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
+                ) : (
+                  <LayoutGrid className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
+                )}
+                <h2 className="text-xl font-semibold text-theme-primary">
+                  {groupName}
+                </h2>
+                <Badge variant="default" className="text-xs">
+                  {groupProjects.length} {groupProjects.length === 1 ? 'project' : 'projects'}
+                </Badge>
+              </div>
+              {projectView === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {groupProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="grid"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {groupProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="list"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       ) : projectView === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project: Project) => (
-            <Link
+            <ProjectCard
               key={project.id}
-              to={`/projects/${project.id}`}
-              className="block group"
-            >
-              <div 
-                className="card h-full flex flex-col"
-                style={{
-                  opacity: project.isArchived ? 0.75 : 1,
-                }}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div 
-                    className="p-3 rounded-lg transition-all duration-150"
-                    style={{ 
-                      backgroundColor: 'var(--elevation-1)',
-                      color: 'var(--text-tertiary)',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!project.isArchived) {
-                        e.currentTarget.style.backgroundColor = 'var(--accent-primary-glow)';
-                        e.currentTarget.style.color = 'var(--accent-primary)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!project.isArchived) {
-                        e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                        e.currentTarget.style.color = 'var(--text-tertiary)';
-                      }
-                    }}
-                  >
-                    {project.isArchived ? (
-                      <Archive className="w-8 h-8" />
-                    ) : (
-                      <Folder className="w-8 h-8" />
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {project.currentUserRole && (
-                      <Badge variant={ROLE_COLORS[project.currentUserRole]}>
-                        {project.currentUserRole === 'OWNER' && <Crown className="h-3 w-3 mr-1" />}
-                        {project.currentUserRole === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
-                        {project.currentUserRole}
-                      </Badge>
-                    )}
-                    {project.isArchived && (
-                      <Badge variant="warning">Archived</Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="text-h3 font-semibold text-primary mb-2">
-                    {project.name}
-                  </h3>
-                  {project.description && (
-                    <p className="text-body-sm text-secondary line-clamp-2 mb-3">
-                      {project.description}
-                    </p>
-                  )}
-                  {project.workflowName && (
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <LayoutGrid className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
-                      <span className="text-caption text-tertiary font-medium">
-                        {project.workflowName}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-4 pt-4 border-t flex items-center justify-between text-body-sm" style={{ borderTopColor: 'var(--border-subtle)' }}>
-                  <div className="flex items-center gap-4" style={{ color: 'var(--text-tertiary)' }}>
-                    <span className="flex items-center" title="Secrets">
-                      <Key className="h-4 w-4 mr-1" />
-                      {project.secretCount ?? 0}
-                    </span>
-                    <span className="flex items-center" title="Members">
-                      <Users className="h-4 w-4 mr-1" />
-                      {project.memberCount ?? 1}
-                    </span>
-                  </div>
-                  <span className="flex items-center" style={{ color: 'var(--text-tertiary)' }} title="Last updated">
-                    <Clock className="h-4 w-4 mr-1" />
-                    {getTimeAgo(project.updatedAt)}
-                  </span>
-                </div>
-              </div>
-            </Link>
+              project={project}
+              view="grid"
+              getTimeAgo={getTimeAgo}
+            />
           ))}
 
           {/* Create New Project Card */}
@@ -356,82 +494,12 @@ export const ProjectsPage: React.FC = () => {
       ) : (
         <div className="space-y-3">
           {projects.map((project: Project) => (
-            <Link
+            <ProjectCard
               key={project.id}
-              to={`/projects/${project.id}`}
-              className="block group"
-            >
-              <div 
-                className="rounded-xl p-4 shadow-sm border transition-all flex items-center gap-4 card"
-                style={{
-                  opacity: project.isArchived ? 0.75 : 1,
-                }}
-              >
-                <div 
-                  className="p-3 rounded-lg transition-colors flex-shrink-0"
-                  style={{ backgroundColor: 'var(--elevation-1)' }}
-                  onMouseEnter={(e) => {
-                    if (!project.isArchived) {
-                      e.currentTarget.style.backgroundColor = 'var(--accent-primary-glow)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!project.isArchived) {
-                      e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                    }
-                  }}
-                >
-                  {project.isArchived ? (
-                    <Archive className="w-6 h-6" style={{ color: 'var(--text-tertiary)' }} />
-                  ) : (
-                    <Folder className="w-6 h-6" style={{ color: 'var(--text-tertiary)' }} />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="text-h3 font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                      {project.name}
-                    </h3>
-                    {project.currentUserRole && (
-                      <Badge variant={ROLE_COLORS[project.currentUserRole]}>
-                        {project.currentUserRole === 'OWNER' && <Crown className="h-3 w-3 mr-1" />}
-                        {project.currentUserRole === 'ADMIN' && <Shield className="h-3 w-3 mr-1" />}
-                        {project.currentUserRole}
-                      </Badge>
-                    )}
-                    {project.isArchived && (
-                      <Badge variant="warning">Archived</Badge>
-                    )}
-                  </div>
-                  {project.description && (
-                    <p className="text-body-sm line-clamp-1 mb-2" style={{ color: 'var(--text-secondary)' }}>
-                      {project.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
-                    {project.workflowName && (
-                      <div className="flex items-center gap-1.5">
-                        <LayoutGrid className="h-3.5 w-3.5" />
-                        <span className="text-xs font-medium">{project.workflowName}</span>
-                      </div>
-                    )}
-                    <span className="flex items-center">
-                      <Key className="h-4 w-4 mr-1" />
-                      {project.secretCount ?? 0} secrets
-                    </span>
-                    <span className="flex items-center">
-                      <Users className="h-4 w-4 mr-1" />
-                      {project.memberCount ?? 1} members
-                    </span>
-                    <span className="flex items-center">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {getTimeAgo(project.updatedAt)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </Link>
+              project={project}
+              view="list"
+              getTimeAgo={getTimeAgo}
+            />
           ))}
 
           {/* Create New Project Card (List View) */}

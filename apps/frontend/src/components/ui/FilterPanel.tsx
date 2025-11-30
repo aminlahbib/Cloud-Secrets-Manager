@@ -35,21 +35,39 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
 
   return (
     <div className={`relative ${className}`}>
-      <Button
-        variant="secondary"
-        size="sm"
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2"
+        className="px-3 py-2 border font-medium rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          borderColor: 'var(--border-subtle)',
+          color: 'var(--text-primary)',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+        }}
       >
-        <Filter className="h-4 w-4" />
+        <Filter className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
         Filters
         {activeFiltersCount > 0 && (
-          <span className="text-caption rounded-full px-2 py-0.5 bg-status-info text-theme-inverse">
+          <span 
+            className="text-xs rounded-full px-2 py-0.5"
+            style={{
+              backgroundColor: 'var(--accent-primary-glow)',
+              color: 'var(--accent-primary)',
+            }}
+          >
             {activeFiltersCount}
           </span>
         )}
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </Button>
+        <ChevronDown 
+          className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--text-tertiary)' }}
+        />
+      </button>
 
       {isOpen && (
         <>
@@ -57,7 +75,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors bg-elevation-4">
+          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors dropdown-glass">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-body-sm font-semibold text-theme-primary">Filters</h3>
               {activeFiltersCount > 0 && (

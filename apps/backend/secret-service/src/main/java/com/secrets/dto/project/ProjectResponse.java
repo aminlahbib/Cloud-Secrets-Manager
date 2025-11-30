@@ -21,6 +21,35 @@ public class ProjectResponse {
     private Long secretCount;
     private Long memberCount;
     private ProjectMembership.ProjectRole currentUserRole;
+    
+    // Team information (if project is in teams)
+    private java.util.List<TeamInfo> teams;
+    
+    // Access source indicator
+    private AccessSource accessSource; // DIRECT, TEAM, BOTH
+    
+    public static class TeamInfo {
+        private UUID teamId;
+        private String teamName;
+        
+        public TeamInfo() {}
+        
+        public TeamInfo(UUID teamId, String teamName) {
+            this.teamId = teamId;
+            this.teamName = teamName;
+        }
+        
+        public UUID getTeamId() { return teamId; }
+        public void setTeamId(UUID teamId) { this.teamId = teamId; }
+        public String getTeamName() { return teamName; }
+        public void setTeamName(String teamName) { this.teamName = teamName; }
+    }
+    
+    public enum AccessSource {
+        DIRECT,  // Access via direct project membership
+        TEAM,    // Access via team membership only
+        BOTH     // Access via both direct and team membership
+    }
 
     public ProjectResponse() {
     }
@@ -143,6 +172,22 @@ public class ProjectResponse {
 
     public void setCurrentUserRole(ProjectMembership.ProjectRole currentUserRole) {
         this.currentUserRole = currentUserRole;
+    }
+    
+    public java.util.List<TeamInfo> getTeams() {
+        return teams;
+    }
+    
+    public void setTeams(java.util.List<TeamInfo> teams) {
+        this.teams = teams;
+    }
+    
+    public AccessSource getAccessSource() {
+        return accessSource;
+    }
+    
+    public void setAccessSource(AccessSource accessSource) {
+        this.accessSource = accessSource;
     }
 }
 

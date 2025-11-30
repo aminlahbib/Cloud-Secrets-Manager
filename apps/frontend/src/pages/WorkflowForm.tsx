@@ -44,8 +44,8 @@ export const WorkflowFormPage: React.FC = () => {
           Back
         </Button>
 
-        <h1 className="text-3xl font-bold transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>Create Workflow</h1>
-        <p className="mt-2 text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+        <h1 className="text-2xl font-bold text-theme-primary">Create Workflow</h1>
+        <p className="text-body-sm text-theme-secondary mt-1">
           Create a new workflow to organize your projects
         </p>
       </div>
@@ -67,7 +67,7 @@ export const WorkflowFormPage: React.FC = () => {
           />
 
           <div>
-            <label className="block text-sm font-medium mb-1 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+            <label className="block text-sm font-medium mb-1 text-theme-primary">
               Description (optional)
             </label>
             <textarea
