@@ -6,13 +6,8 @@ import {
   Building2,
   Crown,
   Shield,
-  Mail,
   Settings,
   Trash2,
-  Plus,
-  X,
-  Folder,
-  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -24,10 +19,8 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
-import { AddMemberModal } from '../components/teams/AddMemberModal';
-import { AddProjectModal } from '../components/teams/AddProjectModal';
-import type { Team, TeamMember, TeamRole, TeamProject } from '../types';
-import { Link } from 'react-router-dom';
+import type { Team, TeamRole } from '../types';
+import { useNavigate } from 'react-router-dom';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
@@ -39,10 +32,8 @@ export const TeamsPage: React.FC = () => {
   const { user } = useAuth();
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
-  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
-  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
@@ -52,20 +43,6 @@ export const TeamsPage: React.FC = () => {
     queryFn: () => teamsService.listTeams(),
     enabled: !!user?.id,
     staleTime: 1 * 60 * 1000, // 1 minute
-  });
-
-  // Fetch team members when a team is selected
-  const { data: members, isLoading: isMembersLoading } = useQuery<TeamMember[]>({
-    queryKey: ['teams', selectedTeam?.id, 'members'],
-    queryFn: () => teamsService.listTeamMembers(selectedTeam!.id),
-    enabled: !!selectedTeam?.id,
-  });
-
-  // Fetch team projects when a team is selected
-  const { data: teamProjects, isLoading: isProjectsLoading } = useQuery<TeamProject[]>({
-    queryKey: ['teams', selectedTeam?.id, 'projects'],
-    queryFn: () => teamsService.listTeamProjects(selectedTeam!.id),
-    enabled: !!selectedTeam?.id,
   });
 
   // Delete team mutation
@@ -80,9 +57,6 @@ export const TeamsPage: React.FC = () => {
       });
       setShowDeleteConfirm(false);
       setTeamToDelete(null);
-      if (selectedTeam?.id === teamToDelete?.id) {
-        setSelectedTeam(null);
-      }
     },
     onError: (error: any) => {
       showNotification({
@@ -93,27 +67,6 @@ export const TeamsPage: React.FC = () => {
     },
   });
 
-  // Remove member mutation
-  const removeMemberMutation = useMutation({
-    mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
-      teamsService.removeTeamMember(teamId, memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam?.id, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      showNotification({
-        type: 'success',
-        title: 'Member removed',
-        message: 'The member has been removed from the team',
-      });
-    },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to remove member',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
-  });
 
   const handleDeleteTeam = (team: Team) => {
     setTeamToDelete(team);
@@ -187,7 +140,7 @@ export const TeamsPage: React.FC = () => {
             <Card
               key={team.id}
               className="p-6 cursor-pointer hover:shadow-lg transition-all"
-              onClick={() => setSelectedTeam(team)}
+              onClick={() => navigate(`/teams/${team.id}`)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
@@ -234,7 +187,7 @@ export const TeamsPage: React.FC = () => {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setSelectedTeam(team);
+                      navigate(`/teams/${team.id}`);
                     }}
                     className="flex-1"
                   >
@@ -260,173 +213,6 @@ export const TeamsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Team Detail Sidebar */}
-      {selectedTeam && (
-        <Modal
-          isOpen={!!selectedTeam}
-          onClose={() => setSelectedTeam(null)}
-          title={selectedTeam.name}
-          size="lg"
-        >
-          <div className="space-y-6">
-            {/* Team Info */}
-            <div>
-              <h3 className="text-sm font-medium mb-2 transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
-                Description
-              </h3>
-              <p className="text-sm transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
-                {selectedTeam.description || 'No description'}
-              </p>
-            </div>
-
-            {/* Members Section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
-                  Members ({members?.length || 0})
-                </h3>
-                {canManageTeam(selectedTeam) && (
-                  <Button
-                    size="sm"
-                    onClick={() => setShowAddMemberModal(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Member
-                  </Button>
-                )}
-              </div>
-
-              {isMembersLoading ? (
-                <div className="flex justify-center py-4">
-                  <Spinner size="md" />
-                </div>
-              ) : !members || members.length === 0 ? (
-                <EmptyState
-                  icon={<Users className="h-12 w-12 text-theme-tertiary" />}
-                  title="No members"
-                  description="Add members to start collaborating"
-                />
-              ) : (
-                <div className="space-y-2">
-                  {members.map((member) => (
-                    <div
-                      key={member.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-theme-subtle"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-elevation-1 text-theme-tertiary">
-                          <span className="font-medium">
-                            {(member.displayName || member.email || 'U').charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
-                            {member.displayName || member.email}
-                            {member.userId === user?.id && (
-                              <span className="ml-2 text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
-                                (You)
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs flex items-center gap-1 transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
-                            <Mail className="h-3 w-3" />
-                            {member.email}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            member.role === 'TEAM_OWNER' || member.role === 'TEAM_ADMIN'
-                              ? 'owner-admin'
-                              : 'default'
-                          }
-                        >
-                          {ROLE_ICONS[member.role] && <span className="mr-1">{ROLE_ICONS[member.role]}</span>}
-                          {member.role.replace('TEAM_', '')}
-                        </Badge>
-                        {canManageTeam(selectedTeam) && member.userId !== user?.id && (
-                          <button
-                            onClick={() =>
-                              removeMemberMutation.mutate({
-                                teamId: selectedTeam.id,
-                                memberId: member.userId,
-                              })
-                            }
-                            className="p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                            title="Remove member"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Projects Section */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
-                  Projects ({teamProjects?.length || 0})
-                </h3>
-                {canManageTeam(selectedTeam) && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={() => setShowAddProjectModal(true)}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Project
-                  </Button>
-                )}
-              </div>
-
-              {isProjectsLoading ? (
-                <div className="flex justify-center py-4">
-                  <Spinner size="md" />
-                </div>
-              ) : !teamProjects || teamProjects.length === 0 ? (
-                <EmptyState
-                  icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
-                  title="No projects"
-                  description="Add projects to this team to share access with all team members"
-                />
-              ) : (
-                <div className="space-y-2">
-                  {teamProjects.map((teamProject) => (
-                    <Link
-                      key={teamProject.id}
-                      to={`/projects/${teamProject.projectId}`}
-                      className="flex items-center justify-between p-3 rounded-lg border border-theme-subtle hover:bg-elevation-1 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-elevation-1">
-                          <Folder className="h-4 w-4 text-theme-tertiary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
-                            {teamProject.projectName}
-                          </p>
-                          {teamProject.projectDescription && (
-                            <p className="text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
-                              {teamProject.projectDescription}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <ExternalLink className="h-4 w-4 text-theme-tertiary" />
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
       {/* Create Team Modal */}
       <CreateTeamModal
         isOpen={showCreateModal}
@@ -435,34 +221,6 @@ export const TeamsPage: React.FC = () => {
           queryClient.invalidateQueries({ queryKey: ['teams'] });
         }}
       />
-
-      {/* Add Member Modal */}
-      {selectedTeam && (
-        <AddMemberModal
-          isOpen={showAddMemberModal}
-          onClose={() => setShowAddMemberModal(false)}
-          teamId={selectedTeam.id}
-          canAssignOwner={selectedTeam.currentUserRole === 'TEAM_OWNER'}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'members'] });
-            queryClient.invalidateQueries({ queryKey: ['teams'] });
-          }}
-        />
-      )}
-
-      {/* Add Project Modal */}
-      {selectedTeam && (
-        <AddProjectModal
-          isOpen={showAddProjectModal}
-          onClose={() => setShowAddProjectModal(false)}
-          teamId={selectedTeam.id}
-          onSuccess={() => {
-            queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'projects'] });
-            queryClient.invalidateQueries({ queryKey: ['teams'] });
-            queryClient.invalidateQueries({ queryKey: ['projects'] }); // Refresh projects list
-          }}
-        />
-      )}
 
       {/* Delete Confirmation Modal */}
       <Modal
