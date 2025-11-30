@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -18,6 +18,8 @@ import {
   ChevronDown,
   Activity,
   Clock,
+  Settings as SettingsIcon,
+  LayoutGrid,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -28,6 +30,8 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
+import { Tabs } from '../components/ui/Tabs';
+import { TeamHeader } from '../components/teams/TeamHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
@@ -45,6 +49,20 @@ export const TeamDetailPage: React.FC = () => {
   const { user } = useAuth();
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
+  
+  // Persist activeTab in sessionStorage
+  const [activeTab, setActiveTab] = useState(() => {
+    const saved = sessionStorage.getItem(`team-${teamId}-activeTab`);
+    return saved || 'overview';
+  });
+
+  // Update sessionStorage when tab changes
+  useEffect(() => {
+    if (teamId) {
+      sessionStorage.setItem(`team-${teamId}-activeTab`, activeTab);
+    }
+  }, [activeTab, teamId]);
+
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -216,94 +234,73 @@ export const TeamDetailPage: React.FC = () => {
     );
   }
 
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: LayoutGrid },
+    { id: 'members', label: 'Members', icon: Users, count: members?.length },
+    { id: 'projects', label: 'Projects', icon: Folder, count: teamProjects?.length },
+    { id: 'activity', label: 'Activity', icon: Activity },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="secondary" onClick={() => navigate('/teams')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-theme-primary">
-                {team.name}
-              </h1>
-              {team.currentUserRole && (
-                <Badge
-                  variant={
-                    team.currentUserRole === 'TEAM_OWNER' || team.currentUserRole === 'TEAM_ADMIN'
-                      ? 'owner-admin'
-                      : 'default'
-                  }
-                >
-                  {ROLE_ICONS[team.currentUserRole as TeamRole] && (
-                    <span className="mr-1">{ROLE_ICONS[team.currentUserRole as TeamRole]}</span>
-                  )}
-                  {team.currentUserRole.replace('TEAM_', '')}
-                </Badge>
-              )}
-            </div>
-            {team.description && (
-              <p className="text-body-sm text-theme-secondary mt-1">
-                {team.description}
-              </p>
-            )}
-          </div>
-        </div>
-        {canManageTeam() && (
-          <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setShowEditModal(true)}>
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Team
-            </Button>
-            {canDeleteTeam() && (
-              <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete Team
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+      <TeamHeader
+        team={team}
+        activeTab={activeTab}
+        canManageTeam={canManageTeam()}
+        onTabChange={setActiveTab}
+      />
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-elevation-1">
-              <Users className="h-5 w-5 text-theme-tertiary" />
-            </div>
-            <div>
-              <p className="text-sm text-theme-secondary">
-                Members
-              </p>
-              <p className="text-2xl font-semibold text-theme-primary">
-                {team.memberCount || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="card p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-elevation-1">
-              <Folder className="h-5 w-5 text-theme-tertiary" />
-            </div>
-            <div>
-              <p className="text-sm text-theme-secondary">
-                Projects
-              </p>
-              <p className="text-2xl font-semibold text-theme-primary">
-                {team.projectCount || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Tabs */}
+      <Tabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onChange={(tabId) => {
+          setActiveTab(tabId);
+        }}
+      />
 
-      {/* Members Section */}
-      <div className="card">
+      {/* Tab Content */}
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Stats */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="card p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-elevation-1">
+                  <Users className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
+                </div>
+                <div>
+                  <p className="text-sm text-theme-secondary mb-1">
+                    Members
+                  </p>
+                  <p className="text-3xl font-bold text-theme-primary">
+                    {team.memberCount || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="card p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-elevation-1">
+                  <Folder className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
+                </div>
+                <div>
+                  <p className="text-sm text-theme-secondary mb-1">
+                    Projects
+                  </p>
+                  <p className="text-3xl font-bold text-theme-primary">
+                    {team.projectCount || 0}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'members' && (
+        <div className="card">
         <div className="padding-card border-b border-theme-subtle">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-theme-primary">
@@ -470,10 +467,87 @@ export const TeamDetailPage: React.FC = () => {
             )}
           </div>
         )}
-      </div>
+        </div>
+      )}
 
-      {/* Recent Activity Section */}
-      {canManageTeam() && activityData && activityData.content && activityData.content.length > 0 && (
+      {activeTab === 'projects' && (
+        <div className="card">
+          <div className="padding-card border-b border-theme-subtle">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-theme-primary">
+                Projects ({teamProjects?.length || 0})
+              </h2>
+              {canManageTeam() && (
+                <Button size="sm" variant="secondary" onClick={() => setShowAddProjectModal(true)}>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Project
+                </Button>
+              )}
+            </div>
+          </div>
+
+        {isProjectsLoading ? (
+          <div className="padding-card flex justify-center">
+            <Spinner size="md" />
+          </div>
+        ) : !teamProjects || teamProjects.length === 0 ? (
+          <div className="padding-card">
+            <EmptyState
+              icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
+              title="No projects"
+              description="Add projects to this team to share access with all team members"
+            />
+          </div>
+        ) : (
+          <div className="divide-y divide-theme-subtle">
+            {teamProjects.map((teamProject) => (
+              <div
+                key={teamProject.id}
+                className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
+              >
+                <Link
+                  to={`/projects/${teamProject.projectId}`}
+                  className="flex items-center gap-3 flex-1"
+                >
+                  <div className="p-2 rounded-lg bg-elevation-1">
+                    <Folder className="h-4 w-4 text-theme-tertiary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-theme-primary">
+                      {teamProject.projectName}
+                    </p>
+                    {teamProject.projectDescription && (
+                      <p className="text-xs text-theme-secondary">
+                        {teamProject.projectDescription}
+                      </p>
+                    )}
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-theme-tertiary" />
+                </Link>
+                {canManageTeam() && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      removeProjectMutation.mutate({
+                        teamId: team.id,
+                        projectId: teamProject.projectId,
+                      });
+                    }}
+                    className="ml-2 p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
+                    title="Remove project"
+                    disabled={removeProjectMutation.isPending}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      )}
+
+      {activeTab === 'activity' && (
         <div className="card">
           <div className="padding-card border-b border-theme-subtle">
             <div className="flex items-center justify-between">
@@ -483,56 +557,74 @@ export const TeamDetailPage: React.FC = () => {
               </h2>
               <Link
                 to="/activity"
-                className="text-sm font-medium transition-colors"
+                className="text-sm font-medium transition-colors flex items-center gap-1"
                 style={{ color: 'var(--accent-primary)' }}
               >
                 View all
               </Link>
             </div>
           </div>
-          <div className="divide-y divide-theme-subtle">
-            {activityData.content.slice(0, 5).map((log: AuditLog) => {
-              const userName = log.userDisplayName || log.userEmail || 'System';
-              const userInitials = userName
-                .split(' ')
-                .map((n: string) => n[0])
-                .join('')
-                .toUpperCase()
-                .slice(0, 2);
-              
-              return (
-                <div key={log.id} className="padding-card">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
-                      {userInitials}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-theme-primary">
-                        <span className="font-medium">{userName}</span>
-                        {' '}
-                        {log.action.replace(/_/g, ' ').toLowerCase()}
-                        {' '}
-                        {log.resourceName && (
-                          <span style={{ color: 'var(--accent-primary)' }}>
-                            {log.resourceName}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-xs text-theme-tertiary mt-0.5 flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {new Date(log.createdAt).toLocaleString()}
-                      </p>
+          {!canManageTeam() ? (
+            <div className="padding-card">
+              <EmptyState
+                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
+                title="Activity not available"
+                description="You need admin or owner permissions to view team activity"
+              />
+            </div>
+          ) : !activityData || !activityData.content || activityData.content.length === 0 ? (
+            <div className="padding-card">
+              <EmptyState
+                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
+                title="No activity"
+                description="Team activity will appear here"
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-theme-subtle">
+              {activityData.content.slice(0, 10).map((log: AuditLog) => {
+                const userName = log.userDisplayName || log.userEmail || 'System';
+                const userInitials = userName
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+                
+                return (
+                  <div key={log.id} className="padding-card">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
+                        {userInitials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-theme-primary">
+                          <span className="font-medium">{userName}</span>
+                          {' '}
+                          {log.action.replace(/_/g, ' ').toLowerCase()}
+                          {' '}
+                          {log.resourceName && (
+                            <span style={{ color: 'var(--accent-primary)' }}>
+                              {log.resourceName}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-theme-tertiary mt-0.5 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(log.createdAt).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Projects Section */}
-      <div className="card">
+      {activeTab === 'projects' && (
+        <div className="card">
         <div className="padding-card border-b border-theme-subtle">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-theme-primary">
@@ -606,6 +698,120 @@ export const TeamDetailPage: React.FC = () => {
           </div>
         )}
       </div>
+      )}
+
+      {activeTab === 'activity' && (
+        <div className="card">
+          <div className="padding-card border-b border-theme-subtle">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Recent Activity
+              </h2>
+              <Link
+                to="/activity"
+                className="text-sm font-medium transition-colors flex items-center gap-1"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                View all
+              </Link>
+            </div>
+          </div>
+          {!canManageTeam() ? (
+            <div className="padding-card">
+              <EmptyState
+                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
+                title="Activity not available"
+                description="You need admin or owner permissions to view team activity"
+              />
+            </div>
+          ) : !activityData || !activityData.content || activityData.content.length === 0 ? (
+            <div className="padding-card">
+              <EmptyState
+                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
+                title="No activity"
+                description="Team activity will appear here"
+              />
+            </div>
+          ) : (
+            <div className="divide-y divide-theme-subtle">
+              {activityData.content.slice(0, 10).map((log: AuditLog) => {
+                const userName = log.userDisplayName || log.userEmail || 'System';
+                const userInitials = userName
+                  .split(' ')
+                  .map((n: string) => n[0])
+                  .join('')
+                  .toUpperCase()
+                  .slice(0, 2);
+                
+                return (
+                  <div key={log.id} className="padding-card">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
+                        {userInitials}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-theme-primary">
+                          <span className="font-medium">{userName}</span>
+                          {' '}
+                          {log.action.replace(/_/g, ' ').toLowerCase()}
+                          {' '}
+                          {log.resourceName && (
+                            <span style={{ color: 'var(--accent-primary)' }}>
+                              {log.resourceName}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-theme-tertiary mt-1 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {new Date(log.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'settings' && canManageTeam() && (
+        <div className="card">
+          <div className="padding-card border-b border-theme-subtle">
+            <h2 className="text-lg font-semibold text-theme-primary">Team Settings</h2>
+          </div>
+          <div className="padding-card space-y-6">
+            <div>
+              <h3 className="text-sm font-medium text-theme-primary mb-2">Team Management</h3>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="secondary" onClick={() => setShowEditModal(true)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Team
+                </Button>
+                {canDeleteTeam() && (
+                  <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Team
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'settings' && !canManageTeam() && (
+        <div className="card">
+          <div className="padding-card">
+            <EmptyState
+              icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
+              title="Settings not available"
+              description="You need admin or owner permissions to manage team settings"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Add Member Modal */}
       {team && (
