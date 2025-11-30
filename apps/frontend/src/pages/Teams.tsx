@@ -25,6 +25,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
+import { AddProjectModal } from '../components/teams/AddProjectModal';
 import type { Team, TeamMember, TeamRole, TeamProject } from '../types';
 import { Link } from 'react-router-dom';
 
