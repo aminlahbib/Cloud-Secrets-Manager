@@ -19,7 +19,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
 }) => {
   return (
     <div className="card">
-      <div className="p-4 border-b border-theme-subtle">
+      <div className="p-3 border-b border-theme-subtle">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-theme-primary">Recent Activity</h2>
           <Link 
@@ -39,11 +39,11 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
       </div>
       <div className="divide-y divide-theme-subtle">
         {isLoading ? (
-          <div className="p-4 flex justify-center items-center">
+          <div className="p-3 flex justify-center items-center">
             <Spinner size="sm" />
           </div>
         ) : activity.length === 0 ? (
-          <div className="p-4 text-center text-theme-tertiary text-sm">
+          <div className="p-3 text-center text-theme-tertiary text-sm">
             No recent activity
           </div>
         ) : (
@@ -60,7 +60,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
             return (
               <div 
                 key={log.id} 
-                className="p-4 transition-all duration-150 hover:bg-elevation-1"
+                className="p-3 transition-all duration-150 hover:bg-elevation-1"
               >
                 <div className="flex items-start gap-3">
                   <div 

@@ -11,7 +11,6 @@ import {
   Plus,
   X,
   Folder,
-  ExternalLink,
   ArrowLeft,
   Edit,
   Search,
@@ -20,22 +19,30 @@ import {
   Clock,
   Settings as SettingsIcon,
   LayoutGrid,
+  List,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
 import { auditService } from '../services/audit';
+import { projectsService } from '../services/projects';
+import { useProjects } from '../hooks/useProjects';
+import { useWorkflows } from '../hooks/useWorkflows';
+import { usePreferences } from '../hooks/usePreferences';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { Tabs } from '../components/ui/Tabs';
+import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import { ProjectCard } from '../components/projects/ProjectCard';
 import { TeamHeader } from '../components/teams/TeamHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
-import type { Team, TeamMember, TeamRole, TeamProject, AuditLog } from '../types';
+import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project } from '../types';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
@@ -69,6 +76,16 @@ export const TeamDetailPage: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [memberSearchTerm, setMemberSearchTerm] = useState('');
   const [editingMemberRole, setEditingMemberRole] = useState<{ memberId: string; role: TeamRole } | null>(null);
+  
+  // Projects tab state
+  const { projectView, setProjectView } = usePreferences();
+  const [projectSearchTerm, setProjectSearchTerm] = useState('');
+  const debouncedProjectSearchTerm = useDebounce(projectSearchTerm, 300);
+  const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
+    workflow: null,
+    accessSource: null,
+  });
+  const [showArchived, setShowArchived] = useState(false);
 
   // Fetch team details
   const { data: team, isLoading: isTeamLoading, error: teamError } = useQuery<Team>({
@@ -85,22 +102,79 @@ export const TeamDetailPage: React.FC = () => {
     enabled: !!teamId,
   });
 
-  // Fetch team projects
-  const { data: teamProjects, isLoading: isProjectsLoading } = useQuery<TeamProject[]>({
+  // Fetch team projects (for team-specific operations)
+  const { data: teamProjects } = useQuery<TeamProject[]>({
     queryKey: ['teams', teamId, 'projects'],
     queryFn: () => teamsService.listTeamProjects(teamId!),
     enabled: !!teamId,
   });
 
+  // Fetch all projects for the projects tab
+  const { data: allProjectsData, isLoading: isAllProjectsLoading } = useProjects({
+    search: debouncedProjectSearchTerm,
+    includeArchived: showArchived,
+  });
+
+  // Fetch workflows for filtering
+  const { data: workflows } = useWorkflows(user?.id);
+
   const canManageTeam = () => {
     return team?.currentUserRole === 'TEAM_OWNER' || team?.currentUserRole === 'TEAM_ADMIN';
   };
 
-  // Fetch team activity
-  const { data: activityData } = useQuery({
-    queryKey: ['teams', teamId, 'activity'],
-    queryFn: () => auditService.listAuditLogs({ resourceType: 'TEAM', userId: teamId, size: 10 }),
-    enabled: !!teamId && canManageTeam(),
+  // Fetch all projects the user has access to for activity
+  const { data: allProjectsForActivity } = useQuery({
+    queryKey: ['projects', 'all'],
+    queryFn: () => projectsService.listProjects({ size: 1000 }),
+    enabled: !!teamId && activeTab === 'activity',
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Fetch all team activity from all projects
+  const { data: activityData, isLoading: isActivityLoading } = useQuery<{
+    logs: AuditLog[];
+    totalCount: number;
+  }>({
+    queryKey: ['teams', teamId, 'activity', 'all', allProjectsForActivity?.content?.length],
+    queryFn: async () => {
+      if (!allProjectsForActivity?.content || allProjectsForActivity.content.length === 0) {
+        return { logs: [], totalCount: 0 };
+      }
+
+      // Get all projects that belong to this team
+      const teamProjectIds = teamProjects?.map(tp => tp.projectId) || [];
+      
+      // Fetch activities from all team projects in parallel
+      const activityPromises = allProjectsForActivity.content
+        .filter((project: Project) => teamProjectIds.includes(project.id))
+        .map(async (project: Project) => {
+          try {
+            const response = await auditService.getProjectAuditLogs(project.id, {
+              page: 0,
+              size: 100, // Get more items per project
+            });
+            return response.content || [];
+          } catch (err: any) {
+            if (err.response?.status === 403 || err.response?.status === 404) {
+              return [];
+            }
+            return [];
+          }
+        });
+
+      const allActivities = await Promise.all(activityPromises);
+      const flattened = allActivities.flat();
+
+      // Sort by date (newest first)
+      const sorted = flattened.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0).getTime();
+        const dateB = new Date(b.createdAt || 0).getTime();
+        return dateB - dateA;
+      });
+
+      return { logs: sorted, totalCount: sorted.length };
+    },
+    enabled: !!teamId && activeTab === 'activity' && !!allProjectsForActivity?.content,
     staleTime: 30 * 1000,
   });
 
@@ -182,32 +256,104 @@ export const TeamDetailPage: React.FC = () => {
     },
   });
 
-  // Remove project mutation
-  const removeProjectMutation = useMutation({
-    mutationFn: ({ teamId, projectId }: { teamId: string; projectId: string }) =>
-      teamsService.removeProjectFromTeam(teamId, projectId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'projects'] });
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
-      showNotification({
-        type: 'success',
-        title: 'Project removed',
-        message: 'The project has been removed from the team',
-      });
-    },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to remove project',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
-  });
 
   const canDeleteTeam = () => {
     return team?.currentUserRole === 'TEAM_OWNER';
+  };
+
+  // Filter and enrich projects for the projects tab
+  const filteredProjects = useMemo(() => {
+    let projectList = allProjectsData?.content ?? [];
+    
+    // Filter to only show projects that belong to this team
+    const teamProjectIds = teamProjects?.map(tp => tp.projectId) || [];
+    projectList = projectList.filter((project: Project) => teamProjectIds.includes(project.id));
+
+    // Enrich with workflow info
+    if (workflows && workflows.length > 0) {
+      projectList = projectList.map((project: Project) => {
+        for (const workflow of workflows) {
+          if (workflow.projects?.some(wp => wp.projectId === project.id)) {
+            return {
+              ...project,
+              workflowId: workflow.id,
+              workflowName: workflow.name,
+            };
+          }
+        }
+        return project;
+      });
+    }
+
+    // Apply workflow filter
+    if (projectFilters.workflow) {
+      projectList = projectList.filter((project: Project) => project.workflowId === projectFilters.workflow);
+    }
+
+    // Apply access source filter
+    if (projectFilters.accessSource) {
+      projectList = projectList.filter((project: Project) => 
+        project.accessSource === projectFilters.accessSource
+      );
+    }
+
+    return projectList;
+  }, [allProjectsData?.content, teamProjects, workflows, projectFilters.workflow, projectFilters.accessSource]);
+
+  // Separate active and archived projects
+  const { activeProjects, archivedProjects } = useMemo(() => {
+    const active = filteredProjects.filter((p: Project) => !p.isArchived);
+    const archived = filteredProjects.filter((p: Project) => p.isArchived);
+    return { activeProjects: active, archivedProjects: archived };
+  }, [filteredProjects]);
+
+  const displayProjects = showArchived ? filteredProjects : activeProjects;
+
+  const projectFilterConfigs: FilterConfig[] = useMemo(() => {
+    const workflowOptions = workflows?.map(w => ({ label: w.name, value: w.id })) || [];
+    return [
+      {
+        key: 'workflow',
+        label: 'Workflow',
+        type: 'select',
+        options: workflowOptions,
+        value: projectFilters.workflow,
+      },
+      {
+        key: 'accessSource',
+        label: 'Access Source',
+        type: 'select',
+        options: [
+          { label: 'Direct', value: 'DIRECT' },
+          { label: 'Team', value: 'TEAM' },
+          { label: 'Both', value: 'BOTH' },
+        ],
+        value: projectFilters.accessSource,
+      },
+    ];
+  }, [workflows, projectFilters]);
+
+  const handleProjectFilterChange = (key: string, value: any) => {
+    setProjectFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleProjectFilterClear = () => {
+    setProjectFilters({ workflow: null, accessSource: null });
+  };
+
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return then.toLocaleDateString();
   };
 
   if (isTeamLoading) {
@@ -471,235 +617,195 @@ export const TeamDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'projects' && (
-        <div className="card">
-          <div className="padding-card border-b border-theme-subtle">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-theme-primary">
-                Projects ({teamProjects?.length || 0})
-              </h2>
+        <div className="space-y-6">
+          {/* Search and Filters */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary" />
+                <input
+                  type="text"
+                  value={projectSearchTerm}
+                  onChange={(e) => setProjectSearchTerm(e.target.value)}
+                  placeholder="Search projects..."
+                  className="w-full pl-9 pr-3 py-2 text-sm border rounded-lg transition-colors"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--border-subtle)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                    e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-primary-glow)';
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setProjectView('grid')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    projectView === 'grid' ? 'bg-elevation-1' : ''
+                  }`}
+                  style={{
+                    color: projectView === 'grid' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                  }}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setProjectView('list')}
+                  className={`p-2 rounded-lg transition-colors ${
+                    projectView === 'list' ? 'bg-elevation-1' : ''
+                  }`}
+                  style={{
+                    color: projectView === 'list' ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                  }}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
               {canManageTeam() && (
-                <Button size="sm" variant="secondary" onClick={() => setShowAddProjectModal(true)}>
+                <Button size="sm" onClick={() => setShowAddProjectModal(true)}>
                   <Plus className="h-4 w-4 mr-1" />
                   Add Project
                 </Button>
               )}
             </div>
-          </div>
-
-        {isProjectsLoading ? (
-          <div className="padding-card flex justify-center">
-            <Spinner size="md" />
-          </div>
-        ) : !teamProjects || teamProjects.length === 0 ? (
-          <div className="padding-card">
-            <EmptyState
-              icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
-              title="No projects"
-              description="Add projects to this team to share access with all team members"
+            <FilterPanel
+              filters={projectFilterConfigs}
+              values={projectFilters}
+              onChange={handleProjectFilterChange}
+              onClear={handleProjectFilterClear}
             />
-          </div>
-        ) : (
-          <div className="divide-y divide-theme-subtle">
-            {teamProjects.map((teamProject) => (
-              <div
-                key={teamProject.id}
-                className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
-              >
-                <Link
-                  to={`/projects/${teamProject.projectId}`}
-                  className="flex items-center gap-3 flex-1"
-                >
-                  <div className="p-2 rounded-lg bg-elevation-1">
-                    <Folder className="h-4 w-4 text-theme-tertiary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-theme-primary">
-                      {teamProject.projectName}
-                    </p>
-                    {teamProject.projectDescription && (
-                      <p className="text-xs text-theme-secondary">
-                        {teamProject.projectDescription}
-                      </p>
-                    )}
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-theme-tertiary" />
-                </Link>
-                {canManageTeam() && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeProjectMutation.mutate({
-                        teamId: team.id,
-                        projectId: teamProject.projectId,
-                      });
-                    }}
-                    className="ml-2 p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                    title="Remove project"
-                    disabled={removeProjectMutation.isPending}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      )}
-
-      {activeTab === 'activity' && (
-        <div className="card">
-          <div className="padding-card border-b border-theme-subtle">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Recent Activity
-              </h2>
-              <Link
-                to="/activity"
-                className="text-sm font-medium transition-colors flex items-center gap-1"
-                style={{ color: 'var(--accent-primary)' }}
-              >
-                View all
-              </Link>
+              <div className="flex items-center gap-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    Show archived
+                  </span>
+                  <div
+                    className="relative inline-flex items-center w-11 h-6 rounded-full transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: showArchived ? 'var(--accent-primary)' : 'var(--border-subtle)',
+                    }}
+                    onClick={() => setShowArchived(!showArchived)}
+                  >
+                    <span
+                      className={`inline-block w-4 h-4 bg-white rounded-full transform transition-transform ${
+                        showArchived ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
-          {!canManageTeam() ? (
-            <div className="padding-card">
-              <EmptyState
-                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
-                title="Activity not available"
-                description="You need admin or owner permissions to view team activity"
-              />
+
+          {/* Projects Display */}
+          {isAllProjectsLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="card p-6 animate-pulse">
+                  <div className="h-4 bg-elevation-1 rounded w-3/4 mb-4"></div>
+                  <div className="h-3 bg-elevation-1 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-elevation-1 rounded w-2/3"></div>
+                </div>
+              ))}
             </div>
-          ) : !activityData || !activityData.content || activityData.content.length === 0 ? (
-            <div className="padding-card">
-              <EmptyState
-                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
-                title="No activity"
-                description="Team activity will appear here"
-              />
-            </div>
+          ) : displayProjects.length === 0 ? (
+            <EmptyState
+              icon={<Folder className="h-16 w-16 text-theme-tertiary" />}
+              title={projectSearchTerm ? 'No projects match your search' : 'No projects'}
+              description={
+                projectSearchTerm
+                  ? 'Try a different search term'
+                  : canManageTeam()
+                  ? 'Add projects to this team to share access with all team members'
+                  : 'This team has no projects yet'
+              }
+              action={
+                canManageTeam()
+                  ? {
+                      label: 'Add Project',
+                      onClick: () => setShowAddProjectModal(true),
+                    }
+                  : undefined
+              }
+            />
           ) : (
-            <div className="divide-y divide-theme-subtle">
-              {activityData.content.slice(0, 10).map((log: AuditLog) => {
-                const userName = log.userDisplayName || log.userEmail || 'System';
-                const userInitials = userName
-                  .split(' ')
-                  .map((n: string) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2);
-                
-                return (
-                  <div key={log.id} className="padding-card">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
-                        {userInitials}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-theme-primary">
-                          <span className="font-medium">{userName}</span>
-                          {' '}
-                          {log.action.replace(/_/g, ' ').toLowerCase()}
-                          {' '}
-                          {log.resourceName && (
-                            <span style={{ color: 'var(--accent-primary)' }}>
-                              {log.resourceName}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-theme-tertiary mt-0.5 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(log.createdAt).toLocaleString()}
-                        </p>
-                      </div>
+            <div className="space-y-6">
+              {/* Active Projects */}
+              {activeProjects.length > 0 && (
+                <div>
+                  {projectView === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {activeProjects.map((project: Project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          view="grid"
+                          getTimeAgo={getTimeAgo}
+                        />
+                      ))}
                     </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {activeProjects.map((project: Project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          view="list"
+                          getTimeAgo={getTimeAgo}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Archived Projects */}
+              {showArchived && archivedProjects.length > 0 && (
+                <div>
+                  <div
+                    className="pt-6 border-t mb-4"
+                    style={{ borderTopColor: 'var(--border-subtle)' }}
+                  >
+                    <h3 className="text-sm font-semibold text-theme-secondary mb-4">Archived Projects</h3>
                   </div>
-                );
-              })}
+                  {projectView === 'grid' ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {archivedProjects.map((project: Project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          view="grid"
+                          getTimeAgo={getTimeAgo}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {archivedProjects.map((project: Project) => (
+                        <ProjectCard
+                          key={project.id}
+                          project={project}
+                          view="list"
+                          getTimeAgo={getTimeAgo}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {activeTab === 'projects' && (
-        <div className="card">
-        <div className="padding-card border-b border-theme-subtle">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-theme-primary">
-              Projects ({teamProjects?.length || 0})
-            </h2>
-            {canManageTeam() && (
-              <Button size="sm" variant="secondary" onClick={() => setShowAddProjectModal(true)}>
-                <Plus className="h-4 w-4 mr-1" />
-                Add Project
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {isProjectsLoading ? (
-          <div className="padding-card flex justify-center">
-            <Spinner size="md" />
-          </div>
-        ) : !teamProjects || teamProjects.length === 0 ? (
-          <div className="padding-card">
-            <EmptyState
-              icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
-              title="No projects"
-              description="Add projects to this team to share access with all team members"
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-theme-subtle">
-            {teamProjects.map((teamProject) => (
-              <div
-                key={teamProject.id}
-                className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
-              >
-                <Link
-                  to={`/projects/${teamProject.projectId}`}
-                  className="flex items-center gap-3 flex-1"
-                >
-                  <div className="p-2 rounded-lg bg-elevation-1">
-                    <Folder className="h-4 w-4 text-theme-tertiary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-theme-primary">
-                      {teamProject.projectName}
-                    </p>
-                    {teamProject.projectDescription && (
-                      <p className="text-xs text-theme-secondary">
-                        {teamProject.projectDescription}
-                      </p>
-                    )}
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-theme-tertiary" />
-                </Link>
-                {canManageTeam() && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      removeProjectMutation.mutate({
-                        teamId: team.id,
-                        projectId: teamProject.projectId,
-                      });
-                    }}
-                    className="ml-2 p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                    title="Remove project"
-                    disabled={removeProjectMutation.isPending}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      )}
-
       {activeTab === 'activity' && (
         <div className="card">
           <div className="padding-card border-b border-theme-subtle">
@@ -725,7 +831,11 @@ export const TeamDetailPage: React.FC = () => {
                 description="You need admin or owner permissions to view team activity"
               />
             </div>
-          ) : !activityData || !activityData.content || activityData.content.length === 0 ? (
+          ) : isActivityLoading ? (
+            <div className="padding-card flex justify-center">
+              <Spinner size="md" />
+            </div>
+          ) : !activityData || !activityData.logs || activityData.logs.length === 0 ? (
             <div className="padding-card">
               <EmptyState
                 icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
@@ -735,7 +845,7 @@ export const TeamDetailPage: React.FC = () => {
             </div>
           ) : (
             <div className="divide-y divide-theme-subtle">
-              {activityData.content.slice(0, 10).map((log: AuditLog) => {
+              {activityData.logs.slice(0, 50).map((log: AuditLog) => {
                 const userName = log.userDisplayName || log.userEmail || 'System';
                 const userInitials = userName
                   .split(' ')

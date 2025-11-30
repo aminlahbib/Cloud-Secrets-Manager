@@ -45,7 +45,7 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
 
   return (
     <div className="card">
-      <div className="p-4 border-b border-theme-subtle">
+      <div className="p-3 border-b border-theme-subtle">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-theme-primary">Teams</h2>
           <button
@@ -65,11 +65,11 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
       </div>
 
       {isTeamsLoading ? (
-        <div className="p-4 flex justify-center items-center">
+        <div className="p-3 flex justify-center items-center">
           <Spinner size="sm" />
         </div>
       ) : !teams || teams.length === 0 ? (
-        <div className="p-4 text-center">
+        <div className="p-3 text-center">
           <p className="text-xs text-theme-tertiary mb-3">
             No teams yet
           </p>
@@ -94,7 +94,7 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
               <div
                 key={team.id}
                 onClick={() => navigate(`/teams/${team.id}`)}
-                className="p-4 flex items-center justify-between hover:bg-elevation-1 transition-colors cursor-pointer group"
+                className="p-3 flex items-center justify-between hover:bg-elevation-1 transition-colors cursor-pointer group"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div 
@@ -140,7 +140,7 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
           {teams.length > 2 && (
             <button
               onClick={() => navigate('/teams')}
-              className="w-full p-4 text-center text-xs font-medium transition-colors hover:bg-elevation-1"
+              className="w-full p-3 text-center text-xs font-medium transition-colors hover:bg-elevation-1"
               style={{ color: 'var(--accent-primary)' }}
             >
               View {teams.length - 2} more
