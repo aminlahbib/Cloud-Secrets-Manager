@@ -41,6 +41,7 @@ export const TeamsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
@@ -374,14 +375,7 @@ export const TeamsPage: React.FC = () => {
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => {
-                      // TODO: Open add project modal
-                      showNotification({
-                        type: 'info',
-                        title: 'Coming soon',
-                        message: 'Project management UI will be added in the next update',
-                      });
-                    }}
+                    onClick={() => setShowAddProjectModal(true)}
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Project
@@ -451,6 +445,20 @@ export const TeamsPage: React.FC = () => {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'members'] });
             queryClient.invalidateQueries({ queryKey: ['teams'] });
+          }}
+        />
+      )}
+
+      {/* Add Project Modal */}
+      {selectedTeam && (
+        <AddProjectModal
+          isOpen={showAddProjectModal}
+          onClose={() => setShowAddProjectModal(false)}
+          teamId={selectedTeam.id}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'projects'] });
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] }); // Refresh projects list
           }}
         />
       )}
