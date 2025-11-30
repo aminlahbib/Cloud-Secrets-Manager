@@ -138,5 +138,41 @@ public class TeamController {
         List<TeamMemberResponse> members = teamService.bulkInviteMembers(id, request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(members);
     }
+
+    // =========================================================================
+    // Project Management Endpoints
+    // =========================================================================
+
+    @GetMapping("/{id}/projects")
+    @Operation(summary = "List team projects", description = "Get all projects in a team")
+    public ResponseEntity<List<com.secrets.dto.team.TeamProjectResponse>> listTeamProjects(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        List<com.secrets.dto.team.TeamProjectResponse> projects = teamService.listTeamProjects(id, userId);
+        return ResponseEntity.ok(projects);
+    }
+
+    @PostMapping("/{id}/projects/{projectId}")
+    @Operation(summary = "Add project to team", description = "Add a project to a team (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<com.secrets.dto.team.TeamProjectResponse> addProjectToTeam(
+            @PathVariable UUID id,
+            @PathVariable UUID projectId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        com.secrets.dto.team.TeamProjectResponse project = teamService.addProjectToTeam(id, projectId, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(project);
+    }
+
+    @DeleteMapping("/{id}/projects/{projectId}")
+    @Operation(summary = "Remove project from team", description = "Remove a project from a team (TEAM_OWNER or TEAM_ADMIN only)")
+    public ResponseEntity<Void> removeProjectFromTeam(
+            @PathVariable UUID id,
+            @PathVariable UUID projectId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        teamService.removeProjectFromTeam(id, projectId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
 
