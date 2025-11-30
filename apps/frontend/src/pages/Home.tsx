@@ -42,34 +42,6 @@ export const HomePage: React.FC = () => {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  // Prepare stats for the strip
-  const stats = useMemo(() => [
-    {
-      label: 'Projects',
-      value: projectsData?.totalElements ?? 0,
-      icon: Folder,
-      isLoading: isProjectsLoading,
-    },
-    {
-      label: 'Secrets',
-      value: totalSecrets,
-      icon: Key,
-      isLoading: isProjectsLoading,
-    },
-    {
-      label: 'Teams',
-      value: teams?.length ?? 0,
-      icon: Building2,
-      isLoading: false,
-    },
-    {
-      label: 'Members',
-      value: totalMembers,
-      icon: Users,
-      isLoading: isProjectsLoading,
-    },
-  ], [projectsData?.totalElements, totalSecrets, teams?.length, totalMembers, isProjectsLoading]);
-
   // Fetch recent activity (only for platform admins)
   const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
     queryKey: ['activity', 'recent'],
@@ -101,8 +73,42 @@ export const HomePage: React.FC = () => {
     });
   }, [projectsList, workflows]);
 
-  const totalSecrets = projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0);
-  const totalMembers = projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0);
+  const totalSecrets = useMemo(() => 
+    projects.reduce((sum, p) => sum + (p.secretCount ?? 0), 0),
+    [projects]
+  );
+  const totalMembers = useMemo(() => 
+    projects.reduce((sum, p) => sum + (p.memberCount ?? 0), 0),
+    [projects]
+  );
+
+  // Prepare stats for the strip
+  const stats = useMemo(() => [
+    {
+      label: 'Projects',
+      value: projectsData?.totalElements ?? 0,
+      icon: Folder,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Secrets',
+      value: totalSecrets,
+      icon: Key,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Teams',
+      value: teams?.length ?? 0,
+      icon: Building2,
+      isLoading: false,
+    },
+    {
+      label: 'Members',
+      value: totalMembers,
+      icon: Users,
+      isLoading: isProjectsLoading,
+    },
+  ], [projectsData?.totalElements, totalSecrets, teams?.length, totalMembers, isProjectsLoading]);
 
   const getTimeAgo = useCallback((timestamp: string) => {
     const now = new Date();
@@ -144,19 +150,19 @@ export const HomePage: React.FC = () => {
 
       {/* Main Content: Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
-        {/* Left Column: Collaboration & Quick Actions (30-35%) */}
-        <div className="lg:col-span-3 space-y-6">
+        {/* Left Column: Projects Hero Section (65-70%) */}
+        <div className="lg:col-span-7 space-y-6">
+          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
+          <QuickActions isPlatformAdmin={isPlatformAdmin} />
+        </div>
+
+        {/* Right Column: Collaboration (30-35%) */}
+        <div className="lg:col-span-3">
           <CollaborationSection
             workflows={workflows}
             isWorkflowsLoading={isWorkflowsLoading}
             maxTeams={3}
           />
-          <QuickActions isPlatformAdmin={isPlatformAdmin} />
-        </div>
-
-        {/* Right Column: Projects Hero Section (65-70%) */}
-        <div className="lg:col-span-7">
-          <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
         </div>
       </div>
 
