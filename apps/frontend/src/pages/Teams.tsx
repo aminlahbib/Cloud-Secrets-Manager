@@ -11,6 +11,8 @@ import {
   Trash2,
   Plus,
   X,
+  Folder,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -23,7 +25,9 @@ import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
-import type { Team, TeamMember, TeamRole } from '../types';
+import { AddProjectModal } from '../components/teams/AddProjectModal';
+import type { Team, TeamMember, TeamRole, TeamProject } from '../types';
+import { Link } from 'react-router-dom';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
@@ -38,6 +42,7 @@ export const TeamsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
@@ -53,6 +58,13 @@ export const TeamsPage: React.FC = () => {
   const { data: members, isLoading: isMembersLoading } = useQuery<TeamMember[]>({
     queryKey: ['teams', selectedTeam?.id, 'members'],
     queryFn: () => teamsService.listTeamMembers(selectedTeam!.id),
+    enabled: !!selectedTeam?.id,
+  });
+
+  // Fetch team projects when a team is selected
+  const { data: teamProjects, isLoading: isProjectsLoading } = useQuery<TeamProject[]>({
+    queryKey: ['teams', selectedTeam?.id, 'projects'],
+    queryFn: () => teamsService.listTeamProjects(selectedTeam!.id),
     enabled: !!selectedTeam?.id,
   });
 
@@ -353,6 +365,64 @@ export const TeamsPage: React.FC = () => {
                 </div>
               )}
             </div>
+
+            {/* Projects Section */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                  Projects ({teamProjects?.length || 0})
+                </h3>
+                {canManageTeam(selectedTeam) && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => setShowAddProjectModal(true)}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Project
+                  </Button>
+                )}
+              </div>
+
+              {isProjectsLoading ? (
+                <div className="flex justify-center py-4">
+                  <Spinner size="md" />
+                </div>
+              ) : !teamProjects || teamProjects.length === 0 ? (
+                <EmptyState
+                  icon={<Folder className="h-12 w-12 text-theme-tertiary" />}
+                  title="No projects"
+                  description="Add projects to this team to share access with all team members"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {teamProjects.map((teamProject) => (
+                    <Link
+                      key={teamProject.id}
+                      to={`/projects/${teamProject.projectId}`}
+                      className="flex items-center justify-between p-3 rounded-lg border border-theme-subtle hover:bg-elevation-1 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-elevation-1">
+                          <Folder className="h-4 w-4 text-theme-tertiary" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium transition-colors duration-300" style={{ color: 'var(--tab-text)' }}>
+                            {teamProject.projectName}
+                          </p>
+                          {teamProject.projectDescription && (
+                            <p className="text-xs transition-colors duration-300" style={{ color: 'var(--tab-text-muted)' }}>
+                              {teamProject.projectDescription}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <ExternalLink className="h-4 w-4 text-theme-tertiary" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </Modal>
       )}
@@ -376,6 +446,20 @@ export const TeamsPage: React.FC = () => {
           onSuccess={() => {
             queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'members'] });
             queryClient.invalidateQueries({ queryKey: ['teams'] });
+          }}
+        />
+      )}
+
+      {/* Add Project Modal */}
+      {selectedTeam && (
+        <AddProjectModal
+          isOpen={showAddProjectModal}
+          onClose={() => setShowAddProjectModal(false)}
+          teamId={selectedTeam.id}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ['teams', selectedTeam.id, 'projects'] });
+            queryClient.invalidateQueries({ queryKey: ['teams'] });
+            queryClient.invalidateQueries({ queryKey: ['projects'] }); // Refresh projects list
           }}
         />
       )}

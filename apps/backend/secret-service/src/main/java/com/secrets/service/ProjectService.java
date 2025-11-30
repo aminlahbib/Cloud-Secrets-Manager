@@ -33,17 +33,20 @@ public class ProjectService {
     private final WorkflowProjectRepository workflowProjectRepository;
     private final SecretRepository secretRepository;
     private final WorkflowService workflowService;
+    private final ProjectPermissionService permissionService;
 
     public ProjectService(ProjectRepository projectRepository,
                          ProjectMembershipRepository membershipRepository,
                          WorkflowProjectRepository workflowProjectRepository,
                          SecretRepository secretRepository,
-                         WorkflowService workflowService) {
+                         WorkflowService workflowService,
+                         ProjectPermissionService permissionService) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.secretRepository = secretRepository;
         this.workflowService = workflowService;
+        this.permissionService = permissionService;
     }
 
     /**
@@ -78,8 +81,8 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new IllegalArgumentException("Project not found"));
 
-        // Check if user has access
-        if (!membershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
+        // Check if user has access (direct membership or via team)
+        if (!permissionService.hasProjectAccess(projectId, userId)) {
             throw new SecurityException("Access denied to project");
         }
 
