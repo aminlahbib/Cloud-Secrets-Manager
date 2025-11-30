@@ -48,7 +48,7 @@ public class ProjectPermissionService {
         List<UUID> teamIds = teamProjectRepository.findByProjectId(projectId)
             .stream()
             .map(tp -> tp.getTeamId())
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
         
         if (teamIds.isEmpty()) {
             return false;
@@ -82,7 +82,7 @@ public class ProjectPermissionService {
         List<UUID> teamIds = teamProjectRepository.findByProjectId(projectId)
             .stream()
             .map(tp -> tp.getTeamId())
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
         
         for (UUID teamId : teamIds) {
             if (teamMembershipRepository.existsByTeamIdAndUserId(teamId, userId)) {
