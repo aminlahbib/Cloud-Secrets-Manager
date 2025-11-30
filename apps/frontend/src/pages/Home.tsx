@@ -1,21 +1,22 @@
 import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Folder, Key, Users, Building2 } from 'lucide-react';
+import { Folder, Key, Users, Building2, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
 import { workflowsService } from '../services/workflows';
 import { auditService, type AuditLogsResponse } from '../services/audit';
-import { WelcomeSection } from '../components/home/WelcomeSection';
-import { StatsCard } from '../components/home/StatsCard';
-import { WorkflowsList } from '../components/home/WorkflowsList';
-import { TeamsOverview } from '../components/home/TeamsOverview';
+import { StatsStrip } from '../components/home/StatsStrip';
+import { CollaborationSection } from '../components/home/CollaborationSection';
 import { RecentActivity } from '../components/home/RecentActivity';
 import { ProjectsOverview } from '../components/home/ProjectsOverview';
 import { QuickActions } from '../components/home/QuickActions';
+import { Button } from '../components/ui/Button';
 import type { Project, Workflow } from '../types';
 
 export const HomePage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch recent projects
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
@@ -40,6 +41,34 @@ export const HomePage: React.FC = () => {
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
+
+  // Prepare stats for the strip
+  const stats = useMemo(() => [
+    {
+      label: 'Projects',
+      value: projectsData?.totalElements ?? 0,
+      icon: Folder,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Secrets',
+      value: totalSecrets,
+      icon: Key,
+      isLoading: isProjectsLoading,
+    },
+    {
+      label: 'Teams',
+      value: teams?.length ?? 0,
+      icon: Building2,
+      isLoading: false,
+    },
+    {
+      label: 'Members',
+      value: totalMembers,
+      icon: Users,
+      isLoading: isProjectsLoading,
+    },
+  ], [projectsData?.totalElements, totalSecrets, teams?.length, totalMembers, isProjectsLoading]);
 
   // Fetch recent activity (only for platform admins)
   const { data: activityData, isLoading: isActivityLoading } = useQuery<AuditLogsResponse>({
@@ -95,54 +124,45 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="space-y-6 md:space-y-8">
-      <WelcomeSection />
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatsCard
-          label="Total Projects"
-          value={projectsData?.totalElements ?? 0}
-          icon={Folder}
-          isLoading={isProjectsLoading}
-        />
-        <StatsCard
-          label="Total Secrets"
-          value={totalSecrets}
-          icon={Key}
-          isLoading={isProjectsLoading}
-        />
-        <StatsCard
-          label="Teams"
-          value={teams?.length ?? 0}
-          icon={Building2}
-          isLoading={false}
-        />
-        <StatsCard
-          label="Team Members"
-          value={totalMembers}
-          icon={Users}
-          isLoading={isProjectsLoading}
-        />
+    <div className="space-y-8">
+      {/* Header with Title and Primary CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-theme-primary">Dashboard</h1>
+          <p className="text-body text-theme-secondary mt-1">
+            Welcome back, {user?.displayName || user?.email?.split('@')[0]}
+          </p>
+        </div>
+        <Button onClick={() => navigate('/projects')} size="lg">
+          <Plus className="w-5 h-5 mr-2" />
+          New Project
+        </Button>
       </div>
 
-      {/* Main Content Grid - Better responsive layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-        {/* Left Column - Workflows & Teams */}
-        <div className="xl:col-span-4 space-y-6">
-          <WorkflowsList workflows={workflows} isLoading={isWorkflowsLoading} />
-          <TeamsOverview maxTeams={3} />
+      {/* Stats Strip */}
+      <StatsStrip stats={stats} />
+
+      {/* Main Content: Two-Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-10 gap-8">
+        {/* Left Column: Collaboration & Quick Actions (30-35%) */}
+        <div className="lg:col-span-3 space-y-6">
+          <CollaborationSection
+            workflows={workflows}
+            isWorkflowsLoading={isWorkflowsLoading}
+            maxTeams={3}
+          />
+          <QuickActions isPlatformAdmin={isPlatformAdmin} />
         </div>
 
-        {/* Right Column - Projects (takes more space) */}
-        <div className="xl:col-span-8">
+        {/* Right Column: Projects Hero Section (65-70%) */}
+        <div className="lg:col-span-7">
           <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
         </div>
       </div>
 
       {/* Admin Activity Section */}
       {isPlatformAdmin && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="mt-8">
           <RecentActivity
             activity={recentActivity}
             isLoading={isActivityLoading}
@@ -151,9 +171,6 @@ export const HomePage: React.FC = () => {
           />
         </div>
       )}
-
-      {/* Quick Actions */}
-      <QuickActions isPlatformAdmin={isPlatformAdmin} />
     </div>
   );
 };
