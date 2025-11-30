@@ -27,7 +27,7 @@ export const TeamsOverview: React.FC<TeamsOverviewProps> = ({ maxTeams = 3 }) =>
   const displayTeams = teams?.slice(0, maxTeams) ?? [];
 
   return (
-    <div className="card h-full flex flex-col">
+    <div className="card flex flex-col">
       <div className="padding-card border-b border-theme-subtle flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-h3 font-semibold text-theme-primary">Your Teams</h2>
@@ -41,11 +41,11 @@ export const TeamsOverview: React.FC<TeamsOverviewProps> = ({ maxTeams = 3 }) =>
       </div>
       
       {isLoading ? (
-        <div className="padding-card flex justify-center items-center flex-1 min-h-[150px]">
+        <div className="padding-card flex justify-center items-center min-h-[150px]">
           <Spinner size="lg" />
         </div>
       ) : !teams || teams.length === 0 ? (
-        <div className="p-8 text-center flex-1 flex flex-col items-center justify-center min-h-[250px]">
+        <div className="p-8 text-center flex flex-col items-center justify-center min-h-[250px]">
           <Building2 className="h-12 w-12 mx-auto mb-4 text-theme-tertiary" />
           <h3 className="text-h3 font-medium text-theme-primary mb-2">No teams yet</h3>
           <p className="text-body-sm text-theme-secondary mb-6">
@@ -57,8 +57,8 @@ export const TeamsOverview: React.FC<TeamsOverviewProps> = ({ maxTeams = 3 }) =>
           </Button>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto">
-          <div className="space-y-3 padding-card">
+        <div className="padding-card">
+          <div className="space-y-3">
             {displayTeams.map((team) => (
               <div
                 key={team.id}
