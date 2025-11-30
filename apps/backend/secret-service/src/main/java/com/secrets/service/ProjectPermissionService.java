@@ -8,10 +8,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Service for checking project-level permissions based on user roles.
@@ -38,41 +36,26 @@ public class ProjectPermissionService {
 
     /**
      * Check if user has access to project (either direct membership or via team)
+     * Optimized to use single query for team-based access check
      */
     public boolean hasProjectAccess(UUID projectId, UUID userId) {
-        // Check direct project membership
+        // Check direct project membership first (fastest check)
         if (membershipRepository.existsByProjectIdAndUserId(projectId, userId)) {
             return true;
         }
         
-        // Check team-based access
-        // Find all teams that have this project
-        List<UUID> teamIds = teamProjectRepository.findByProjectId(projectId)
-            .stream()
-            .map(tp -> tp.getTeamId())
-            .collect(Collectors.toList());
-        
-        if (teamIds.isEmpty()) {
-            return false;
-        }
-        
-        // Check if user is a member of any of these teams
-        for (UUID teamId : teamIds) {
-            if (teamMembershipRepository.existsByTeamIdAndUserId(teamId, userId)) {
-                return true;
-            }
-        }
-        
-        return false;
+        // Check team-based access with single optimized query
+        return teamMembershipRepository.hasTeamAccessToProject(projectId, userId);
     }
 
     /**
      * Get user's role in a project
      * Returns direct project role if exists, otherwise VIEWER if user has team access
+     * Cached to avoid repeated database queries
      */
     @Cacheable(cacheNames = "projectMemberships", key = "T(java.lang.String).format('%s:%s', #projectId, #userId)")
     public Optional<ProjectMembership.ProjectRole> getUserRole(UUID projectId, UUID userId) {
-        // First check direct project membership
+        // First check direct project membership (takes precedence)
         Optional<ProjectMembership.ProjectRole> directRole = membershipRepository.findByProjectIdAndUserId(projectId, userId)
             .map(ProjectMembership::getRole);
         
@@ -80,16 +63,9 @@ public class ProjectPermissionService {
             return directRole;
         }
         
-        // Check team-based access - team members get VIEWER access
-        List<UUID> teamIds = teamProjectRepository.findByProjectId(projectId)
-            .stream()
-            .map(tp -> tp.getTeamId())
-            .collect(Collectors.toList());
-        
-        for (UUID teamId : teamIds) {
-            if (teamMembershipRepository.existsByTeamIdAndUserId(teamId, userId)) {
-                return Optional.of(ProjectMembership.ProjectRole.VIEWER);
-            }
+        // Check team-based access with optimized single query - team members get VIEWER access
+        if (teamMembershipRepository.hasTeamAccessToProject(projectId, userId)) {
+            return Optional.of(ProjectMembership.ProjectRole.VIEWER);
         }
         
         return Optional.empty();

@@ -49,5 +49,14 @@ public interface TeamMembershipRepository extends JpaRepository<TeamMembership, 
      */
     @Query("SELECT COUNT(m) FROM TeamMembership m WHERE m.teamId = :teamId AND m.role = 'TEAM_OWNER'")
     long countTeamOwners(@Param("teamId") UUID teamId);
+    
+    /**
+     * Check if user has access to project via team membership
+     * Returns true if user is a member of any team that has access to the project
+     */
+    @Query("SELECT COUNT(tm) > 0 FROM TeamMembership tm " +
+           "JOIN TeamProject tp ON tp.teamId = tm.teamId " +
+           "WHERE tp.projectId = :projectId AND tm.userId = :userId")
+    boolean hasTeamAccessToProject(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
 }
 
