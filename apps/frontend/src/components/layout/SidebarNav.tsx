@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Folder, Activity, Users, Settings, Shield, LucideIcon } from 'lucide-react';
+import { LayoutDashboard, Folder, Activity, Building2, Settings, Shield, LucideIcon } from 'lucide-react';
 
 interface NavItem {
   name: string;
@@ -29,7 +29,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
   ];
 
   const bottomNavigation: NavItem[] = [
-    { name: 'Teams', href: '/teams', icon: Users, badge: 'Soon' },
+    { name: 'Teams', href: '/teams', icon: Building2 },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 

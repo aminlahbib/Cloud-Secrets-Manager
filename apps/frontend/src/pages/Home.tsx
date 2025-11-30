@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Folder, Key, Users, Activity } from 'lucide-react';
+import { Folder, Key, Users, Building2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { projectsService } from '../services/projects';
 import { workflowsService } from '../services/workflows';
@@ -8,6 +8,7 @@ import { auditService, type AuditLogsResponse } from '../services/audit';
 import { WelcomeSection } from '../components/home/WelcomeSection';
 import { StatsCard } from '../components/home/StatsCard';
 import { WorkflowsList } from '../components/home/WorkflowsList';
+import { TeamsOverview } from '../components/home/TeamsOverview';
 import { RecentActivity } from '../components/home/RecentActivity';
 import { ProjectsOverview } from '../components/home/ProjectsOverview';
 import { QuickActions } from '../components/home/QuickActions';
@@ -30,6 +31,14 @@ export const HomePage: React.FC = () => {
     queryFn: () => workflowsService.listWorkflows(),
     enabled: !!user?.id,
     staleTime: 2 * 60 * 1000, // 2 minutes - workflows rarely change
+  });
+
+  // Fetch teams for stats
+  const { data: teams } = useQuery({
+    queryKey: ['teams'],
+    queryFn: () => import('../services/teams').then(m => m.teamsService.listTeams()),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
   // Fetch recent activity (only for platform admins)
@@ -104,35 +113,35 @@ export const HomePage: React.FC = () => {
           isLoading={isProjectsLoading}
         />
         <StatsCard
+          label="Teams"
+          value={teams?.length ?? 0}
+          icon={Building2}
+          isLoading={false}
+        />
+        <StatsCard
           label="Team Members"
           value={totalMembers}
           icon={Users}
           isLoading={isProjectsLoading}
         />
-        {isPlatformAdmin && (
-          <StatsCard
-            label="Recent Activity"
-            value={activityData?.totalElements ?? 0}
-            icon={Activity}
-            isLoading={isActivityLoading}
-          />
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <WorkflowsList workflows={workflows} isLoading={isWorkflowsLoading} />
-        
-        {isPlatformAdmin && (
+        <TeamsOverview maxTeams={3} />
+        <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
+      </div>
+
+      {isPlatformAdmin && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <RecentActivity
             activity={recentActivity}
             isLoading={isActivityLoading}
             formatAction={formatAction}
             getTimeAgo={getTimeAgo}
           />
-        )}
-
-        <ProjectsOverview projects={projects} isLoading={isProjectsLoading} />
-      </div>
+        </div>
+      )}
 
       <QuickActions isPlatformAdmin={isPlatformAdmin} />
     </div>

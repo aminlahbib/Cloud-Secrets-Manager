@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Folder, Key, Users, Plus, LayoutGrid, ArrowRight } from 'lucide-react';
+import { Folder, Key, Users, Plus, LayoutGrid, ArrowRight, Building2 } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { ProjectSourceIndicator } from '../projects/ProjectSourceIndicator';
 import type { Project } from '../../types';
 
 interface ProjectsOverviewProps {
@@ -61,14 +62,25 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
                   <h3 className="font-semibold text-theme-primary truncate text-body-sm">
                     {project.name}
                   </h3>
-                  {project.workflowName && (
-                    <div className="flex items-center gap-1.5 mt-1 mb-1.5">
-                      <LayoutGrid className="h-3 w-3 text-theme-tertiary" />
-                      <span className="text-caption text-theme-tertiary font-medium truncate">
-                        {project.workflowName}
-                      </span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-1 mb-1.5 flex-wrap">
+                    {project.workflowName && (
+                      <div className="flex items-center gap-1.5">
+                        <LayoutGrid className="h-3 w-3 text-theme-tertiary" />
+                        <span className="text-caption text-theme-tertiary font-medium truncate">
+                          {project.workflowName}
+                        </span>
+                      </div>
+                    )}
+                    {project.teams && project.teams.length > 0 && (
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-3 w-3 text-theme-tertiary" />
+                        <span className="text-caption text-theme-tertiary font-medium truncate">
+                          {project.teams[0].teamName}
+                          {project.teams.length > 1 && ` +${project.teams.length - 1}`}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 mt-1 text-body-sm text-theme-secondary">
                     <span className="flex items-center">
                       <Key className="h-3.5 w-3.5 mr-1" />
@@ -80,18 +92,21 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
                     </span>
                   </div>
                 </div>
-                {project.currentUserRole && (
-                  <Badge 
-                    variant={
-                      project.currentUserRole === 'OWNER' ? 'owner-admin' :
-                      project.currentUserRole === 'ADMIN' ? 'owner-admin' :
-                      'default'
-                    }
-                    className="text-xs"
-                  >
-                    {project.currentUserRole}
-                  </Badge>
-                )}
+                <div className="flex flex-col items-end gap-1.5">
+                  {project.currentUserRole && (
+                    <Badge 
+                      variant={
+                        project.currentUserRole === 'OWNER' ? 'owner-admin' :
+                        project.currentUserRole === 'ADMIN' ? 'owner-admin' :
+                        'default'
+                      }
+                      className="text-xs"
+                    >
+                      {project.currentUserRole}
+                    </Badge>
+                  )}
+                  <ProjectSourceIndicator project={project} />
+                </div>
               </div>
             </Link>
           ))}

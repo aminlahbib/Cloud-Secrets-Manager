@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Activity, Users, TrendingUp } from 'lucide-react';
+import { Plus, Activity, Building2, TrendingUp } from 'lucide-react';
 
 interface QuickAction {
   icon: React.ComponentType<{ className?: string }>;
@@ -32,9 +32,9 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
       onClick: () => navigate('/activity'),
     }] : []),
     {
-      icon: Users,
-      label: 'Manage Team',
-      description: 'Invite collaborators',
+      icon: Building2,
+      label: 'Manage Teams',
+      description: 'Create and manage teams',
       onClick: () => navigate('/teams'),
     },
     {
