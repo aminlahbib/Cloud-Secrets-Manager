@@ -2,21 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
-  UserPlus,
   Building2,
   Settings,
   Trash2,
-  LayoutGrid,
-  List,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { usePreferences } from '../hooks/usePreferences';
+import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
+import { PageHeader } from '../components/shared/PageHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import type { Team } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -52,6 +51,8 @@ export const TeamsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Fetch teams
   const { data: teams, isLoading, error } = useQuery<Team[]>({
@@ -60,6 +61,17 @@ export const TeamsPage: React.FC = () => {
     enabled: !!user?.id,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
+
+  // Filter teams by search term
+  const filteredTeams = React.useMemo(() => {
+    if (!teams) return [];
+    if (!debouncedSearchTerm.trim()) return teams;
+    const search = debouncedSearchTerm.toLowerCase();
+    return teams.filter(team =>
+      team.name.toLowerCase().includes(search) ||
+      (team.description && team.description.toLowerCase().includes(search))
+    );
+  }, [teams, debouncedSearchTerm]);
 
   // Delete team mutation
   const deleteTeamMutation = useMutation({
@@ -123,75 +135,17 @@ export const TeamsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Teams
-          </h1>
-          <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Manage team members and access controls
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div 
-            className="border rounded-lg p-1 flex gap-1 shadow-sm"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            <button 
-              onClick={() => setTeamView('grid')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: teamView === 'grid' ? 'var(--elevation-1)' : 'transparent',
-                color: teamView === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (teamView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (teamView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setTeamView('list')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: teamView === 'list' ? 'var(--elevation-1)' : 'transparent',
-                color: teamView === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (teamView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (teamView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <UserPlus className="w-5 h-5 mr-2" />
-            Create Team
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Teams"
+        description="Manage team members and access controls"
+        view={teamView}
+        onViewChange={setTeamView}
+        onCreateNew={() => setShowCreateModal(true)}
+        createButtonLabel="New Team"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search teams..."
+      />
 
       {/* Teams List */}
       {!teams || teams.length === 0 ? (
@@ -206,7 +160,7 @@ export const TeamsPage: React.FC = () => {
         />
       ) : teamView === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teams.map((team) => {
+          {filteredTeams.map((team) => {
             const teamInitials = team.name
               .split(' ')
               .map(n => n[0])
@@ -219,7 +173,8 @@ export const TeamsPage: React.FC = () => {
             return (
               <div 
                 key={team.id} 
-                className="card rounded-xl p-6 shadow-sm transition-all group flex flex-col h-full"
+                onClick={() => navigate(`/teams/${team.id}?tab=overview`)}
+                className="card rounded-xl p-6 shadow-sm transition-all group flex flex-col h-full cursor-pointer"
                 style={{
                   borderColor: 'var(--border-subtle)',
                 }}
@@ -298,7 +253,7 @@ export const TeamsPage: React.FC = () => {
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/teams/${team.id}`);
+                        navigate(`/teams/${team.id}?tab=overview`);
                       }}
                       className="flex-1 py-2 px-3 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                       style={{
@@ -348,7 +303,7 @@ export const TeamsPage: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {teams.map((team) => {
+          {filteredTeams.map((team) => {
             const teamInitials = team.name
               .split(' ')
               .map(n => n[0])
@@ -361,7 +316,7 @@ export const TeamsPage: React.FC = () => {
             return (
               <div
                 key={team.id}
-                onClick={() => navigate(`/teams/${team.id}`)}
+                onClick={() => navigate(`/teams/${team.id}?tab=overview`)}
                 className="card rounded-xl p-4 shadow-sm transition-all cursor-pointer hover:shadow-theme-md"
                 style={{
                   borderColor: 'var(--border-subtle)',
@@ -423,7 +378,7 @@ export const TeamsPage: React.FC = () => {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          navigate(`/teams/${team.id}`);
+                          navigate(`/teams/${team.id}?tab=overview`);
                         }}
                         className="py-2 px-3 border rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                         style={{
