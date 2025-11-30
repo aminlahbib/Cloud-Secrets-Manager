@@ -19,7 +19,7 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
   const navigate = useNavigate();
 
   return (
-    <div className="card h-full flex flex-col">
+    <div className="card flex flex-col">
       <div className="padding-card border-b border-theme-subtle flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-h3 font-semibold text-theme-primary">Your Projects</h2>
@@ -47,7 +47,7 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
           </Button>
         </div>
       ) : (
-        <div className="padding-card flex-1 overflow-y-auto">
+        <div className="padding-card">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {projects.slice(0, 6).map((project: Project) => (
               <Link

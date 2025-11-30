@@ -14,7 +14,7 @@ export const WorkflowsList: React.FC<WorkflowsListProps> = ({
   isLoading,
 }) => {
   return (
-    <div className="card h-full flex flex-col">
+    <div className="card flex flex-col">
       <div className="padding-card border-b border-theme-subtle flex-shrink-0">
         <div className="flex items-center justify-between">
           <h2 className="text-h3 font-semibold text-theme-primary">Workflows</h2>
@@ -26,7 +26,7 @@ export const WorkflowsList: React.FC<WorkflowsListProps> = ({
           </Link>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div>
         {isLoading ? (
           <div className="padding-card flex justify-center items-center min-h-[150px]">
             <Spinner size="sm" />
