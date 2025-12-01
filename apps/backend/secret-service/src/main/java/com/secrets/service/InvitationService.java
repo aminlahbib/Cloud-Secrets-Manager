@@ -1,6 +1,8 @@
 package com.secrets.service;
 
 import com.secrets.dto.invitation.InvitationResponse;
+import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.dto.notification.NotificationType;
 import com.secrets.entity.ProjectInvitation;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
@@ -34,19 +36,22 @@ public class InvitationService {
     private final ProjectMembershipRepository membershipRepository;
     private final WorkflowService workflowService;
     private final EmailService emailService;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public InvitationService(ProjectInvitationRepository invitationRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
             ProjectMembershipRepository membershipRepository,
             WorkflowService workflowService,
-            EmailService emailService) {
+            EmailService emailService,
+            NotificationEventPublisher notificationEventPublisher) {
         this.invitationRepository = invitationRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.membershipRepository = membershipRepository;
         this.workflowService = workflowService;
         this.emailService = emailService;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     /**
@@ -85,7 +90,7 @@ public class InvitationService {
         ProjectInvitation saved = invitationRepository.save(invitation);
         log.info("Created invitation for {} to project {} with role {}", email, projectId, role);
 
-        // Send email notification
+        // Legacy direct email send (kept for now)
         try {
             var project = projectRepository.findById(projectId).orElse(null);
             var inviter = userRepository.findById(invitedBy).orElse(null);
@@ -96,10 +101,20 @@ public class InvitationService {
                         token,
                         project.getName(),
                         inviter.getEmail());
+
+                // Publish notification event for future fan-out (email, in-app, push)
+                NotificationEvent event = new NotificationEvent();
+                event.setType(NotificationType.PROJECT_INVITATION);
+                event.setActorUserId(invitedBy != null ? invitedBy.toString() : null);
+                event.setRecipientUserIds(List.of(email.toLowerCase()));
+                event.setProjectId(projectId.toString());
+                event.setTitle("You've been invited to " + project.getName());
+                event.setMessage(inviter.getEmail() + " invited you to collaborate on " + project.getName());
+                notificationEventPublisher.publish(event);
             }
         } catch (Exception e) {
-            log.error("Failed to send invitation email to {}: {}", email, e.getMessage());
-            // Don't fail the invitation creation if email fails
+            log.error("Failed to send invitation email or publish event for {}: {}", email, e.getMessage());
+            // Don't fail the invitation creation if email/event fails
         }
 
         return saved;
