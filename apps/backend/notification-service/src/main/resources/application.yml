@@ -2,6 +2,18 @@ spring:
   application:
     name: notification-service
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/secrets}
+    username: ${SPRING_DATASOURCE_USERNAME:secret_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret_pw}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
 server:
   port: 8082
 

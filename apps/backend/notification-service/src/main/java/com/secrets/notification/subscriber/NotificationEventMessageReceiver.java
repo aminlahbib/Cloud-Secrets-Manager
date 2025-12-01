@@ -5,6 +5,7 @@ import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.pubsub.v1.PubsubMessage;
 import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.notification.service.NotificationHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -19,9 +20,12 @@ public class NotificationEventMessageReceiver implements MessageReceiver {
     private static final Logger log = LoggerFactory.getLogger(NotificationEventMessageReceiver.class);
 
     private final ObjectMapper objectMapper;
+    private final NotificationHandler notificationHandler;
 
-    public NotificationEventMessageReceiver(ObjectMapper objectMapper) {
+    public NotificationEventMessageReceiver(ObjectMapper objectMapper,
+                                            NotificationHandler notificationHandler) {
         this.objectMapper = objectMapper;
+        this.notificationHandler = notificationHandler;
     }
 
     @Override
@@ -36,7 +40,7 @@ public class NotificationEventMessageReceiver implements MessageReceiver {
                     event.getProjectId(),
                     event.getSecretId());
 
-            // TODO: Forward to NotificationHandler for persistence / email dispatch
+            notificationHandler.handle(event);
 
             consumer.ack();
         } catch (Exception ex) {
