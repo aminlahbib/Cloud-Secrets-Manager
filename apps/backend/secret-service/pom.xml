@@ -204,6 +204,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.secrets.SecretServiceApplication</mainClass>
+                    <attach>true</attach>
+                    <classifier>boot</classifier>
                 </configuration>
                 <executions>
                     <execution>

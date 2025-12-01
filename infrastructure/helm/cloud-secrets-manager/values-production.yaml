@@ -4,6 +4,7 @@
 image:
   repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
   repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
+  repositoryNotificationService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service"
   tag: "production"  # Use production tag
   pullPolicy: IfNotPresent  # Use IfNotPresent for stability
 
@@ -25,6 +26,20 @@ secretService:
 auditService:
   replicaCount: 3  # Higher replica count for production
   port: 8081
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: "production"
+
+notificationService:
+  replicaCount: 3  # Match other backends
+  port: 8082
   resources:
     requests:
       memory: "256Mi"
