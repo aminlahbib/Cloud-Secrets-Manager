@@ -3,6 +3,7 @@ package com.secrets.notification.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.dto.notification.NotificationType;
 import com.secrets.notification.entity.Notification;
 import com.secrets.notification.entity.User;
 import com.secrets.notification.repository.NotificationRepository;
@@ -21,19 +22,29 @@ public class NotificationHandler {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final EmailService emailService;
     private final ObjectMapper objectMapper;
 
     public NotificationHandler(NotificationRepository notificationRepository,
                                UserRepository userRepository,
+                               EmailService emailService,
                                ObjectMapper objectMapper) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.emailService = emailService;
         this.objectMapper = objectMapper;
     }
 
     public void handle(NotificationEvent event) {
         if (event.getRecipientUserIds() == null || event.getRecipientUserIds().isEmpty()) {
             log.debug("Notification event {} has no recipients, skipping", event.getType());
+            return;
+        }
+
+        // Invitations are handled specially by email only (recipient ids are emails, not UUIDs)
+        if (event.getType() == NotificationType.PROJECT_INVITATION ||
+                event.getType() == NotificationType.TEAM_INVITATION) {
+            handleInvitationEmail(event);
             return;
         }
 
@@ -70,6 +81,9 @@ public class NotificationHandler {
                 }
 
                 notificationRepository.save(notification);
+
+                // Send email where appropriate
+                sendEmailForEvent(user, event);
             } catch (IllegalArgumentException ex) {
                 log.warn("Invalid recipient user id '{}' in notification event {}, skipping recipient",
                         userIdStr, event.getType());
@@ -77,6 +91,36 @@ public class NotificationHandler {
                 log.error("Failed to persist notification for user {}: {}", userIdStr, ex.getMessage(), ex);
             }
         }
+    }
+
+    private void handleInvitationEmail(NotificationEvent event) {
+        var metadata = event.getMetadata();
+        if (metadata == null) {
+            return;
+        }
+
+        String email = metadata.getOrDefault("email", null);
+        String projectName = metadata.getOrDefault("projectName", "");
+        String token = metadata.getOrDefault("token", "");
+        String inviterName = metadata.getOrDefault("inviterName", "A teammate");
+
+        if (email != null) {
+            emailService.sendInvitationEmail(email, token, projectName, inviterName);
+        }
+    }
+
+    private void sendEmailForEvent(User user, NotificationEvent event) {
+        var metadata = event.getMetadata();
+        if (metadata == null) {
+            return;
+        }
+
+        String email = user.getId() != null ? null : null; // email is not exposed on User here
+        // For now we skip direct email by user record; future improvement could add email field to User projection.
+
+        // Secret expiration: we send to owner's email, but email address is not present here,
+        // so we rely on future enhancement or a separate mail pipeline.
+        // Role change: same limitation. For now we keep email sending disabled in handler except invitations.
     }
 
     @SuppressWarnings("unchecked")
