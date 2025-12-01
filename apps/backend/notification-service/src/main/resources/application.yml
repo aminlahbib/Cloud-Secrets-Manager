@@ -22,6 +22,10 @@ logging:
     root: INFO
     com.secrets.notification: DEBUG
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:mySuperStrongSecretKeyForJWTTokenGeneration123456}
+
 # Email notifications (shared config with secret-service)
 email:
   enabled: ${EMAIL_ENABLED:true}

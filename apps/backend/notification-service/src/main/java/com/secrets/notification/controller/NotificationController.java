@@ -4,10 +4,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secrets.notification.dto.NotificationDto;
 import com.secrets.notification.entity.Notification;
+import com.secrets.notification.entity.User;
 import com.secrets.notification.repository.NotificationRepository;
+import com.secrets.notification.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
@@ -23,22 +26,23 @@ public class NotificationController {
     private static final Logger log = LoggerFactory.getLogger(NotificationController.class);
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     public NotificationController(NotificationRepository notificationRepository,
+                                  UserRepository userRepository,
                                   ObjectMapper objectMapper) {
         this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
         this.objectMapper = objectMapper;
     }
 
-    /**
-     * Temporary: userId is passed as a query parameter.
-     * In production this should come from authenticated principal / token.
-     */
     @GetMapping
     public ResponseEntity<List<NotificationDto>> listNotifications(
-            @RequestParam("userId") UUID userId,
+            Authentication authentication,
             @RequestParam(value = "unreadOnly", defaultValue = "false") boolean unreadOnly) {
+
+        UUID userId = resolveCurrentUserId(authentication);
 
         List<Notification> notifications = unreadOnly
                 ? notificationRepository.findTop50ByUserIdAndReadAtIsNullOrderByCreatedAtDesc(userId)
@@ -63,7 +67,8 @@ public class NotificationController {
     }
 
     @PostMapping("/read-all")
-    public ResponseEntity<Void> markAllAsRead(@RequestParam("userId") UUID userId) {
+    public ResponseEntity<Void> markAllAsRead(Authentication authentication) {
+        UUID userId = resolveCurrentUserId(authentication);
         List<Notification> notifications =
                 notificationRepository.findTop50ByUserIdAndReadAtIsNullOrderByCreatedAtDesc(userId);
 
@@ -72,6 +77,13 @@ public class NotificationController {
         notificationRepository.saveAll(notifications);
 
         return ResponseEntity.noContent().build();
+    }
+
+    private UUID resolveCurrentUserId(Authentication authentication) {
+        String username = authentication.getName(); // email from JWT
+        User user = userRepository.findByEmail(username)
+                .orElseThrow(() -> new IllegalStateException("User not found for email " + username));
+        return user.getId();
     }
 
     private NotificationDto toDto(Notification notification) {
