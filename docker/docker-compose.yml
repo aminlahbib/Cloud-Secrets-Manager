@@ -90,6 +90,43 @@ services:
       - csm
 
   # ---------------------------------------------------------------------------
+  # Notification Service
+  # ---------------------------------------------------------------------------
+  notification:
+    build:
+      context: ..
+      dockerfile: apps/backend/notification-service/Dockerfile
+    container_name: csm-notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: dev
+      JWT_SECRET: ${JWT_SECRET:-mySuperStrongSecretKeyForJWTTokenGeneration123456}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@cloudsecrets.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Cloud Secrets Manager}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - csm
+
+  # ---------------------------------------------------------------------------
   # Frontend (React)
   # ---------------------------------------------------------------------------
   frontend:

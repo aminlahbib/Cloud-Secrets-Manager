@@ -8,9 +8,11 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.secrets.dto.notification.NotificationEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -23,10 +25,11 @@ public class NotificationEventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationEventPublisher.class);
 
-    private final Publisher publisher;
+    private final Optional<Publisher> publisher;
     private final ObjectMapper objectMapper;
 
-    public NotificationEventPublisher(Publisher publisher, ObjectMapper objectMapper) {
+    @Autowired(required = false)
+    public NotificationEventPublisher(Optional<Publisher> publisher, ObjectMapper objectMapper) {
         this.publisher = publisher;
         this.objectMapper = objectMapper;
     }
@@ -36,10 +39,12 @@ public class NotificationEventPublisher {
      * interrupt the main application flow.
      */
     public void publish(NotificationEvent event) {
-        if (publisher == null) {
+        if (publisher.isEmpty()) {
             log.debug("Notification publisher is not configured. Skipping event: {}", event.getType());
             return;
         }
+
+        Publisher pub = publisher.get();
 
         if (event.getCreatedAt() == null) {
             event.setCreatedAt(Instant.now());
@@ -53,7 +58,7 @@ public class NotificationEventPublisher {
                     .putAttributes("type", event.getType().name())
                     .build();
 
-            publisher.publish(message);
+            pub.publish(message);
         } catch (JsonProcessingException ex) {
             log.error("Failed to serialize notification event {}: {}", event.getType(), ex.getMessage(), ex);
         } catch (Exception ex) {

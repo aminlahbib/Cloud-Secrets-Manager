@@ -10,7 +10,7 @@ export const useNotifications = (userId?: string) => {
     queryKey: userId ? notificationsKey(userId) : ['notifications', 'anonymous'],
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
-      return notificationsService.list(userId, false);
+	    return notificationsService.list(false);
     },
     enabled: !!userId,
     staleTime: 30_000,
@@ -26,7 +26,7 @@ export const useNotifications = (userId?: string) => {
   });
 
   const markAllAsReadMutation = useMutation({
-    mutationFn: () => (userId ? notificationsService.markAllAsRead(userId) : Promise.resolve()),
+    mutationFn: () => (userId ? notificationsService.markAllAsRead() : Promise.resolve()),
     onSuccess: () => {
       if (userId) {
         queryClient.invalidateQueries({ queryKey: notificationsKey(userId) });
