@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -115,12 +116,33 @@ public class NotificationHandler {
             return;
         }
 
-        String email = user.getId() != null ? null : null; // email is not exposed on User here
-        // For now we skip direct email by user record; future improvement could add email field to User projection.
+        String email = user.getEmail();
+        if (email == null || email.isBlank()) {
+            return;
+        }
 
-        // Secret expiration: we send to owner's email, but email address is not present here,
-        // so we rely on future enhancement or a separate mail pipeline.
-        // Role change: same limitation. For now we keep email sending disabled in handler except invitations.
+        try {
+            if (event.getType() == NotificationType.SECRET_EXPIRING_SOON) {
+                String secretKey = metadata.getOrDefault("secretKey", "");
+                String projectName = metadata.getOrDefault("projectName", "");
+                String expiresAtStr = metadata.getOrDefault("expiresAt", "");
+
+                if (!secretKey.isEmpty() && !projectName.isEmpty() && !expiresAtStr.isEmpty()) {
+                    LocalDateTime expiresAt = LocalDateTime.parse(expiresAtStr);
+                    emailService.sendExpirationWarning(email, secretKey, projectName, expiresAt);
+                }
+            } else if (event.getType() == NotificationType.ROLE_CHANGED) {
+                String projectName = metadata.getOrDefault("projectName", "");
+                String oldRole = metadata.getOrDefault("oldRole", "");
+                String newRole = metadata.getOrDefault("newRole", "");
+
+                if (!projectName.isEmpty() && !newRole.isEmpty()) {
+                    emailService.sendMembershipChangeEmail(email, projectName, oldRole, newRole);
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Failed to send email for event {} to {}: {}", event.getType(), email, ex.getMessage(), ex);
+        }
     }
 
     @SuppressWarnings("unchecked")

@@ -17,6 +17,9 @@ public class User {
     @Id
     private UUID id;
 
+    @Column(name = "email", nullable = false, length = 255)
+    private String email;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "notification_preferences", columnDefinition = "jsonb")
     private Map<String, Object> notificationPreferences;
@@ -27,6 +30,14 @@ public class User {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public Map<String, Object> getNotificationPreferences() {
