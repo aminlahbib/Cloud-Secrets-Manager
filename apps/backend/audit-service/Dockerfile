@@ -18,6 +18,10 @@ COPY pom.xml ./
 # Copy ALL module POMs (required for multi-module project resolution)
 COPY apps/backend/secret-service/pom.xml apps/backend/secret-service/
 COPY apps/backend/audit-service/pom.xml apps/backend/audit-service/
+COPY apps/backend/notification-service/pom.xml apps/backend/notification-service/
+
+# Install parent POM first (required for child modules)
+RUN mvn install -N -DskipTests -B -q
 
 # Download dependencies for audit-service only
 RUN mvn dependency:go-offline -pl apps/backend/audit-service -am -B -q || true

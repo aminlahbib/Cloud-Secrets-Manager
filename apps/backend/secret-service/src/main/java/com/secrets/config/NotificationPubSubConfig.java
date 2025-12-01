@@ -6,8 +6,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.io.IOException;
 
@@ -18,11 +20,13 @@ import java.io.IOException;
  * publish NotificationEvent messages to Google Cloud Pub/Sub.
  */
 @Configuration
+@Profile("!test-simple")
+@ConditionalOnExpression("!'${gcp.project-id:}'.isEmpty()")
 public class NotificationPubSubConfig implements DisposableBean {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationPubSubConfig.class);
 
-    @Value("${gcp.project-id:}")
+    @Value("${gcp.project-id}")
     private String gcpProjectId;
 
     @Value("${notifications.topic-name:notifications-events}")
@@ -32,18 +36,11 @@ public class NotificationPubSubConfig implements DisposableBean {
 
     @Bean
     public TopicName notificationsTopic() {
-        if (gcpProjectId == null || gcpProjectId.isBlank()) {
-            log.warn("GCP project id is not configured. Notification events will not be published.");
-            return null;
-        }
         return TopicName.of(gcpProjectId, notificationsTopicName);
     }
 
     @Bean
     public Publisher notificationPublisher(TopicName notificationsTopic) throws IOException {
-        if (notificationsTopic == null) {
-            return null;
-        }
         this.publisher = Publisher.newBuilder(notificationsTopic).build();
         log.info("Initialized Pub/Sub publisher for topic {}", notificationsTopic.toString());
         return this.publisher;

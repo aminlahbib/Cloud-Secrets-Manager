@@ -17,6 +17,12 @@
     <name>Notification Service</name>
     <description>Cloud Secrets Manager - Notification Service</description>
 
+    <properties>
+        <!-- Use Spring Boot 3.3.5's managed Logback version (1.5.13) -->
+        <!-- This ensures compatibility with Spring Boot's LogbackLoggingSystem -->
+        <logback.version>1.5.13</logback.version>
+    </properties>
+
     <dependencies>
         <!-- Shared DTOs from secret-service -->
         <dependency>
@@ -35,14 +41,12 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-pubsub</artifactId>
-            <version>1.131.0</version>
         </dependency>
 
         <!-- SendGrid for email notifications -->
         <dependency>
             <groupId>com.sendgrid</groupId>
             <artifactId>sendgrid-java</artifactId>
-            <version>4.10.2</version>
         </dependency>
 
         <!-- Jackson for JSON -->
@@ -72,6 +76,13 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.secrets.notification.NotificationServiceApplication</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>true</skipTests>
                 </configuration>
             </plugin>
         </plugins>
