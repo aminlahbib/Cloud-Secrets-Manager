@@ -150,6 +150,13 @@
             <version>4.10.2</version>
         </dependency>
 
+        <!-- Google Cloud Pub/Sub for notification events -->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-pubsub</artifactId>
+            <version>1.131.0</version>
+        </dependency>
+
         <!-- Distributed Tracing - Zipkin completely removed -->
         <dependency>
             <groupId>io.micrometer</groupId>
