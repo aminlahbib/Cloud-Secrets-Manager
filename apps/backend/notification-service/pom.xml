@@ -18,6 +18,13 @@
     <description>Cloud Secrets Manager - Notification Service</description>
 
     <dependencies>
+        <!-- Shared DTOs from secret-service -->
+        <dependency>
+            <groupId>com.secrets</groupId>
+            <artifactId>secret-service</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- Spring Boot Web (for health checks / future APIs) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
