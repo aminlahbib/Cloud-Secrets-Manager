@@ -2,6 +2,8 @@ package com.secrets.service;
 
 import com.secrets.dto.member.MemberRequest;
 import com.secrets.dto.member.MemberResponse;
+import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.dto.notification.NotificationType;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
 import com.secrets.entity.Workflow;
@@ -38,6 +40,7 @@ public class MemberService {
     private final WorkflowRepository workflowRepository;
     private final WorkflowProjectRepository workflowProjectRepository;
     private final WorkflowService workflowService;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public MemberService(ProjectMembershipRepository membershipRepository,
                         ProjectRepository projectRepository,
@@ -46,7 +49,8 @@ public class MemberService {
                         InvitationService invitationService,
                         WorkflowRepository workflowRepository,
                         WorkflowProjectRepository workflowProjectRepository,
-                        WorkflowService workflowService) {
+                        WorkflowService workflowService,
+                        NotificationEventPublisher notificationEventPublisher) {
         this.membershipRepository = membershipRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -55,6 +59,7 @@ public class MemberService {
         this.workflowRepository = workflowRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.workflowService = workflowService;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     /**
@@ -144,8 +149,30 @@ public class MemberService {
 
         existing.setRole(newRole);
         ProjectMembership saved = membershipRepository.save(existing);
-        
+
         log.info("Updated role of user {} in project {} to {}", memberUserId, projectId, newRole);
+
+        try {
+            User member = userRepository.findById(memberUserId)
+                .orElse(null);
+
+            if (member != null) {
+                NotificationEvent event = new NotificationEvent();
+                event.setType(NotificationType.ROLE_CHANGED);
+                event.setActorUserId(userId != null ? userId.toString() : null);
+                event.setRecipientUserIds(List.of(memberUserId.toString()));
+                event.setProjectId(projectId.toString());
+                event.setTitle("Your role has changed");
+                event.setMessage(String.format(
+                    "Your role in this project has been updated to %s.",
+                    newRole.name()));
+                notificationEventPublisher.publish(event);
+            }
+        } catch (Exception e) {
+            log.error("Failed to publish role change notification for user {} in project {}: {}",
+                memberUserId, projectId, e.getMessage());
+        }
+
         return MemberResponse.from(saved);
     }
 
