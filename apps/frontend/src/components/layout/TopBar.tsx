@@ -148,7 +148,11 @@ export const TopBar: React.FC = () => {
                             className="px-4 py-3 text-xs cursor-pointer hover:bg-elevation-1"
                             onClick={async () => {
                               await markAsRead(n.id);
-                              // TODO: use metadata.deepLink for navigation when backend provides it
+                              const deepLink = (n.metadata as any)?.deepLink as string | undefined;
+                              if (deepLink) {
+                                navigate(deepLink);
+                                setShowNotifications(false);
+                              }
                             }}
                           >
                             <div className="flex items-start justify-between gap-2">
