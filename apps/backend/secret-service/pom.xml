@@ -143,13 +143,6 @@
             </exclusions>
         </dependency>
 
-        <!-- SendGrid for email notifications -->
-        <dependency>
-            <groupId>com.sendgrid</groupId>
-            <artifactId>sendgrid-java</artifactId>
-            <version>4.10.2</version>
-        </dependency>
-
         <!-- Google Cloud Pub/Sub for notification events -->
         <dependency>
             <groupId>com.google.cloud</groupId>
