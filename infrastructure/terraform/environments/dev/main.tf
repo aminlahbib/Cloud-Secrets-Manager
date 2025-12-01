@@ -14,6 +14,7 @@ resource "google_project_service" "required_apis" {
     "secretmanager.googleapis.com",
     "iam.googleapis.com",
     "billingbudgets.googleapis.com",
+    "pubsub.googleapis.com",
   ])
 
   project            = var.project_id
@@ -107,6 +108,7 @@ module "iam" {
         "roles/secretmanager.secretAccessor",
         "roles/artifactregistry.reader",
         "roles/cloudsql.instanceUser", # Needed for IAM DB authentication if enabled
+        "roles/pubsub.publisher",
       ]
     }
     "audit-service-dev" = {
@@ -116,7 +118,17 @@ module "iam" {
         "roles/cloudsql.client",
         "roles/logging.logWriter",
         "roles/artifactregistry.reader", # Needed to pull images from Artifact Registry
-        "roles/cloudsql.instanceUser", # Needed for IAM DB authentication if enabled
+        "roles/cloudsql.instanceUser",   # Needed for IAM DB authentication if enabled
+      ]
+    }
+    "notification-service-dev" = {
+      display_name = "Notification Service (Dev)"
+      description  = "Service account for Notification Service in dev environment"
+      roles = [
+        "roles/cloudsql.client",
+        "roles/artifactregistry.reader",
+        "roles/pubsub.subscriber",
+        "roles/cloudsql.instanceUser",
       ]
     }
     "external-secrets-sa" = {
@@ -145,9 +157,35 @@ module "iam" {
       namespace           = "external-secrets"
       k8s_service_account = "external-secrets"
     }
+    "notification-service" = {
+      gcp_service_account = "notification-service-dev@${var.project_id}.iam.gserviceaccount.com"
+      namespace           = "cloud-secrets-manager"
+      k8s_service_account = "notification-service"
+    }
   }
 
   depends_on = [google_project_service.required_apis, module.gke]
+}
+
+# Pub/Sub topic for notification events
+resource "google_pubsub_topic" "notifications_events" {
+  name    = "notifications-events"
+  project = var.project_id
+
+  depends_on = [google_project_service.required_apis]
+}
+
+# Pub/Sub subscription for notification-service
+resource "google_pubsub_subscription" "notifications_events_sub" {
+  name  = "notifications-events-sub"
+  topic = google_pubsub_topic.notifications_events.name
+
+  project = var.project_id
+
+  ack_deadline_seconds       = 30
+  message_retention_duration = "604800s" # 7 days
+
+  depends_on = [google_pubsub_topic.notifications_events]
 }
 
 # External Secrets Operator
@@ -209,7 +247,7 @@ module "billing_budget" {
   project_id         = var.project_id
   display_name       = "budget-${local.environment}"
   amount             = var.budget_amount
-  
+
   # Optional: Add notification channels here if needed
   # notification_channels = []
 }
