@@ -14,10 +14,7 @@ export interface NotificationDto {
 export const notificationsService = {
   async list(userId: string, unreadOnly: boolean = false): Promise<NotificationDto[]> {
     const { data } = await api.get<NotificationDto[]>('/api/notifications', {
-      params: {
-        userId,
-        unreadOnly,
-      },
+      params: { unreadOnly },
     });
     return data;
   },
@@ -27,9 +24,7 @@ export const notificationsService = {
   },
 
   async markAllAsRead(userId: string): Promise<void> {
-    await api.post('/api/notifications/read-all', null, {
-      params: { userId },
-    });
+    await api.post('/api/notifications/read-all');
   },
 };
 
