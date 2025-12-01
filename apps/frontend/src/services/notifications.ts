@@ -1,5 +1,4 @@
 import api from './api';
-import type { Notification } from '@/types';
 
 export interface NotificationDto {
   id: string;
@@ -12,7 +11,7 @@ export interface NotificationDto {
 }
 
 export const notificationsService = {
-  async list(userId: string, unreadOnly: boolean = false): Promise<NotificationDto[]> {
+  async list(unreadOnly: boolean = false): Promise<NotificationDto[]> {
     const { data } = await api.get<NotificationDto[]>('/api/notifications', {
       params: { unreadOnly },
     });
@@ -23,7 +22,7 @@ export const notificationsService = {
     await api.post(`/api/notifications/${id}/read`);
   },
 
-  async markAllAsRead(userId: string): Promise<void> {
+  async markAllAsRead(): Promise<void> {
     await api.post('/api/notifications/read-all');
   },
 };
