@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: notification-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/secrets}
+    username: ${SPRING_DATASOURCE_USERNAME:secret_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:secret_pw}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: 8082
+
+logging:
+  level:
+    root: INFO
+    com.secrets.notification: DEBUG
+
+# Email notifications (shared config with secret-service)
+email:
+  enabled: ${EMAIL_ENABLED:true}
+  provider: sendgrid
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY:}
+  from:
+    address: ${EMAIL_FROM_ADDRESS:noreply@cloudsecrets.com}
+    name: ${EMAIL_FROM_NAME:Cloud Secrets Manager}
+
+app:
+  base-url: ${APP_BASE_URL:http://localhost:5173}
+
+gcp:
+  project-id: ${GCP_PROJECT_ID:}
+
+notifications:
+  subscription-name: notifications-events-sub
+
+

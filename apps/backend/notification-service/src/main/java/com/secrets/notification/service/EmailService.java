@@ -1,4 +1,4 @@
-package com.secrets.service;
+package com.secrets.notification.service;
 
 import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
@@ -14,7 +14,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Service for sending email notifications using SendGrid
+ * Service for sending email notifications using SendGrid.
+ * Moved from secret-service so that notification-service owns
+ * all outbound email delivery.
  */
 @Service
 public class EmailService {
@@ -37,9 +39,6 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
 
-    /**
-     * Send project invitation email
-     */
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping invitation email to {}", recipientEmail);
@@ -70,11 +69,8 @@ public class EmailService {
         log.info("Sent invitation email to {} for project {}", recipientEmail, projectName);
     }
 
-    /**
-     * Send secret expiration warning email
-     */
     public void sendExpirationWarning(String recipientEmail, String secretKey, String projectName,
-            LocalDateTime expiresAt) {
+                                      LocalDateTime expiresAt) {
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping expiration warning to {}", recipientEmail);
             return;
@@ -107,9 +103,6 @@ public class EmailService {
         log.info("Sent expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
     }
 
-    /**
-     * Send membership role change notification
-     */
     public void sendMembershipChangeEmail(String recipientEmail, String projectName, String oldRole, String newRole) {
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping membership change email to {}", recipientEmail);
@@ -141,9 +134,6 @@ public class EmailService {
                 recipientEmail, projectName, oldRole, newRole);
     }
 
-    /**
-     * Core email sending logic using SendGrid
-     */
     private void sendEmail(String to, String subject, String body) {
         if (!emailEnabled) {
             return;
@@ -181,3 +171,5 @@ public class EmailService {
         }
     }
 }
+
+

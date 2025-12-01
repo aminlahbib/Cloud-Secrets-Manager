@@ -8,7 +8,6 @@ import com.secrets.entity.User;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
 import com.secrets.repository.UserRepository;
-import com.secrets.service.EmailService;
 import com.secrets.service.NotificationEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Scheduled tasks for secret expiration notifications
@@ -30,18 +30,15 @@ public class SecretExpirationScheduler {
     private final SecretRepository secretRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final EmailService emailService;
     private final NotificationEventPublisher notificationEventPublisher;
 
     public SecretExpirationScheduler(SecretRepository secretRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
-            EmailService emailService,
             NotificationEventPublisher notificationEventPublisher) {
         this.secretRepository = secretRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
-        this.emailService = emailService;
         this.notificationEventPublisher = notificationEventPublisher;
     }
 
@@ -66,9 +63,6 @@ public class SecretExpirationScheduler {
 
         log.info("Found {} secrets expiring in the next {} days", expiringSoon.size(), WARNING_DAYS);
 
-        int emailsSent = 0;
-        int emailsFailed = 0;
-
         for (Secret secret : expiringSoon) {
             try {
                 // Get project name
@@ -85,13 +79,6 @@ public class SecretExpirationScheduler {
                     continue;
                 }
 
-                // Send warning email
-                emailService.sendExpirationWarning(
-                        owner.getEmail(),
-                        secret.getSecretKey(),
-                        project.getName(),
-                        secret.getExpiresAt());
-
                 // Publish notification event for expiration
                 NotificationEvent event = new NotificationEvent();
                 event.setType(NotificationType.SECRET_EXPIRING_SOON);
@@ -105,16 +92,17 @@ public class SecretExpirationScheduler {
                         secret.getSecretKey(),
                         project.getName(),
                         secret.getExpiresAt()));
+                event.setMetadata(Map.of(
+                        "secretKey", secret.getSecretKey(),
+                        "projectName", project.getName(),
+                        "expiresAt", secret.getExpiresAt().toString()
+                ));
                 notificationEventPublisher.publish(event);
-
-                emailsSent++;
             } catch (Exception e) {
-                log.error("Failed to send expiration warning for secret {}: {}",
+                log.error("Failed to publish expiration warning event for secret {}: {}",
                         secret.getSecretKey(), e.getMessage());
-                emailsFailed++;
             }
         }
-
-        log.info("Expiration check complete. Emails sent: {}, failed: {}", emailsSent, emailsFailed);
+        log.info("Expiration check complete.");
     }
 }

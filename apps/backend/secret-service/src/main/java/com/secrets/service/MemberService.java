@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -156,7 +157,9 @@ public class MemberService {
             User member = userRepository.findById(memberUserId)
                 .orElse(null);
 
-            if (member != null) {
+            var project = projectRepository.findById(projectId).orElse(null);
+
+            if (member != null && project != null) {
                 NotificationEvent event = new NotificationEvent();
                 event.setType(NotificationType.ROLE_CHANGED);
                 event.setActorUserId(userId != null ? userId.toString() : null);
@@ -164,8 +167,14 @@ public class MemberService {
                 event.setProjectId(projectId.toString());
                 event.setTitle("Your role has changed");
                 event.setMessage(String.format(
-                    "Your role in this project has been updated to %s.",
+                    "Your role in project \"%s\" has been updated to %s.",
+                    project.getName(),
                     newRole.name()));
+                event.setMetadata(Map.of(
+                    "projectName", project.getName(),
+                    "oldRole", existing.getRole().name(),
+                    "newRole", newRole.name()
+                ));
                 notificationEventPublisher.publish(event);
             }
         } catch (Exception e) {
