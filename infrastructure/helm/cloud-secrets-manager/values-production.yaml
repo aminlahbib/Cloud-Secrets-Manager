@@ -48,6 +48,12 @@ auditServiceAccount:
     # Production service account
     iam.gke.io/gcp-service-account: "audit-service-prod@cloud-secrets-manager.iam.gserviceaccount.com"
 
+notificationServiceAccount:
+  create: true
+  annotations:
+    # Production service account
+    iam.gke.io/gcp-service-account: "notification-service-prod@cloud-secrets-manager.iam.gserviceaccount.com"
+
 createSecrets: false  # Always use External Secrets in production
 
 postgres:
