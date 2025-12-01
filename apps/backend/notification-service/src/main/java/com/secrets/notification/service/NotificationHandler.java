@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secrets.dto.notification.NotificationEvent;
 import com.secrets.notification.entity.Notification;
+import com.secrets.notification.entity.User;
 import com.secrets.notification.repository.NotificationRepository;
+import com.secrets.notification.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -18,11 +20,14 @@ public class NotificationHandler {
     private static final Logger log = LoggerFactory.getLogger(NotificationHandler.class);
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     public NotificationHandler(NotificationRepository notificationRepository,
+                               UserRepository userRepository,
                                ObjectMapper objectMapper) {
         this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -35,6 +40,18 @@ public class NotificationHandler {
         for (String userIdStr : event.getRecipientUserIds()) {
             try {
                 UUID userId = UUID.fromString(userIdStr);
+
+                User user = userRepository.findById(userId).orElse(null);
+                if (user == null) {
+                    log.debug("User {} not found when handling notification {}, skipping", userId, event.getType());
+                    continue;
+                }
+
+                if (!isEnabledForEvent(user, event)) {
+                    log.debug("Notification {} disabled by preferences for user {}, skipping",
+                            event.getType(), userId);
+                    continue;
+                }
 
                 Notification notification = new Notification();
                 notification.setId(UUID.randomUUID());
@@ -61,6 +78,30 @@ public class NotificationHandler {
             }
         }
     }
-}
 
+    @SuppressWarnings("unchecked")
+    private boolean isEnabledForEvent(User user, NotificationEvent event) {
+        var prefs = user.getNotificationPreferences();
+        if (prefs == null || prefs.isEmpty()) {
+            return true;
+        }
+
+        String key;
+        switch (event.getType()) {
+            case SECRET_EXPIRING_SOON -> key = "secretExpiration";
+            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitations";
+            case SECURITY_ALERT -> key = "securityAlerts";
+            case ROLE_CHANGED -> key = "email"; // treat as general email/notification toggle
+            default -> key = "email";
+        }
+
+        Object value = prefs.get(key);
+        if (value instanceof Boolean b) {
+            return b;
+        }
+
+        // default to enabled when preference missing or not boolean
+        return true;
+    }
+}
 
