@@ -39,6 +39,12 @@ auditServiceAccount:
     # Workload Identity binding for audit-service
     iam.gke.io/gcp-service-account: "audit-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
 
+notificationServiceAccount:
+  create: true
+  annotations:
+    # Workload Identity binding for notification-service
+    iam.gke.io/gcp-service-account: "notification-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
+
 # Secrets Configuration
 # Set to false if using External Secrets Operator (recommended for production)
 createSecrets: false

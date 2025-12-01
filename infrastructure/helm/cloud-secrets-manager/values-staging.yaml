@@ -41,6 +41,12 @@ auditServiceAccount:
     # Staging service account
     iam.gke.io/gcp-service-account: "audit-service-staging@cloud-secrets-manager.iam.gserviceaccount.com"
 
+notificationServiceAccount:
+  create: true
+  annotations:
+    # Staging service account
+    iam.gke.io/gcp-service-account: "notification-service-staging@cloud-secrets-manager.iam.gserviceaccount.com"
+
 createSecrets: false
 
 # Cloud SQL Configuration (staging instance)
