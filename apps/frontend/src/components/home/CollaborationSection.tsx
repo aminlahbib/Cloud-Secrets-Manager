@@ -1,24 +1,20 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Folder, Building2, Users, Plus, ArrowRight, LayoutGrid } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Users, Plus, ArrowRight, Folder } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Spinner } from '../ui/Spinner';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
-import type { Workflow, Team } from '../../types';
+import type { Team } from '../../types';
 
 interface CollaborationSectionProps {
-  workflows: Workflow[] | undefined;
-  isWorkflowsLoading: boolean;
+  workflows?: any;
+  isWorkflowsLoading?: boolean;
   maxTeams?: number;
 }
 
-export const CollaborationSection: React.FC<CollaborationSectionProps> = ({
-  workflows,
-  isWorkflowsLoading,
-  maxTeams = 3,
-}) => {
+export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -30,146 +26,128 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = ({
     staleTime: 2 * 60 * 1000,
   });
 
-  const displayTeams = teams?.slice(0, maxTeams) ?? [];
+  // Show maximum 2 teams
+  const displayTeams = teams && teams.length > 0 
+    ? teams.slice(0, 2)
+    : [];
+
+  // Generate theme-aware gradient style for team avatars
+  const getTeamGradientStyle = (teamName: string): React.CSSProperties => {
+    let hash = 0;
+    for (let i = 0; i < teamName.length; i++) {
+      hash = teamName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const direction = 135 + (Math.abs(hash) % 60) - 30;
+    return {
+      background: `linear-gradient(${direction}deg, var(--elevation-2), var(--elevation-1))`,
+    };
+  };
 
   return (
     <div className="card">
-      <div className="padding-card border-b border-theme-subtle">
-        <h2 className="text-h2 font-bold text-theme-primary">Collaboration</h2>
-        <p className="text-body-sm text-theme-secondary mt-1">
-          Workflows and teams you're part of
-        </p>
+      <div className="p-3 border-b border-theme-subtle">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-theme-primary">Teams</h2>
+          <button
+            onClick={() => navigate('/teams')}
+            className="text-sm font-medium transition-colors flex items-center gap-1"
+            style={{ color: 'var(--accent-primary)' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = 'var(--accent-primary-hover)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = 'var(--accent-primary)';
+            }}
+          >
+            View all <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      <div className="divide-y divide-theme-subtle">
-        {/* Workflows Section */}
-        <div className="padding-card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-body font-semibold text-theme-primary flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4 text-theme-tertiary" />
-              Workflows
-            </h3>
-            <Link
-              to="/workflows/new"
-              className="text-xs font-medium text-accent-primary hover:text-accent-primary-hover transition-colors"
-            >
-              New <Plus className="h-3 w-3 inline ml-0.5" />
-            </Link>
-          </div>
-
-          {isWorkflowsLoading ? (
-            <div className="flex justify-center py-4">
-              <Spinner size="sm" />
-            </div>
-          ) : !workflows || workflows.length === 0 ? (
-            <p className="text-caption text-theme-tertiary text-center py-4">
-              No workflows yet
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {workflows.map((workflow) => (
-                <Link
-                  key={workflow.id}
-                  to={`/workflows/${workflow.id}`}
-                  className="block p-3 rounded-lg hover:bg-elevation-1 transition-colors group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-body-sm font-medium text-theme-primary truncate group-hover:text-accent-primary transition-colors">
-                        {workflow.name}
-                        {workflow.isDefault && (
-                          <span className="ml-2 text-caption text-theme-tertiary">(Default)</span>
-                        )}
-                      </p>
-                      <p className="text-caption text-theme-tertiary mt-0.5">
-                        {workflow.projects?.length || 0} projects
-                      </p>
-                    </div>
-                    <Folder className="h-4 w-4 text-theme-tertiary flex-shrink-0 ml-2" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+      {isTeamsLoading ? (
+        <div className="p-3 flex justify-center items-center">
+          <Spinner size="sm" />
         </div>
-
-        {/* Teams Section */}
-        <div className="padding-card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-body font-semibold text-theme-primary flex items-center gap-2">
-              <Building2 className="h-4 w-4 text-theme-tertiary" />
-              Teams
-            </h3>
-            <button
-              onClick={() => navigate('/teams')}
-              className="text-xs font-medium text-accent-primary hover:text-accent-primary-hover transition-colors flex items-center gap-1"
-            >
-              View all <ArrowRight className="h-3 w-3" />
-            </button>
-          </div>
-
-          {isTeamsLoading ? (
-            <div className="flex justify-center py-4">
-              <Spinner size="sm" />
-            </div>
-          ) : !teams || teams.length === 0 ? (
-            <div className="text-center py-4">
-              <p className="text-caption text-theme-tertiary mb-3">
-                No teams yet
-              </p>
-              <Button size="sm" onClick={() => navigate('/teams')}>
-                <Plus className="h-3 w-3 mr-1.5" />
-                Create Team
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {displayTeams.map((team) => (
-                <div
-                  key={team.id}
-                  onClick={() => navigate(`/teams/${team.id}`)}
-                  className="p-3 rounded-lg hover:bg-elevation-1 transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-body-sm font-medium text-theme-primary truncate group-hover:text-accent-primary transition-colors">
-                          {team.name}
-                        </p>
-                        {team.currentUserRole === 'TEAM_OWNER' && (
-                          <Badge variant="owner-admin" className="text-xs">Owner</Badge>
-                        )}
-                        {team.currentUserRole === 'TEAM_ADMIN' && (
-                          <Badge variant="info" className="text-xs">Admin</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3 text-caption text-theme-tertiary">
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {team.memberCount ?? 0}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Folder className="h-3 w-3" />
-                          {team.projectCount ?? 0}
-                        </span>
-                      </div>
+      ) : !teams || teams.length === 0 ? (
+        <div className="p-3 text-center">
+          <p className="text-xs text-theme-tertiary mb-3">
+            No teams yet
+          </p>
+          <Button size="sm" onClick={() => navigate('/teams')}>
+            <Plus className="h-3 w-3 mr-1.5" />
+            Create Team
+          </Button>
+        </div>
+      ) : (
+        <div className="divide-y divide-theme-subtle">
+          {displayTeams.map((team) => {
+            const teamInitials = team.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2);
+            
+            const teamGradientStyle = getTeamGradientStyle(team.name);
+            
+            return (
+              <div
+                key={team.id}
+                onClick={() => navigate(`/teams/${team.id}`)}
+                className="p-3 flex items-center justify-between hover:bg-elevation-1 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div 
+                    className="w-10 h-10 rounded-full border flex items-center justify-center font-bold text-sm flex-shrink-0"
+                    style={{ 
+                      ...teamGradientStyle,
+                      borderColor: 'var(--border-subtle)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    {teamInitials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-sm font-medium text-theme-primary truncate group-hover:text-accent-primary transition-colors">
+                        {team.name}
+                      </p>
+                      {team.currentUserRole && (
+                        <Badge 
+                          variant={team.currentUserRole === 'TEAM_OWNER' ? 'owner-admin' : team.currentUserRole === 'TEAM_ADMIN' ? 'info' : 'default'} 
+                          className="text-xs flex-shrink-0"
+                        >
+                          {team.currentUserRole.replace('TEAM_', '')}
+                        </Badge>
+                      )}
                     </div>
-                    <Building2 className="h-4 w-4 text-theme-tertiary flex-shrink-0 ml-2" />
+                    <div className="flex items-center gap-3 text-xs text-theme-tertiary">
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {team.memberCount ?? 0} members
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Folder className="h-3 w-3" />
+                        {team.projectCount ?? 0} projects
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ))}
-              {teams.length > maxTeams && (
-                <button
-                  onClick={() => navigate('/teams')}
-                  className="w-full text-center text-xs font-medium text-accent-primary hover:underline py-2"
-                >
-                  View {teams.length - maxTeams} more
-                </button>
-              )}
-            </div>
+                <ArrowRight className="h-4 w-4 text-theme-tertiary flex-shrink-0 ml-2" />
+              </div>
+            );
+          })}
+          {teams.length > 2 && (
+            <button
+              onClick={() => navigate('/teams')}
+              className="w-full p-3 text-center text-xs font-medium transition-colors hover:bg-elevation-1"
+              style={{ color: 'var(--accent-primary)' }}
+            >
+              View {teams.length - 2} more
+            </button>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

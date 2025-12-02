@@ -2,18 +2,20 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
-  UserPlus,
   Building2,
   Settings,
   Trash2,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { usePreferences } from '../hooks/usePreferences';
+import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
+import { PageHeader } from '../components/shared/PageHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import type { Team } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -45,9 +47,12 @@ export const TeamsPage: React.FC = () => {
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { teamView, setTeamView } = usePreferences();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Fetch teams
   const { data: teams, isLoading, error } = useQuery<Team[]>({
@@ -56,6 +61,17 @@ export const TeamsPage: React.FC = () => {
     enabled: !!user?.id,
     staleTime: 1 * 60 * 1000, // 1 minute
   });
+
+  // Filter teams by search term
+  const filteredTeams = React.useMemo(() => {
+    if (!teams) return [];
+    if (!debouncedSearchTerm.trim()) return teams;
+    const search = debouncedSearchTerm.toLowerCase();
+    return teams.filter(team =>
+      team.name.toLowerCase().includes(search) ||
+      (team.description && team.description.toLowerCase().includes(search))
+    );
+  }, [teams, debouncedSearchTerm]);
 
   // Delete team mutation
   const deleteTeamMutation = useMutation({
@@ -119,19 +135,17 @@ export const TeamsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-theme-primary">Teams</h1>
-          <p className="text-body-sm text-theme-secondary mt-1">
-            Manage team members and access controls
-          </p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <UserPlus className="w-5 h-5 mr-2" />
-          Create Team
-        </Button>
-      </div>
+      <PageHeader
+        title="Teams"
+        description="Manage team members and access controls"
+        view={teamView}
+        onViewChange={setTeamView}
+        onCreateNew={() => setShowCreateModal(true)}
+        createButtonLabel="New Team"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search teams..."
+      />
 
       {/* Teams List */}
       {!teams || teams.length === 0 ? (
@@ -144,9 +158,9 @@ export const TeamsPage: React.FC = () => {
             onClick: () => setShowCreateModal(true),
           }}
         />
-      ) : (
+      ) : teamView === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teams.map((team) => {
+          {filteredTeams.map((team) => {
             const teamInitials = team.name
               .split(' ')
               .map(n => n[0])
@@ -159,7 +173,8 @@ export const TeamsPage: React.FC = () => {
             return (
               <div 
                 key={team.id} 
-                className="card rounded-xl p-6 shadow-sm transition-all group"
+                onClick={() => navigate(`/teams/${team.id}?tab=overview`)}
+                className="card rounded-xl p-6 shadow-sm transition-all group flex flex-col h-full cursor-pointer"
                 style={{
                   borderColor: 'var(--border-subtle)',
                 }}
@@ -170,10 +185,11 @@ export const TeamsPage: React.FC = () => {
                   e.currentTarget.style.borderColor = 'var(--border-subtle)';
                 }}
               >
+                {/* Header Section */}
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div 
-                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg"
+                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg flex-shrink-0"
                       style={{ 
                         ...teamGradientStyle,
                         borderColor: 'var(--border-subtle)',
@@ -181,8 +197,8 @@ export const TeamsPage: React.FC = () => {
                     >
                       {teamInitials}
                     </div>
-                    <div>
-                      <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>
                         {team.name}
                       </h3>
                       {team.currentUserRole && (
@@ -200,12 +216,20 @@ export const TeamsPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {team.description && (
-                  <p className="text-sm mb-6 h-10 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                    {team.description || "No description provided for this team."}
-                  </p>
-                )}
+                {/* Description Section */}
+                <div className="mb-4 min-h-[2.5rem]">
+                  {team.description ? (
+                    <p className="text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                      {team.description}
+                    </p>
+                  ) : (
+                    <p className="text-sm line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
+                      No description provided for this team.
+                    </p>
+                  )}
+                </div>
 
+                {/* Stats Section */}
                 <div 
                   className="flex items-center gap-4 mb-6 border-t border-b py-3"
                   style={{
@@ -214,21 +238,22 @@ export const TeamsPage: React.FC = () => {
                   }}
                 >
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <Users className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
                     <span>{team.memberCount || 0} members</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <Building2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                    <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
                     <span>{team.projectCount || 0} projects</span>
                   </div>
                 </div>
 
+                {/* Action Buttons - Pushed to Bottom */}
                 {canManageTeam(team) && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-auto">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/teams/${team.id}`);
+                        navigate(`/teams/${team.id}?tab=overview`);
                       }}
                       className="flex-1 py-2 px-3 border rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
                       style={{
@@ -272,6 +297,132 @@ export const TeamsPage: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredTeams.map((team) => {
+            const teamInitials = team.name
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .slice(0, 2);
+            
+            const teamGradientStyle = getTeamGradientStyle(team.name);
+            
+            return (
+              <div
+                key={team.id}
+                onClick={() => navigate(`/teams/${team.id}?tab=overview`)}
+                className="card rounded-xl p-4 shadow-sm transition-all cursor-pointer hover:shadow-theme-md"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-default)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div 
+                      className="w-12 h-12 rounded-full border flex items-center justify-center font-bold text-lg flex-shrink-0"
+                      style={{ 
+                        ...teamGradientStyle,
+                        borderColor: 'var(--border-subtle)',
+                      }}
+                    >
+                      {teamInitials}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                          {team.name}
+                        </h3>
+                        {team.currentUserRole && (
+                          <span 
+                            className="text-xs uppercase tracking-wide font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                            style={{
+                              backgroundColor: 'var(--elevation-1)',
+                              color: 'var(--text-secondary)',
+                            }}
+                          >
+                            {team.currentUserRole.replace('TEAM_', '')}
+                          </span>
+                        )}
+                      </div>
+                      {team.description && (
+                        <p className="text-sm truncate mb-2" style={{ color: 'var(--text-secondary)' }}>
+                          {team.description}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="flex items-center gap-1.5">
+                          <Users className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                          {team.memberCount || 0} members
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
+                          {team.projectCount || 0} projects
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  {canManageTeam(team) && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/teams/${team.id}?tab=overview`);
+                        }}
+                        className="py-2 px-3 border rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--border-subtle)',
+                          color: 'var(--text-primary)',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                        }}
+                      >
+                        <Settings className="w-4 h-4" />
+                        Manage
+                      </button>
+                      {canDeleteTeam(team) && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTeam(team);
+                          }}
+                          className="py-2 px-3 border rounded-lg text-sm font-medium transition-colors"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--border-subtle)',
+                            color: 'var(--status-danger)',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--status-danger-bg)';
+                            e.currentTarget.style.borderColor = 'var(--status-danger)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

@@ -705,7 +705,7 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'secrets' && (
         <SecretsTab
-          projectId={projectId!}
+                    projectId={projectId!}
           secrets={secrets}
           isLoading={isSecretsLoading}
           searchTerm={searchTerm}
@@ -718,8 +718,8 @@ export const ProjectDetailPage: React.FC = () => {
           onToggleSelection={toggleSecretSelection}
           onSelectAll={selectAllSecrets}
           onClearSelection={clearSelection}
-          canManageSecrets={canManageSecrets}
-          canDeleteSecrets={canDeleteSecrets}
+                    canManageSecrets={canManageSecrets}
+                    canDeleteSecrets={canDeleteSecrets}
           onDeleteSecret={handleDeleteSecret}
           onBulkDelete={handleBulkDelete}
           isBulkDeleting={bulkDeleteSecretsMutation.isPending}

@@ -1,14 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, HelpCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { ThemeControls } from './ThemeControls';
+import { useNotifications } from '../../hooks/useNotifications';
 
 export const TopBar: React.FC = () => {
   const { user, logout, isPlatformAdmin } = useAuth();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const userId = user?.id;
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications(userId);
+
+  useEffect(() => {
+    const checkTheme = () => {
+      const html = document.documentElement;
+      const theme = html.getAttribute('data-theme') || '';
+      setIsDark(theme.includes('dark'));
+    };
+    
+    checkTheme();
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +59,14 @@ export const TopBar: React.FC = () => {
     <header
       className="sticky top-0 z-50 w-full border-b transition-colors duration-200"
       style={{
-        backgroundColor: 'var(--page-bg)',
-        borderBottomColor: 'var(--border-subtle)',
+        backgroundColor: isDark ? 'rgba(20, 20, 20, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+        backdropFilter: 'blur(50px) saturate(200%)',
+        WebkitBackdropFilter: 'blur(50px) saturate(200%)',
+        borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+        borderBottomWidth: '1px',
+        boxShadow: isDark 
+          ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)' 
+          : '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
       }}
     >
       <div className="flex items-center justify-between h-16 px-4 md:px-8">
@@ -58,12 +92,91 @@ export const TopBar: React.FC = () => {
           </div>
 
           {/* Notifications */}
-          <button
-            className="p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"
-            title="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-          </button>
+          <div className="relative">
+            <button
+              className="relative p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"
+              title="Notifications"
+              onClick={() => setShowNotifications((prev) => !prev)}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] px-1 rounded-full bg-status-danger text-[10px] font-semibold text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            {showNotifications && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowNotifications(false)}
+                />
+                <div
+                  className="absolute right-0 mt-2 w-80 rounded-xl shadow-lg border z-20 dropdown-glass max-h-[420px] overflow-hidden flex flex-col"
+                  style={{ borderWidth: '0.5px' }}
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-theme-subtle">
+                    <div>
+                      <p className="text-sm font-medium text-theme-primary">Notifications</p>
+                      <p className="text-xs text-theme-secondary">
+                        {unreadCount > 0
+                          ? `${unreadCount} unread`
+                          : 'You’re all caught up'}
+                      </p>
+                    </div>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={() => userId && markAllAsRead()}
+                        className="text-xs font-medium text-accent-primary hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center text-xs text-theme-secondary">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      <ul className="divide-y divide-theme-subtle">
+                        {notifications.map((n) => (
+                          <li
+                            key={n.id}
+                            className="px-4 py-3 text-xs cursor-pointer hover:bg-elevation-1"
+                            onClick={async () => {
+                              await markAsRead(n.id);
+                              const deepLink = (n.metadata as any)?.deepLink as string | undefined;
+                              if (deepLink) {
+                                navigate(deepLink);
+                                setShowNotifications(false);
+                              }
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <p className="font-medium text-theme-primary">{n.title}</p>
+                                {n.body && (
+                                  <p className="mt-1 text-theme-secondary line-clamp-2">
+                                    {n.body}
+                                  </p>
+                                )}
+                              </div>
+                              {!n.readAt && (
+                                <span className="mt-0.5 h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Help */}
           <button
@@ -104,10 +217,9 @@ export const TopBar: React.FC = () => {
                   onClick={() => setShowProfileDropdown(false)}
                 />
                 <div
-                  className="absolute right-0 mt-2 w-56 rounded-lg shadow-lg border z-20"
+                  className="absolute right-0 mt-2 w-56 rounded-xl shadow-lg border z-20 dropdown-glass"
                   style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-subtle)',
+                    borderWidth: '0.5px',
                   }}
                 >
                   <div className="p-2">

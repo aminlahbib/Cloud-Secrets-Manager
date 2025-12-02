@@ -18,6 +18,10 @@ COPY pom.xml ./
 # Copy ALL module POMs (required for multi-module project resolution)
 COPY apps/backend/secret-service/pom.xml apps/backend/secret-service/
 COPY apps/backend/audit-service/pom.xml apps/backend/audit-service/
+COPY apps/backend/notification-service/pom.xml apps/backend/notification-service/
+
+# Install parent POM first (required for child modules)
+RUN mvn install -N -DskipTests -B -q
 
 # Download dependencies for secret-service only
 RUN mvn dependency:go-offline -pl apps/backend/secret-service -am -B -q || true
@@ -27,7 +31,7 @@ COPY apps/backend/secret-service/src apps/backend/secret-service/src
 
 # Build only secret-service (skip tests)
 RUN mvn package -pl apps/backend/secret-service -DskipTests -B \
-    && cp apps/backend/secret-service/target/secret-service-*.jar app.jar
+    && cp apps/backend/secret-service/target/secret-service-*-boot.jar app.jar
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime
@@ -48,4 +52,4 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
     CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
 
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT exec java $JAVA_OPTS -jar app.jar

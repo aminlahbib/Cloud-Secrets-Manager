@@ -1,0 +1,134 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+spec:
+  replicas: {{ .Values.notificationService.replicaCount }}
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      serviceAccountName: notification-service
+      imagePullSecrets:
+        - name: artifact-registry-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: notification-service
+          image: "{{ .Values.image.repositoryNotificationService }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://127.0.0.1:5432/{{ .Values.postgres.secretsDb.db }}?sslmode=disable
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: csm-db-secrets
+                  key: secrets-db-user
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: csm-db-secrets
+                  key: secrets-db-password
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: JWT_SECRET
+            - name: EMAIL_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: EMAIL_ENABLED
+            - name: SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: SENDGRID_API_KEY
+            - name: EMAIL_FROM_ADDRESS
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: EMAIL_FROM_ADDRESS
+            - name: EMAIL_FROM_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: EMAIL_FROM_NAME
+            - name: GCP_PROJECT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: csm-app-config
+                  key: GCP_PROJECT_ID
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+          ports:
+            - containerPort: {{ .Values.notificationService.port }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: {{ .Values.notificationService.port }}
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.notificationService.port }}
+            initialDelaySeconds: 90
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          resources:
+            {{- toYaml .Values.notificationService.resources | nindent 12 }}
+        {{- if .Values.cloudSql.enabled }}
+        - name: cloud-sql-proxy
+          image: "{{ .Values.cloudSql.image }}"
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "{{ .Values.cloudSql.connectionName }}"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            {{- toYaml .Values.cloudSql.resources | nindent 12 }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: {{ .Values.notificationService.port }}
+      targetPort: {{ .Values.notificationService.port }}
+  type: ClusterIP
+
+

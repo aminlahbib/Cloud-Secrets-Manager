@@ -21,10 +21,10 @@ export const ThemeControls: React.FC = () => {
   return (
     <div className="flex items-center gap-2">
       {/* Theme Selector - Shows only color schemes */}
-      <div className="relative flex-1" ref={themeSelectorRef}>
+      <div className="relative" ref={themeSelectorRef} style={{ minWidth: '140px' }}>
         <button
           onClick={() => setIsThemeSelectorOpen(!isThemeSelectorOpen)}
-          className="flex items-center justify-between w-full p-2 rounded-lg transition-all duration-200 hover:bg-elevation-2 text-left"
+          className="flex items-center justify-between w-full px-3 py-2 rounded-lg transition-all duration-200 hover:bg-elevation-2 text-left"
           style={{ 
             backgroundColor: 'var(--elevation-1)',
             border: '1px solid var(--border-subtle)'
@@ -56,11 +56,13 @@ export const ThemeControls: React.FC = () => {
         {/* Theme Dropdown - Only 7 color schemes */}
         {isThemeSelectorOpen && (
           <div 
-            className="absolute top-full left-0 right-0 mt-2 rounded-lg border shadow-xl z-50"
+            className="absolute top-full left-0 mt-2 rounded-lg border shadow-xl z-50"
             style={{
               backgroundColor: 'var(--elevation-4)',
               borderColor: 'var(--border-default)',
-              boxShadow: 'var(--shadow-xl)'
+              boxShadow: 'var(--shadow-xl)',
+              minWidth: '180px',
+              width: '100%'
             }}
           >
             <div className="p-2">

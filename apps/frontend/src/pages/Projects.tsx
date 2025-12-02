@@ -3,11 +3,8 @@ import { useDebounce } from '../utils/debounce';
 import {
   Folder,
   Plus,
-  Search,
   LayoutGrid,
-  List,
   Building2,
-  Layers
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { useProjects } from '../hooks/useProjects';
@@ -17,7 +14,8 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
-import { FilterPanel, FilterConfig } from '../components/ui/FilterPanel';
+import { FilterConfig } from '../components/ui/FilterPanel';
+import { PageHeader } from '../components/shared/PageHeader';
 import { TeamsVsDirectGuidance } from '../components/projects/TeamsVsDirectGuidance';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,7 +28,7 @@ export const ProjectsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showArchived] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [projectFilters, setProjectFilters] = useState<Record<string, any>>({
     workflow: null,
     role: null,
@@ -136,7 +134,14 @@ export const ProjectsPage: React.FC = () => {
     return { filteredProjects: projectList, groupedProjects: grouped };
   }, [data?.content, workflows, teams, projectFilters.workflow, projectFilters.team, projectFilters.accessSource, groupBy]);
   
-  const projects = filteredProjects;
+  // Separate active and archived projects
+  const { activeProjects, archivedProjects } = useMemo(() => {
+    const active = filteredProjects.filter((p: Project) => !p.isArchived);
+    const archived = filteredProjects.filter((p: Project) => p.isArchived);
+    return { activeProjects: active, archivedProjects: archived };
+  }, [filteredProjects]);
+  
+  const projects = showArchived ? filteredProjects : activeProjects;
 
   const projectFilterConfigs: FilterConfig[] = useMemo(() => {
     const workflowOptions = workflows?.map(w => ({ label: w.name, value: w.id })) || [];
@@ -190,198 +195,28 @@ export const ProjectsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            Projects
-          </h2>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Manage your projects and secret collections.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div 
-            className="border rounded-lg p-1 flex gap-1 shadow-sm"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderColor: 'var(--border-subtle)',
-            }}
-          >
-            <button 
-              onClick={() => setProjectView('grid')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: projectView === 'grid' ? 'var(--elevation-1)' : 'transparent',
-                color: projectView === 'grid' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (projectView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (projectView !== 'grid') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setProjectView('list')}
-              className="p-1.5 rounded transition-colors"
-              style={{
-                backgroundColor: projectView === 'list' ? 'var(--elevation-1)' : 'transparent',
-                color: projectView === 'list' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                if (projectView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-                  e.currentTarget.style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (projectView !== 'list') {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                  e.currentTarget.style.color = 'var(--text-tertiary)';
-                }
-              }}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
-          <button 
-            className="px-4 py-2 font-medium rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
-            style={{
-              backgroundColor: 'var(--accent-primary)',
-              color: 'var(--text-inverse)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '0.9';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '1';
-            }}
-            onClick={() => setShowCreateModal(true)}
-          >
-            <Plus className="w-4 h-4" />
-            New Project
-          </button>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search 
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" 
-            style={{ color: 'var(--text-tertiary)' }}
-          />
-          <input 
-            type="text" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search projects..." 
-            className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 transition-all shadow-sm"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--text-primary)',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = 'var(--accent-primary)';
-              e.currentTarget.style.boxShadow = '0 0 0 2px var(--accent-primary-glow)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          />
-        </div>
-        <FilterPanel
-          filters={projectFilterConfigs}
-          values={projectFilters}
-          onChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
-          onClear={() => setProjectFilters({ workflow: null, role: null, team: null, accessSource: null })}
-        />
-      </div>
-        
-      {/* Group By Selector with Info Icon */}
-      <div className="flex items-center gap-3">
-        <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-          Group by:
-        </span>
-        <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ borderColor: 'var(--border-subtle)' }}>
-          <button
-            onClick={() => setGroupBy('none')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'none' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'none' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'none') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'none') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <Layers className="h-4 w-4 inline mr-1.5" />
-            None
-          </button>
-          <button
-            onClick={() => setGroupBy('workflow')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'workflow' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'workflow' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'workflow') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'workflow') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <LayoutGrid className="h-4 w-4 inline mr-1.5" />
-            Workflow
-          </button>
-          <button
-            onClick={() => setGroupBy('team')}
-            className="px-3 py-1.5 rounded text-body-sm transition-all duration-150"
-            style={{
-              backgroundColor: groupBy === 'team' ? 'var(--accent-primary-glow)' : 'transparent',
-              color: groupBy === 'team' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-            }}
-            onMouseEnter={(e) => {
-              if (groupBy !== 'team') {
-                e.currentTarget.style.color = 'var(--text-primary)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (groupBy !== 'team') {
-                e.currentTarget.style.color = 'var(--text-secondary)';
-              }
-            }}
-          >
-            <Building2 className="h-4 w-4 inline mr-1.5" />
-            Team
-          </button>
-        </div>
-        {/* Info Icon for Guidance */}
-        <TeamsVsDirectGuidance compact />
-      </div>
+      <PageHeader
+        title="Projects"
+        description="Manage your projects and secret collections."
+        view={projectView}
+        onViewChange={setProjectView}
+        onCreateNew={() => setShowCreateModal(true)}
+        createButtonLabel="New Project"
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search projects..."
+        filters={projectFilterConfigs}
+        filterValues={projectFilters}
+        onFilterChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
+        onFilterClear={() => setProjectFilters({ workflow: null, role: null, team: null, accessSource: null })}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
+        showGroupBy={true}
+        showArchived={showArchived}
+        onShowArchivedChange={setShowArchived}
+        showArchivedToggle={true}
+        additionalActions={<TeamsVsDirectGuidance compact />}
+      />
 
       {/* Projects Grid/List */}
       {isLoading ? (
@@ -458,78 +293,134 @@ export const ProjectsPage: React.FC = () => {
             </div>
           ))}
         </div>
-      ) : projectView === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project: Project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              view="grid"
-              getTimeAgo={getTimeAgo}
-            />
-          ))}
-
-          {/* Create New Project Card */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-150 min-h-[200px]"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              backgroundColor: 'var(--card-bg)',
-              color: 'var(--text-tertiary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-accent)';
-              e.currentTarget.style.color = 'var(--accent-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            <Plus className="w-12 h-12 mb-3 opacity-50" />
-            <span className="font-medium">Create new project</span>
-          </button>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {projects.map((project: Project) => (
-            <ProjectCard
-              key={project.id}
-              project={project}
-              view="list"
-              getTimeAgo={getTimeAgo}
-            />
-          ))}
+        <div className="space-y-6">
+          {/* Active Projects */}
+          {activeProjects.length > 0 && (
+            <div className="space-y-4">
+              {projectView === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {activeProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="grid"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                  {/* Create New Project Card */}
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center transition-all duration-150 min-h-[200px]"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-tertiary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }}
+                  >
+                    <Plus className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Create new project</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activeProjects.map((project: Project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      view="list"
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
+                  {/* Create New Project Card (List View) */}
+                  <button
+                    onClick={() => setShowCreateModal(true)}
+                    className="w-full border-2 border-dashed rounded-xl p-6 flex items-center justify-center gap-3 transition-all duration-150"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-tertiary)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                      e.currentTarget.style.color = 'var(--accent-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      e.currentTarget.style.color = 'var(--text-tertiary)';
+                    }}
+                  >
+                    <Plus className="w-6 h-6" />
+                    <span className="font-medium">Create new project</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-          {/* Create New Project Card (List View) */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="w-full border-2 border-dashed rounded-xl p-6 flex items-center justify-center gap-3 transition-all duration-150"
-            style={{
-              borderColor: 'var(--border-subtle)',
-              backgroundColor: 'var(--card-bg)',
-              color: 'var(--text-tertiary)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-accent)';
-              e.currentTarget.style.color = 'var(--accent-primary)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--border-subtle)';
-              e.currentTarget.style.color = 'var(--text-tertiary)';
-            }}
-          >
-            <Plus className="w-6 h-6 opacity-50" />
-            <span className="font-medium">Create new project</span>
-          </button>
+          {/* Archived Projects - Separated with subtle line */}
+          {showArchived && archivedProjects.length > 0 && (
+            <div className="space-y-4">
+              <div 
+                className="pt-6 border-t"
+                style={{ borderTopColor: 'var(--border-subtle)' }}
+              >
+                {projectView === 'grid' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {archivedProjects.map((project: Project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        view="grid"
+                        getTimeAgo={getTimeAgo}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {archivedProjects.map((project: Project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        view="list"
+                        getTimeAgo={getTimeAgo}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Empty state when no active projects */}
+          {activeProjects.length === 0 && !showArchived && (
+            <EmptyState
+              icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
+              title="No active projects"
+              description="Create your first project to start managing secrets"
+              action={{
+                label: 'Create Project',
+                onClick: () => setShowCreateModal(true),
+              }}
+            />
+          )}
         </div>
       )}
 
       {/* Pagination info */}
       {data && data.totalElements > 0 && (
         <div className="text-center text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
-          Showing {projects.length} of {data.totalElements} projects
+          Showing {activeProjects.length} active{showArchived && archivedProjects.length > 0 ? ` and ${archivedProjects.length} archived` : ''} of {data.totalElements} projects
         </div>
       )}
 

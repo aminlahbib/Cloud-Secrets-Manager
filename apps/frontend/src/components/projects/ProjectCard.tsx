@@ -10,7 +10,6 @@ import {
   Clock,
   LayoutGrid,
   Building2,
-  MoreHorizontal,
 } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { ProjectSourceIndicator } from './ProjectSourceIndicator';
@@ -57,19 +56,19 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
     return (
       <Link
         to={`/projects/${project.id}`}
-        className="block group"
+        className="block group h-full"
       >
         <div 
-          className="group card rounded-xl p-5 transition-all duration-200 cursor-pointer hover:shadow-theme-md"
+          className="group card rounded-xl p-5 transition-all duration-200 cursor-pointer hover:shadow-theme-md flex flex-col h-full"
           style={{
             borderColor: 'var(--border-subtle)',
           }}
         >
           {/* Header */}
           <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div 
-                className="w-10 h-10 rounded-lg flex items-center justify-center border"
+                className="w-10 h-10 rounded-lg flex items-center justify-center border flex-shrink-0"
                 style={{
                   backgroundColor: 'var(--elevation-1)',
                   borderColor: 'var(--border-subtle)',
@@ -78,11 +77,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
               >
                 <Folder className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold leading-snug truncate" style={{ color: 'var(--text-primary)' }}>
                   {project.name}
                 </h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {project.workflowName && (
                     <span 
                       className="text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wide"
@@ -98,42 +97,29 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                 </div>
               </div>
             </div>
-            <button 
-              className="p-1 rounded transition-colors"
-              style={{
-                color: 'var(--text-tertiary)',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--text-primary)';
-                e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--text-tertiary)';
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <MoreHorizontal className="w-5 h-5" />
-            </button>
           </div>
 
-          {project.description && (
-            <p className="text-sm mb-5 line-clamp-2 h-10" style={{ color: 'var(--text-secondary)' }}>
-              {project.description}
-            </p>
-          )}
+          {/* Description */}
+          <div className="mb-4 min-h-[2.5rem] flex-1">
+            {project.description ? (
+              <p className="text-sm line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                {project.description}
+              </p>
+            ) : (
+              <p className="text-sm line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
+                No description
+              </p>
+            )}
+          </div>
 
-          {/* Footer metrics */}
+          {/* Footer metrics - Pushed to Bottom */}
           <div 
-            className="flex items-center justify-between pt-4 border-t"
+            className="flex items-center justify-between pt-4 border-t mt-auto"
             style={{ borderTopColor: 'var(--border-subtle)' }}
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4 min-w-0">
               <div 
-                className="flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded border" 
+                className="flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded border flex-shrink-0" 
                 title="Secrets"
                 style={{
                   backgroundColor: 'var(--elevation-1)',
@@ -141,10 +127,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                   color: 'var(--text-secondary)',
                 }}
               >
-                <Key className="w-3 h-3" style={{ color: 'var(--text-tertiary)' }} />
+                <Key className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
                 <span>{project.secretCount ?? 0}</span>
               </div>
-              <div className="flex -space-x-1.5">
+              <div className="flex -space-x-1.5 flex-shrink-0">
                 {[...Array(Math.min(3, project.memberCount ?? 1))].map((_, i) => (
                   <div 
                     key={i} 
@@ -172,9 +158,9 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, view, getTime
                 )}
               </div>
             </div>
-            <div className="text-xs flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
+            <div className="text-xs flex items-center gap-1.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }}>
               <Clock className="w-3.5 h-3.5" />
-              {getTimeAgo(project.updatedAt)}
+              <span className="whitespace-nowrap">{getTimeAgo(project.updatedAt)}</span>
             </div>
           </div>
         </div>

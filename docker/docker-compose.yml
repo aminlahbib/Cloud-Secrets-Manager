@@ -11,6 +11,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-csm}
       POSTGRES_USER: ${POSTGRES_USER:-csm}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      # PostgreSQL memory settings
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_MAINTENANCE_WORK_MEM: 64MB
+      POSTGRES_WORK_MEM: 16MB
     ports:
       - "5432:5432"
     volumes:
@@ -19,9 +24,17 @@ services:
       - ../database/seeds/dev:/docker-entrypoint-initdb.d/seeds:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
-      interval: 5s
+      interval: 10s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
     networks:
       - csm
 
@@ -48,6 +61,14 @@ services:
       GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
       GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-your-firebase-project-id}
       GOOGLE_SERVICE_ACCOUNT_PATH: /app/firebase-admin-key.json
+      # JVM memory settings
+      JAVA_OPTS: >-
+        -Xms512m
+        -Xmx1024m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
     ports:
       - "8080:8080"
     healthcheck:
@@ -56,6 +77,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1536M
+        reservations:
+          cpus: '1.0'
+          memory: 768M
     volumes:
       - ../infrastructure/gcp/keys/firebase-admin-key.json:/app/firebase-admin-key.json:ro
     networks:
@@ -78,14 +107,83 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: dev
+      # JVM memory settings
+      JAVA_OPTS: >-
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
     ports:
       - "8081:8081"
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    networks:
+      - csm
+
+  # ---------------------------------------------------------------------------
+  # Notification Service
+  # ---------------------------------------------------------------------------
+  notification:
+    build:
+      context: ..
+      dockerfile: apps/backend/notification-service/Dockerfile
+    container_name: csm-notification
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: dev
+      JWT_SECRET: ${JWT_SECRET:-mySuperStrongSecretKeyForJWTTokenGeneration123456}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM_ADDRESS: ${EMAIL_FROM_ADDRESS:-noreply@cloudsecrets.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-Cloud Secrets Manager}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      # JVM memory settings
+      JAVA_OPTS: >-
+        -Xms256m
+        -Xmx512m
+        -XX:+UseG1GC
+        -XX:MaxGCPauseMillis=200
+        -XX:+UseContainerSupport
+        -XX:MaxRAMPercentage=75.0
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     networks:
       - csm
 
