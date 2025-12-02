@@ -58,6 +58,31 @@ public class User {
     @Column(name = "notification_preferences", columnDefinition = "jsonb")
     private Map<String, Object> notificationPreferences;
 
+    @Column(name = "two_factor_enabled", nullable = false)
+    private Boolean twoFactorEnabled = false;
+
+    @Column(name = "two_factor_type", length = 20)
+    private String twoFactorType; // e.g. "TOTP"
+
+    @Column(name = "two_factor_secret", columnDefinition = "TEXT")
+    private String twoFactorSecret; // encrypted TOTP secret
+
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "two_factor_recovery_codes", columnDefinition = "TEXT[]")
+    private java.util.List<String> twoFactorRecoveryCodes; // hashed codes
+
+    @Column(name = "two_factor_enabled_at")
+    private LocalDateTime twoFactorEnabledAt;
+
+    @Column(name = "two_factor_last_verified_at")
+    private LocalDateTime twoFactorLastVerifiedAt;
+
+    @Column(name = "pending_two_factor_secret", columnDefinition = "TEXT")
+    private String pendingTwoFactorSecret;
+
+    @Column(name = "pending_two_factor_created_at")
+    private LocalDateTime pendingTwoFactorCreatedAt;
+
     @Column(name = "timezone", length = 50)
     private String timezone;
 
@@ -159,6 +184,70 @@ public class User {
 
     public void setNotificationPreferences(Map<String, Object> notificationPreferences) {
         this.notificationPreferences = notificationPreferences;
+    }
+
+    public Boolean getTwoFactorEnabled() {
+        return twoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
+    }
+
+    public String getTwoFactorType() {
+        return twoFactorType;
+    }
+
+    public void setTwoFactorType(String twoFactorType) {
+        this.twoFactorType = twoFactorType;
+    }
+
+    public String getTwoFactorSecret() {
+        return twoFactorSecret;
+    }
+
+    public void setTwoFactorSecret(String twoFactorSecret) {
+        this.twoFactorSecret = twoFactorSecret;
+    }
+
+    public java.util.List<String> getTwoFactorRecoveryCodes() {
+        return twoFactorRecoveryCodes;
+    }
+
+    public void setTwoFactorRecoveryCodes(java.util.List<String> twoFactorRecoveryCodes) {
+        this.twoFactorRecoveryCodes = twoFactorRecoveryCodes;
+    }
+
+    public LocalDateTime getTwoFactorEnabledAt() {
+        return twoFactorEnabledAt;
+    }
+
+    public void setTwoFactorEnabledAt(LocalDateTime twoFactorEnabledAt) {
+        this.twoFactorEnabledAt = twoFactorEnabledAt;
+    }
+
+    public LocalDateTime getTwoFactorLastVerifiedAt() {
+        return twoFactorLastVerifiedAt;
+    }
+
+    public void setTwoFactorLastVerifiedAt(LocalDateTime twoFactorLastVerifiedAt) {
+        this.twoFactorLastVerifiedAt = twoFactorLastVerifiedAt;
+    }
+
+    public String getPendingTwoFactorSecret() {
+        return pendingTwoFactorSecret;
+    }
+
+    public void setPendingTwoFactorSecret(String pendingTwoFactorSecret) {
+        this.pendingTwoFactorSecret = pendingTwoFactorSecret;
+    }
+
+    public LocalDateTime getPendingTwoFactorCreatedAt() {
+        return pendingTwoFactorCreatedAt;
+    }
+
+    public void setPendingTwoFactorCreatedAt(LocalDateTime pendingTwoFactorCreatedAt) {
+        this.pendingTwoFactorCreatedAt = pendingTwoFactorCreatedAt;
     }
 
     public String getTimezone() {

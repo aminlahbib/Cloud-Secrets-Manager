@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
+import { twoFactorService } from '@/services/twoFactor';
 import { tokenStorage } from '@/utils/tokenStorage';
 import type { User, PlatformRole, LoginRequest } from '@/types';
 
@@ -12,8 +13,8 @@ interface AuthContextType {
   isLoading: boolean;
   isFirebaseEnabled: boolean;
   isPlatformAdmin: boolean;
-  login: (credentials: LoginRequest, keepSignedIn?: boolean) => Promise<void>;
-  loginWithGoogle: (keepSignedIn?: boolean) => Promise<void>;
+  login: (credentials: LoginRequest, keepSignedIn?: boolean, intermediateToken?: string, twoFactorCode?: string) => Promise<void | { requiresTwoFactor: boolean; intermediateToken?: string }>;
+  loginWithGoogle: (keepSignedIn?: boolean, intermediateToken?: string, twoFactorCode?: string) => Promise<void | { requiresTwoFactor: boolean; intermediateToken?: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -269,7 +270,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => clearTimeout(timer);
   }, [user, isFirebaseEnabled]);
 
-  const login = async (credentials: LoginRequest, keepSignedIn: boolean = false) => {
+  const login = async (credentials: LoginRequest, keepSignedIn: boolean = false, intermediateToken?: string, twoFactorCode?: string) => {
     // Set storage mode based on user preference BEFORE login
     // This ensures tokens are stored in the correct location
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
@@ -287,26 +288,71 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           keepSignedIn
         );
         if (idToken) {
-          tokenStorage.setAccessToken(idToken);
+          // Check if 2FA is required
+          const response = await authService.login({ idToken });
+          
+          if (response.requiresTwoFactor && response.intermediateToken) {
+            // Return 2FA requirement - caller should handle verification
+            return { requiresTwoFactor: true, intermediateToken: response.intermediateToken };
+          }
+          
+          if (response.accessToken) {
+            tokenStorage.setAccessToken(response.accessToken);
+            if (response.refreshToken) {
+              tokenStorage.setRefreshToken(response.refreshToken);
+            }
+            // Fetch user details
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+            navigate('/home');
+          } else if (idToken) {
+            // Fallback to Firebase token
+            tokenStorage.setAccessToken(idToken);
+            // User state will be set by onAuthStateChanged listener
+            navigate('/home');
+          }
         }
-        // User state will be set by onAuthStateChanged listener
-        navigate('/home');
       } catch (error) {
         throw error;
       }
     } else {
       // Local authentication
       const response = await authService.login(credentials);
-      tokenStorage.setAccessToken(response.accessToken);
-      if (response.refreshToken) {
-        tokenStorage.setRefreshToken(response.refreshToken);
+      
+      // Check if 2FA is required
+      if (response.requiresTwoFactor && response.intermediateToken) {
+        // If we have a 2FA code, verify it
+        if (intermediateToken && twoFactorCode) {
+          // Verify 2FA - let errors bubble up to LoginPage for proper handling
+          const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
+          tokenStorage.setAccessToken(verifyResponse.accessToken);
+          if (verifyResponse.refreshToken) {
+            tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+          }
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+          navigate('/home');
+        } else {
+          // Return 2FA requirement
+          return { requiresTwoFactor: true, intermediateToken: response.intermediateToken };
+        }
+      } else if (response.accessToken) {
+        tokenStorage.setAccessToken(response.accessToken);
+        if (response.refreshToken) {
+          tokenStorage.setRefreshToken(response.refreshToken);
+        }
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+        navigate('/home');
       }
-      setUser(response.user);
-      navigate('/home');
     }
   };
 
-  const loginWithGoogle = async (keepSignedIn: boolean = false) => {
+  const loginWithGoogle = async (
+    keepSignedIn: boolean = false,
+    intermediateToken?: string,
+    twoFactorCode?: string
+  ) => {
     if (!isFirebaseEnabled) {
       throw new Error('Firebase is not enabled');
     }
@@ -315,11 +361,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
     console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
 
+    // If we already have an intermediate token and 2FA code, this is the second step
+    // of the 2FA flow. Do NOT re-open the Google popup; just verify 2FA.
+    if (intermediateToken && twoFactorCode) {
+      const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
+      tokenStorage.setAccessToken(verifyResponse.accessToken);
+      if (verifyResponse.refreshToken) {
+        tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+      }
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+      navigate('/home');
+      return;
+    }
+
+    // First step: perform Google sign-in and check if 2FA is required
     try {
       const idToken = await firebaseAuthService.signInWithGoogle(keepSignedIn);
-      tokenStorage.setAccessToken(idToken);
-      // User state will be set by onAuthStateChanged listener
-      navigate('/home');
+
+      if (idToken) {
+        // Check if 2FA is required
+        const response = await authService.login({ idToken });
+
+        if (response.requiresTwoFactor && response.intermediateToken) {
+          // Return 2FA requirement to the caller (LoginPage)
+          return { requiresTwoFactor: true, intermediateToken: response.intermediateToken };
+        } else if (response.accessToken) {
+          tokenStorage.setAccessToken(response.accessToken);
+          if (response.refreshToken) {
+            tokenStorage.setRefreshToken(response.refreshToken);
+          }
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+          navigate('/home');
+        } else if (idToken) {
+          // Fallback to Firebase token only (no backend JWT). This is a last resort.
+          tokenStorage.setAccessToken(idToken);
+          // User state will be set by onAuthStateChanged listener
+          navigate('/home');
+        }
+      }
     } catch (error) {
       throw error;
     }
@@ -344,26 +425,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async () => {
-    if (isFirebaseEnabled) {
-      const firebaseUser = firebaseAuthService.getCurrentUser();
-      if (firebaseUser) {
-        try {
-          // Force refresh the ID token to get latest claims
-          const idTokenResult = await firebaseUser.getIdTokenResult(true);
-          const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
-          
-          setUser({
-            id: firebaseUser.uid,
-            firebaseUid: firebaseUser.uid,
-            email: firebaseUser.email || '',
-            displayName: firebaseUser.displayName || undefined,
-            avatarUrl: firebaseUser.photoURL || undefined,
-            platformRole,
-            createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
-            lastLoginAt: firebaseUser.metadata.lastSignInTime || undefined,
-          });
-        } catch (error) {
-          console.error('Failed to refresh user:', error);
+    try {
+      // Always fetch full user data from backend to get latest 2FA status and other fields
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      // If backend call fails, try to maintain existing user state
+      if (isFirebaseEnabled) {
+        const firebaseUser = firebaseAuthService.getCurrentUser();
+        if (firebaseUser) {
+          try {
+            // Fallback to Firebase user data if backend is unavailable
+            const idTokenResult = await firebaseUser.getIdTokenResult(true);
+            const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
+            
+            setUser({
+              id: firebaseUser.uid,
+              firebaseUid: firebaseUser.uid,
+              email: firebaseUser.email || '',
+              displayName: firebaseUser.displayName || undefined,
+              avatarUrl: firebaseUser.photoURL || undefined,
+              platformRole,
+              createdAt: firebaseUser.metadata.creationTime || new Date().toISOString(),
+              lastLoginAt: firebaseUser.metadata.lastSignInTime || undefined,
+            });
+          } catch (firebaseError) {
+            console.error('Failed to refresh Firebase user:', firebaseError);
+          }
         }
       }
     }

@@ -23,6 +23,9 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
+import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal';
+import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
+import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
 
 type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 
@@ -36,6 +39,11 @@ export const SettingsPage: React.FC = () => {
   
   // Profile form state
   const [displayName, setDisplayName] = useState(user?.displayName || '');
+  
+  // 2FA modals state
+  const [show2FASetupModal, setShow2FASetupModal] = useState(false);
+  const [show2FADisableModal, setShow2FADisableModal] = useState(false);
+  const [showRecoveryCodesModal, setShowRecoveryCodesModal] = useState(false);
   
   // Fetch preferences from backend
   const { data: preferences, isLoading: isLoadingPreferences } = useQuery({
@@ -125,13 +133,18 @@ export const SettingsPage: React.FC = () => {
   }, [showNotification]);
 
   const handleEnable2FA = useCallback(() => {
-    showNotification({
-      type: 'info',
-      title: 'Two-Factor Authentication - Coming Soon',
-      message: 'Enhanced security with 2FA is in development. This will add an extra layer of protection to your account using time-based one-time passwords (TOTP) via authenticator apps like Google Authenticator or Authy. Expected in a future release.',
-      duration: 6000,
-    });
-  }, [showNotification]);
+    setShow2FASetupModal(true);
+  }, []);
+
+  const handleDisable2FA = useCallback(() => {
+    setShow2FADisableModal(true);
+  }, []);
+
+  const handle2FASuccess = useCallback(async () => {
+    // Refresh user data to get updated 2FA status
+    await refreshUser();
+    queryClient.invalidateQueries({ queryKey: ['user'] });
+  }, [refreshUser, queryClient]);
 
   // Save preferences mutation
   const savePreferencesMutation = useMutation({
@@ -352,23 +365,59 @@ export const SettingsPage: React.FC = () => {
                     borderColor: 'var(--border-subtle)' 
                   }}
                 >
-                  <h3 className="text-lg font-medium mb-2 text-theme-primary">Two-Factor Authentication</h3>
-                  <p className="text-body-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-                    Add an extra layer of security to your account by enabling 2FA.
-                  </p>
-                  <div className="mb-4 p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--elevation-2)', color: 'var(--text-tertiary)' }}>
-                    <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Coming Soon:</p>
-                    <ul className="space-y-1 ml-4 list-disc">
-                      <li>Time-based one-time passwords (TOTP) via authenticator apps</li>
-                      <li>Support for Google Authenticator, Authy, and similar apps</li>
-                      <li>Backup codes for account recovery</li>
-                      <li>Optional enforcement for platform admins</li>
-                    </ul>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-lg font-medium text-theme-primary">Two-Factor Authentication</h3>
+                      <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        {user?.twoFactorEnabled 
+                          ? 'An extra layer of security is protecting your account.'
+                          : 'Add an extra layer of security to your account by enabling 2FA.'}
+                      </p>
+                    </div>
+                    {user?.twoFactorEnabled && (
+                      <Badge variant="success">Enabled</Badge>
+                    )}
                   </div>
-                  <Button variant="secondary" onClick={handleEnable2FA}>
-                    <Key className="h-4 w-4 mr-2" />
-                    Enable 2FA
-                  </Button>
+
+                  {user?.twoFactorEnabled ? (
+                    <div className="space-y-3">
+                      <div 
+                        className="p-3 rounded-lg"
+                        style={{ backgroundColor: 'var(--elevation-2)' }}
+                      >
+                        <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+                          Your account is protected with TOTP-based two-factor authentication. 
+                          You'll need to enter a code from your authenticator app when signing in.
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <Button variant="secondary" onClick={() => setShowRecoveryCodesModal(true)}>
+                          View Recovery Codes
+                        </Button>
+                        <Button variant="danger" onClick={handleDisable2FA}>
+                          Disable 2FA
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div 
+                        className="p-3 rounded-lg text-xs"
+                        style={{ backgroundColor: 'var(--elevation-2)' }}
+                      >
+                        <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Features:</p>
+                        <ul className="space-y-1 ml-4 list-disc" style={{ color: 'var(--text-tertiary)' }}>
+                          <li>Time-based one-time passwords (TOTP) via authenticator apps</li>
+                          <li>Support for Google Authenticator, Authy, 1Password, and similar apps</li>
+                          <li>Backup codes for account recovery</li>
+                        </ul>
+                      </div>
+                      <Button variant="secondary" onClick={handleEnable2FA}>
+                        <Key className="h-4 w-4 mr-2" />
+                        Enable 2FA
+                      </Button>
+                    </div>
+                  )}
                 </div>
 
                 <div 
@@ -644,6 +693,22 @@ export const SettingsPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 2FA Modals */}
+      <TwoFactorSetupModal
+        isOpen={show2FASetupModal}
+        onClose={() => setShow2FASetupModal(false)}
+        onSuccess={handle2FASuccess}
+      />
+      <TwoFactorDisableModal
+        isOpen={show2FADisableModal}
+        onClose={() => setShow2FADisableModal(false)}
+        onSuccess={handle2FASuccess}
+      />
+      <RecoveryCodesModal
+        isOpen={showRecoveryCodesModal}
+        onClose={() => setShowRecoveryCodesModal(false)}
+      />
     </div>
   );
 };
