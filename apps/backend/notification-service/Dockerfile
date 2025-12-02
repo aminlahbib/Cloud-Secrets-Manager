@@ -1,5 +1,5 @@
 # =============================================================================
-# Secret Service - Multi-stage Dockerfile
+# Notification Service - Multi-stage Dockerfile
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -23,15 +23,21 @@ COPY apps/backend/notification-service/pom.xml apps/backend/notification-service
 # Install parent POM first (required for child modules)
 RUN mvn install -N -DskipTests -B -q
 
-# Download dependencies for secret-service only
-RUN mvn dependency:go-offline -pl apps/backend/secret-service -am -B -q || true
-
-# Copy source code for secret-service
+# Copy source code for secret-service (dependency of notification-service)
 COPY apps/backend/secret-service/src apps/backend/secret-service/src
 
-# Build only secret-service (skip tests)
-RUN mvn package -pl apps/backend/secret-service -DskipTests -B \
-    && cp apps/backend/secret-service/target/secret-service-*-boot.jar app.jar
+# Build and install secret-service first (required dependency)
+RUN mvn install -pl apps/backend/secret-service -am -DskipTests -B -q
+
+# Download dependencies for notification-service (now secret-service is available)
+RUN mvn dependency:go-offline -pl apps/backend/notification-service -am -B -q || true
+
+# Copy source code for notification-service
+COPY apps/backend/notification-service/src apps/backend/notification-service/src
+
+# Build only notification-service (skip tests)
+RUN mvn package -pl apps/backend/notification-service -DskipTests -B \
+    && cp apps/backend/notification-service/target/notification-service-*.jar app.jar
 
 # ---------------------------------------------------------------------------
 # Stage 2: Runtime
@@ -47,9 +53,11 @@ USER app
 # Copy JAR from builder
 COPY --from=builder /build/app.jar app.jar
 
-EXPOSE 8080
+EXPOSE 8082
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD wget -q --spider http://localhost:8080/actuator/health || exit 1
+    CMD wget -q --spider http://localhost:8082/actuator/health || exit 1
 
 ENTRYPOINT exec java $JAVA_OPTS -jar app.jar
+
+

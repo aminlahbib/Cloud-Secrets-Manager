@@ -1,6 +1,8 @@
 package com.secrets.service;
 
 import com.secrets.dto.invitation.InvitationResponse;
+import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.dto.notification.NotificationType;
 import com.secrets.entity.ProjectInvitation;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
@@ -16,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -33,20 +36,20 @@ public class InvitationService {
     private final UserRepository userRepository;
     private final ProjectMembershipRepository membershipRepository;
     private final WorkflowService workflowService;
-    private final EmailService emailService;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public InvitationService(ProjectInvitationRepository invitationRepository,
             ProjectRepository projectRepository,
             UserRepository userRepository,
             ProjectMembershipRepository membershipRepository,
             WorkflowService workflowService,
-            EmailService emailService) {
+            NotificationEventPublisher notificationEventPublisher) {
         this.invitationRepository = invitationRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.membershipRepository = membershipRepository;
         this.workflowService = workflowService;
-        this.emailService = emailService;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     /**
@@ -85,21 +88,30 @@ public class InvitationService {
         ProjectInvitation saved = invitationRepository.save(invitation);
         log.info("Created invitation for {} to project {} with role {}", email, projectId, role);
 
-        // Send email notification
         try {
             var project = projectRepository.findById(projectId).orElse(null);
             var inviter = userRepository.findById(invitedBy).orElse(null);
 
             if (project != null && inviter != null) {
-                emailService.sendInvitationEmail(
-                        email,
-                        token,
-                        project.getName(),
-                        inviter.getEmail());
+                NotificationEvent event = new NotificationEvent();
+                event.setType(NotificationType.PROJECT_INVITATION);
+                event.setActorUserId(invitedBy != null ? invitedBy.toString() : null);
+                // For invitations we use the email address as recipient identifier
+                event.setRecipientUserIds(List.of(email.toLowerCase()));
+                event.setProjectId(projectId.toString());
+                event.setTitle("You've been invited to " + project.getName());
+                event.setMessage(inviter.getEmail() + " invited you to collaborate on " + project.getName());
+                event.setMetadata(Map.of(
+                        "email", email,
+                        "projectName", project.getName(),
+                        "token", token,
+                        "inviterName", inviter.getEmail()
+                ));
+                notificationEventPublisher.publish(event);
             }
         } catch (Exception e) {
-            log.error("Failed to send invitation email to {}: {}", email, e.getMessage());
-            // Don't fail the invitation creation if email fails
+            log.error("Failed to publish invitation event for {}: {}", email, e.getMessage());
+            // Don't fail the invitation creation if event publish fails
         }
 
         return saved;

@@ -143,11 +143,11 @@
             </exclusions>
         </dependency>
 
-        <!-- SendGrid for email notifications -->
+        <!-- Google Cloud Pub/Sub for notification events -->
         <dependency>
-            <groupId>com.sendgrid</groupId>
-            <artifactId>sendgrid-java</artifactId>
-            <version>4.10.2</version>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-pubsub</artifactId>
+            <version>1.131.0</version>
         </dependency>
 
         <!-- Distributed Tracing - Zipkin completely removed -->
@@ -204,6 +204,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>com.secrets.SecretServiceApplication</mainClass>
+                    <attach>true</attach>
+                    <classifier>boot</classifier>
                 </configuration>
                 <executions>
                     <execution>

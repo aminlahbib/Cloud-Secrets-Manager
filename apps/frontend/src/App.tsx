@@ -13,6 +13,7 @@ const ActivityPage = lazy(() => import('./pages/Activity').then(m => ({ default:
 const TeamsPage = lazy(() => import('./pages/Teams').then(m => ({ default: m.TeamsPage })));
 const TeamDetailPage = lazy(() => import('./pages/TeamDetail').then(m => ({ default: m.TeamDetailPage })));
 const SettingsPage = lazy(() => import('./pages/Settings').then(m => ({ default: m.SettingsPage })));
+const NotificationsPage = lazy(() => import('./pages/Notifications').then(m => ({ default: m.NotificationsPage })));
 const AdminPage = lazy(() => import('./pages/Admin').then(m => ({ default: m.AdminPage })));
 const InvitationAcceptPage = lazy(() => import('./pages/InvitationAccept').then(m => ({ default: m.InvitationAcceptPage })));
 const WorkflowFormPage = lazy(() => import('./pages/WorkflowForm').then(m => ({ default: m.WorkflowFormPage })));
@@ -99,6 +100,9 @@ const App: React.FC = () => {
 
           {/* Settings */}
           <Route path="/settings" element={<SettingsPage />} />
+
+          {/* Notifications */}
+          <Route path="/notifications" element={<NotificationsPage />} />
 
           {/* Workflows */}
           <Route path="/workflows/new" element={<WorkflowFormPage />} />
