@@ -6,10 +6,15 @@ import java.util.List;
 public class UserResponse {
     private String id;
     private String email;
+    private String displayName;
+    private String avatarUrl;
     private String role;
     private List<String> permissions;
     private boolean active;
     private LocalDateTime createdAt;
+    private LocalDateTime lastLoginAt;
+    private Boolean twoFactorEnabled;
+    private String twoFactorType;
 
     public UserResponse() {
     }
@@ -71,6 +76,46 @@ public class UserResponse {
         this.createdAt = createdAt;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(LocalDateTime lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
+    public Boolean getTwoFactorEnabled() {
+        return twoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
+    }
+
+    public String getTwoFactorType() {
+        return twoFactorType;
+    }
+
+    public void setTwoFactorType(String twoFactorType) {
+        this.twoFactorType = twoFactorType;
+    }
+
     public static UserResponseBuilder builder() {
         return new UserResponseBuilder();
     }
@@ -78,10 +123,15 @@ public class UserResponse {
     public static class UserResponseBuilder {
         private String id;
         private String email;
+        private String displayName;
+        private String avatarUrl;
         private String role;
         private List<String> permissions;
         private boolean active;
         private LocalDateTime createdAt;
+        private LocalDateTime lastLoginAt;
+        private Boolean twoFactorEnabled;
+        private String twoFactorType;
 
         public UserResponseBuilder id(String id) {
             this.id = id;
@@ -113,8 +163,39 @@ public class UserResponse {
             return this;
         }
 
+        public UserResponseBuilder displayName(String displayName) {
+            this.displayName = displayName;
+            return this;
+        }
+
+        public UserResponseBuilder avatarUrl(String avatarUrl) {
+            this.avatarUrl = avatarUrl;
+            return this;
+        }
+
+        public UserResponseBuilder lastLoginAt(LocalDateTime lastLoginAt) {
+            this.lastLoginAt = lastLoginAt;
+            return this;
+        }
+
+        public UserResponseBuilder twoFactorEnabled(Boolean twoFactorEnabled) {
+            this.twoFactorEnabled = twoFactorEnabled;
+            return this;
+        }
+
+        public UserResponseBuilder twoFactorType(String twoFactorType) {
+            this.twoFactorType = twoFactorType;
+            return this;
+        }
+
         public UserResponse build() {
-            return new UserResponse(id, email, role, permissions, active, createdAt);
+            UserResponse response = new UserResponse(id, email, role, permissions, active, createdAt);
+            response.setDisplayName(displayName);
+            response.setAvatarUrl(avatarUrl);
+            response.setLastLoginAt(lastLoginAt);
+            response.setTwoFactorEnabled(twoFactorEnabled);
+            response.setTwoFactorType(twoFactorType);
+            return response;
         }
     }
 }

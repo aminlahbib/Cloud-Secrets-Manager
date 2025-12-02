@@ -12,6 +12,7 @@ export const TopBar: React.FC = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   const userId = user?.id;
   const {
@@ -20,6 +21,11 @@ export const TopBar: React.FC = () => {
     markAsRead,
     markAllAsRead,
   } = useNotifications(userId);
+
+  // Reset avatar error when user or avatarUrl changes
+  React.useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatarUrl]);
 
   useEffect(() => {
     const checkTheme = () => {
@@ -200,12 +206,24 @@ export const TopBar: React.FC = () => {
                   <span className="text-xs text-theme-tertiary">ADMIN</span>
                 )}
               </div>
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
-                style={{ backgroundColor: 'var(--accent-primary)' }}
-              >
-                {userInitials}
-              </div>
+              {user?.avatarUrl && !avatarError ? (
+                <img 
+                  src={user.avatarUrl} 
+                  alt={user.displayName || user.email}
+                  className="w-8 h-8 rounded-full object-cover border border-theme-subtle"
+                  onError={() => {
+                    // Fallback to initials if image fails to load
+                    setAvatarError(true);
+                  }}
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white"
+                  style={{ backgroundColor: 'var(--accent-primary)' }}
+                >
+                  {userInitials}
+                </div>
+              )}
               <ChevronDown className="h-4 w-4 text-theme-tertiary" />
             </button>
 
