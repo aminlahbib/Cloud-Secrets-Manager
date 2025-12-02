@@ -21,6 +21,8 @@ export interface User {
   platformRole: PlatformRole;
   createdAt: string;
   lastLoginAt?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorType?: 'TOTP' | 'EMAIL' | 'SMS';
 }
 
 export interface LoginRequest {
@@ -33,6 +35,9 @@ export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  requiresTwoFactor?: boolean;
+  intermediateToken?: string;
+  twoFactorType?: string;
 }
 
 export interface UserPreferencesResponse {

@@ -1,5 +1,6 @@
 package com.secrets.controller;
 
+import com.secrets.client.AuditClient;
 import com.secrets.dto.twofactor.*;
 import com.secrets.entity.User;
 import com.secrets.security.IntermediateTokenProvider;
@@ -40,6 +41,7 @@ public class TwoFactorController {
     private final IntermediateTokenProvider intermediateTokenProvider;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
+    private final AuditClient auditClient;
 
     // Simple in-memory rate limiting for 2FA endpoints
     private final Map<String, RateLimitInfo> rateLimitCache = new ConcurrentHashMap<>();
@@ -55,6 +57,7 @@ public class TwoFactorController {
             IntermediateTokenProvider intermediateTokenProvider,
             JwtTokenProvider jwtTokenProvider,
             RefreshTokenService refreshTokenService,
+            AuditClient auditClient,
             @Value("${two-factor.rate-limit.totp-attempts:5}") int totpRateLimit,
             @Value("${two-factor.rate-limit.totp-window-minutes:5}") int totpWindowMinutes) {
         this.twoFactorService = twoFactorService;
@@ -62,6 +65,7 @@ public class TwoFactorController {
         this.intermediateTokenProvider = intermediateTokenProvider;
         this.jwtTokenProvider = jwtTokenProvider;
         this.refreshTokenService = refreshTokenService;
+        this.auditClient = auditClient;
         this.totpRateLimit = totpRateLimit;
         this.totpWindowMinutes = totpWindowMinutes;
     }
@@ -152,6 +156,17 @@ public class TwoFactorController {
             response.setTwoFactorEnabled(true);
             response.setRecoveryCodes(recoveryCodes);
 
+            // Log audit event
+            auditClient.logEvent(
+                    null, // No project for user-level events
+                    userId,
+                    "TWO_FACTOR_ENABLED",
+                    "USER",
+                    userId.toString(),
+                    user.getEmail(),
+                    Map.of("type", "TOTP")
+            );
+
             log.info("TOTP 2FA enabled for user: {}", user.getEmail());
             return ResponseEntity.ok(response);
 
@@ -203,6 +218,18 @@ public class TwoFactorController {
                         user.setTwoFactorRecoveryCodes(recoveryCodes);
                         userService.updateUser(user);
                         verified = true;
+                        
+                        // Log recovery code usage
+                        auditClient.logEvent(
+                                null,
+                                userId,
+                                "RECOVERY_CODE_USED",
+                                "USER",
+                                userId.toString(),
+                                email,
+                                null
+                        );
+                        
                         log.info("Recovery code used for user: {}", email);
                     }
                 }
@@ -217,9 +244,32 @@ public class TwoFactorController {
             }
 
             if (!verified) {
+                // Log failed verification attempt
+                auditClient.logEvent(
+                        null,
+                        userId,
+                        "TWO_FACTOR_VERIFICATION_FAILED",
+                        "USER",
+                        userId.toString(),
+                        email,
+                        Map.of("reason", "Invalid code")
+                );
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("error", "Invalid code"));
             }
+
+            // Log successful verification
+            String verificationMethod = twoFactorService.isRecoveryCodeFormat(request.getCode()) 
+                    ? "RECOVERY_CODE" : "TOTP";
+            auditClient.logEvent(
+                    null,
+                    userId,
+                    "TWO_FACTOR_VERIFIED",
+                    "USER",
+                    userId.toString(),
+                    email,
+                    Map.of("method", verificationMethod)
+            );
 
             // Generate full access and refresh tokens
             List<GrantedAuthority> authorities = List.of(
@@ -311,6 +361,17 @@ public class TwoFactorController {
             response.put("message", "Two-factor authentication has been disabled");
             response.put("twoFactorEnabled", false);
 
+            // Log audit event
+            auditClient.logEvent(
+                    null,
+                    userId,
+                    "TWO_FACTOR_DISABLED",
+                    "USER",
+                    userId.toString(),
+                    user.getEmail(),
+                    null
+            );
+
             log.info("2FA disabled for user: {}", user.getEmail());
             return ResponseEntity.ok(response);
 
@@ -347,6 +408,17 @@ public class TwoFactorController {
 
             RecoveryCodesResponse response = new RecoveryCodesResponse();
             response.setRecoveryCodes(recoveryCodes);
+
+            // Log audit event
+            auditClient.logEvent(
+                    null,
+                    userId,
+                    "RECOVERY_CODES_REGENERATED",
+                    "USER",
+                    userId.toString(),
+                    user.getEmail(),
+                    null
+            );
 
             log.info("Recovery codes regenerated for user: {}", user.getEmail());
             return ResponseEntity.ok(response);
