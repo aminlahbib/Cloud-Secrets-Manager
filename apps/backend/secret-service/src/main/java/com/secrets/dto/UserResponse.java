@@ -13,6 +13,8 @@ public class UserResponse {
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime lastLoginAt;
+    private Boolean twoFactorEnabled;
+    private String twoFactorType;
 
     public UserResponse() {
     }
@@ -98,6 +100,22 @@ public class UserResponse {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public Boolean getTwoFactorEnabled() {
+        return twoFactorEnabled;
+    }
+
+    public void setTwoFactorEnabled(Boolean twoFactorEnabled) {
+        this.twoFactorEnabled = twoFactorEnabled;
+    }
+
+    public String getTwoFactorType() {
+        return twoFactorType;
+    }
+
+    public void setTwoFactorType(String twoFactorType) {
+        this.twoFactorType = twoFactorType;
+    }
+
     public static UserResponseBuilder builder() {
         return new UserResponseBuilder();
     }
@@ -112,6 +130,8 @@ public class UserResponse {
         private boolean active;
         private LocalDateTime createdAt;
         private LocalDateTime lastLoginAt;
+        private Boolean twoFactorEnabled;
+        private String twoFactorType;
 
         public UserResponseBuilder id(String id) {
             this.id = id;
@@ -158,11 +178,23 @@ public class UserResponse {
             return this;
         }
 
+        public UserResponseBuilder twoFactorEnabled(Boolean twoFactorEnabled) {
+            this.twoFactorEnabled = twoFactorEnabled;
+            return this;
+        }
+
+        public UserResponseBuilder twoFactorType(String twoFactorType) {
+            this.twoFactorType = twoFactorType;
+            return this;
+        }
+
         public UserResponse build() {
             UserResponse response = new UserResponse(id, email, role, permissions, active, createdAt);
             response.setDisplayName(displayName);
             response.setAvatarUrl(avatarUrl);
             response.setLastLoginAt(lastLoginAt);
+            response.setTwoFactorEnabled(twoFactorEnabled);
+            response.setTwoFactorType(twoFactorType);
             return response;
         }
     }
