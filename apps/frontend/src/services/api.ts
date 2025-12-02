@@ -24,8 +24,19 @@ api.interceptors.response.use(
   async (error: AxiosError<ApiError>) => {
     const originalRequest = error.config as any;
 
-    // Handle 401 errors
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Don't attempt token refresh for certain endpoints that return 401 as part of their normal flow
+    const skipRefreshEndpoints = [
+      '/api/auth/2fa/totp/verify-login', // 2FA verification returns 401 for invalid codes
+      '/api/auth/login', // Login endpoint handles its own auth flow
+      '/api/auth/refresh', // Refresh endpoint itself
+    ];
+    
+    const shouldSkipRefresh = skipRefreshEndpoints.some(endpoint => 
+      originalRequest.url?.includes(endpoint)
+    );
+
+    // Handle 401 errors (but skip refresh for specific endpoints)
+    if (error.response?.status === 401 && !originalRequest._retry && !shouldSkipRefresh) {
       originalRequest._retry = true;
 
       try {
