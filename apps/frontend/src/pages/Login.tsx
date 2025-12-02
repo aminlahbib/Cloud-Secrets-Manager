@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Logo } from '@/components/ui/Logo';
 import { TwoFactorVerification } from '@/components/twofactor/TwoFactorVerification';
 import { handleApiError } from '@/services/api';
 import type { LoginRequest } from '@/types';
 
 export const LoginPage: React.FC = () => {
+  const navigate = useNavigate();
   const { login, loginWithGoogle, isFirebaseEnabled } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -122,10 +126,22 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 py-8"
       style={{ backgroundColor: 'var(--page-bg)' }}
     >
       <div className="w-full max-w-md">
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/')}
+          className="mb-4 flex items-center gap-2 text-sm transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to home
+        </button>
+
         <div 
           className="rounded-2xl shadow-2xl p-8"
           style={{
@@ -135,19 +151,9 @@ export const LoginPage: React.FC = () => {
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <img 
-              src="/assets/csm-2.webp" 
-              alt="Cloud Secrets Manager Logo" 
-              className="h-16 w-16 mx-auto mb-4 object-contain"
-              onError={(e) => {
-                // Fallback to emoji if image fails to load
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-                const fallback = target.nextElementSibling as HTMLElement;
-                if (fallback) fallback.style.display = 'block';
-              }}
-            />
-            <div className="text-4xl mb-2 hidden">🔐</div>
+            <div className="flex justify-center mb-4">
+              <Logo size="xl" showText={false} clickable={false} />
+            </div>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Cloud Secrets Manager</h1>
             <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to manage your secrets</p>
           </div>

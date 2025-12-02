@@ -5,6 +5,7 @@ import { Layout } from './components/Layout';
 import { Spinner } from './components/ui/Spinner';
 
 // Lazy load pages for code splitting
+const LandingPage = lazy(() => import('./pages/Landing').then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import('./pages/Login').then(m => ({ default: m.LoginPage })));
 const HomePage = lazy(() => import('./pages/Home').then(m => ({ default: m.HomePage })));
 const ProjectsPage = lazy(() => import('./pages/Projects').then(m => ({ default: m.ProjectsPage })));
@@ -77,6 +78,7 @@ const App: React.FC = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/invitations/:token" element={<InvitationAcceptPage />} />
 
@@ -117,11 +119,8 @@ const App: React.FC = () => {
           </Route>
         </Route>
 
-        {/* Default Redirect */}
-        <Route path="/" element={<Navigate to="/home" replace />} />
-
         {/* 404 Fallback */}
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

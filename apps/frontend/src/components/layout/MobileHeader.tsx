@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { Logo } from '../ui/Logo';
 
 interface MobileHeaderProps {
   isSidebarOpen: boolean;
@@ -27,7 +28,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({ isSidebarOpen, onTog
       >
         {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
-      <span className="text-body-sm font-semibold tracking-tight uppercase" style={{ color: 'var(--text-primary)' }}>Cloud Secrets</span>
+      <Logo size="sm" textClassName="text-body-sm uppercase" />
       <div 
         className="h-8 w-8 rounded-full flex items-center justify-center"
         style={{ backgroundColor: 'var(--elevation-2)', color: 'var(--text-primary)' }}
