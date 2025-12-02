@@ -4,11 +4,13 @@ import com.secrets.dto.LoginRequest;
 import com.secrets.dto.RefreshTokenRequest;
 import com.secrets.dto.TokenResponse;
 import com.secrets.entity.RefreshToken;
+import com.secrets.entity.User;
 import com.secrets.exception.TokenRefreshException;
 import com.secrets.security.GoogleIdentityTokenValidator;
 import com.secrets.security.JwtTokenProvider;
 import com.secrets.service.GoogleIdentityService;
 import com.secrets.service.RefreshTokenService;
+import com.secrets.service.UserService;
 import com.google.firebase.auth.FirebaseAuthException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -42,15 +44,17 @@ public class AuthController {
     private final GoogleIdentityTokenValidator googleTokenValidator;
     private final JwtTokenProvider tokenProvider;
     private final RefreshTokenService refreshTokenService;
-
     private final GoogleIdentityService googleIdentityService;
+    private final UserService userService;
 
     public AuthController(GoogleIdentityTokenValidator googleTokenValidator, JwtTokenProvider tokenProvider,
-                         RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService) {
+                         RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService,
+                         UserService userService) {
         this.googleTokenValidator = googleTokenValidator;
         this.tokenProvider = tokenProvider;
         this.refreshTokenService = refreshTokenService;
         this.googleIdentityService = googleIdentityService;
+        this.userService = userService;
     }
 
     @Value("${security.jwt.expiration-ms:900000}")
@@ -66,30 +70,49 @@ public class AuthController {
             return ResponseEntity.notFound().build();
         }
         
-        List<String> authorities = userDetails.getAuthorities().stream()
-            .map(GrantedAuthority::getAuthority)
-            .toList();
-
-        String role = authorities.stream()
-            .filter(a -> a.startsWith("ROLE_"))
-            .findFirst()
-            .map(r -> r.substring(5)) // Remove ROLE_
-            .orElse("USER");
+        String email = userDetails.getUsername();
+        
+        // Fetch full user details from database
+        User user = userService.findByEmail(email)
+            .orElse(null);
+        
+        // Determine role: prefer database platformRole, fallback to JWT authorities
+        String role = "USER";
+        if (user != null && user.getPlatformRole() != null) {
+            role = user.getPlatformRole().name();
+        } else {
+            List<String> authorities = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+            role = authorities.stream()
+                .filter(a -> a.startsWith("ROLE_"))
+                .findFirst()
+                .map(r -> r.substring(5)) // Remove ROLE_
+                .orElse("USER");
+        }
 
         // In v3 architecture, permissions are project-scoped, not global
         // The permissions array is kept empty for backwards compatibility
         List<String> permissions = List.of();
 
-        UserResponse response = UserResponse.builder()
-            .id(userDetails.getUsername())
-            .email(userDetails.getUsername())
+        UserResponse.UserResponseBuilder responseBuilder = UserResponse.builder()
+            .id(user != null ? user.getId().toString() : email)
+            .email(email)
             .role(role)
             .permissions(permissions)
-            .active(true)
-            .createdAt(java.time.LocalDateTime.now())
-            .build();
+            .active(user != null ? user.getIsActive() : true);
+        
+        if (user != null) {
+            responseBuilder
+                .displayName(user.getDisplayName())
+                .avatarUrl(user.getAvatarUrl())
+                .createdAt(user.getCreatedAt())
+                .lastLoginAt(user.getLastLoginAt());
+        } else {
+            responseBuilder.createdAt(java.time.LocalDateTime.now());
+        }
             
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(responseBuilder.build());
     }
 
     /**
