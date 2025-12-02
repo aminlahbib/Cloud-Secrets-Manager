@@ -7,6 +7,7 @@ import com.secrets.entity.RefreshToken;
 import com.secrets.entity.User;
 import com.secrets.exception.TokenRefreshException;
 import com.secrets.security.GoogleIdentityTokenValidator;
+import com.secrets.security.IntermediateTokenProvider;
 import com.secrets.security.JwtTokenProvider;
 import com.secrets.service.GoogleIdentityService;
 import com.secrets.service.RefreshTokenService;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,15 +48,20 @@ public class AuthController {
     private final RefreshTokenService refreshTokenService;
     private final GoogleIdentityService googleIdentityService;
     private final UserService userService;
+    private final IntermediateTokenProvider intermediateTokenProvider;
+
+    @Value("${two-factor.intermediate-token.expiry-ms:300000}")
+    private long intermediateTokenExpiryMs;
 
     public AuthController(GoogleIdentityTokenValidator googleTokenValidator, JwtTokenProvider tokenProvider,
                          RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService,
-                         UserService userService) {
+                         UserService userService, IntermediateTokenProvider intermediateTokenProvider) {
         this.googleTokenValidator = googleTokenValidator;
         this.tokenProvider = tokenProvider;
         this.refreshTokenService = refreshTokenService;
         this.googleIdentityService = googleIdentityService;
         this.userService = userService;
+        this.intermediateTokenProvider = intermediateTokenProvider;
     }
 
     @Value("${security.jwt.expiration-ms:900000}")
@@ -107,7 +114,9 @@ public class AuthController {
                 .displayName(user.getDisplayName())
                 .avatarUrl(user.getAvatarUrl())
                 .createdAt(user.getCreatedAt())
-                .lastLoginAt(user.getLastLoginAt());
+                .lastLoginAt(user.getLastLoginAt())
+                .twoFactorEnabled(user.getTwoFactorEnabled())
+                .twoFactorType(user.getTwoFactorType());
         } else {
             responseBuilder.createdAt(java.time.LocalDateTime.now());
         }
@@ -143,24 +152,44 @@ public class AuthController {
             Authentication authentication = googleTokenValidator.validateToken(request.getIdToken());
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String email = userDetails.getUsername();
             
-            // Generate access token
+            // Check if user has 2FA enabled
+            User user = userService.findByEmail(email).orElse(null);
+            if (user != null && Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+                // User has 2FA enabled - return intermediate token
+                UUID userId = user.getId();
+                String intermediateToken = intermediateTokenProvider.generateToken(userId, email);
+                
+                TokenResponse response = TokenResponse.builder()
+                    .requiresTwoFactor(true)
+                    .intermediateToken(intermediateToken)
+                    .twoFactorType("TOTP")
+                    .expiresIn(intermediateTokenExpiryMs / 1000)
+                    .build();
+                
+                log.info("User {} requires 2FA verification", email);
+                return ResponseEntity.ok(response);
+            }
+            
+            // No 2FA - proceed with normal token generation
             String accessToken = tokenProvider.generateToken(
-                userDetails.getUsername(),
+                email,
                 userDetails.getAuthorities()
             );
 
             // Generate refresh token
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(userDetails.getUsername());
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
 
             TokenResponse response = TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken.getToken())
                 .tokenType("Bearer")
                 .expiresIn(expirationMs / 1000)
+                .requiresTwoFactor(false)
                 .build();
 
-            log.info("User {} logged in successfully via Google Identity Platform", userDetails.getUsername());
+            log.info("User {} logged in successfully via Google Identity Platform", email);
             return ResponseEntity.ok(response);
             
         } catch (FirebaseAuthException e) {

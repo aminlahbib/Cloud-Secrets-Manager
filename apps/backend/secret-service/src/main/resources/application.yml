@@ -79,11 +79,30 @@ encryption:
   algorithm: AES
   transformation: AES/GCM/NoPadding
 
+# Two-Factor Authentication Configuration
+two-factor:
+  totp:
+    issuer: ${TOTP_ISSUER:Cloud Secrets Manager}
+    period: ${TOTP_PERIOD:30}
+    digits: ${TOTP_DIGITS:6}
+    skew: ${TOTP_SKEW:1}
+  intermediate-token:
+    expiry-ms: ${INTERMEDIATE_TOKEN_EXPIRY_MS:300000}  # 5 minutes
+  rate-limit:
+    totp-attempts: ${TOTP_RATE_LIMIT_ATTEMPTS:5}
+    totp-window-minutes: ${TOTP_RATE_LIMIT_WINDOW:5}
+    recovery-attempts: ${RECOVERY_RATE_LIMIT_ATTEMPTS:3}
+    recovery-window-minutes: ${RECOVERY_RATE_LIMIT_WINDOW:15}
+
 audit:
   service:
     url: ${AUDIT_SERVICE_URL:http://localhost:8081}
     timeout: 5000
     api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
+
+notifications:
+  service:
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}
 
 # Google Cloud Identity Platform Configuration
 google:

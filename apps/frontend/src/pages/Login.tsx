@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { TwoFactorVerification } from '@/components/twofactor/TwoFactorVerification';
 import { handleApiError } from '@/services/api';
 import type { LoginRequest } from '@/types';
 
@@ -12,6 +13,9 @@ export const LoginPage: React.FC = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keepSignedIn, setKeepSignedIn] = useState(false);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [intermediateToken, setIntermediateToken] = useState<string | null>(null);
+  const [loginCredentials, setLoginCredentials] = useState<LoginRequest | null>(null);
 
   const {
     register,
@@ -26,12 +30,71 @@ export const LoginPage: React.FC = () => {
     console.log('Login submitted with keepSignedIn:', keepSignedIn);
 
     try {
-      await login(data, keepSignedIn);
+      const result = await login(data, keepSignedIn);
+      if (result && 'requiresTwoFactor' in result && result.requiresTwoFactor) {
+        // 2FA required - show verification step
+        setRequires2FA(true);
+        setIntermediateToken(result.intermediateToken || null);
+        setLoginCredentials(data);
+      }
     } catch (err) {
       setError(handleApiError(err));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handle2FAVerify = async (code: string) => {
+    if (!intermediateToken) {
+      setError('Session expired. Please try logging in again.');
+      setRequires2FA(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (loginCredentials) {
+        // Email/password login
+        await login(loginCredentials, keepSignedIn, intermediateToken, code);
+        // Login successful - navigation handled by AuthContext
+      } else {
+        // Google login
+        await loginWithGoogle(keepSignedIn, intermediateToken, code);
+        // Login successful - navigation handled by AuthContext
+      }
+    } catch (err: any) {
+      // Extract error message from API response
+      const errorMessage = err?.response?.data?.error || 
+                          err?.response?.data?.message || 
+                          err?.message || 
+                          'Invalid verification code. Please try again.';
+      
+      // Check if it's a 2FA-specific error (invalid code, expired token, etc.)
+      const is2FAError = errorMessage.toLowerCase().includes('invalid') ||
+                        errorMessage.toLowerCase().includes('code') ||
+                        errorMessage.toLowerCase().includes('expired') ||
+                        errorMessage.toLowerCase().includes('verification');
+      
+      if (is2FAError) {
+        // Keep user on 2FA screen with error message
+        setError(errorMessage);
+        // Don't reset requires2FA - let user try again
+      } else {
+        // For other errors (network, server, etc.), show error but keep on 2FA screen
+        setError(errorMessage || 'Verification failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handle2FACancel = () => {
+    setRequires2FA(false);
+    setIntermediateToken(null);
+    setLoginCredentials(null);
+    setError(null);
   };
 
   const handleGoogleSignIn = async () => {
@@ -41,7 +104,15 @@ export const LoginPage: React.FC = () => {
     console.log('Google login submitted with keepSignedIn:', keepSignedIn);
 
     try {
-      await loginWithGoogle(keepSignedIn);
+      const result = await loginWithGoogle(keepSignedIn);
+
+      // If backend indicates 2FA is required, show verification step
+      if (result && 'requiresTwoFactor' in result && result.requiresTwoFactor) {
+        setRequires2FA(true);
+        setIntermediateToken(result.intermediateToken || null);
+        // For Google login, we don't need stored credentials
+        setLoginCredentials(null);
+      }
     } catch (err) {
       setError(handleApiError(err));
     } finally {
@@ -81,8 +152,8 @@ export const LoginPage: React.FC = () => {
             <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to manage your secrets</p>
           </div>
 
-          {/* Error Alert */}
-          {error && (
+          {/* Error Alert (only for primary login / non-2FA errors) */}
+          {error && !requires2FA && (
             <div 
               className="mb-4 p-3 border rounded-lg"
               style={{
@@ -94,8 +165,19 @@ export const LoginPage: React.FC = () => {
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          {/* 2FA Verification Step */}
+          {requires2FA && intermediateToken ? (
+            <TwoFactorVerification
+              onVerify={handle2FAVerify}
+              onCancel={handle2FACancel}
+              isLoading={isLoading}
+              error={error}
+              onErrorClear={() => setError(null)}
+            />
+          ) : (
+            <>
+              {/* Login Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
               label="Email"
               type="email"
@@ -198,11 +280,15 @@ export const LoginPage: React.FC = () => {
               </Button>
             </div>
           )}
+            </>
+          )}
 
           {/* Footer */}
-          <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-            Don't have an account? Contact your administrator.
-          </p>
+          {!requires2FA && (
+            <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
+              Don't have an account? Contact your administrator.
+            </p>
+          )}
         </div>
       </div>
     </div>
