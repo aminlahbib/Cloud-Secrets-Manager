@@ -2830,6 +2830,19 @@
       0 14px 26px rgba(15, 23, 42, 0.7),
       0 0 0 1px rgba(30, 64, 175, 0.55);
   }
+
+  /* Final override: remove glass look entirely for a cleaner, solid UI */
+  .glass,
+  .card-glass,
+  .modal-glass,
+  .sidebar-glass,
+  .dropdown-glass {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-color: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: var(--card-shadow) !important;
+  }
   
   /* Light mode adjustments for glass effects - Pronounced frosted glass */
   [data-theme="light-orange"] .glass,

@@ -58,7 +58,11 @@ public class User {
     @Column(name = "notification_preferences", columnDefinition = "jsonb")
     private Map<String, Object> notificationPreferences;
 
-    @Column(name = "two_factor_enabled", nullable = false)
+    @Column(
+        name = "two_factor_enabled",
+        nullable = false,
+        columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE"
+    )
     private Boolean twoFactorEnabled = false;
 
     @Column(name = "two_factor_type", length = 20)
