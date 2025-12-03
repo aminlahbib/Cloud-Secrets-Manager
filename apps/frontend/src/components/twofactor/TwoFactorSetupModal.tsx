@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { twoFactorService, type TotpStartResponse } from '../../services/twoFactor';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface TwoFactorSetupModalProps {
   isOpen: boolean;
@@ -18,6 +19,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
   onSuccess,
 }) => {
   const { showNotification } = useNotifications();
+  const { t } = useI18n();
   const [step, setStep] = useState<'qr' | 'verify'>('qr');
   const [setupData, setSetupData] = useState<TotpStartResponse | null>(null);
   const [verificationCode, setVerificationCode] = useState('');
@@ -44,9 +46,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
       if (backendMessage && backendMessage.toLowerCase().includes('already enabled')) {
         showNotification({
           type: 'info',
-          title: 'Two-Factor Authentication already enabled',
-          message:
-            '2FA is already active on your account. You can disable it or manage recovery codes from the Security settings.',
+          title: t('twoFactor.alreadyEnabled'),
+          message: t('twoFactor.alreadyEnabledDescription'),
         });
         // Let parent refresh the user state so the Security tab reflects 2FA correctly
         // Wait for refresh to complete before closing modal
@@ -55,8 +56,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
       } else {
         showNotification({
           type: 'error',
-          title: 'Setup failed',
-          message: backendMessage || 'Failed to start 2FA setup. Please try again.',
+          title: t('twoFactor.setupFailed'),
+          message: backendMessage || t('twoFactor.setupFailedDescription'),
         });
         onClose();
       }
@@ -69,8 +70,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
     if (!verificationCode.match(/^\d{6}$/)) {
       showNotification({
         type: 'error',
-        title: 'Invalid code',
-        message: 'Please enter a 6-digit code from your authenticator app.',
+        title: t('twoFactor.invalidCode'),
+        message: t('twoFactor.invalidCodeDescription'),
       });
       return;
     }
@@ -83,8 +84,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
     } catch (error: any) {
       showNotification({
         type: 'error',
-        title: 'Verification failed',
-        message: error?.response?.data?.error || 'Invalid code. Please try again.',
+        title: t('twoFactor.verificationFailed'),
+        message: error?.response?.data?.error || t('twoFactor.verificationFailedDescription'),
       });
     } finally {
       setIsLoading(false);
@@ -124,13 +125,13 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Enable Two-Factor Authentication">
+    <Modal isOpen={isOpen} onClose={handleClose} title={t('twoFactor.title')}>
       <div className="space-y-6">
         {step === 'qr' && (
           <>
             <div>
               <p className="text-body-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Scan the QR code with your authenticator app (Google Authenticator, Authy, 1Password, etc.)
+                {t('twoFactor.scanQR')}
               </p>
               
               {isLoading ? (
@@ -152,7 +153,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                   
                   <div className="w-full">
                     <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                      Or enter this code manually:
+                      {t('twoFactor.enterManually')}
                     </label>
                     <div className="flex items-center gap-2">
                       <Input
@@ -176,24 +177,24 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
 
             <div>
               <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                Enter verification code
+                {t('twoFactor.verificationCode')}
               </label>
               <Input
                 type="text"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
+                placeholder={t('twoFactor.verificationCodePlaceholder')}
                 maxLength={6}
                 className="text-center text-2xl tracking-widest font-mono"
               />
               <p className="text-caption mt-2" style={{ color: 'var(--text-tertiary)' }}>
-                Enter the 6-digit code from your authenticator app
+                {t('twoFactor.verificationCodeHint')}
               </p>
             </div>
 
             <div className="flex gap-3">
               <Button variant="secondary" onClick={handleClose} className="flex-1">
-                Cancel
+                {t('twoFactor.cancel')}
               </Button>
               <Button 
                 onClick={handleVerify} 
@@ -201,7 +202,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                 disabled={verificationCode.length !== 6}
                 className="flex-1"
               >
-                Verify & Enable
+                {t('twoFactor.verifyAndEnable')}
               </Button>
             </div>
           </>
@@ -221,10 +222,10 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
               <Check className="h-5 w-5 flex-shrink-0 mt-0.5" style={{ color: 'var(--status-success)' }} />
               <div>
                 <h3 className="font-medium mb-1" style={{ color: 'var(--status-success)' }}>
-                  Two-Factor Authentication Enabled
+                  {t('twoFactor.enabled')}
                 </h3>
                 <p className="text-body-sm" style={{ color: 'var(--status-success)' }}>
-                  Your account is now protected with 2FA. Please save your recovery codes.
+                  {t('twoFactor.enabledDescription')}
                 </p>
               </div>
             </div>
@@ -232,7 +233,7 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
             <div>
               <div className="flex items-center justify-between mb-3">
                 <label className="block text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                  Recovery Codes
+                  {t('twoFactor.recoveryCodes')}
                 </label>
                 <Button
                   variant="secondary"
@@ -242,13 +243,13 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                     navigator.clipboard.writeText(codesText);
                     showNotification({
                       type: 'success',
-                      title: 'Copied',
-                      message: 'Recovery codes copied to clipboard',
+                      title: t('twoFactor.copied'),
+                      message: t('twoFactor.recoveryCodesCopied'),
                     });
                   }}
                 >
                   <Copy className="h-4 w-4 mr-2" />
-                  Copy All
+                  {t('twoFactor.copyAll')}
                 </Button>
               </div>
               
@@ -271,8 +272,8 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
                         navigator.clipboard.writeText(code);
                         showNotification({
                           type: 'success',
-                          title: 'Copied',
-                          message: 'Recovery code copied',
+                          title: t('twoFactor.copied'),
+                          message: t('twoFactor.recoveryCodeCopied'),
                         });
                       }}
                     >
@@ -293,13 +294,13 @@ export const TwoFactorSetupModal: React.FC<TwoFactorSetupModalProps> = ({
               >
                 <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" style={{ color: 'var(--status-warning)' }} />
                 <p className="text-caption" style={{ color: 'var(--status-warning)' }}>
-                  <strong>Important:</strong> Save these codes in a safe place. You'll need them if you lose access to your authenticator app. Each code can only be used once.
+                  <strong>{t('common.important') || 'Important:'}</strong> {t('twoFactor.recoveryCodesImportant')}
                 </p>
               </div>
             </div>
 
             <Button onClick={handleComplete} className="w-full">
-              Done
+              {t('twoFactor.done')}
             </Button>
           </>
         )}

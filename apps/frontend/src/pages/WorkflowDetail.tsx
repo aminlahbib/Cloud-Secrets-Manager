@@ -8,10 +8,12 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
+import { useI18n } from '../contexts/I18nContext';
 
 export const WorkflowDetailPage: React.FC = () => {
   const { workflowId } = useParams<{ workflowId: string }>();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -82,13 +84,13 @@ export const WorkflowDetailPage: React.FC = () => {
                 <Input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  placeholder="Workflow name"
+                  placeholder={t('workflow.namePlaceholder')}
                   className="text-2xl font-bold"
                 />
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
-                  placeholder="Description (optional)"
+                  placeholder={t('workflow.descriptionPlaceholder')}
                   rows={2}
                   className="input-theme w-full px-4 py-2 rounded-lg"
                 />

@@ -3,6 +3,7 @@ import { Mail, Users, Trash2, Crown, Shield } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import { EmptyState } from '../ui/EmptyState';
 import { Badge } from '../ui/Badge';
+import { useI18n } from '../../contexts/I18nContext';
 import type { ProjectMember, ProjectRole } from '../../types';
 
 const ROLE_ICONS: Record<ProjectRole, React.ReactNode> = {
@@ -39,6 +40,7 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
   onRemoveMember,
   onInviteMember,
 }) => {
+  const { t } = useI18n();
   const handleRoleChange = useCallback((member: ProjectMember, e: React.ChangeEvent<HTMLSelectElement>) => {
     onRoleChange(member, e.target.value as ProjectRole);
   }, [onRoleChange]);
@@ -58,12 +60,12 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
     return (
       <EmptyState
         icon={<Users className="h-16 w-16 text-theme-tertiary" />}
-        title="No members"
-        description="Invite team members to collaborate on this project"
+        title={t('members.noMembers')}
+        description={t('members.inviteDescription')}
         action={
           canManageMembers
             ? {
-                label: 'Invite Member',
+                label: t('members.inviteMember'),
                 onClick: onInviteMember,
               }
             : undefined
@@ -90,7 +92,7 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
                 <p className="text-sm font-medium text-theme-primary">
                   {member.user?.displayName || member.user?.email}
                   {member.userId === currentUserId && (
-                    <span className="ml-2 text-xs text-theme-tertiary">(You)</span>
+                    <span className="ml-2 text-xs text-theme-tertiary">{t('members.you')}</span>
                   )}
                 </p>
                 <p className="text-sm flex items-center text-theme-tertiary">
@@ -125,7 +127,7 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
                 <button
                   onClick={() => handleRemoveMember(member.userId)}
                   className="p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                  title="Remove member"
+                  title={t('members.removeMember')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
