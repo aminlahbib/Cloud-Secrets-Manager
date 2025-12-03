@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { I18nProvider } from './contexts/I18nContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
@@ -61,13 +62,15 @@ root.render(
           v7_relativeSplatPath: true,
         }}
       >
-        <ThemeProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <App />
-            </NotificationProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <I18nProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <NotificationProvider>
+                <App />
+              </NotificationProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </I18nProvider>
       </BrowserRouter>
     </QueryClientProvider>
     </ErrorBoundary>

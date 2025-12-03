@@ -421,7 +421,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     tokenStorage.clearAll();
     // Clear query cache on logout
     queryClient.clear();
-    navigate('/login');
+    // Redirect to public landing page after sign out
+    navigate('/');
   };
 
   const refreshUser = async () => {

@@ -6,6 +6,7 @@ import {
   Settings,
   Trash2,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { usePreferences } from '../hooks/usePreferences';
@@ -18,7 +19,7 @@ import { Modal } from '../components/ui/Modal';
 import { PageHeader } from '../components/shared/PageHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import type { Team } from '../types';
-import { useNavigate } from 'react-router-dom';
+import { useI18n } from '../contexts/I18nContext';
 
 // Generate theme-aware gradient style for a team based on its name
 // Uses CSS variables that adapt to the current theme and color mode
@@ -48,6 +49,7 @@ export const TeamsPage: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { teamView, setTeamView } = usePreferences();
+  const { t } = useI18n();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
@@ -127,8 +129,8 @@ export const TeamsPage: React.FC = () => {
     return (
       <EmptyState
         icon={<Users className="h-16 w-16 text-theme-tertiary" />}
-        title="Error loading teams"
-        description="Failed to load teams. Please try again."
+        title={t('teams.errorTitle')}
+        description={t('teams.errorDescription')}
       />
     );
   }
@@ -136,25 +138,25 @@ export const TeamsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Teams"
-        description="Manage team members and access controls"
+        title={t('teams.title')}
+        description={t('teams.description')}
         view={teamView}
         onViewChange={setTeamView}
         onCreateNew={() => setShowCreateModal(true)}
-        createButtonLabel="New Team"
+        createButtonLabel={t('teams.newTeam')}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search teams..."
+        searchPlaceholder={t('teams.searchPlaceholder')}
       />
 
       {/* Teams List */}
       {!teams || teams.length === 0 ? (
         <EmptyState
           icon={<Users className="h-16 w-16 text-theme-tertiary" />}
-          title="No teams yet"
-          description="Create your first team to start collaborating"
+          title={t('teams.emptyTitle')}
+          description={t('teams.emptyDescription')}
           action={{
-            label: 'Create Team',
+            label: t('teams.createTeamLabel'),
             onClick: () => setShowCreateModal(true),
           }}
         />

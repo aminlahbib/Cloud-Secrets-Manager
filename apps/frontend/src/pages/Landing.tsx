@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ChevronDown, 
@@ -16,15 +16,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Logo } from '@/components/ui/Logo';
 import { ThemeSelector } from '@/components/ui/ThemeSelector';
-import { LanguageSelector, type Language } from '@/components/ui/LanguageSelector';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { mode, toggleMode } = useTheme();
-  const [currentLanguage, setCurrentLanguage] = useState<Language>('en');
+  const { t } = useI18n();
 
   // Redirect if already authenticated
   React.useEffect(() => {
@@ -67,7 +68,7 @@ export const LandingPage: React.FC = () => {
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
-                Features <ChevronDown className="w-3 h-3" />
+                {t('nav.features')} <ChevronDown className="w-3 h-3" />
               </button>
               <button 
                 className="transition-colors"
@@ -75,7 +76,7 @@ export const LandingPage: React.FC = () => {
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
-                Security
+                {t('nav.security')}
               </button>
               <button 
                 className="transition-colors"
@@ -83,7 +84,7 @@ export const LandingPage: React.FC = () => {
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
-                Pricing
+                {t('nav.pricing')}
               </button>
               <button 
                 className="transition-colors flex items-center gap-1"
@@ -91,7 +92,7 @@ export const LandingPage: React.FC = () => {
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
-                Resources <ChevronDown className="w-3 h-3" />
+                {t('nav.resources')} <ChevronDown className="w-3 h-3" />
               </button>
             </div>
           </div>
@@ -106,7 +107,7 @@ export const LandingPage: React.FC = () => {
                 />
                 <input 
                     type="text" 
-                    placeholder="Search docs..." 
+                    placeholder={t('nav.search.placeholder')} 
                     className="rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none w-48 transition-all"
                     style={{
                       backgroundColor: 'var(--elevation-2)',
@@ -188,11 +189,7 @@ export const LandingPage: React.FC = () => {
                  </button>
                  {/* Language Selector - Icon only, rightmost position */}
                  <div className="hidden md:block">
-                   <LanguageSelector 
-                     currentLanguage={currentLanguage}
-                     onLanguageChange={setCurrentLanguage}
-                     iconOnly={true}
-                   />
+                   <LanguageSelector iconOnly={true} />
                  </div>
             </div>
           </div>
@@ -208,21 +205,20 @@ export const LandingPage: React.FC = () => {
           {/* Left Content */}
           <div className="flex-1 max-w-2xl space-y-6 sm:space-y-8 animate-fade-in-up text-center lg:text-left">
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.1]" style={{ color: 'var(--text-primary)' }}>
-              The world's most <br />
+              {t('landing.hero.title')} <br />
               <span style={{ 
                 background: 'linear-gradient(to right, var(--accent-primary), var(--accent-primary-light))',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
                 backgroundClip: 'text'
               }}>
-                secure platform
+                {t('landing.hero.titleHighlight')}
               </span> <br />
-              for secrets.
+              {t('landing.hero.titleEnd')}
             </h1>
             
             <p className="text-base sm:text-lg max-w-lg leading-relaxed mx-auto lg:mx-0" style={{ color: 'var(--text-secondary)' }}>
-              Manage API keys, tokens, and certificates with enterprise-grade security. 
-              Built for developers, trusted by security teams.
+              {t('landing.hero.description')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4 justify-center lg:justify-start">
@@ -241,7 +237,7 @@ export const LandingPage: React.FC = () => {
                   e.currentTarget.style.backgroundColor = 'var(--accent-primary)';
                 }}
               >
-                Get Started Free
+                {t('landing.hero.getStarted')}
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button 
@@ -260,7 +256,7 @@ export const LandingPage: React.FC = () => {
                   e.currentTarget.style.borderColor = 'var(--border-subtle)';
                 }}
               >
-                View Demo
+                {t('landing.hero.viewDemo')}
               </button>
             </div>
 
@@ -268,15 +264,15 @@ export const LandingPage: React.FC = () => {
             <div className="pt-6 sm:pt-8 flex items-center justify-center lg:justify-start gap-4 sm:gap-6 text-xs sm:text-sm font-medium flex-wrap" style={{ color: 'var(--text-tertiary)' }}>
                 <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                    <span>AES-256 Encrypted</span>
+                    <span>{t('landing.trust.encrypted')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                    <span>2FA Supported</span>
+                    <span>{t('landing.trust.2fa')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <CheckCircle2 className="w-4 h-4" style={{ color: 'var(--accent-primary)' }} />
-                    <span>99.99% Uptime</span>
+                    <span>{t('landing.trust.uptime')}</span>
                 </div>
             </div>
           </div>
@@ -487,19 +483,19 @@ export const LandingPage: React.FC = () => {
         >
             <div className="text-center md:text-left">
                 <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>200+</div>
-                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Integrations</div>
+                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>{t('landing.stats.integrations')}</div>
             </div>
              <div className="text-center md:text-left">
                 <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>$50B</div>
-                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Secured Assets</div>
+                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>{t('landing.stats.assets')}</div>
             </div>
              <div className="text-center md:text-left">
                 <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>0.05ms</div>
-                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Latency</div>
+                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>{t('landing.stats.latency')}</div>
             </div>
              <div className="text-center md:text-left">
                 <div className="text-2xl sm:text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>24/7</div>
-                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Expert Support</div>
+                <div className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>{t('landing.stats.support')}</div>
             </div>
         </footer>
       </div>

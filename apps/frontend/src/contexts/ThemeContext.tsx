@@ -51,7 +51,9 @@ export const useTheme = () => {
   return context;
 };
 
-const DEFAULT_THEME: Theme = 'dark-orange';
+const DEFAULT_THEME_DARK: Theme = 'dark-plum';
+const DEFAULT_THEME_LIGHT: Theme = 'light-plum';
+const DEFAULT_THEME: Theme = DEFAULT_THEME_DARK;
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -61,9 +63,9 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (saved && AVAILABLE_THEMES.some(t => t.id === saved)) {
         return saved;
       }
-      // Check system preference and default to orange
+      // Check system preference and default to new brand theme
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      return prefersDark ? 'dark-orange' : 'light-orange';
+      return prefersDark ? DEFAULT_THEME_DARK : DEFAULT_THEME_LIGHT;
     }
     return DEFAULT_THEME;
   });
@@ -90,7 +92,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const saved = localStorage.getItem('theme') as Theme;
     const initialTheme = (saved && AVAILABLE_THEMES.some(t => t.id === saved))
       ? saved
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-orange' : 'light-orange');
+      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? DEFAULT_THEME_DARK : DEFAULT_THEME_LIGHT);
     root.setAttribute('data-theme', initialTheme);
     const initialInfo = AVAILABLE_THEMES.find(t => t.id === initialTheme) || AVAILABLE_THEMES[0];
     root.setAttribute('data-theme-mode', initialInfo.mode);

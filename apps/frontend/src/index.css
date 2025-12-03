@@ -2748,96 +2748,87 @@
     border-color: var(--border-default);
   }
   
-  /* Glassmorphism effect - Base - Pronounced Apple-like */
+  /* Glassmorphism effect - Base - Subtle and refined */
   .glass {
-    backdrop-filter: blur(50px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    background-color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      0 12px 24px rgba(0, 0, 0, 0.12),
-      0 4px 8px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background-color: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    box-shadow:
+      0 8px 16px rgba(15, 23, 42, 0.18),
+      0 0 0 1px rgba(148, 163, 184, 0.25);
     border-radius: 1.25rem;
   }
   
   [data-theme*="dark"] .glass {
-    background-color: rgba(20, 20, 20, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(15, 23, 42, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.35);
   }
   
-  /* Glass effect for cards - Pronounced with backdrop blur */
+  /* Glass effect for cards - Soft and minimal */
   .card-glass {
-    backdrop-filter: blur(50px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    background-color: rgba(255, 255, 255, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    background-color: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(226, 232, 240, 0.55);
   }
   
   [data-theme*="dark"] .card-glass {
-    background-color: rgba(20, 20, 20, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(15, 23, 42, 0.68);
+    border: 1px solid rgba(148, 163, 184, 0.45);
   }
   
-  /* Glass effect for modals - Pronounced Apple-like */
+  /* Glass effect for modals - Refined sheet, reduced glow */
   .modal-glass {
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(60px) saturate(200%);
-    background-color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    border-radius: 1.5rem;      /* 24px - Apple-like rounded */
-    box-shadow: 
-      0 24px 48px -8px rgba(0, 0, 0, 0.2),
-      0 12px 24px -4px rgba(0, 0, 0, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.5),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 1.25rem;
+    box-shadow:
+      0 18px 40px rgba(15, 23, 42, 0.28),
+      0 0 0 1px rgba(148, 163, 184, 0.25);
   }
   
   [data-theme*="dark"] .modal-glass {
-    background-color: rgba(30, 30, 30, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background-color: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.55);
   }
   
-  /* Glass effect for sidebar - Pronounced Apple-like */
+  /* Glass effect for sidebar - More solid, less frosted */
   .sidebar-glass {
-    backdrop-filter: blur(50px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    background-color: rgba(255, 255, 255, 0.7);
-    border-right: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      4px 0 16px rgba(0, 0, 0, 0.08),
-      inset -1px 0 0 rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(14px) saturate(130%);
+    -webkit-backdrop-filter: blur(14px) saturate(130%);
+    background-color: rgba(255, 255, 255, 0.92);
+    border-right: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow:
+      4px 0 14px rgba(15, 23, 42, 0.16);
   }
   
   [data-theme*="dark"] .sidebar-glass {
-    background-color: rgba(20, 20, 20, 0.75);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 
-      4px 0 16px rgba(0, 0, 0, 0.4),
-      inset -1px 0 0 rgba(255, 255, 255, 0.08);
+    background-color: rgba(15, 23, 42, 0.94);
+    border-right: 1px solid rgba(30, 64, 175, 0.45);
+    box-shadow:
+      4px 0 18px rgba(15, 23, 42, 0.55);
   }
   
-  /* Glass effect for dropdowns - Pronounced */
+  /* Glass effect for dropdowns - Light popover, less glow */
   .dropdown-glass {
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
-    background-color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      0 16px 32px -4px rgba(0, 0, 0, 0.18),
-      0 8px 16px -4px rgba(0, 0, 0, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    background-color: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow:
+      0 12px 24px rgba(15, 23, 42, 0.22),
+      0 0 0 1px rgba(148, 163, 184, 0.35);
   }
   
   [data-theme*="dark"] .dropdown-glass {
-    background-color: rgba(30, 30, 30, 0.85);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: 
-      0 16px 32px -4px rgba(0, 0, 0, 0.6),
-      0 8px 16px -4px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    background-color: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    box-shadow:
+      0 14px 26px rgba(15, 23, 42, 0.7),
+      0 0 0 1px rgba(30, 64, 175, 0.55);
   }
   
   /* Light mode adjustments for glass effects - Pronounced frosted glass */

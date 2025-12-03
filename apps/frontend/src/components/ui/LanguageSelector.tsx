@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Globe, ChevronUp, ChevronDown } from 'lucide-react';
+import { useI18n } from '@/contexts/I18nContext';
 
 export type Language = 'en' | 'es' | 'fr' | 'de' | 'it' | 'pt' | 'ja' | 'zh' | 'ko' | 'ar';
 
@@ -23,9 +24,9 @@ const languages: LanguageOption[] = [
 ];
 
 interface LanguageSelectorProps {
-  /** Current selected language */
+  /** Current selected language - if not provided, uses i18n context */
   currentLanguage?: Language;
-  /** Callback when language changes */
+  /** Callback when language changes - if not provided, uses i18n context */
   onLanguageChange?: (language: Language) => void;
   /** Compact mode for smaller spaces */
   compact?: boolean;
@@ -34,11 +35,22 @@ interface LanguageSelectorProps {
 }
 
 export const LanguageSelector: React.FC<LanguageSelectorProps> = ({ 
-  currentLanguage = 'en',
-  onLanguageChange,
+  currentLanguage: propCurrentLanguage,
+  onLanguageChange: propOnLanguageChange,
   compact = false,
   iconOnly = false
 }) => {
+  // Use i18n context if props are not provided
+  let i18nContext: ReturnType<typeof useI18n> | null = null;
+  try {
+    i18nContext = useI18n();
+  } catch {
+    // Context not available, use props
+  }
+
+  const currentLanguage = propCurrentLanguage ?? i18nContext?.language ?? 'en';
+  const handleLanguageChange = propOnLanguageChange ?? i18nContext?.setLanguage ?? (() => {});
+
   const [isOpen, setIsOpen] = useState(false);
   const selectorRef = useRef<HTMLDivElement>(null);
 
@@ -56,13 +68,8 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   const currentLang = languages.find(l => l.code === currentLanguage) || languages[0];
 
   const handleLanguageSelect = (lang: Language) => {
-    onLanguageChange?.(lang);
+    handleLanguageChange(lang);
     setIsOpen(false);
-    // TODO: Implement actual language switching logic
-    // This would typically involve:
-    // 1. Loading translation files
-    // 2. Updating i18n context
-    // 3. Persisting preference to localStorage
   };
 
   if (iconOnly) {
