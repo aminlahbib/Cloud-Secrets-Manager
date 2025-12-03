@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
@@ -13,6 +14,7 @@ import type { LoginRequest } from '@/types';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login, loginWithGoogle, isFirebaseEnabled } = useAuth();
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -139,7 +141,7 @@ export const LoginPage: React.FC = () => {
           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to home
+          {t('common.backToHome')}
         </button>
 
         <div 
@@ -154,8 +156,8 @@ export const LoginPage: React.FC = () => {
             <div className="flex justify-center mb-4">
               <Logo size="xl" showText={false} clickable={false} />
             </div>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>Cloud Secrets Manager</h1>
-            <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>Sign in to manage your secrets</p>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{t('login.title')}</h1>
+            <p className="mt-2" style={{ color: 'var(--text-secondary)' }}>{t('login.subtitle')}</p>
           </div>
 
           {/* Error Alert (only for primary login / non-2FA errors) */}
@@ -185,28 +187,28 @@ export const LoginPage: React.FC = () => {
               {/* Login Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <Input
-              label="Email"
+              label={t('login.email')}
               type="email"
-              placeholder="user@example.com"
+              placeholder={t('login.emailPlaceholder')}
               {...register('email', {
-                required: 'Email is required',
+                required: t('login.emailRequired'),
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                  message: 'Invalid email address',
+                  message: t('login.emailInvalid'),
                 },
               })}
               error={errors.email?.message}
             />
 
             <Input
-              label="Password"
+              label={t('login.password')}
               type="password"
-              placeholder="••••••••"
+              placeholder={t('login.passwordPlaceholder')}
               {...register('password', {
-                required: 'Password is required',
+                required: t('login.passwordRequired'),
                 minLength: {
                   value: 8,
-                  message: 'Password must be at least 8 characters',
+                  message: t('login.passwordMinLength'),
                 },
               })}
               error={errors.password?.message}
@@ -222,17 +224,17 @@ export const LoginPage: React.FC = () => {
                 style={{ borderColor: 'var(--border-default)' }}
               />
               <label htmlFor="keep-signed-in" className="ml-2 block text-body-sm" style={{ color: 'var(--text-primary)' }}>
-                Keep me signed in
+                {t('login.keepSignedIn')}
               </label>
             </div>
             <p className="text-caption -mt-2 mb-2" style={{ color: 'var(--text-secondary)' }}>
               {keepSignedIn 
-                ? 'Your session will persist across browser restarts and tabs will stay synchronized.'
-                : 'Your session will end when you close the browser. Each tab has its own session.'}
+                ? t('login.keepSignedInDescription')
+                : t('login.keepSignedInDescriptionSession')}
             </p>
 
             <Button type="submit" className="w-full" isLoading={isLoading}>
-              Sign In
+              {t('login.signIn')}
             </Button>
           </form>
 
@@ -251,7 +253,7 @@ export const LoginPage: React.FC = () => {
                       color: 'var(--text-secondary)',
                     }}
                   >
-                    Or continue with
+                    {t('login.orContinueWith')}
                   </span>
                 </div>
               </div>
@@ -282,7 +284,7 @@ export const LoginPage: React.FC = () => {
                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                   />
                 </svg>
-                {isGoogleLoading ? 'Signing in...' : 'Sign in with Google'}
+                {isGoogleLoading ? t('login.signingIn') : t('login.signInWithGoogle')}
               </Button>
             </div>
           )}
@@ -292,7 +294,7 @@ export const LoginPage: React.FC = () => {
           {/* Footer */}
           {!requires2FA && (
             <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-              Don't have an account? Contact your administrator.
+              {t('login.noAccount')}
             </p>
           )}
         </div>

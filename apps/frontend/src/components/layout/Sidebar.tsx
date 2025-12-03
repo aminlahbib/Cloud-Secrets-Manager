@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Key, LogOut } from 'lucide-react';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
 import { WorkflowSelector } from './WorkflowSelector';
-import { Key, LogOut } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { useI18n } from '../../contexts/I18nContext';
 import type { Workflow } from '../../types';
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
 }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <aside
@@ -65,14 +67,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           variant="primary"
         >
           <Key className="h-4 w-4 mr-2" />
-          New Secret
+          {t('nav.newSecret')}
         </Button>
         <button
           onClick={onLogout}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-theme-secondary hover:text-theme-primary transition-colors"
         >
           <LogOut className="h-4 w-4" />
-          Sign Out
+          {t('nav.signOut')}
         </button>
       </div>
     </aside>

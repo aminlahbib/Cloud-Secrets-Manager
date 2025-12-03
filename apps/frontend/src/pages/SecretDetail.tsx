@@ -10,12 +10,14 @@ import { Badge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { queryClient } from '../main';
+import { useI18n } from '../contexts/I18nContext';
 import type { Secret, SecretVersion, SecretVersionDetail, Project } from '../types';
 
 export const SecretDetailPage: React.FC = () => {
   const { projectId, key: keyParam } = useParams<{ projectId: string; key: string }>();
   const secretKey = keyParam ? decodeURIComponent(keyParam) : '';
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [showValue, setShowValue] = useState(false);
   const [showVersionModal, setShowVersionModal] = useState(false);
   const [versionDetail, setVersionDetail] = useState<SecretVersionDetail | null>(null);
@@ -34,14 +36,14 @@ export const SecretDetailPage: React.FC = () => {
           }}
         >
           <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
-            Invalid URL. Please navigate from a project page.
+            {t('secrets.detail.invalidUrl')}
           </p>
           <Button
             variant="secondary"
             onClick={() => navigate('/home')}
             className="mt-4"
           >
-            Back to Home
+            {t('secrets.detail.backToHome')}
           </Button>
         </div>
       </div>
@@ -161,10 +163,10 @@ export const SecretDetailPage: React.FC = () => {
           }}
         >
           <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
-            Failed to load secret. It may have been deleted or you do not have access.
+            {t('secrets.detail.loadError')}
           </p>
           <Button variant="secondary" onClick={() => navigate(`/projects/${projectId}`)} className="mt-4">
-            Back to Project
+            {t('secrets.detail.backToProject')}
           </Button>
         </div>
       </div>
@@ -187,7 +189,7 @@ export const SecretDetailPage: React.FC = () => {
       <div className="max-w-6xl mx-auto space-y-6">
         <Button variant="ghost" onClick={() => navigate(`/projects/${projectId}`)} className="w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Project
+          {t('secrets.detail.backToProject')}
         </Button>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)]">
@@ -195,14 +197,16 @@ export const SecretDetailPage: React.FC = () => {
             <Card className="p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-caption uppercase tracking-wide mb-1" style={{ color: 'var(--text-tertiary)' }}>Secret</p>
+                  <p className="text-caption uppercase tracking-wide mb-1" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.secretLabel')}
+                  </p>
                   <h1 className="text-h1 font-semibold break-all" style={{ color: 'var(--text-primary)' }}>{secret.secretKey}</h1>
                   {secret.description && (
                     <p className="text-body-sm mt-2 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>{secret.description}</p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
-                  {isExpired && <Badge variant="danger">Expired</Badge>}
+                  {isExpired && <Badge variant="danger">{t('secrets.detail.expiredBadge')}</Badge>}
                   <Badge variant="default">v{latestVersionNumber}</Badge>
                 </div>
               </div>
@@ -214,7 +218,7 @@ export const SecretDetailPage: React.FC = () => {
                   onClick={() => navigate(`/projects/${projectId}/secrets/${encodeURIComponent(secretKey)}/edit`)}
                 >
                   <Edit className="h-4 w-4 mr-2" />
-                  Edit
+                  {t('secrets.detail.edit')}
                 </Button>
                 <Button
                   size="sm"
@@ -223,20 +227,20 @@ export const SecretDetailPage: React.FC = () => {
                   isLoading={rotateMutation.isPending}
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Rotate
+                  {t('secrets.detail.rotate')}
                 </Button>
                 <Button
                   size="sm"
                   variant="danger"
                   onClick={() => {
-                    if (confirm('Delete this secret? This cannot be undone.')) {
+                    if (confirm(t('secrets.detail.deleteConfirm'))) {
                       deleteMutation.mutate();
                     }
                   }}
                   isLoading={deleteMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
+                  {t('secrets.detail.delete')}
                 </Button>
               </div>
 
@@ -248,7 +252,9 @@ export const SecretDetailPage: React.FC = () => {
                 }}
               >
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>Value</p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {t('secrets.detail.valueLabel')}
+                  </p>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -259,12 +265,12 @@ export const SecretDetailPage: React.FC = () => {
                       {showValue ? (
                         <>
                           <EyeOff className="h-4 w-4 mr-2" />
-                          Hide
+                          {t('secrets.detail.hide')}
                         </>
                       ) : (
                         <>
                           <Eye className="h-4 w-4 mr-2" />
-                          Reveal
+                          {t('secrets.detail.reveal')}
                         </>
                       )}
                     </Button>
@@ -275,7 +281,7 @@ export const SecretDetailPage: React.FC = () => {
                       disabled={!secret.value}
                     >
                       <Copy className="h-4 w-4 mr-2" />
-                      Copy
+                      {t('secrets.detail.copy')}
                     </Button>
                   </div>
                 </div>
@@ -291,25 +297,35 @@ export const SecretDetailPage: React.FC = () => {
 
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Created</p>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.created')}
+                  </p>
                   <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{formatDateTime(secret.createdAt)}</p>
                   {secret.creator && (
                     <p className="text-caption mt-1" style={{ color: 'var(--text-tertiary)' }}>{secret.creator.email}</p>
                   )}
                 </div>
                 <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Last Updated</p>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.lastUpdated')}
+                  </p>
                   <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{formatDateTime(secret.updatedAt)}</p>
                 </div>
                 <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Expires</p>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.expires')}
+                  </p>
                   <p className="text-body-sm font-medium" style={{ color: isExpired ? 'var(--status-danger)' : 'var(--text-primary)' }}>
-                    {secret.expiresAt ? formatDateTime(secret.expiresAt) : 'Not set'}
+                    {secret.expiresAt ? formatDateTime(secret.expiresAt) : t('secrets.detail.notSet')}
                   </p>
                 </div>
                 <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>Your Role</p>
-                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>{currentUserRole || 'Member'}</p>
+                  <p className="text-caption uppercase tracking-wide" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.yourRole')}
+                  </p>
+                  <p className="text-body-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {currentUserRole || t('secrets.detail.member')}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -318,9 +334,13 @@ export const SecretDetailPage: React.FC = () => {
           <div className="space-y-6">
             <Card className="p-6 h-full">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-h3 font-semibold" style={{ color: 'var(--text-primary)' }}>Version History</h2>
+                <h2 className="text-h3 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {t('secrets.detail.versionHistory')}
+                </h2>
                 {versions && versions.length > 10 && (
-                  <span className="text-caption" style={{ color: 'var(--text-tertiary)' }}>Showing latest 10</span>
+                  <span className="text-caption" style={{ color: 'var(--text-tertiary)' }}>
+                    {t('secrets.detail.showingLatest', { count: 10 })}
+                  </span>
                 )}
               </div>
               {versions && versions.length > 0 ? (
@@ -333,7 +353,9 @@ export const SecretDetailPage: React.FC = () => {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Version {version.versionNumber}</p>
+                          <p className="text-body-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                            {t('secrets.detail.versionLabel', { version: version.versionNumber })}
+                          </p>
                           <p className="text-caption" style={{ color: 'var(--text-tertiary)' }}>{formatDateTime(version.createdAt)}</p>
                           {version.changeNote && (
                             <p className="text-caption mt-1 truncate" style={{ color: 'var(--text-tertiary)' }}>{version.changeNote}</p>
@@ -374,7 +396,9 @@ export const SecretDetailPage: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>No version history available</p>
+                <p className="text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
+                  {t('secrets.detail.noVersions')}
+                </p>
               )}
             </Card>
           </div>

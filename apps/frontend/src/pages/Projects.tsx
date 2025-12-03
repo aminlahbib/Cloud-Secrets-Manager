@@ -19,11 +19,13 @@ import { PageHeader } from '../components/shared/PageHeader';
 import { TeamsVsDirectGuidance } from '../components/projects/TeamsVsDirectGuidance';
 import { ProjectCard } from '../components/projects/ProjectCard';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import type { Project, ProjectTeamInfo } from '../types';
 
 export const ProjectsPage: React.FC = () => {
   const { user } = useAuth(); // For authentication check
   const { projectView, setProjectView } = usePreferences();
+  const { t } = useI18n();
 
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -150,35 +152,35 @@ export const ProjectsPage: React.FC = () => {
     return [
       {
         key: 'workflow',
-        label: 'Workflow',
+        label: t('projects.filterWorkflow'),
         type: 'select',
         options: [
-          { label: 'All Workflows', value: '' },
+          { label: t('projects.filterAllWorkflows'), value: '' },
           ...workflowOptions,
         ],
       },
       {
         key: 'team',
-        label: 'Team',
+        label: t('projects.filterTeam'),
         type: 'select',
         options: [
-          { label: 'All Teams', value: '' },
+          { label: t('projects.filterAllTeams'), value: '' },
           ...teamOptions,
         ],
       },
       {
         key: 'accessSource',
-        label: 'Access Source',
+        label: t('projects.filterAccessSource'),
         type: 'select',
         options: [
-          { label: 'All Access', value: '' },
-          { label: 'Direct Access', value: 'DIRECT' },
-          { label: 'Team Access', value: 'TEAM' },
-          { label: 'Both', value: 'BOTH' },
+          { label: t('projects.filterAllAccess'), value: '' },
+          { label: t('projects.filterDirectAccess'), value: 'DIRECT' },
+          { label: t('projects.filterTeamAccess'), value: 'TEAM' },
+          { label: t('projects.filterBoth'), value: 'BOTH' },
         ],
       },
     ];
-  }, [workflows, teams]);
+  }, [workflows, teams, t]);
 
   const getTimeAgo = (date: string) => {
     const now = new Date();
@@ -187,24 +189,24 @@ export const ProjectsPage: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffHours < 1) return t('projects.justNow');
+    if (diffHours < 24) return t('projects.timeAgo.hours', { count: diffHours });
+    if (diffDays < 7) return t('projects.timeAgo.days', { count: diffDays });
     return then.toLocaleDateString();
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Projects"
-        description="Manage your projects and secret collections."
+        title={t('projects.title')}
+        description={t('projects.description')}
         view={projectView}
         onViewChange={setProjectView}
         onCreateNew={() => setShowCreateModal(true)}
-        createButtonLabel="New Project"
+        createButtonLabel={t('projects.newProject')}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        searchPlaceholder="Search projects..."
+        searchPlaceholder={t('projects.searchPlaceholder')}
         filters={projectFilterConfigs}
         filterValues={projectFilters}
         onFilterChange={(key, value) => setProjectFilters(prev => ({ ...prev, [key]: value }))}
@@ -233,19 +235,19 @@ export const ProjectsPage: React.FC = () => {
             borderColor: 'var(--status-danger)',
           }}
         >
-          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>Failed to load projects. Please try again.</p>
+          <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>{t('projects.failedToLoad')}</p>
         </div>
       ) : projects.length === 0 ? (
         <EmptyState
           icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
-          title={searchTerm ? 'No projects match your search' : 'No projects yet'}
+          title={searchTerm ? t('projects.noProjectsMatch') : t('projects.noProjects')}
           description={
             searchTerm
-              ? 'Try a different search term'
-              : 'Create your first project to start managing secrets'
+              ? t('projects.tryDifferentSearch')
+              : t('projects.createFirstProject')
           }
           action={{
-            label: 'Create Project',
+            label: t('projects.createProject'),
             onClick: () => setShowCreateModal(true),
           }}
         />
@@ -264,7 +266,7 @@ export const ProjectsPage: React.FC = () => {
                   {groupName}
                 </h2>
                 <Badge variant="default" className="text-xs">
-                  {groupProjects.length} {groupProjects.length === 1 ? 'project' : 'projects'}
+                  {groupProjects.length} {groupProjects.length === 1 ? t('projects.project') : t('projects.projects')}
                 </Badge>
               </div>
               {projectView === 'grid' ? (
@@ -329,7 +331,7 @@ export const ProjectsPage: React.FC = () => {
                     }}
                   >
                     <Plus className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Create new project</span>
+                    <span className="text-sm font-medium">{t('projects.createNewProject')}</span>
                   </button>
                 </div>
               ) : (
@@ -406,10 +408,10 @@ export const ProjectsPage: React.FC = () => {
           {activeProjects.length === 0 && !showArchived && (
             <EmptyState
               icon={<Folder className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
-              title="No active projects"
-              description="Create your first project to start managing secrets"
+              title={t('projects.noActiveProjects')}
+              description={t('projects.createFirstProject')}
               action={{
-                label: 'Create Project',
+                label: t('projects.createProject'),
                 onClick: () => setShowCreateModal(true),
               }}
             />
@@ -420,7 +422,11 @@ export const ProjectsPage: React.FC = () => {
       {/* Pagination info */}
       {data && data.totalElements > 0 && (
         <div className="text-center text-body-sm" style={{ color: 'var(--text-tertiary)' }}>
-          Showing {activeProjects.length} active{showArchived && archivedProjects.length > 0 ? ` and ${archivedProjects.length} archived` : ''} of {data.totalElements} projects
+          {t('projects.showing', { 
+            active: activeProjects.length, 
+            archived: showArchived && archivedProjects.length > 0 ? t('projects.and') + archivedProjects.length + t('projects.archived') : '',
+            total: data.totalElements 
+          })}
         </div>
       )}
 

@@ -2,11 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Bell, HelpCircle, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { ThemeControls } from './ThemeControls';
+import { LanguageSelector } from '../ui/LanguageSelector';
 import { useNotifications } from '../../hooks/useNotifications';
 
 export const TopBar: React.FC = () => {
   const { user, logout, isPlatformAdmin } = useAuth();
+  const { t } = useI18n();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -84,7 +87,7 @@ export const TopBar: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search projects, secrets, or teams..."
+              placeholder={t('nav.search.projects')}
               className="w-full pl-10 pr-4 py-2 rounded-lg border transition-colors duration-200 bg-elevation-1 border-theme-subtle text-theme-primary placeholder-theme-tertiary focus:outline-none focus:ring-2 focus:ring-accent-primary focus:border-transparent"
             />
           </div>
@@ -191,6 +194,9 @@ export const TopBar: React.FC = () => {
           >
             <HelpCircle className="h-5 w-5" />
           </button>
+
+          {/* Language Selector */}
+          <LanguageSelector iconOnly={true} />
 
           {/* Profile Dropdown */}
           <div className="relative">
