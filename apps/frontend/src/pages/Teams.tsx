@@ -226,7 +226,7 @@ export const TeamsPage: React.FC = () => {
                     </p>
                   ) : (
                     <p className="text-sm line-clamp-2" style={{ color: 'var(--text-tertiary)' }}>
-                      No description provided for this team.
+                      {t('teams.noDescription')}
                     </p>
                   )}
                 </div>
@@ -241,11 +241,11 @@ export const TeamsPage: React.FC = () => {
                 >
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     <Users className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
-                    <span>{team.memberCount || 0} members</span>
+                    <span>{t('teams.membersCount', { count: team.memberCount || 0 })}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
                     <Building2 className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
-                    <span>{team.projectCount || 0} projects</span>
+                    <span>{t('teams.projectsCount', { count: team.projectCount || 0 })}</span>
                   </div>
                 </div>
 
@@ -271,7 +271,7 @@ export const TeamsPage: React.FC = () => {
                       }}
                     >
                       <Settings className="w-4 h-4" />
-                      Manage
+                      {t('teams.manage')}
                     </button>
                     {canDeleteTeam(team) && (
                       <button 

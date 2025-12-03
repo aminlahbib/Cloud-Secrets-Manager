@@ -11,6 +11,7 @@ import { StatsCards } from '../analytics/StatsCards';
 import { ActivityChart } from '../analytics/ActivityChart';
 import { ActionDistributionChart } from '../analytics/ActionDistributionChart';
 import { formatActionName } from '../../utils/analytics';
+import { useI18n } from '../../contexts/I18nContext';
 import type { AuditLog } from '../../types';
 
 interface ActivityTabProps {
@@ -34,15 +35,15 @@ interface ActivityTabProps {
 }
 
 // Memoized utility functions
-const getTimeAgo = (timestamp: string) => {
+const getTimeAgo = (timestamp: string, t: (key: string, params?: Record<string, string | number>) => string) => {
   const date = new Date(timestamp);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  if (diffInSeconds < 60) return t('home.justNow');
+  if (diffInSeconds < 3600) return t('home.timeAgo.minutes', { count: Math.floor(diffInSeconds / 60) });
+  if (diffInSeconds < 86400) return t('home.timeAgo.hours', { count: Math.floor(diffInSeconds / 3600) });
+  if (diffInSeconds < 604800) return t('home.timeAgo.days', { count: Math.floor(diffInSeconds / 86400) });
   return date.toLocaleDateString();
 };
 
@@ -60,10 +61,14 @@ const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'da
 
 // Memoized activity log item component
 const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
+  const { t } = useI18n();
   const actionColor = useMemo(() => getActionColor(log.action), [log.action]);
   const formattedAction = useMemo(() => formatAction(log.action), [log.action]);
-  const timeAgo = useMemo(() => getTimeAgo(log.createdAt || ''), [log.createdAt]);
-  const userEmail = useMemo(() => log.userEmail || log.user?.email || 'Unknown', [log.userEmail, log.user?.email]);
+  const timeAgo = useMemo(() => getTimeAgo(log.createdAt || '', t), [log.createdAt, t]);
+  const userEmail = useMemo(
+    () => log.userEmail || log.user?.email || t('activity.project.unknownUser'),
+    [log.userEmail, log.user?.email, t]
+  );
 
   return (
     <div className="p-4 transition-colors hover:bg-elevation-1">
@@ -81,19 +86,30 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={actionColor}>
-              {formattedAction}
-            </Badge>
-            {log.resourceName && (
-              <span className="text-body-sm font-medium text-theme-primary">
-                {log.resourceName}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-body-sm text-theme-tertiary">
-            by {userEmail}
-          </p>
+          {log.description ? (
+            <p className="text-body-sm font-medium text-theme-primary">
+              {log.description}
+            </p>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={actionColor}>
+                  {formattedAction}
+                </Badge>
+                {log.resourceName && (
+                  <span className="text-body-sm font-medium text-theme-primary">
+                    {log.resourceName}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-body-sm text-theme-tertiary">
+                by {userEmail}
+                {log.metadata?.teamName && (
+                  <span className="text-theme-tertiary"> (team: {log.metadata.teamName as string})</span>
+                )}
+              </p>
+            </>
+          )}
         </div>
 
         <div className="flex items-center text-body-sm text-theme-tertiary">
@@ -124,6 +140,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
   activityPage,
   onPageChange,
 }) => {
+  const { t } = useI18n();
   const handleViewChange = useCallback((view: 'analytics' | 'list') => {
     onViewChange(view);
   }, [onViewChange]);
@@ -141,11 +158,11 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
       fallback={
         <Card className="p-6">
           <div className="text-center">
-            <p className="mb-2 text-status-danger">Error loading activity tab</p>
+            <p className="mb-2 text-status-danger">{t('activityTab.errorLoadingTab')}</p>
             <p className="text-sm text-theme-tertiary">
-              There was an error displaying the activity tab. Please try refreshing the page.
+              {t('activityTab.errorLoadingTabDescription')}
             </p>
-            <Button onClick={() => window.location.reload()}>Refresh Page</Button>
+            <Button onClick={() => window.location.reload()}>{t('activityTab.refreshPage')}</Button>
           </div>
         </Card>
       }
@@ -153,7 +170,9 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
       <div className="tab-content-container space-y-6">
         {/* Header with view toggle and date filter */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <h2 className="text-h3 font-semibold text-theme-primary">Project Activity</h2>
+          <h2 className="text-h3 font-semibold text-theme-primary">
+            {t('activityTab.projectActivity')}
+          </h2>
           <div className="flex items-center gap-3">
             {/* Date Range Filter and Export (only for analytics) */}
             {activityView === 'analytics' && (
@@ -165,10 +184,10 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                     onChange={(e) => handleDateRangeChange(e.target.value as '7d' | '30d' | '90d' | 'all')}
                     className="bg-transparent border-none text-body-sm font-medium focus:outline-none cursor-pointer text-theme-primary"
                   >
-                    <option value="7d">Last 7 days</option>
-                    <option value="30d">Last 30 days</option>
-                    <option value="90d">Last 90 days</option>
-                    <option value="all">All time</option>
+                    <option value="7d">{t('activityTab.last7Days')}</option>
+                    <option value="30d">{t('activityTab.last30Days')}</option>
+                    <option value="90d">{t('activityTab.last90Days')}</option>
+                    <option value="all">{t('activityTab.allTime')}</option>
                   </select>
                 </div>
                 {analyticsStats && (
@@ -179,7 +198,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                     className="!m-0"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    Export
+                    {t('activityTab.export')}
                   </Button>
                 )}
               </>
@@ -194,7 +213,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                 className="!m-0"
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
-                Analytics
+                {t('activityTab.analytics')}
               </Button>
               <Button
                 variant={activityView === 'list' ? 'primary' : 'secondary'}
@@ -203,7 +222,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                 className="!m-0"
               >
                 <List className="h-4 w-4 mr-2" />
-                List
+                {t('activityTab.list')}
               </Button>
             </div>
           </div>
@@ -232,15 +251,15 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 bg-status-danger-bg">
                     <AlertTriangle className="h-6 w-6 text-status-danger" />
                   </div>
-                  <h3 className="text-h3 font-medium mb-2 text-theme-primary">Error Loading Analytics</h3>
+                  <h3 className="text-h3 font-medium mb-2 text-theme-primary">{t('activityTab.errorLoadingAnalytics')}</h3>
                   <p className="text-body-sm mb-4 text-theme-secondary">
                     {analyticsError instanceof Error
                       ? analyticsError.message
-                      : 'An error occurred while loading analytics. Please try again.'}
+                      : t('activityTab.errorLoadingAnalyticsDescription')}
                   </p>
                   {(analyticsError as any)?.isPermissionError && (
                     <p className="text-caption mb-4 text-theme-tertiary">
-                      You may not have permission to view analytics for this project.
+                      {t('activityTab.noPermissionAnalytics')}
                     </p>
                   )}
                   <Button
@@ -248,7 +267,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                     size="sm"
                     onClick={() => window.location.reload()}
                   >
-                    Refresh Page
+                    {t('activityTab.refreshPage')}
                   </Button>
                 </div>
               </Card>
@@ -267,10 +286,10 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
 
                 {/* Charts */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <ActivityChart data={chartData} title="Activity Over Time" type="line" />
+                  <ActivityChart data={chartData} title={t('activityTab.activityOverTime')} type="line" />
                   <ActionDistributionChart
                     actionsByType={analyticsStats.actionsByType}
-                    title="Actions Distribution"
+                    title={t('activityTab.actionsDistribution')}
                   />
                 </div>
 
@@ -278,9 +297,9 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Top Users */}
                   <Card className="p-6">
-                    <h3 className="text-h3 font-semibold mb-4 text-theme-primary">Top Contributors</h3>
+                    <h3 className="text-h3 font-semibold mb-4 text-theme-primary">{t('activityTab.topContributors')}</h3>
                     {analyticsStats.topUsers.length === 0 ? (
-                      <p className="text-body-sm text-theme-tertiary">No user data available</p>
+                      <p className="text-body-sm text-theme-tertiary">{t('activityTab.noUserData')}</p>
                     ) : (
                       <div className="space-y-3">
                         {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
@@ -291,9 +310,9 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                               </div>
                               <div>
                                 <p className="text-body-sm font-medium text-theme-primary">
-                                  {user.email || 'Unknown User'}
+                                  {user.email || t('activity.project.unknownUser')}
                                 </p>
-                                <p className="text-caption text-theme-tertiary">{user.count} actions</p>
+                                <p className="text-caption text-theme-tertiary">{user.count} {t('activityTab.actions')}</p>
                               </div>
                             </div>
                           </div>
@@ -304,9 +323,9 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
 
                   {/* Top Actions */}
                   <Card className="p-6">
-                    <h3 className="text-h3 font-semibold mb-4 text-theme-primary">Most Common Actions</h3>
+                    <h3 className="text-h3 font-semibold mb-4 text-theme-primary">{t('activityTab.mostCommonActions')}</h3>
                     {analyticsStats.topActions.length === 0 ? (
-                      <p className="text-body-sm text-theme-tertiary">No action data available</p>
+                      <p className="text-body-sm text-theme-tertiary">{t('activityTab.noActionData')}</p>
                     ) : (
                       <div className="space-y-3">
                         {analyticsStats.topActions.map((action: { action: string; count: number }, index: number) => (
@@ -319,7 +338,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                                 <p className="text-body-sm font-medium text-theme-primary">
                                   {formatActionName(action.action)}
                                 </p>
-                                <p className="text-caption text-theme-tertiary">{action.count} occurrences</p>
+                                <p className="text-caption text-theme-tertiary">{action.count} {t('activityTab.occurrences')}</p>
                               </div>
                             </div>
                           </div>
@@ -346,15 +365,15 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 bg-status-danger-bg">
                     <AlertTriangle className="h-6 w-6 text-status-danger" />
                   </div>
-                  <h3 className="text-h3 font-medium mb-2 text-theme-primary">Error Loading Activity</h3>
+                  <h3 className="text-h3 font-medium mb-2 text-theme-primary">{t('activityTab.errorLoadingActivity')}</h3>
                   <p className="text-body-sm mb-4 text-theme-secondary">
                     {activityError instanceof Error
                       ? activityError.message
-                      : 'An error occurred while loading activity data. Please try again.'}
+                      : t('activityTab.errorLoadingActivityDescription')}
                   </p>
                   {(activityError as any)?.isPermissionError && (
                     <p className="text-caption mb-4 text-theme-tertiary">
-                      You may not have permission to view audit logs for this project.
+                      {t('activityTab.noPermissionActivity')}
                     </p>
                   )}
                   <Button
@@ -362,7 +381,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                     size="sm"
                     onClick={() => window.location.reload()}
                   >
-                    Refresh Page
+                    {t('activityTab.refreshPage')}
                   </Button>
                 </div>
               </Card>
@@ -370,8 +389,8 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
               <Card className="p-6">
                 <EmptyState
                   icon={<Activity className="h-16 w-16 text-theme-tertiary" />}
-                  title="No Activity"
-                  description="Activity for this project will appear here as actions are performed"
+                  title={t('activityTab.noActivity')}
+                  description={t('activityTab.noActivityDescription')}
                 />
               </Card>
             ) : (
@@ -391,10 +410,10 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                         onClick={() => handlePageChange(Math.max(1, activityPage - 1))}
                         disabled={activityPage === 1}
                       >
-                        Previous
+                        {t('activityTab.previous')}
                       </Button>
                       <span className="flex items-center px-4 text-body-sm text-theme-secondary">
-                        Page {activityPage} of {activityData.totalPages}
+                        {t('activityTab.page', { current: activityPage, total: activityData.totalPages })}
                       </span>
                       <Button
                         variant="secondary"
@@ -402,7 +421,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                         onClick={() => handlePageChange(Math.min(activityData.totalPages, activityPage + 1))}
                         disabled={activityPage >= activityData.totalPages}
                       >
-                        Next
+                        {t('activityTab.next')}
                       </Button>
                     </div>
                   </div>

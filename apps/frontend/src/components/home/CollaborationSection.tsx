@@ -7,6 +7,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Team } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface CollaborationSectionProps {
   workflows?: any;
@@ -17,6 +18,7 @@ interface CollaborationSectionProps {
 export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
 
   // Fetch teams
   const { data: teams, isLoading: isTeamsLoading } = useQuery<Team[]>({
@@ -47,7 +49,9 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
     <div className="card">
       <div className="p-3 border-b border-theme-subtle">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-theme-primary">Teams</h2>
+          <h2 className="text-lg font-semibold text-theme-primary">
+            {t('home.teams')}
+          </h2>
           <button
             onClick={() => navigate('/teams')}
             className="text-sm font-medium transition-colors flex items-center gap-1"
@@ -59,7 +63,7 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
               e.currentTarget.style.color = 'var(--accent-primary)';
             }}
           >
-            View all <ArrowRight className="w-4 h-4" />
+            {t('home.viewAll')} <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -71,11 +75,11 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
       ) : !teams || teams.length === 0 ? (
         <div className="p-3 text-center">
           <p className="text-xs text-theme-tertiary mb-3">
-            No teams yet
+            {t('home.noTeams')}
           </p>
           <Button size="sm" onClick={() => navigate('/teams')}>
             <Plus className="h-3 w-3 mr-1.5" />
-            Create Team
+            {t('home.createTeam')}
           </Button>
         </div>
       ) : (
@@ -124,11 +128,11 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
                     <div className="flex items-center gap-3 text-xs text-theme-tertiary">
                       <span className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        {team.memberCount ?? 0} members
+                      {t('teams.membersCount', { count: team.memberCount ?? 0 })}
                       </span>
                       <span className="flex items-center gap-1">
                         <Folder className="h-3 w-3" />
-                        {team.projectCount ?? 0} projects
+                      {t('teams.projectsCount', { count: team.projectCount ?? 0 })}
                       </span>
                     </div>
                   </div>
@@ -143,7 +147,7 @@ export const CollaborationSection: React.FC<CollaborationSectionProps> = () => {
               className="w-full p-3 text-center text-xs font-medium transition-colors hover:bg-elevation-1"
               style={{ color: 'var(--accent-primary)' }}
             >
-              View {teams.length - 2} more
+              {t('home.viewAll')}
             </button>
           )}
         </div>

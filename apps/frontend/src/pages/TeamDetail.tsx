@@ -21,6 +21,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
@@ -54,6 +55,7 @@ export const TeamDetailPage: React.FC = () => {
   const { teamId } = useParams<{ teamId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useI18n();
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
   
@@ -360,10 +362,10 @@ export const TeamDetailPage: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('home.justNow');
+    if (diffMins < 60) return t('home.timeAgo.minutes', { count: diffMins });
+    if (diffHours < 24) return t('home.timeAgo.hours', { count: diffHours });
+    if (diffDays < 7) return t('home.timeAgo.days', { count: diffDays });
     return then.toLocaleDateString();
   };
 
@@ -380,23 +382,23 @@ export const TeamDetailPage: React.FC = () => {
       <div className="space-y-6">
         <Button variant="secondary" onClick={() => navigate('/teams')}>
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Teams
+          {t('teams.backToList')}
         </Button>
         <EmptyState
           icon={<Building2 className="h-16 w-16 text-theme-tertiary" />}
-          title="Team not found"
-          description="The team you're looking for doesn't exist or you don't have access to it."
+          title={t('teams.detail.notFoundTitle')}
+          description={t('teams.detail.notFoundDescription')}
         />
       </div>
     );
   }
 
   const tabs = [
-    { id: 'overview', label: 'Overview', icon: LayoutGrid },
-    { id: 'members', label: 'Members', icon: Users, count: members?.length },
-    { id: 'projects', label: 'Projects', icon: Folder, count: teamProjects?.length },
-    { id: 'activity', label: 'Activity', icon: Activity },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'overview', label: t('teams.detail.tabs.overview'), icon: LayoutGrid },
+    { id: 'members', label: t('teams.detail.tabs.members'), icon: Users, count: members?.length },
+    { id: 'projects', label: t('teams.detail.tabs.projects'), icon: Folder, count: teamProjects?.length },
+    { id: 'activity', label: t('teams.detail.tabs.activity'), icon: Activity },
+    { id: 'settings', label: t('teams.detail.tabs.settings'), icon: SettingsIcon },
   ];
 
   return (
@@ -540,7 +542,7 @@ export const TeamDetailPage: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-theme-primary truncate">
-                          {member.displayName || member.email}
+                          {member.displayName || 'No name'}
                           {member.userId === user?.id && (
                             <span className="ml-2 text-xs text-theme-secondary">
                               (You)

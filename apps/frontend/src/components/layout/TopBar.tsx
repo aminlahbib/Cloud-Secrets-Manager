@@ -104,7 +104,7 @@ export const TopBar: React.FC = () => {
           <div className="relative">
             <button
               className="relative p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"
-              title="Notifications"
+              title={t('topbar.notifications')}
               onClick={() => setShowNotifications((prev) => !prev)}
             >
               <Bell className="h-5 w-5" />
@@ -127,11 +127,11 @@ export const TopBar: React.FC = () => {
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-theme-subtle">
                     <div>
-                      <p className="text-sm font-medium text-theme-primary">Notifications</p>
+                      <p className="text-sm font-medium text-theme-primary">{t('topbar.notifications')}</p>
                       <p className="text-xs text-theme-secondary">
                         {unreadCount > 0
-                          ? `${unreadCount} unread`
-                          : 'You’re all caught up'}
+                          ? `${unreadCount} ${t('topbar.unread', { count: unreadCount })}`
+                          : t('topbar.allCaughtUp')}
                       </p>
                     </div>
                     {unreadCount > 0 && (
@@ -139,7 +139,7 @@ export const TopBar: React.FC = () => {
                         onClick={() => userId && markAllAsRead()}
                         className="text-xs font-medium text-accent-primary hover:underline"
                       >
-                        Mark all as read
+                        {t('topbar.markAllAsRead')}
                       </button>
                     )}
                   </div>
@@ -147,7 +147,7 @@ export const TopBar: React.FC = () => {
                   <div className="flex-1 overflow-y-auto">
                     {notifications.length === 0 ? (
                       <div className="px-4 py-6 text-center text-xs text-theme-secondary">
-                        No notifications yet.
+                        {t('topbar.noNotifications')}
                       </div>
                     ) : (
                       <ul className="divide-y divide-theme-subtle">
@@ -190,7 +190,7 @@ export const TopBar: React.FC = () => {
           {/* Help */}
           <button
             className="p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"
-            title="Help"
+            title={t('topbar.help')}
           >
             <HelpCircle className="h-5 w-5" />
           </button>
@@ -209,7 +209,7 @@ export const TopBar: React.FC = () => {
                   {user?.displayName || user?.email?.split('@')[0]}
                 </span>
                 {isPlatformAdmin && (
-                  <span className="text-xs text-theme-tertiary">ADMIN</span>
+                  <span className="text-xs text-theme-tertiary">{t('topbar.admin')}</span>
                 )}
               </div>
               {user?.avatarUrl && !avatarError ? (
@@ -249,7 +249,7 @@ export const TopBar: React.FC = () => {
                   <div className="p-2">
                     <div className="px-3 py-2 border-b border-theme-subtle mb-2">
                       <p className="text-sm font-medium text-theme-primary">
-                        {user?.displayName || 'User'}
+                        {user?.displayName || t('topbar.user')}
                       </p>
                       <p className="text-xs text-theme-secondary truncate">
                         {user?.email}
@@ -262,7 +262,7 @@ export const TopBar: React.FC = () => {
                       }}
                       className="w-full text-left px-3 py-2 text-sm text-theme-primary hover:bg-elevation-1 rounded transition-colors"
                     >
-                      Settings
+                      {t('topbar.settings')}
                     </button>
                     <button
                       onClick={() => {
@@ -271,7 +271,7 @@ export const TopBar: React.FC = () => {
                       }}
                       className="w-full text-left px-3 py-2 text-sm text-status-danger hover:bg-elevation-1 rounded transition-colors"
                     >
-                      Sign Out
+                      {t('topbar.signOut')}
                     </button>
                   </div>
                 </div>

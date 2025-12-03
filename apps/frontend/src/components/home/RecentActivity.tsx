@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import type { AuditLog } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface RecentActivityProps {
   activity: AuditLog[];
@@ -17,11 +18,14 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
   formatAction,
   getTimeAgo,
 }) => {
+  const { t } = useI18n();
   return (
     <div className="card">
       <div className="p-3 border-b border-theme-subtle">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-theme-primary">Recent Activity</h2>
+          <h2 className="text-lg font-semibold text-theme-primary">
+            {t('home.recentActivity')}
+          </h2>
           <Link 
             to="/activity" 
             className="text-sm font-medium flex items-center transition-colors gap-1"
@@ -33,7 +37,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
               e.currentTarget.style.color = 'var(--accent-primary)';
             }}
           >
-            View all <ArrowRight className="w-4 h-4" />
+            {t('home.viewAll')} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>
@@ -44,7 +48,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
           </div>
         ) : activity.length === 0 ? (
           <div className="p-3 text-center text-theme-tertiary text-sm">
-            No recent activity
+            {t('home.noRecentActivity')}
           </div>
         ) : (
           activity.slice(0, 3).map((log: AuditLog) => {
