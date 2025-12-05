@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: promtail
+  namespace: logging
+  labels:
+    app: promtail
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  endpoints:
+    - port: http-metrics
+      interval: 30s
+      path: /metrics
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - logging

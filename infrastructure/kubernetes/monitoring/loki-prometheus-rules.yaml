@@ -1,0 +1,146 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: loki-alerts
+  namespace: logging
+  labels:
+    app: loki
+    release: prometheus
+spec:
+  groups:
+    - name: loki.rules
+      interval: 30s
+      rules:
+        # Availability Alerts
+        - alert: LokiDown
+          expr: up{job="loki"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            component: loki
+          annotations:
+            summary: "Loki is down"
+            description: "Loki instance {{ $labels.instance }} has been down for more than 5 minutes"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#loki-down"
+        
+        - alert: PromtailDown
+          expr: up{job="promtail"} == 0
+          for: 5m
+          labels:
+            severity: warning
+            component: promtail
+          annotations:
+            summary: "Promtail is down"
+            description: "Promtail instance {{ $labels.instance }} has been down for more than 5 minutes"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#promtail-not-sending-logs"
+        
+        # Performance Alerts
+        - alert: HighLogIngestionRate
+          expr: rate(loki_distributor_lines_received_total[5m]) > 10000
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "High log ingestion rate detected"
+            description: "Loki is receiving {{ $value | humanize }} lines per second (threshold: 10000)"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#high-log-volume"
+        
+        - alert: LokiRequestLatencyHigh
+          expr: histogram_quantile(0.99, rate(loki_request_duration_seconds_bucket[5m])) > 2
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki request latency is high"
+            description: "99th percentile latency is {{ $value | humanize }}s (threshold: 2s)"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#slow-queries"
+        
+        # Error Alerts
+        - alert: PromtailDroppingLogs
+          expr: rate(promtail_dropped_entries_total[5m]) > 0
+          for: 5m
+          labels:
+            severity: warning
+            component: promtail
+          annotations:
+            summary: "Promtail is dropping log entries"
+            description: "Promtail on {{ $labels.instance }} is dropping {{ $value | humanize }} entries per second"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#logs-not-appearing"
+        
+        - alert: LokiIngesterUnhealthy
+          expr: loki_ingester_flush_queue_length > 100
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki ingester flush queue is growing"
+            description: "Loki ingester has {{ $value }} chunks in flush queue (threshold: 100)"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#loki-performance-issues"
+        
+        # Resource Alerts
+        - alert: LokiHighMemoryUsage
+          expr: |
+            (container_memory_working_set_bytes{namespace="logging",pod=~"loki-.*"} 
+            / container_spec_memory_limit_bytes{namespace="logging",pod=~"loki-.*"}) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki memory usage is high"
+            description: "Loki pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory limit"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#loki-performance-issues"
+        
+        - alert: LokiHighCPUUsage
+          expr: |
+            rate(container_cpu_usage_seconds_total{namespace="logging",pod=~"loki-.*"}[5m]) > 0.8
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki CPU usage is high"
+            description: "Loki pod {{ $labels.pod }} is using {{ $value | humanize }} CPU cores"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#loki-performance-issues"
+        
+        # Storage Alerts
+        - alert: LokiStorageNearFull
+          expr: |
+            (kubelet_volume_stats_used_bytes{namespace="logging",persistentvolumeclaim=~"loki-.*"}
+            / kubelet_volume_stats_capacity_bytes{namespace="logging",persistentvolumeclaim=~"loki-.*"}) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            component: loki
+          annotations:
+            summary: "Loki storage is nearly full"
+            description: "Loki PVC {{ $labels.persistentvolumeclaim }} is {{ $value | humanizePercentage }} full"
+            runbook_url: "https://github.com/aminlahbib/Cloud-Secrets-Manager/blob/main/docs/deployment/logging/LOGGING_RUNBOOK.md#storage-issues"
+
+    - name: loki.recording
+      interval: 30s
+      rules:
+        # Recording rules for common queries
+        - record: job:loki_distributor_lines_received:rate5m
+          expr: rate(loki_distributor_lines_received_total[5m])
+        
+        - record: job:loki_distributor_bytes_received:rate5m
+          expr: rate(loki_distributor_bytes_received_total[5m])
+        
+        - record: job:loki_request_duration_seconds:p99
+          expr: histogram_quantile(0.99, rate(loki_request_duration_seconds_bucket[5m]))
+        
+        - record: job:loki_request_duration_seconds:p95
+          expr: histogram_quantile(0.95, rate(loki_request_duration_seconds_bucket[5m]))
+        
+        - record: job:loki_request_duration_seconds:p50
+          expr: histogram_quantile(0.50, rate(loki_request_duration_seconds_bucket[5m]))
+        
+        - record: job:promtail_sent_entries:rate5m
+          expr: rate(promtail_sent_entries_total[5m])
+        
+        - record: job:promtail_dropped_entries:rate5m
+          expr: rate(promtail_dropped_entries_total[5m])
