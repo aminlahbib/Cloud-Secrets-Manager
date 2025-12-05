@@ -150,3 +150,6 @@ testing/
 
 # PDF files
 Cloud-Secrets-Manager.pdf
+
+# Kiro specs
+.kiro/specs/project-assessment/
