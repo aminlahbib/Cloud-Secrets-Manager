@@ -46,6 +46,13 @@ public class NotificationProxyService {
                     .timeout(Duration.ofSeconds(5))
                     .block();
         } catch (WebClientResponseException ex) {
+            // If the downstream service returns 401/403, treat it as "no notifications" in dev
+            if (ex.getStatusCode().is4xxClientError()) {
+                log.error("Notification service responded with client error: status={}, body={}",
+                        ex.getStatusCode(), ex.getResponseBodyAsString());
+                // Return empty list JSON so the UI can continue to function
+                return "[]";
+            }
             log.error("Notification service responded with error: status={}, body={}",
                     ex.getStatusCode(), ex.getResponseBodyAsString());
             throw ex;

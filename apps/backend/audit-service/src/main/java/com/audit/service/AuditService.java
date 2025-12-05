@@ -32,9 +32,11 @@ public class AuditService {
     private static final Logger log = LoggerFactory.getLogger(AuditService.class);
 
     private final AuditLogRepository auditLogRepository;
+    private final DescriptionFormatter descriptionFormatter;
 
-    public AuditService(AuditLogRepository auditLogRepository) {
+    public AuditService(AuditLogRepository auditLogRepository, DescriptionFormatter descriptionFormatter) {
         this.auditLogRepository = auditLogRepository;
+        this.descriptionFormatter = descriptionFormatter;
     }
 
     @Transactional
@@ -61,14 +63,14 @@ public class AuditService {
         log.info("Audit event logged: {} for user: {} in project: {}",
                 request.getAction(), request.getUserId(), request.getProjectId());
 
-        return AuditLogResponse.from(savedLog);
+        return AuditLogResponse.from(savedLog, descriptionFormatter);
     }
 
     @Transactional(readOnly = true)
     public List<AuditLogResponse> getAllLogs() {
         log.debug("Retrieving all audit logs");
         return auditLogRepository.findAll().stream()
-                .map(AuditLogResponse::from)
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter))
                 .collect(Collectors.toList());
     }
 
@@ -76,7 +78,7 @@ public class AuditService {
     public Page<AuditLogResponse> getLogs(Pageable pageable) {
         log.debug("Retrieving audit logs with pagination");
         return auditLogRepository.findAll(pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     // Project-scoped queries
@@ -85,7 +87,7 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByProjectId(UUID projectId, Pageable pageable) {
         log.debug("Retrieving audit logs for project: {}", projectId);
         return auditLogRepository.findByProjectId(projectId, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
@@ -93,7 +95,7 @@ public class AuditService {
             UUID projectId, String action, Pageable pageable) {
         log.debug("Retrieving audit logs for project: {} with action: {}", projectId, action);
         return auditLogRepository.findByProjectIdAndAction(projectId, action, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
@@ -101,7 +103,7 @@ public class AuditService {
             UUID projectId, String resourceType, Pageable pageable) {
         log.debug("Retrieving audit logs for project: {} with resource type: {}", projectId, resourceType);
         return auditLogRepository.findByProjectIdAndResourceType(projectId, resourceType, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
@@ -111,7 +113,7 @@ public class AuditService {
         Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
         Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
         return auditLogRepository.findByProjectIdAndCreatedAtBetween(projectId, startInstant, endInstant, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     // User-scoped queries
@@ -119,14 +121,14 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByUserId(UUID userId, Pageable pageable) {
         log.debug("Retrieving audit logs for user: {}", userId);
         return auditLogRepository.findByUserId(userId, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
     public List<AuditLogResponse> getLogsByUserId(UUID userId) {
         log.debug("Retrieving all audit logs for user: {}", userId);
         return auditLogRepository.findByUserId(userId).stream()
-                .map(AuditLogResponse::from)
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter))
                 .collect(Collectors.toList());
     }
 
@@ -137,7 +139,7 @@ public class AuditService {
         Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
         Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
         return auditLogRepository.findByUserIdAndCreatedAtBetween(userId, startInstant, endInstant, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     // Resource-scoped queries
@@ -145,14 +147,14 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByResource(String resourceType, String resourceId, Pageable pageable) {
         log.debug("Retrieving audit logs for resource: {}:{}", resourceType, resourceId);
         return auditLogRepository.findByResourceTypeAndResourceId(resourceType, resourceId, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
     public List<AuditLogResponse> getLogsByResource(String resourceType, String resourceId) {
         log.debug("Retrieving all audit logs for resource: {}:{}", resourceType, resourceId);
         return auditLogRepository.findByResourceTypeAndResourceId(resourceType, resourceId).stream()
-                .map(AuditLogResponse::from)
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter))
                 .collect(Collectors.toList());
     }
 
@@ -161,14 +163,14 @@ public class AuditService {
     public Page<AuditLogResponse> getLogsByAction(String action, Pageable pageable) {
         log.debug("Retrieving audit logs for action: {}", action);
         return auditLogRepository.findByAction(action, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     @Transactional(readOnly = true)
     public List<AuditLogResponse> getLogsByAction(String action) {
         log.debug("Retrieving all audit logs for action: {}", action);
         return auditLogRepository.findByAction(action).stream()
-                .map(AuditLogResponse::from)
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter))
                 .collect(Collectors.toList());
     }
 
@@ -180,7 +182,7 @@ public class AuditService {
         Instant startInstant = start != null ? start.atZone(ZoneId.of("UTC")).toInstant() : null;
         Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
         return auditLogRepository.findByCreatedAtBetween(startInstant, endInstant, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     // Combined queries
@@ -193,7 +195,7 @@ public class AuditService {
         Instant endInstant = end != null ? end.atZone(ZoneId.of("UTC")).toInstant() : null;
         return auditLogRepository.findByProjectIdAndUserIdAndCreatedAtBetween(
                 projectId, userId, startInstant, endInstant, pageable)
-                .map(AuditLogResponse::from);
+                .map(log -> AuditLogResponse.from(log, descriptionFormatter));
     }
 
     // Analytics

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Folder, Key, Users, Building2, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import { projectsService } from '../services/projects';
 import { workflowsService } from '../services/workflows';
 import { auditService } from '../services/audit';
@@ -17,6 +18,7 @@ import type { Project, Workflow } from '../types';
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   // Fetch recent projects
   const { data: projectsData, isLoading: isProjectsLoading } = useQuery({
@@ -150,12 +152,12 @@ export const HomePage: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('home.justNow');
+    if (diffMins < 60) return t('home.timeAgo.minutes', { count: diffMins });
+    if (diffHours < 24) return t('home.timeAgo.hours', { count: diffHours });
+    if (diffDays < 7) return t('home.timeAgo.days', { count: diffDays });
     return then.toLocaleDateString();
-  }, []);
+  }, [t]);
 
   const formatAction = useCallback((action: string) => {
     return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
@@ -166,18 +168,18 @@ export const HomePage: React.FC = () => {
       {/* Header with Title and Primary CTA */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-theme-primary">Overview</h1>
+          <h1 className="text-3xl font-bold text-theme-primary">{t('home.title')}</h1>
           <p className="text-body text-theme-secondary mt-1">
-            Manage your organization's secrets and access controls.
+            {t('home.subtitle')}
           </p>
         </div>
         <div className="flex gap-3">
           <Button variant="secondary" onClick={() => navigate('/activity')}>
-            View Audit Logs
+            {t('home.viewAuditLogs')}
           </Button>
           <Button onClick={() => navigate('/projects')}>
             <Plus className="w-4 h-4 mr-2" />
-            Add Project
+            {t('home.addProject')}
           </Button>
         </div>
       </div>

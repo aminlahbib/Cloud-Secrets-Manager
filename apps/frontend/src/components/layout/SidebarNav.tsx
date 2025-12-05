@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Folder, Activity, Building2, Settings, Shield, LucideIcon } from 'lucide-react';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface NavItem {
   name: string;
@@ -16,6 +17,7 @@ interface SidebarNavProps {
 
 export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAdmin = false }) => {
   const location = useLocation();
+  const { t } = useI18n();
 
   const isActiveLink = (href: string) => {
     if (href === '/home') return location.pathname === '/home' || location.pathname === '/';
@@ -23,11 +25,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
   };
 
   const navigation: NavItem[] = [
-    { name: 'Overview', href: '/home', icon: LayoutDashboard },
-    { name: 'Projects', href: '/projects', icon: Folder },
-    { name: 'Activity Logs', href: '/activity', icon: Activity },
-    { name: 'Teams', href: '/teams', icon: Building2 },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: t('nav.overview'), href: '/home', icon: LayoutDashboard },
+    { name: t('nav.projects'), href: '/projects', icon: Folder },
+    { name: t('nav.activityLogs'), href: '/activity', icon: Activity },
+    { name: t('nav.teams'), href: '/teams', icon: Building2 },
+    { name: t('nav.settings'), href: '/settings', icon: Settings },
   ];
 
   return (
@@ -73,7 +75,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           } : {}}
         >
           <Shield className="h-5 w-5" />
-          Admin
+          {t('nav.admin')}
         </Link>
       )}
     </div>

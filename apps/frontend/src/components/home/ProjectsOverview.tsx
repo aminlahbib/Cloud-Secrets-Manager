@@ -5,6 +5,7 @@ import { Spinner } from '../ui/Spinner';
 import { Button } from '../ui/Button';
 import { ProjectCard } from '../projects/ProjectCard';
 import type { Project } from '../../types';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface ProjectsOverviewProps {
   projects: Project[];
@@ -18,6 +19,7 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
   getTimeAgo,
 }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   return (
     <div>
@@ -25,10 +27,10 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-            Recent Projects
+            {t('home.recentProjects')}
           </h2>
           <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-            Manage and access your projects
+            {t('home.recentProjectsDescription')}
           </p>
         </div>
         <Link 
@@ -42,7 +44,7 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
             e.currentTarget.style.color = 'var(--accent-primary)';
           }}
         >
-          View all <ArrowRight className="w-4 h-4" />
+          {t('home.viewAll')} <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
 
@@ -54,14 +56,14 @@ export const ProjectsOverview: React.FC<ProjectsOverviewProps> = ({
         <div className="card p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
           <Folder className="h-16 w-16 mx-auto mb-4" style={{ color: 'var(--text-tertiary)' }} />
           <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-            No projects yet
+            {t('home.noProjects')}
           </h3>
           <p className="text-body mb-6 max-w-md" style={{ color: 'var(--text-secondary)' }}>
-            Create your first project to start managing secrets and collaborating with your team
+            {t('home.createFirstProject')}
           </p>
           <Button onClick={() => navigate('/projects')} size="lg">
             <Plus className="w-5 h-5 mr-2" />
-            Create Project
+            {t('home.createProject')}
           </Button>
         </div>
       ) : (
