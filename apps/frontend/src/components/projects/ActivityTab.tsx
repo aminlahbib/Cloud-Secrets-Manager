@@ -69,6 +69,10 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
     () => log.userEmail || log.user?.email || t('activity.project.unknownUser'),
     [log.userEmail, log.user?.email, t]
   );
+  const teamName = useMemo(
+    () => log.metadata?.teamName ? String(log.metadata.teamName) : null,
+    [log.metadata?.teamName]
+  );
 
   return (
     <div className="p-4 transition-colors hover:bg-elevation-1">
@@ -104,8 +108,8 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
               </div>
               <p className="mt-1 text-body-sm text-theme-tertiary">
                 by {userEmail}
-                {log.metadata?.teamName && (
-                  <span className="text-theme-tertiary"> (team: {log.metadata.teamName as string})</span>
+                {teamName && (
+                  <span className="text-theme-tertiary"> (team: {teamName})</span>
                 )}
               </p>
             </>
