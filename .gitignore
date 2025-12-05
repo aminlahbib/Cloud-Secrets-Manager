@@ -68,10 +68,19 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Environment variables
+# ============================================
+# Environment Variables & Secrets
+# ============================================
 .env
 .env.local
 .env.*.local
+docker/.env
+docker/.env.local
+
+# Keep only examples
+!.env.example
+!docker/env.example
+!**/env.example
 
 # Application specific
 application-local.yml
@@ -95,17 +104,34 @@ secrets/
 *.secret
 *.token
 
-# Service Account JSON (NEVER commit!)
+# ============================================
+# GCP Service Account Keys (NEVER COMMIT!)
+# ============================================
+# All service account JSON files
 service-account.json
 **/service-account.json
-apps/backend/secret-service/src/main/resources/service-account.json
+*-service-account.json
+**/*-service-account.json
+
+# Firebase Admin SDK keys
+firebase-admin-key.json
+**/firebase-admin-key.json
+**/*-admin-key.json
+
+# GitHub Actions service account
 github-actions-key.json
 
-# Firebase/GCP Keys Directory
+# GCP Keys directory (entire directory)
 infrastructure/gcp/keys/
-**/*-admin-key.json
-firebase-admin-key.json
+infrastructure/gcp/keys/*.json
+
+# Kubernetes secrets with credentials
 infrastructure/k8s/firebase-admin-secret.yaml
+infrastructure/kubernetes/**/*-secret.yaml
+
+# Specific known locations
+apps/backend/secret-service/src/main/resources/service-account.json
+apps/backend/secret-service/infrastructure/gcp/keys/
 
 # Files with sensitive credentials (generated from environment variables)
 testing/postman/firebase-config.js
@@ -152,4 +178,4 @@ testing/
 Cloud-Secrets-Manager.pdf
 
 # Kiro specs
-.kiro/specs/project-assessment/
+.kiro/** 
