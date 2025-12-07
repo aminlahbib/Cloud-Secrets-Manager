@@ -1,0 +1,16 @@
+# Cloud Secrets Manager - Staging Environment Variables
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control!
+
+# Required: Your GCP project ID
+project_id = "your-gcp-project-id"
+
+# Optional: GCP region (default: europe-west10)
+region = "europe-west10"
+
+# Optional: Billing account ID for budget alerts
+# Leave empty to skip budget creation
+billing_account_id = ""
+
+# Optional: Monthly budget amount in USD (default: 150)
+budget_amount = 150

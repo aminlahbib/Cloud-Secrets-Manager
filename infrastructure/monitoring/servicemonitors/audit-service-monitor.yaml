@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: audit-service-monitor
-  namespace: cloud-secrets-manager
+  namespace: monitoring
   labels:
     app: audit-service
     release: prometheus
@@ -27,5 +27,5 @@ spec:
       replacement: audit-service
   namespaceSelector:
     matchNames:
-    - cloud-secrets-manager
+    - csm
 

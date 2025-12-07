@@ -5,6 +5,13 @@
 **Project:** Cloud Secrets Manager - Production GCP Deployment  
 **Status:** Comprehensive Analysis & Deployment Roadmap
 
+> **Status note (aligned with current repo):**  
+> Since this assessment was written, the project now has:
+> - A working **local Kubernetes deployment** on Docker Desktop using the `csm` namespace and the Helm chart in `infrastructure/helm/cloud-secrets-manager/`.  
+> - A deployed **local monitoring stack** (Prometheus, Grafana, Loki, Promtail) with a custom CSM dashboard, as described in `infrastructure/monitoring/DEPLOYMENT_GUIDE.md` and `GRAFANA_DASHBOARD_SETUP.md`.  
+> - Implemented **Terraform environments for `dev` and `staging`** under `infrastructure/terraform/environments/`.  
+> There is **still no GCP dev/staging/production deployment applied yet**; this document describes the **target GCP state** and remains accurate for cloud deployment planning.
+
 ---
 
 ## Executive Summary
@@ -22,10 +29,10 @@ This document provides a comprehensive assessment of the Cloud Secrets Manager p
 - ✅ CI/CD pipeline configured (Cloud Build)
 
 **Critical Gaps:**
-- ⚠️ No production deployment yet (only local Docker Compose)
+- ⚠️ No GCP dev/staging/production deployment yet (only local Docker + local Kubernetes)
 - ⚠️ Missing cost optimization strategies
 - ⚠️ Incomplete disaster recovery procedures
-- ⚠️ No production monitoring alerts configured
+- ⚠️ No GCP production monitoring alerts configured (local monitoring exists in `monitoring` namespace)
 - ⚠️ Frontend not integrated with backend in GKE
 
 **Overall Readiness:** 75% - Ready for production with recommended improvements
@@ -89,9 +96,9 @@ This document provides a comprehensive assessment of the Cloud Secrets Manager p
 - **No active production deployment**
 
 **Environments Defined:**
-- `dev` - Development environment (Terraform ready)
-- `staging` - Staging environment (Terraform ready)
-- `production` - Production environment (Terraform ready)
+- `dev` - Development environment (Terraform configuration implemented)
+- `staging` - Staging environment (Terraform configuration implemented)
+- `production` - Production environment (Terraform module pattern defined; to be finalized before go‑live)
 
 ### 1.3 Infrastructure Components Analysis
 

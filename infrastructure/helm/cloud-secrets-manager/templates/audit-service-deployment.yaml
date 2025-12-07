@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: audit-service
+  labels:
+    app.kubernetes.io/name: audit-service
+    app.kubernetes.io/part-of: csm-platform
+    app.kubernetes.io/component: backend
 spec:
   replicas: {{ .Values.auditService.replicaCount }}
   selector:
@@ -11,10 +15,14 @@ spec:
     metadata:
       labels:
         app: audit-service
+        app.kubernetes.io/name: audit-service
+        app.kubernetes.io/part-of: csm-platform
     spec:
       serviceAccountName: audit-service
+      {{- if .Values.cloudSql.enabled }}
       imagePullSecrets:
         - name: artifact-registry-secret
+      {{- end }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -36,16 +44,20 @@ spec:
               type: RuntimeDefault
           env:
             - name: SPRING_DATASOURCE_URL
+              {{- if .Values.cloudSql.enabled }}
               value: jdbc:postgresql://127.0.0.1:5432/{{ .Values.postgres.auditDb.db }}?sslmode=disable
+              {{- else }}
+              value: jdbc:postgresql://audit-db:5432/{{ .Values.postgres.auditDb.db }}?sslmode=disable
+              {{- end }}
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: csm-db-secrets
+                  name: db-secrets
                   key: audit-db-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: csm-db-secrets
+                  name: db-secrets
                   key: audit-db-password
             - name: SPRING_PROFILES_ACTIVE
               value: prod

@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: notification-service
+  labels:
+    app.kubernetes.io/name: notification-service
+    app.kubernetes.io/part-of: csm-platform
+    app.kubernetes.io/component: backend
 spec:
   replicas: {{ .Values.notificationService.replicaCount }}
   selector:
@@ -11,10 +15,14 @@ spec:
     metadata:
       labels:
         app: notification-service
+        app.kubernetes.io/name: notification-service
+        app.kubernetes.io/part-of: csm-platform
     spec:
       serviceAccountName: notification-service
+      {{- if .Values.cloudSql.enabled }}
       imagePullSecrets:
         - name: artifact-registry-secret
+      {{- end }}
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -36,49 +44,30 @@ spec:
               type: RuntimeDefault
           env:
             - name: SPRING_DATASOURCE_URL
+              {{- if .Values.cloudSql.enabled }}
               value: jdbc:postgresql://127.0.0.1:5432/{{ .Values.postgres.secretsDb.db }}?sslmode=disable
+              {{- else }}
+              value: jdbc:postgresql://secrets-db:5432/{{ .Values.postgres.secretsDb.db }}?sslmode=disable
+              {{- end }}
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: csm-db-secrets
+                  name: db-secrets
                   key: secrets-db-user
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: csm-db-secrets
+                  name: db-secrets
                   key: secrets-db-password
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
-                  name: csm-app-config
+                  name: cloud-secrets-config
                   key: JWT_SECRET
             - name: EMAIL_ENABLED
-              valueFrom:
-                secretKeyRef:
-                  name: csm-app-config
-                  key: EMAIL_ENABLED
-            - name: SENDGRID_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: csm-app-config
-                  key: SENDGRID_API_KEY
-            - name: EMAIL_FROM_ADDRESS
-              valueFrom:
-                secretKeyRef:
-                  name: csm-app-config
-                  key: EMAIL_FROM_ADDRESS
-            - name: EMAIL_FROM_NAME
-              valueFrom:
-                secretKeyRef:
-                  name: csm-app-config
-                  key: EMAIL_FROM_NAME
-            - name: GCP_PROJECT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: csm-app-config
-                  key: GCP_PROJECT_ID
+              value: "false"
             - name: SPRING_PROFILES_ACTIVE
-              value: prod
+              value: {{ if .Values.cloudSql.enabled }}prod{{ else }}dev{{ end }}
           ports:
             - containerPort: {{ .Values.notificationService.port }}
           livenessProbe:
