@@ -165,6 +165,47 @@ curl http://localhost:8080/actuator/health
 curl http://localhost:8080/api/health
 ```
 
+---
+
+## Next Steps: Staging & Production
+
+Once `dev` is healthy, you can repeat the same pattern for **staging** and later **production** using the existing Terraform and Helm configuration.
+
+### Staging environment
+
+- **Terraform config:**  
+  - `infrastructure/terraform/environments/staging/`  
+  - Same modules as `dev`, but with:
+    - Larger GKE node sizes and replica counts
+    - Stronger database settings (PITR, deletion protection, etc.)
+
+- **Helm values:**  
+  - `infrastructure/helm/cloud-secrets-manager/values-staging.yaml`
+
+- **High-level flow:**
+  1. Create `terraform.tfvars` in `environments/staging` (similar to dev, but with staging project/budget).
+  2. `terraform init && terraform apply` for staging.
+  3. Build images tagged for staging (or reuse dev images by SHA).
+  4. Deploy with Helm using `values-staging.yaml` and the staging connection name.
+
+### Production environment (planning)
+
+- **Pattern:** Same as staging, but with:
+  - HA Cloud SQL
+  - Increased node pool capacity
+  - Stricter network/security policies
+  - Full monitoring + alerting enabled
+
+- **Files to adjust when you introduce production:**
+  - `infrastructure/terraform/environments/production/` (once created)
+  - `infrastructure/helm/cloud-secrets-manager/values-production.yaml`
+
+> **Recommendation:** Treat this guide as the **dev bootstrap**. For staging and production, follow the same steps but always:
+> - Use separate GCP projects and Terraform backends per environment.
+> - Keep all changes in Git (Terraform + Helm values).
+> - Wire deployments into Cloud Build triggers instead of running Helm manually from your laptop.
+
+
 ### Step 8: Deploy Monitoring (Optional, 30 minutes)
 
 ```bash
