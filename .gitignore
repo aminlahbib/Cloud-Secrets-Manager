@@ -172,8 +172,9 @@ apps/frontend/build/
 # Test files
 testing/
 
-# Documents (keep documentation, ignore generated docs)
-docs/**
+# Documents (keep documentation, ignore only generated/temp docs)
+docs/**/*.pdf
+docs/**/node_modules/
 
 # PDF files
 Cloud-Secrets-Manager.pdf
