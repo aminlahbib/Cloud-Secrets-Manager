@@ -99,7 +99,7 @@ resource "google_sql_database_instance" "main" {
   }
 
   lifecycle {
-    prevent_destroy = true
+    # prevent_destroy = true  # Temporarily disabled to allow destruction
     ignore_changes = [
       settings[0].disk_size # Allow auto-resize without Terraform changes
     ]
