@@ -48,6 +48,9 @@ public class AuditLogDto {
     @JsonProperty("createdAt")
     private ZonedDateTime createdAt;
     
+    @JsonProperty("description")
+    private String description;
+    
     // Enriched user data (added by proxy service)
     private String userEmail;
     private String userDisplayName;
@@ -171,6 +174,14 @@ public class AuditLogDto {
 
     public void setUserDisplayName(String userDisplayName) {
         this.userDisplayName = userDisplayName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
 

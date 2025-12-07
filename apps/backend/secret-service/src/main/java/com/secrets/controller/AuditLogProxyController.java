@@ -57,6 +57,9 @@ public class AuditLogProxyController {
             throw new AccessDeniedException("Access denied. Platform admin role required.");
         }
         
+        // Get current user ID
+        UUID currentUserId = userService.getCurrentUserId(userDetails.getUsername());
+        
         AuditLogPageResponse response = auditLogProxyService.fetchAuditLogs(
                 page,
                 size,
@@ -64,7 +67,8 @@ public class AuditLogProxyController {
                 sortDir,
                 Optional.ofNullable(action),
                 Optional.ofNullable(startDate),
-                Optional.ofNullable(endDate));
+                Optional.ofNullable(endDate),
+                currentUserId);
 
         return ResponseEntity.ok(response);
     }
@@ -105,7 +109,8 @@ public class AuditLogProxyController {
                 Optional.ofNullable(userId),
                 Optional.ofNullable(resourceType),
                 Optional.ofNullable(startDate),
-                Optional.ofNullable(endDate));
+                Optional.ofNullable(endDate),
+                currentUserId);
 
         return ResponseEntity.ok(response);
     }
@@ -143,7 +148,8 @@ public class AuditLogProxyController {
                 Optional.empty(),
                 Optional.empty(),
                 Optional.of(start),
-                Optional.of(end));
+                Optional.of(end),
+                currentUserId);
 
         return ResponseEntity.ok(response);
     }

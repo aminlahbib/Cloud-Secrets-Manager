@@ -1,0 +1,90 @@
+# Loki Helm Values for Cloud Secrets Manager
+# Optimized for university project / proof of concept
+# Minimal resource footprint with 30-day retention
+# Simplified for Docker Desktop local development
+
+loki:
+  # Disable authentication for simplified internal-only deployment
+  auth_enabled: false
+  
+  # Common configuration
+  commonConfig:
+    replication_factor: 1
+  
+  # Storage configuration - filesystem for simplicity
+  storage:
+    type: filesystem
+  
+  # Schema configuration
+  schemaConfig:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: filesystem
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+  
+  # Limits configuration
+  limits_config:
+    retention_period: 720h  # 30 days
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
+    max_query_length: 721h
+    max_query_lookback: 720h
+
+# Single binary deployment mode (simplified for university project)
+deploymentMode: SingleBinary
+
+singleBinary:
+  replicas: 1
+  
+  # Resource allocation
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  
+  # Persistence for logs - use emptyDir for Docker Desktop
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: ""  # Empty string uses default
+
+# Disable chunksCache and resultsCache for simplicity
+chunksCache:
+  enabled: false
+
+resultsCache:
+  enabled: false
+
+# Disable backend components
+backend:
+  replicas: 0
+
+read:
+  replicas: 0
+
+write:
+  replicas: 0
+
+# Disable gateway
+gateway:
+  enabled: false
+
+# Monitoring configuration
+monitoring:
+  serviceMonitor:
+    enabled: false
+
+# Disable test
+test:
+  enabled: false
+
+# Disable lokiCanary
+lokiCanary:
+  enabled: false

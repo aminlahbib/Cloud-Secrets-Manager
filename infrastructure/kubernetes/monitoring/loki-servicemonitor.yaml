@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ServiceMonitor
+metadata:
+  name: loki
+  namespace: logging
+  labels:
+    app: loki
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: loki
+  endpoints:
+    - port: http-metrics
+      interval: 30s
+      path: /metrics
+      scheme: http
+  namespaceSelector:
+    matchNames:
+      - logging

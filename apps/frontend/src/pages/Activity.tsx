@@ -9,6 +9,7 @@ import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
+import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog, Project } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -79,6 +80,7 @@ interface FilterState {
 
 export const ActivityPage: React.FC = () => {
   const { user, isPlatformAdmin } = useAuth();
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const itemsPerPage = 50;
@@ -272,29 +274,31 @@ export const ActivityPage: React.FC = () => {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffMins < 1) return t('home.justNow');
+    if (diffMins < 60) return t('home.timeAgo.minutes', { count: diffMins });
+    if (diffHours < 24) return t('home.timeAgo.hours', { count: diffHours });
+    if (diffDays < 7) return t('home.timeAgo.days', { count: diffDays });
     return then.toLocaleDateString();
-  }, []);
+  }, [t]);
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-theme-primary">Activity</h1>
+          <h1 className="text-2xl font-bold text-theme-primary">
+            {t('activity.title')}
+          </h1>
           <p className="text-body-sm text-theme-secondary mt-1">
-            {isPlatformAdmin 
-              ? 'Track all actions across all projects and secrets' 
-              : 'Track all actions across your accessible projects and secrets'}
+            {isPlatformAdmin
+              ? t('activity.subtitle.admin')
+              : t('activity.subtitle.user')}
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-5 w-5 mr-2" />
-            {showFilters ? 'Hide Filters' : 'Filters'}
+            {showFilters ? t('activity.hideFilters') : t('activity.filters')}
           </Button>
           <Button
             variant="secondary"
@@ -302,7 +306,7 @@ export const ActivityPage: React.FC = () => {
             disabled={!paginatedLogs.length}
           >
             <Download className="h-5 w-5 mr-2" />
-            Export
+            {t('activity.export')}
           </Button>
         </div>
       </div>
@@ -313,14 +317,14 @@ export const ActivityPage: React.FC = () => {
           <div className="grid gap-4 md:grid-cols-5">
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Project
+                {t('activity.filters.project')}
               </label>
               <select
                 value={filters.projectId}
                 onChange={(e) => handleFilterChange('projectId', e.target.value)}
                 className="input-theme"
               >
-                <option value="">All Projects</option>
+                <option value="">{t('activity.filters.allProjects')}</option>
                 {projects.map((project: Project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -337,29 +341,29 @@ export const ActivityPage: React.FC = () => {
                 onChange={(e) => handleFilterChange('action', e.target.value)}
                 className="input-theme"
               >
-                <option value="">All Actions</option>
-                <optgroup label="Secrets">
-                  <option value="SECRET_CREATE">Secret Created</option>
-                  <option value="SECRET_READ">Secret Read</option>
-                  <option value="SECRET_UPDATE">Secret Updated</option>
-                  <option value="SECRET_DELETE">Secret Deleted</option>
-                  <option value="SECRET_ROTATE">Secret Rotated</option>
+                <option value="">{t('activity.filters.allActions')}</option>
+                <optgroup label={t('activity.filters.secrets')}>
+                  <option value="SECRET_CREATE">{t('activity.filters.secretCreated')}</option>
+                  <option value="SECRET_READ">{t('activity.filters.secretRead')}</option>
+                  <option value="SECRET_UPDATE">{t('activity.filters.secretUpdated')}</option>
+                  <option value="SECRET_DELETE">{t('activity.filters.secretDeleted')}</option>
+                  <option value="SECRET_ROTATE">{t('activity.filters.secretRotated')}</option>
                 </optgroup>
-                <optgroup label="Projects">
-                  <option value="PROJECT_CREATE">Project Created</option>
-                  <option value="PROJECT_UPDATE">Project Updated</option>
-                  <option value="PROJECT_DELETE">Project Deleted</option>
+                <optgroup label={t('activity.filters.projects')}>
+                  <option value="PROJECT_CREATE">{t('activity.filters.projectCreated')}</option>
+                  <option value="PROJECT_UPDATE">{t('activity.filters.projectUpdated')}</option>
+                  <option value="PROJECT_DELETE">{t('activity.filters.projectDeleted')}</option>
                 </optgroup>
-                <optgroup label="Members">
-                  <option value="MEMBER_INVITE">Member Invited</option>
-                  <option value="MEMBER_JOIN">Member Joined</option>
-                  <option value="MEMBER_REMOVE">Member Removed</option>
+                <optgroup label={t('activity.filters.members')}>
+                  <option value="MEMBER_INVITE">{t('activity.filters.memberInvited')}</option>
+                  <option value="MEMBER_JOIN">{t('activity.filters.memberJoined')}</option>
+                  <option value="MEMBER_REMOVE">{t('activity.filters.memberRemoved')}</option>
                 </optgroup>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Start Date
+                {t('activity.filters.startDate')}
               </label>
               <input
                 type="date"
@@ -370,7 +374,7 @@ export const ActivityPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                End Date
+                {t('activity.filters.endDate')}
               </label>
               <input
                 type="date"
@@ -399,19 +403,20 @@ export const ActivityPage: React.FC = () => {
       ) : error ? (
         <div className="rounded-lg p-4" style={{ backgroundColor: 'var(--status-danger-bg)', border: '1px solid var(--status-danger)' }}>
           <p className="text-sm" style={{ color: 'var(--status-danger)' }}>
-            Failed to load activity. {error instanceof Error ? error.message : 'Please try again.'}
+            {t('common.error')}{' '}
+            {error instanceof Error ? error.message : t('projects.failedToLoad')}
           </p>
         </div>
       ) : !paginatedLogs.length ? (
         <EmptyState
           icon={<FileText className="h-16 w-16" style={{ color: 'var(--text-tertiary)' }} />}
-          title="No activity yet"
+          title={t('activity.noActivity')}
           description={
             hasActiveFilters
-              ? 'No activity matches your filters. Try adjusting them.'
+              ? t('activity.noMatches')
               : projects.length === 0
-              ? 'You don\'t have access to any projects yet.'
-              : 'Your activity feed will show actions across all your accessible projects.'
+              ? t('activity.noAccess')
+              : t('activity.feedDescription')
           }
         />
       ) : (
@@ -426,6 +431,22 @@ export const ActivityPage: React.FC = () => {
                 info: { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' },
                 default: { backgroundColor: 'var(--elevation-1)', color: 'var(--text-secondary)' },
               };
+              
+              // Get project from log.project or lookup from projects array
+              const project = log.project || (log.projectId ? projects.find((p: Project) => p.id === log.projectId) : null);
+              const projectName = project?.name || log.metadata?.projectName as string;
+              
+              // Get team name(s) from project.teams or metadata
+              // Projects have teams array with { teamId, teamName }
+              let teamName: string | undefined;
+              if (project?.teams && project.teams.length > 0) {
+                // Use the first team the user is a member of
+                teamName = project.teams[0]?.teamName;
+              } else if (log.metadata?.teamName) {
+                // Fallback to metadata
+                teamName = log.metadata.teamName as string;
+              }
+              
               return (
                 <div 
                   key={log.id} 
@@ -449,12 +470,19 @@ export const ActivityPage: React.FC = () => {
                             {log.resourceName}
                           </span>
                         )}
+                        {projectName && (
+                          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                            in {projectName}
+                          </span>
+                        )}
+                        {teamName && (
+                          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                            (team: {teamName})
+                          </span>
+                        )}
                       </div>
                       <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        by {log.userEmail || log.user?.email || 'Unknown'}
-                        {log.project && (
-                          <span style={{ color: 'var(--text-tertiary)' }}> in {log.project.name}</span>
-                        )}
+                        by {log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}
                       </p>
                     </div>
                     

@@ -29,6 +29,18 @@ public class AuditClient {
 
     /**
      * Log an audit event with v3 structure
+     * 
+     * @param projectId Project ID (optional)
+     * @param userId User ID (required)
+     * @param action Action performed (e.g., "SECRET_READ", "SECRET_CREATE")
+     * @param resourceType Type of resource (e.g., "SECRET", "PROJECT", "TEAM")
+     * @param resourceId Resource ID (optional)
+     * @param resourceName Resource name (optional)
+     * @param metadata Additional metadata. Can include:
+     *                 - userName: User's display name
+     *                 - userEmail: User's email
+     *                 - projectName: Project name
+     *                 - teamName: Team name (if applicable)
      */
     public void logEvent(UUID projectId, UUID userId, String action, String resourceType,
             String resourceId, String resourceName, Map<String, Object> metadata) {
@@ -74,6 +86,13 @@ public class AuditClient {
      */
     public void logSecretEvent(UUID projectId, UUID userId, String action, String secretKey) {
         logEvent(projectId, userId, action, "SECRET", secretKey, secretKey, null);
+    }
+
+    /**
+     * Convenience method for secret operations with metadata
+     */
+    public void logSecretEvent(UUID projectId, UUID userId, String action, String secretKey, Map<String, Object> metadata) {
+        logEvent(projectId, userId, action, "SECRET", secretKey, secretKey, metadata);
     }
 
 }

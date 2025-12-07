@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
+import { useI18n } from '../contexts/I18nContext';
 import { usePreferences } from '../hooks/usePreferences';
 import { useNotifications } from '../contexts/NotificationContext';
 import { firebaseAuthService } from '../services/firebase-auth';
@@ -32,6 +33,7 @@ type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin, isFirebaseEnabled, refreshUser } = useAuth();
   const { theme, themeInfo, setTheme, availableThemes } = useTheme();
+  const { t } = useI18n();
   const { projectView, setProjectView } = usePreferences();
   const { showNotification } = useNotifications();
   const queryClient = useQueryClient();
@@ -81,10 +83,10 @@ export const SettingsPage: React.FC = () => {
   }, [preferences]);
 
   const tabs = [
-    { id: 'profile' as const, label: 'Profile', icon: User },
-    { id: 'security' as const, label: 'Security', icon: Shield },
-    { id: 'notifications' as const, label: 'Notifications', icon: Bell },
-    { id: 'preferences' as const, label: 'Preferences', icon: SettingsIcon },
+    { id: 'profile' as const, label: t('settings.profile'), icon: User },
+    { id: 'security' as const, label: t('settings.security'), icon: Shield },
+    { id: 'notifications' as const, label: t('settings.notifications'), icon: Bell },
+    { id: 'preferences' as const, label: t('settings.preferences'), icon: SettingsIcon },
   ];
 
   const saveProfileMutation = useMutation({
@@ -97,15 +99,15 @@ export const SettingsPage: React.FC = () => {
     onSuccess: () => {
       showNotification({
         type: 'success',
-        title: 'Profile updated',
-        message: 'Your profile has been updated successfully',
+        title: t('settings.profileUpdated'),
+        message: t('settings.profileUpdatedMessage'),
       });
     },
     onError: (error: any) => {
       showNotification({
         type: 'error',
         title: 'Update failed',
-        message: error?.message || 'Failed to update profile. Please try again.',
+        message: error?.message || t('settings.profileUpdateFailed'),
       });
     },
   });
@@ -115,7 +117,7 @@ export const SettingsPage: React.FC = () => {
       showNotification({
         type: 'error',
         title: 'Validation Error',
-        message: 'Display name cannot be empty',
+        message: t('settings.displayNameEmpty'),
       });
       return;
     }
@@ -189,8 +191,8 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-theme-primary">Settings</h1>
-        <p className="text-body-sm text-theme-secondary mt-1">Manage your account and application preferences</p>
+        <h1 className="text-2xl font-bold text-theme-primary">{t('settings.title')}</h1>
+        <p className="text-body-sm text-theme-secondary mt-1">{t('settings.description')}</p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
@@ -236,7 +238,7 @@ export const SettingsPage: React.FC = () => {
         <div className="flex-1">
           {activeTab === 'profile' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Profile Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">{t('settings.profileSettings')}</h2>
               
               <div className="space-y-6">
                 {/* Avatar */}
@@ -262,8 +264,8 @@ export const SettingsPage: React.FC = () => {
                       </div>
                     )}
                     <div>
-                      <Button variant="secondary" size="sm" onClick={handleChangeAvatar}>Change Avatar</Button>
-                      <p className="text-caption mt-2" style={{ color: 'var(--text-secondary)' }}>JPG, PNG or GIF. Max 2MB.</p>
+                      <Button variant="secondary" size="sm" onClick={handleChangeAvatar}>{t('settings.changeAvatar')}</Button>
+                      <p className="text-caption mt-2" style={{ color: 'var(--text-secondary)' }}>{t('settings.avatarRequirements')}</p>
                     </div>
                   </div>
                   <div 
@@ -275,12 +277,11 @@ export const SettingsPage: React.FC = () => {
                       borderStyle: 'solid'
                     }}
                   >
-                    <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Coming Soon:</p>
+                    <p className="font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>{t('settings.comingSoon')}</p>
                     <ul className="space-y-1 ml-4 list-disc" style={{ color: 'var(--text-tertiary)' }}>
-                      <li>Secure file upload with automatic image optimization</li>
-                      <li>Support for JPG, PNG, and GIF formats (max 2MB)</li>
-                      <li>Automatic cropping and resizing for optimal display</li>
-                      <li>CDN integration for fast global delivery</li>
+                      {t('settings.comingSoonFeatures').split('\n').map((feature, idx) => (
+                        <li key={idx}>{feature}</li>
+                      ))}
                     </ul>
                   </div>
                 </div>
@@ -288,24 +289,24 @@ export const SettingsPage: React.FC = () => {
                 {/* Form Fields */}
                 <div className="grid gap-6 max-w-xl">
                   <Input
-                    label="Display Name"
+                    label={t('settings.displayName')}
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="Your name"
+                    placeholder={t('settings.displayNamePlaceholder')}
                   />
                   
                   <Input
-                    label="Email Address"
+                    label={t('settings.emailAddress')}
                     type="email"
                     defaultValue={user?.email || ''}
                     disabled
-                    helperText="Email cannot be changed. Contact support if needed."
+                    helperText={t('settings.emailCannotChange')}
                   />
 
                   <div className="flex items-center gap-4">
                     <div>
                       <label className="block text-body-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                        Account Type
+                        {t('settings.accountType')}
                       </label>
                       <Badge variant={isPlatformAdmin ? 'owner-admin' : 'default'}>
                         {user?.platformRole || 'USER'}
@@ -314,7 +315,7 @@ export const SettingsPage: React.FC = () => {
                     {user?.createdAt && (
                       <div>
                         <label className="block text-body-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                          Member Since
+                          {t('settings.memberSince')}
                         </label>
                         <span className="text-body-sm flex items-center" style={{ color: 'var(--text-secondary)' }}>
                           <Clock className="h-4 w-4 mr-1" style={{ color: 'var(--text-tertiary)' }} />
@@ -329,7 +330,7 @@ export const SettingsPage: React.FC = () => {
                   className="pt-6 border-t"
                   style={{ borderTopColor: 'var(--border-subtle)' }}
                 >
-                  <Button onClick={handleSaveProfile} isLoading={saveProfileMutation.isPending}>Save Changes</Button>
+                  <Button onClick={handleSaveProfile} isLoading={saveProfileMutation.isPending}>{t('settings.saveChanges')}</Button>
                 </div>
               </div>
             </Card>
@@ -337,7 +338,7 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'security' && (
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Security Settings</h2>
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">{t('settings.securitySettings')}</h2>
               
               <div className="space-y-6 max-w-xl">
                 <div 
@@ -350,9 +351,9 @@ export const SettingsPage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <Shield className="h-5 w-5" style={{ color: 'var(--status-success)' }} />
                     <div>
-                      <h3 className="font-medium" style={{ color: 'var(--status-success)' }}>Firebase Authentication</h3>
+                      <h3 className="font-medium" style={{ color: 'var(--status-success)' }}>{t('settings.firebaseAuth')}</h3>
                       <p className="text-body-sm" style={{ color: 'var(--status-success)' }}>
-                        Your account is secured with Firebase Authentication.
+                        {t('settings.firebaseAuthDescription')}
                       </p>
                     </div>
                   </div>
@@ -367,15 +368,15 @@ export const SettingsPage: React.FC = () => {
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="text-lg font-medium text-theme-primary">Two-Factor Authentication</h3>
+                      <h3 className="text-lg font-medium text-theme-primary">{t('settings.twoFactorAuth')}</h3>
                       <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
                         {user?.twoFactorEnabled 
-                          ? 'An extra layer of security is protecting your account.'
-                          : 'Add an extra layer of security to your account by enabling 2FA.'}
+                          ? t('settings.twoFactorEnabled')
+                          : t('settings.twoFactorDisabled')}
                       </p>
                     </div>
                     {user?.twoFactorEnabled && (
-                      <Badge variant="success">Enabled</Badge>
+                      <Badge variant="success">{t('settings.enabled')}</Badge>
                     )}
                   </div>
 
@@ -386,16 +387,15 @@ export const SettingsPage: React.FC = () => {
                         style={{ backgroundColor: 'var(--elevation-2)' }}
                       >
                         <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                          Your account is protected with TOTP-based two-factor authentication. 
-                          You'll need to enter a code from your authenticator app when signing in.
+                          {t('settings.twoFactorDescription')}
                         </p>
                       </div>
                       <div className="flex gap-3">
                         <Button variant="secondary" onClick={() => setShowRecoveryCodesModal(true)}>
-                          View Recovery Codes
+                          {t('settings.viewRecoveryCodes')}
                         </Button>
                         <Button variant="danger" onClick={handleDisable2FA}>
-                          Disable 2FA
+                          {t('settings.disable2FA')}
                         </Button>
                       </div>
                     </div>
@@ -414,7 +414,7 @@ export const SettingsPage: React.FC = () => {
                       </div>
                       <Button variant="secondary" onClick={handleEnable2FA}>
                         <Key className="h-4 w-4 mr-2" />
-                        Enable 2FA
+                        {t('settings.enable2FA')}
                       </Button>
                     </div>
                   )}

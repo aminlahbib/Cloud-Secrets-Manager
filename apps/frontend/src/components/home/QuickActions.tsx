@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Activity, Building2, TrendingUp } from 'lucide-react';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface QuickAction {
   icon: React.ComponentType<{ className?: string }>;
@@ -17,30 +18,31 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   isPlatformAdmin = false,
 }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
 
   const actions: QuickAction[] = [
     {
       icon: Plus,
-      label: 'New Project',
-      description: 'Create a new project',
+      label: t('quickActions.newProject.label'),
+      description: t('quickActions.newProject.description'),
       onClick: () => navigate('/projects'),
     },
     ...(isPlatformAdmin ? [{
       icon: Activity,
-      label: 'View Activity',
-      description: 'See recent changes',
+      label: t('quickActions.viewActivity.label'),
+      description: t('quickActions.viewActivity.description'),
       onClick: () => navigate('/activity'),
     }] : []),
     {
       icon: Building2,
-      label: 'Manage Teams',
-      description: 'Create and manage teams',
+      label: t('quickActions.manageTeams.label'),
+      description: t('quickActions.manageTeams.description'),
       onClick: () => navigate('/teams'),
     },
     {
       icon: TrendingUp,
-      label: 'Settings',
-      description: 'Configure preferences',
+      label: t('quickActions.settings.label'),
+      description: t('quickActions.settings.description'),
       onClick: () => navigate('/settings'),
     },
   ];
@@ -48,7 +50,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   return (
     <div className="card">
       <div className="padding-card border-b border-theme-subtle">
-        <h2 className="text-body font-semibold text-theme-primary">Shortcuts</h2>
+        <h2 className="text-body font-semibold text-theme-primary">{t('quickActions.shortcuts')}</h2>
       </div>
       <div className="padding-card space-y-2">
         {actions.map((action, index) => {

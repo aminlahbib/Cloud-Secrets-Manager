@@ -50,6 +50,12 @@ public class FirebaseConfig {
             if (FirebaseApp.getApps().isEmpty()) {
                 InputStream serviceAccount = getServiceAccountInputStream();
                 
+                if (serviceAccount == null) {
+                    log.warn("Firebase service account file not found at: {}. Firebase authentication will not be available. " +
+                            "This is acceptable for local development, but required for production.", serviceAccountPath);
+                    return;
+                }
+                
                 FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .setProjectId(projectId)
@@ -61,8 +67,9 @@ public class FirebaseConfig {
                 log.info("Firebase Admin SDK already initialized");
             }
         } catch (IOException e) {
-            log.error("Failed to initialize Firebase Admin SDK", e);
-            throw new RuntimeException("Firebase initialization failed", e);
+            log.warn("Failed to initialize Firebase Admin SDK: {}. Firebase authentication will not be available. " +
+                    "This is acceptable for local development, but required for production.", e.getMessage());
+            // Don't throw exception - allow app to start without Firebase in dev mode
         }
     }
 
@@ -79,12 +86,12 @@ public class FirebaseConfig {
         }
         try {
             if (FirebaseApp.getApps().isEmpty()) {
-                log.warn("Firebase not initialized, returning null");
+                log.warn("Firebase not initialized (service account file may be missing), returning null");
                 return null;
             }
             return FirebaseAuth.getInstance();
         } catch (IllegalStateException e) {
-            log.warn("Firebase not initialized, returning null");
+            log.warn("Firebase not initialized (service account file may be missing), returning null: {}", e.getMessage());
             return null;
         }
     }
@@ -92,22 +99,28 @@ public class FirebaseConfig {
     private InputStream getServiceAccountInputStream() throws IOException {
         // Try as file path first (for Docker/K8s)
         try {
-            return new FileInputStream(serviceAccountPath);
-        } catch (Exception e) {
-            // Fall back to classpath (for local dev)
-            String classpathPath = serviceAccountPath.startsWith("classpath:") 
-                ? serviceAccountPath.replace("classpath:", "") 
-                : serviceAccountPath;
-            
-            InputStream resourceStream = getClass().getClassLoader()
-                .getResourceAsStream(classpathPath);
-            
-            if (resourceStream == null) {
-                throw new IOException("Service account file not found at: " + serviceAccountPath);
+            java.io.File file = new java.io.File(serviceAccountPath);
+            if (file.exists() && file.isFile()) {
+                return new FileInputStream(file);
             }
-            
-            return resourceStream;
+        } catch (Exception e) {
+            // Continue to try classpath
         }
+        
+        // Fall back to classpath (for local dev)
+        String classpathPath = serviceAccountPath.startsWith("classpath:") 
+            ? serviceAccountPath.replace("classpath:", "") 
+            : serviceAccountPath;
+        
+        InputStream resourceStream = getClass().getClassLoader()
+            .getResourceAsStream(classpathPath);
+        
+        if (resourceStream == null) {
+            // Return null instead of throwing - let caller handle gracefully
+            return null;
+        }
+        
+        return resourceStream;
     }
 }
 
