@@ -182,6 +182,9 @@ Cloud-Secrets-Manager.pdf
 # Kiro specs
 .kiro/** 
 
+# Root-level assets (screenshots, temporary images)
+/assets/
+
 # Kubernetes secret files with actual credentials
 infrastructure/kubernetes/k8s/firebase-admin-secret.yaml
 infrastructure/kubernetes/k8s/*-secret.yaml
