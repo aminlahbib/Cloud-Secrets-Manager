@@ -180,4 +180,7 @@ Cloud-Secrets-Manager.pdf
 # Kiro specs
 .kiro/** 
 
-docs/
+# Kubernetes secret files with actual credentials
+infrastructure/kubernetes/k8s/firebase-admin-secret.yaml
+infrastructure/kubernetes/k8s/*-secret.yaml
+!infrastructure/kubernetes/k8s/*-secret.yaml.example
