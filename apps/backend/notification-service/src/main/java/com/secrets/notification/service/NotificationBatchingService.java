@@ -52,11 +52,24 @@ public class NotificationBatchingService {
 
     /**
      * Update an existing notification to include batch information.
+     * Updates the title to indicate multiple similar notifications.
      */
     public void updateNotificationBatch(Notification notification, String newBatchItem) {
-        // Increment batch count in metadata
-        // For now, we'll store batch info in metadata JSON
-        // In a future enhancement, we could add a dedicated batchCount field
+        // Update title to show it's a batch
+        String currentTitle = notification.getTitle();
+        if (!currentTitle.contains("(")) {
+            notification.setTitle(currentTitle + " (2 similar)");
+        } else {
+            // Extract current count and increment
+            try {
+                String countPart = currentTitle.substring(currentTitle.indexOf("(") + 1, currentTitle.indexOf(")"));
+                int count = Integer.parseInt(countPart.split(" ")[0]);
+                notification.setTitle(currentTitle.replace("(" + countPart + ")", "(" + (count + 1) + " similar)"));
+            } catch (Exception e) {
+                // If parsing fails, just append
+                notification.setTitle(currentTitle + " (+1)");
+            }
+        }
         log.debug("Batching notification {} with new item: {}", notification.getId(), newBatchItem);
     }
 }
