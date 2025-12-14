@@ -27,17 +27,20 @@ public class NotificationHandler {
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final NotificationSseService sseService;
+    private final NotificationBatchingService batchingService;
 
     public NotificationHandler(NotificationRepository notificationRepository,
                                UserRepository userRepository,
                                EmailService emailService,
                                ObjectMapper objectMapper,
-                               NotificationSseService sseService) {
+                               NotificationSseService sseService,
+                               NotificationBatchingService batchingService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.objectMapper = objectMapper;
         this.sseService = sseService;
+        this.batchingService = batchingService;
     }
 
     public void handle(NotificationEvent event) {
@@ -77,31 +80,57 @@ public class NotificationHandler {
 
                 Notification notification = null;
                 if (inAppEnabled) {
-                    notification = new Notification();
-                    notification.setId(UUID.randomUUID());
-                    notification.setUserId(userId);
-                    notification.setType(event.getType().name());
-                    notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
-                    notification.setBody(event.getMessage());
-                    notification.setCreatedAt(event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now());
+                    Instant createdAt = event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now();
+                    
+                    // Check if we should batch this notification
+                    Notification existingBatch = batchingService.findBatchableNotification(
+                            userId, event.getType().name(), createdAt);
+                    
+                    if (existingBatch != null) {
+                        // Update existing notification with batch info
+                        String batchInfo = String.format("Additional: %s", event.getTitle() != null ? event.getTitle() : "Notification");
+                        batchingService.updateNotificationBatch(existingBatch, batchInfo);
+                        notification = existingBatch;
+                        // Update the notification to reflect it's been updated
+                        notificationRepository.save(notification);
+                    } else {
+                        // Create new notification
+                        notification = new Notification();
+                        notification.setId(UUID.randomUUID());
+                        notification.setUserId(userId);
+                        notification.setType(event.getType().name());
+                        notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
+                        notification.setBody(event.getMessage());
+                        notification.setCreatedAt(createdAt);
 
-                    if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
-                        try {
-                            notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
-                        } catch (JsonProcessingException e) {
-                            log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                        if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
+                            try {
+                                notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
+                            } catch (JsonProcessingException e) {
+                                log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                            }
                         }
+
+                        notificationRepository.save(notification);
                     }
 
-                    notificationRepository.save(notification);
-
-                    // Send via SSE to connected clients
-                    try {
-                        NotificationDto dto = toDto(notification);
-                        sseService.sendNotification(userId, dto);
-                    } catch (Exception ex) {
-                        log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
-                        // Don't fail the whole operation if SSE fails
+                    // Send via SSE to connected clients (only if it's a new notification, not a batch update)
+                    if (existingBatch == null) {
+                        try {
+                            NotificationDto dto = toDto(notification);
+                            sseService.sendNotification(userId, dto);
+                        } catch (Exception ex) {
+                            log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
+                            // Don't fail the whole operation if SSE fails
+                        }
+                    } else {
+                        // For batched notifications, send update via SSE
+                        try {
+                            NotificationDto dto = toDto(notification);
+                            sseService.sendNotification(userId, dto);
+                        } catch (Exception ex) {
+                            log.warn("Failed to send batched notification update via SSE to user {}: {}", userId, ex.getMessage());
+                        }
                     }
                 }
 
