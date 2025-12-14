@@ -170,10 +170,13 @@ public class MemberService {
                     "Your role in project \"%s\" has been updated to %s.",
                     project.getName(),
                     newRole.name()));
+                String projectLink = String.format("/projects/%s", projectId);
                 event.setMetadata(Map.of(
                     "projectName", project.getName(),
                     "oldRole", existing.getRole().name(),
-                    "newRole", newRole.name()
+                    "newRole", newRole.name(),
+                    "deepLink", projectLink,
+                    "actions", "[\"VIEW_PROJECT\"]"
                 ));
                 notificationEventPublisher.publish(event);
             }
