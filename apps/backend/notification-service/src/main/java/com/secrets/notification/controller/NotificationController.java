@@ -36,15 +36,18 @@ public class NotificationController {
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
     private final NotificationSseService sseService;
+    private final com.secrets.notification.service.NotificationAnalyticsService analyticsService;
 
     public NotificationController(NotificationRepository notificationRepository,
                                   UserRepository userRepository,
                                   ObjectMapper objectMapper,
-                                  NotificationSseService sseService) {
+                                  NotificationSseService sseService,
+                                  com.secrets.notification.service.NotificationAnalyticsService analyticsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
         this.sseService = sseService;
+        this.analyticsService = analyticsService;
     }
 
     @GetMapping
@@ -85,11 +88,16 @@ public class NotificationController {
     }
 
     @PostMapping("/{id}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable("id") UUID id) {
+    public ResponseEntity<Void> markAsRead(
+            @PathVariable("id") UUID id,
+            Authentication authentication) {
+        UUID userId = resolveCurrentUserId(authentication);
         notificationRepository.findById(id).ifPresent(notification -> {
             if (notification.getReadAt() == null) {
                 notification.setReadAt(Instant.now());
                 notificationRepository.save(notification);
+                // Track analytics
+                analyticsService.trackOpen(notification.getId(), userId);
             }
         });
         return ResponseEntity.noContent().build();

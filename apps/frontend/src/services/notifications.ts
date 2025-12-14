@@ -72,6 +72,23 @@ export const notificationsService = {
     );
     return data;
   },
+
+  async trackOpen(id: string): Promise<void> {
+    await api.post(`${NOTIFICATION_SERVICE_URL}/api/notifications/analytics/${id}/open`);
+  },
+
+  async trackAction(id: string, action: string): Promise<void> {
+    await api.post(`${NOTIFICATION_SERVICE_URL}/api/notifications/analytics/${id}/action`, null, {
+      params: { action },
+    });
+  },
+
+  async getAnalyticsSummary(): Promise<{ totalOpens: number; totalClicks: number }> {
+    const { data } = await api.get<{ totalOpens: number; totalClicks: number }>(
+      `${NOTIFICATION_SERVICE_URL}/api/notifications/analytics/summary`
+    );
+    return data;
+  },
 };
 
 

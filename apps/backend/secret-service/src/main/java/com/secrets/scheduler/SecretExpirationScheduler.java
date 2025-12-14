@@ -92,10 +92,13 @@ public class SecretExpirationScheduler {
                         secret.getSecretKey(),
                         project.getName(),
                         secret.getExpiresAt()));
+                String secretLink = String.format("/projects/%s/secrets/%s", project.getId(), secret.getId());
                 event.setMetadata(Map.of(
                         "secretKey", secret.getSecretKey(),
                         "projectName", project.getName(),
-                        "expiresAt", secret.getExpiresAt().toString()
+                        "expiresAt", secret.getExpiresAt().toString(),
+                        "deepLink", secretLink,
+                        "actions", "[\"VIEW_SECRET\", \"ROTATE_SECRET\", \"UPDATE_EXPIRATION\"]"
                 ));
                 notificationEventPublisher.publish(event);
             } catch (Exception e) {

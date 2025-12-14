@@ -1,6 +1,8 @@
 import React, { useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../hooks/useNotifications';
+import { notificationsService } from '../services/notifications';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -18,6 +20,7 @@ const NOTIFICATION_TYPES = [
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const userId = user?.id;
   const [filters, setFilters] = useState<NotificationFilters>({
     unreadOnly: false,
@@ -126,22 +129,75 @@ export const NotificationsPage: React.FC = () => {
             {notifications.map((n) => (
               <li
                 key={n.id}
-                className="px-6 py-4 hover:bg-elevation-1 cursor-pointer"
-                onClick={async () => {
-                  await markAsRead(n.id);
-                  // TODO: navigate using metadata.deepLink when available
-                }}
+                className="px-6 py-4 hover:bg-elevation-1"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="flex-1 cursor-pointer" onClick={async () => {
+                    await markAsRead(n.id);
+                    await notificationsService.trackOpen(n.id);
+                    if (n.metadata?.deepLink) {
+                      navigate(n.metadata.deepLink as string);
+                    }
+                  }}>
                     <p className="text-sm font-medium text-theme-primary">{n.title}</p>
                     {n.body && (
                       <p className="mt-1 text-xs text-theme-secondary">{n.body}</p>
                     )}
                   </div>
-                  {!n.readAt && (
-                    <span className="mt-1 h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
-                  )}
+                  <div className="flex items-center gap-2">
+                    {n.metadata?.actions && Array.isArray(n.metadata.actions) && (
+                      <div className="flex gap-1">
+                        {(n.metadata.actions as string[]).includes('VIEW_PROJECT') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'VIEW_PROJECT');
+                              if (n.metadata?.deepLink) {
+                                navigate(n.metadata.deepLink as string);
+                              }
+                            }}
+                          >
+                            View
+                          </Button>
+                        )}
+                        {(n.metadata.actions as string[]).includes('ROTATE_SECRET') && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'ROTATE_SECRET');
+                              if (n.metadata?.deepLink) {
+                                navigate(n.metadata.deepLink as string + '/rotate');
+                              }
+                            }}
+                          >
+                            Rotate
+                          </Button>
+                        )}
+                        {(n.metadata.actions as string[]).includes('ACCEPT_INVITATION') && (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'ACCEPT_INVITATION');
+                              if (n.metadata?.deepLink) {
+                                navigate(n.metadata.deepLink as string);
+                              }
+                            }}
+                          >
+                            Accept
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                    {!n.readAt && (
+                      <span className="mt-1 h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
+                    )}
+                  </div>
                 </div>
               </li>
             ))}

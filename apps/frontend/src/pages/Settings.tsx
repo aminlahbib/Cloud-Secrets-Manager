@@ -29,7 +29,7 @@ import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal
 import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
 import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences';
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences' | 'analytics';
 
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin, isFirebaseEnabled, refreshUser } = useAuth();
@@ -773,6 +773,20 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
               )}
+            </Card>
+          )}
+
+          {activeTab === 'analytics' && (
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold mb-6 text-theme-primary">Notification Analytics</h2>
+              <div className="space-y-4">
+                <p className="text-body-sm text-theme-secondary">
+                  Track your notification engagement and email delivery rates.
+                </p>
+                <div className="text-body-sm text-theme-secondary">
+                  Analytics coming soon...
+                </div>
+              </div>
             </Card>
           )}
 
