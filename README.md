@@ -2,10 +2,16 @@
 
 <div align="center">
 
-<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-  <img src="assets/logo.png" alt="Cloud Secrets Manager Logo" height="80" style="border-radius: 10px;"/>
-  <h1 style="margin: 0; font-size: 3.5rem; font-weight: 700;">Cloud Secrets Manager</h1>
-</div>
+<table>
+  <tr>
+    <td align="center" valign="middle" style="border: none; padding-right: 20px;">
+      <img src="assets/logo.png" alt="Cloud Secrets Manager Logo" height="80" style="border-radius: 10px;"/>
+    </td>
+    <td align="center" valign="middle" style="border: none;">
+      <h1 style="margin: 0; font-size: 3.5rem; font-weight: 700;">Cloud Secrets Manager</h1>
+    </td>
+  </tr>
+</table>
 
 **Enterprise-Grade Secrets Management Platform**
 
