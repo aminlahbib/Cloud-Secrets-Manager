@@ -133,6 +133,7 @@ export const NotificationsPage: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 cursor-pointer" onClick={async () => {
                     await markAsRead(n.id);
+                    await notificationsService.trackOpen(n.id);
                     if (n.metadata?.deepLink) {
                       navigate(n.metadata.deepLink as string);
                     }
@@ -149,8 +150,9 @@ export const NotificationsPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'VIEW_PROJECT');
                               if (n.metadata?.deepLink) {
                                 navigate(n.metadata.deepLink as string);
                               }
@@ -163,8 +165,9 @@ export const NotificationsPage: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'ROTATE_SECRET');
                               if (n.metadata?.deepLink) {
                                 navigate(n.metadata.deepLink as string + '/rotate');
                               }
@@ -177,8 +180,9 @@ export const NotificationsPage: React.FC = () => {
                           <Button
                             variant="primary"
                             size="sm"
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
+                              await notificationsService.trackAction(n.id, 'ACCEPT_INVITATION');
                               if (n.metadata?.deepLink) {
                                 navigate(n.metadata.deepLink as string);
                               }
