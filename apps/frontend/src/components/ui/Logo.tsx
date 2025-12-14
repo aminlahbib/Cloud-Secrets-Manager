@@ -1,5 +1,4 @@
 import React from 'react';
-import { Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface LogoProps {
@@ -20,10 +19,10 @@ interface LogoProps {
 }
 
 const sizeMap = {
-  sm: { icon: 'w-6 h-6', container: 'w-6 h-6', text: 'text-base' },
-  md: { icon: 'w-5 h-5', container: 'w-8 h-8', text: 'text-lg' },
-  lg: { icon: 'w-6 h-6', container: 'w-10 h-10', text: 'text-xl' },
-  xl: { icon: 'w-8 h-8', container: 'w-12 h-12', text: 'text-2xl' },
+  sm: { container: 'w-6 h-6', text: 'text-base' },
+  md: { container: 'w-8 h-8', text: 'text-lg' },
+  lg: { container: 'w-10 h-10', text: 'text-xl' },
+  xl: { container: 'w-12 h-12', text: 'text-2xl' },
 };
 
 export const Logo: React.FC<LogoProps> = ({
@@ -44,15 +43,12 @@ export const Logo: React.FC<LogoProps> = ({
       onClick={onClick}
       style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}
     >
-      <div 
-        className={`${sizeClasses.container} rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200 ${isClickable ? 'group-hover:scale-105' : ''}`}
-        style={{ 
-          backgroundColor: 'var(--accent-primary)', 
-          color: 'var(--text-inverse)' 
-        }}
-      >
-        <Shield className={`${sizeClasses.icon} fill-current`} />
-      </div>
+      <img 
+        src="/assets/logo.webp"
+        alt="Cloud Secrets Manager Logo"
+        className={`${sizeClasses.container} object-contain flex-shrink-0 transition-all duration-200 rounded-lg ${isClickable ? 'group-hover:scale-105' : ''}`}
+        style={{ borderRadius: '10px' }}
+      />
       {showText && (
         <span 
           className={`font-bold tracking-tight transition-colors duration-200 whitespace-nowrap ${isClickable ? 'group-hover:opacity-90' : ''} ${sizeClasses.text} ${textClassName}`}

@@ -6,6 +6,7 @@ import com.secrets.dto.notification.NotificationEvent;
 import com.secrets.dto.notification.NotificationType;
 import com.secrets.notification.entity.Notification;
 import com.secrets.notification.entity.User;
+import com.secrets.notification.dto.NotificationDto;
 import com.secrets.notification.repository.NotificationRepository;
 import com.secrets.notification.repository.UserRepository;
 import org.slf4j.Logger;
@@ -25,15 +26,21 @@ public class NotificationHandler {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
+    private final NotificationSseService sseService;
+    private final NotificationBatchingService batchingService;
 
     public NotificationHandler(NotificationRepository notificationRepository,
                                UserRepository userRepository,
                                EmailService emailService,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               NotificationSseService sseService,
+                               NotificationBatchingService batchingService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.objectMapper = objectMapper;
+        this.sseService = sseService;
+        this.batchingService = batchingService;
     }
 
     public void handle(NotificationEvent event) {
@@ -59,32 +66,78 @@ public class NotificationHandler {
                     continue;
                 }
 
+                // Check if notification type is enabled at all
                 if (!isEnabledForEvent(user, event)) {
                     log.debug("Notification {} disabled by preferences for user {}, skipping",
                             event.getType(), userId);
                     continue;
                 }
 
-                Notification notification = new Notification();
-                notification.setId(UUID.randomUUID());
-                notification.setUserId(userId);
-                notification.setType(event.getType().name());
-                notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
-                notification.setBody(event.getMessage());
-                notification.setCreatedAt(event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now());
+                // Check if in-app notifications are enabled
+                boolean inAppEnabled = isInAppEnabledForEvent(user, event);
+                // Check if email notifications are enabled
+                boolean emailEnabled = isEmailEnabledForEvent(user, event);
 
-                if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
-                    try {
-                        notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
-                    } catch (JsonProcessingException e) {
-                        log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                Notification notification = null;
+                if (inAppEnabled) {
+                    Instant createdAt = event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now();
+                    
+                    // Check if we should batch this notification
+                    Notification existingBatch = batchingService.findBatchableNotification(
+                            userId, event.getType().name(), createdAt);
+                    
+                    if (existingBatch != null) {
+                        // Update existing notification with batch info
+                        String batchInfo = String.format("Additional: %s", event.getTitle() != null ? event.getTitle() : "Notification");
+                        batchingService.updateNotificationBatch(existingBatch, batchInfo);
+                        notification = existingBatch;
+                        // Update the notification to reflect it's been updated
+                        notificationRepository.save(notification);
+                    } else {
+                        // Create new notification
+                        notification = new Notification();
+                        notification.setId(UUID.randomUUID());
+                        notification.setUserId(userId);
+                        notification.setType(event.getType().name());
+                        notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
+                        notification.setBody(event.getMessage());
+                        notification.setCreatedAt(createdAt);
+
+                        if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
+                            try {
+                                notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
+                            } catch (JsonProcessingException e) {
+                                log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                            }
+                        }
+
+                        notificationRepository.save(notification);
+                    }
+
+                    // Send via SSE to connected clients (only if it's a new notification, not a batch update)
+                    if (existingBatch == null) {
+                        try {
+                            NotificationDto dto = toDto(notification);
+                            sseService.sendNotification(userId, dto);
+                        } catch (Exception ex) {
+                            log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
+                            // Don't fail the whole operation if SSE fails
+                        }
+                    } else {
+                        // For batched notifications, send update via SSE
+                        try {
+                            NotificationDto dto = toDto(notification);
+                            sseService.sendNotification(userId, dto);
+                        } catch (Exception ex) {
+                            log.warn("Failed to send batched notification update via SSE to user {}: {}", userId, ex.getMessage());
+                        }
                     }
                 }
 
-                notificationRepository.save(notification);
-
                 // Send email where appropriate
-                sendEmailForEvent(user, event);
+                if (emailEnabled) {
+                    sendEmailForEvent(user, event);
+                }
             } catch (IllegalArgumentException ex) {
                 log.warn("Invalid recipient user id '{}' in notification event {}, skipping recipient",
                         userIdStr, event.getType());
@@ -168,6 +221,95 @@ public class NotificationHandler {
 
         // default to enabled when preference missing or not boolean
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isInAppEnabledForEvent(User user, NotificationEvent event) {
+        var prefs = user.getNotificationPreferences();
+        if (prefs == null || prefs.isEmpty()) {
+            return true;
+        }
+
+        String key;
+        switch (event.getType()) {
+            case SECRET_EXPIRING_SOON -> key = "secretExpirationInApp";
+            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsInApp";
+            case SECURITY_ALERT -> key = "securityAlertsInApp";
+            case ROLE_CHANGED -> key = "roleChangedInApp";
+            default -> {
+                // Check general preference first
+                Object generalEnabled = prefs.get("secretExpiration");
+                if (generalEnabled instanceof Boolean b && !b) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        Object value = prefs.get(key);
+        if (value instanceof Boolean b) {
+            return b;
+        }
+
+        // Fallback to general preference
+        return isEnabledForEvent(user, event);
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isEmailEnabledForEvent(User user, NotificationEvent event) {
+        var prefs = user.getNotificationPreferences();
+        if (prefs == null || prefs.isEmpty()) {
+            return true;
+        }
+
+        // Check general email toggle first
+        Object emailEnabled = prefs.get("email");
+        if (emailEnabled instanceof Boolean b && !b) {
+            return false;
+        }
+
+        String key;
+        switch (event.getType()) {
+            case SECRET_EXPIRING_SOON -> key = "secretExpirationEmail";
+            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsEmail";
+            case SECURITY_ALERT -> key = "securityAlertsEmail";
+            case ROLE_CHANGED -> key = "roleChangedEmail";
+            default -> {
+                return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
+            }
+        }
+
+        Object value = prefs.get(key);
+        if (value instanceof Boolean b) {
+            return b;
+        }
+
+        // Fallback to general email preference
+        return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
+    }
+
+    private NotificationDto toDto(Notification notification) {
+        NotificationDto dto = new NotificationDto();
+        dto.setId(notification.getId());
+        dto.setType(notification.getType());
+        dto.setTitle(notification.getTitle());
+        dto.setBody(notification.getBody());
+        dto.setCreatedAt(notification.getCreatedAt());
+        dto.setReadAt(notification.getReadAt());
+
+        if (notification.getMetadata() != null) {
+            try {
+                dto.setMetadata(objectMapper.readValue(
+                        notification.getMetadata(),
+                        new com.fasterxml.jackson.core.type.TypeReference<>() {
+                        }));
+            } catch (JsonProcessingException e) {
+                log.warn("Failed to parse notification metadata for {}: {}", notification.getId(), e.getMessage());
+                dto.setMetadata(java.util.Collections.emptyMap());
+            }
+        }
+
+        return dto;
     }
 }
 

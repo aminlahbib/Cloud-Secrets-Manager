@@ -192,7 +192,8 @@ export const ActivityPage: React.FC = () => {
       };
     },
     enabled: !!user?.id && (projects.length > 0 || isProjectsLoading === false),
-    staleTime: 30 * 1000, // 30 seconds - activity is real-time data
+    staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
   });
 
   const isLoading = isProjectsLoading || isActivitiesLoading;

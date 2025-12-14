@@ -188,7 +188,8 @@ export const TeamDetailPage: React.FC = () => {
       return { logs: sorted, totalCount: sorted.length };
     },
     enabled: !!teamId && activeTab === 'activity' && !!allProjectsForActivity?.content,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
   });
 
   // Update member role mutation

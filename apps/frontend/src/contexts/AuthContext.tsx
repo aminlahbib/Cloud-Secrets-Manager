@@ -5,6 +5,7 @@ import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
 import { twoFactorService } from '@/services/twoFactor';
 import { tokenStorage } from '@/utils/tokenStorage';
+import { clearUserSpecificQueries } from '@/utils/queryInvalidation';
 import type { User, PlatformRole, LoginRequest } from '@/types';
 
 interface AuthContextType {
@@ -43,14 +44,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Track previous user ID to detect user changes
   const [previousUserId, setPreviousUserId] = useState<string | null>(null);
 
-  // Clear query cache when user changes (logout or different user login)
+  // Clear user-specific queries when user changes (logout or different user login)
+  // Preserve audit/activity queries as they are persistent and not user-session dependent
   useEffect(() => {
     const currentUserId = user?.id || null;
 
     // Only clear cache when user actually changes (not during initial loading)
     if (previousUserId !== null && currentUserId !== previousUserId) {
-      console.log('User changed from', previousUserId, 'to', currentUserId, '- clearing query cache');
-      queryClient.clear();
+      console.log('User changed from', previousUserId, 'to', currentUserId, '- clearing user-specific queries (preserving audit logs)');
+      clearUserSpecificQueries(queryClient);
     }
 
     setPreviousUserId(currentUserId);
@@ -419,8 +421,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setUser(null);
     tokenStorage.clearAll();
-    // Clear query cache on logout
-    queryClient.clear();
+    // Clear user-specific queries but preserve audit/activity logs
+    // Audit logs are persistent and should not be lost on logout
+    clearUserSpecificQueries(queryClient);
     // Redirect to public landing page after sign out
     navigate('/');
   };

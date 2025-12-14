@@ -101,11 +101,14 @@ public class InvitationService {
                 event.setProjectId(projectId.toString());
                 event.setTitle("You've been invited to " + project.getName());
                 event.setMessage(inviter.getEmail() + " invited you to collaborate on " + project.getName());
+                String acceptLink = String.format("/accept-invite?token=%s", token);
                 event.setMetadata(Map.of(
                         "email", email,
                         "projectName", project.getName(),
                         "token", token,
-                        "inviterName", inviter.getEmail()
+                        "inviterName", inviter.getEmail(),
+                        "deepLink", acceptLink,
+                        "actions", "[\"ACCEPT_INVITATION\", \"DECLINE_INVITATION\"]"
                 ));
                 notificationEventPublisher.publish(event);
             }

@@ -44,8 +44,16 @@ export interface UserPreferencesResponse {
   notifications: {
     email: boolean;
     secretExpiration: boolean;
+    secretExpirationInApp?: boolean;
+    secretExpirationEmail?: boolean;
     projectInvitations: boolean;
+    projectInvitationsInApp?: boolean;
+    projectInvitationsEmail?: boolean;
     securityAlerts: boolean;
+    securityAlertsInApp?: boolean;
+    securityAlertsEmail?: boolean;
+    roleChangedInApp?: boolean;
+    roleChangedEmail?: boolean;
   };
   timezone: string;
   dateFormat: string;
