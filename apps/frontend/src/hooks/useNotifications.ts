@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService, type NotificationDto } from '../services/notifications';
+import { useNotificationStream } from './useNotificationStream';
 
 const notificationsKey = (userId: string) => ['notifications', userId];
 
@@ -13,7 +14,21 @@ export const useNotifications = (userId?: string) => {
 	    return notificationsService.list(false);
     },
     enabled: !!userId,
-    staleTime: 30_000,
+    staleTime: 5 * 60 * 1000, // 5 minutes (SSE handles real-time updates)
+  });
+
+  // Set up SSE stream for real-time notifications
+  useNotificationStream({
+    enabled: !!userId,
+    onNotification: () => {
+      // Invalidate cache when new notification arrives via SSE
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: notificationsKey(userId) });
+      }
+    },
+    onError: (error) => {
+      console.warn('SSE connection error, falling back to polling:', error);
+    },
   });
 
   const markAsReadMutation = useMutation({

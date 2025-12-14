@@ -1,4 +1,5 @@
 import api from './api';
+import { tokenStorage } from '../utils/tokenStorage';
 
 export interface NotificationDto {
   id: string;
@@ -29,8 +30,8 @@ export const notificationsService = {
   },
 
   getStreamUrl(): string {
-    const token = localStorage.getItem('accessToken');
-    return `${NOTIFICATION_SERVICE_URL}/api/notifications/stream${token ? `?token=${token}` : ''}`;
+    const token = tokenStorage.getAccessToken();
+    return `${NOTIFICATION_SERVICE_URL}/api/notifications/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   },
 };
 
