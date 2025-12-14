@@ -4,6 +4,9 @@ import com.secrets.notification.entity.Notification;
 import com.secrets.notification.repository.NotificationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -34,8 +37,11 @@ public class NotificationBatchingService {
     public Notification findBatchableNotification(UUID userId, String notificationType, Instant createdAt) {
         Instant windowStart = createdAt.minus(BATCH_TIME_WINDOW_MINUTES, ChronoUnit.MINUTES);
         
+        // Get recent notifications for the user
+        Pageable pageable = PageRequest.of(0, 50, Sort.by(Sort.Direction.DESC, "createdAt"));
         List<Notification> recentNotifications = notificationRepository
-                .findTop50ByUserIdOrderByCreatedAtDesc(userId)
+                .findByUserIdOrderByCreatedAtDesc(userId, pageable)
+                .getContent()
                 .stream()
                 .filter(n -> n.getType().equals(notificationType))
                 .filter(n -> n.getReadAt() == null)
