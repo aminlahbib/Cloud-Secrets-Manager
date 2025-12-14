@@ -11,12 +11,37 @@ export interface NotificationDto {
   readAt?: string | null;
 }
 
+export interface NotificationPage {
+  content: NotificationDto[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}
+
+export interface NotificationFilters {
+  unreadOnly?: boolean;
+  type?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  size?: number;
+}
+
 const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:8082';
 
 export const notificationsService = {
-  async list(unreadOnly: boolean = false): Promise<NotificationDto[]> {
-    const { data } = await api.get<NotificationDto[]>('/api/notifications', {
-      params: { unreadOnly },
+  async list(filters: NotificationFilters = {}): Promise<NotificationPage> {
+    const { unreadOnly = false, type, startDate, endDate, page = 0, size = 50 } = filters;
+    const params: Record<string, any> = { unreadOnly, page, size };
+    if (type) params.type = type;
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    
+    const { data } = await api.get<NotificationPage>(`${NOTIFICATION_SERVICE_URL}/api/notifications`, {
+      params,
     });
     return data;
   },

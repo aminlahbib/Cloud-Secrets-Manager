@@ -55,6 +55,12 @@
             <artifactId>jackson-databind</artifactId>
         </dependency>
 
+        <!-- Thymeleaf for HTML email templates -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
         <!-- Actuator for basic health endpoints -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

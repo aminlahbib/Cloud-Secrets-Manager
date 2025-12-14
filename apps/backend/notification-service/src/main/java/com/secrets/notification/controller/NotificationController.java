@@ -10,6 +10,10 @@ import com.secrets.notification.repository.UserRepository;
 import com.secrets.notification.service.NotificationSseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -44,19 +48,38 @@ public class NotificationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<NotificationDto>> listNotifications(
+    public ResponseEntity<Page<NotificationDto>> listNotifications(
             Authentication authentication,
-            @RequestParam(value = "unreadOnly", defaultValue = "false") boolean unreadOnly) {
+            @RequestParam(value = "unreadOnly", defaultValue = "false") boolean unreadOnly,
+            @RequestParam(value = "type", required = false) String type,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDate,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "50") int size) {
 
         UUID userId = resolveCurrentUserId(authentication);
 
-        List<Notification> notifications = unreadOnly
-                ? notificationRepository.findTop50ByUserIdAndReadAtIsNullOrderByCreatedAtDesc(userId)
-                : notificationRepository.findTop50ByUserIdOrderByCreatedAtDesc(userId);
+        // Validate pagination parameters
+        if (page < 0) page = 0;
+        if (size < 1) size = 1;
+        if (size > 100) size = 100; // Max 100 per page
 
-        List<NotificationDto> response = notifications.stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Notification> notifications;
+        if (type != null || startDate != null || endDate != null) {
+            // Use filtered query
+            notifications = unreadOnly
+                    ? notificationRepository.findByUserIdUnreadWithFilters(userId, type, startDate, endDate, pageable)
+                    : notificationRepository.findByUserIdWithFilters(userId, type, startDate, endDate, pageable);
+        } else {
+            // Use simple query for backward compatibility
+            notifications = unreadOnly
+                    ? notificationRepository.findByUserIdAndReadAtIsNullOrderByCreatedAtDesc(userId, pageable)
+                    : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        }
+
+        Page<NotificationDto> response = notifications.map(this::toDto);
 
         return ResponseEntity.ok(response);
     }
