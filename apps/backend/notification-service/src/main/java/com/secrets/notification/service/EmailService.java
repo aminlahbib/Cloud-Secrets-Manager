@@ -4,12 +4,15 @@ import com.sendgrid.*;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
+import com.secrets.notification.entity.EmailDelivery;
+import com.secrets.notification.repository.EmailDeliveryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -26,6 +29,7 @@ public class EmailService {
 
     private final EmailTemplateService templateService;
     private final EmailRetryService retryService;
+    private final EmailDeliveryRepository emailDeliveryRepository;
 
     @Value("${email.enabled:true}")
     private boolean emailEnabled;
@@ -42,9 +46,11 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
 
-    public EmailService(EmailTemplateService templateService, EmailRetryService retryService) {
+    public EmailService(EmailTemplateService templateService, EmailRetryService retryService,
+                       EmailDeliveryRepository emailDeliveryRepository) {
         this.templateService = templateService;
         this.retryService = retryService;
+        this.emailDeliveryRepository = emailDeliveryRepository;
     }
 
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
@@ -74,8 +80,9 @@ public class EmailService {
                 Secure secret management for teams
                 """, inviterName, projectName, acceptLink);
 
+        EmailDelivery delivery = createEmailDelivery(recipientEmail, subject, "INVITATION");
         retryService.executeWithRetry(
-            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody, delivery),
             "sendInvitationEmail"
         );
         log.info("Queued invitation email to {} for project {}", recipientEmail, projectName);
@@ -112,8 +119,9 @@ public class EmailService {
                 Secure secret management for teams
                 """, secretKey, projectName, formattedDate, projectLink);
 
+        EmailDelivery delivery = createEmailDelivery(recipientEmail, subject, "EXPIRATION_WARNING");
         retryService.executeWithRetry(
-            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody, delivery),
             "sendExpirationWarning"
         );
         log.info("Queued expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
@@ -146,20 +154,36 @@ public class EmailService {
                 Secure secret management for teams
                 """, projectName, oldRole, newRole, projectLink);
 
+        EmailDelivery delivery = createEmailDelivery(recipientEmail, subject, "ROLE_CHANGE");
         retryService.executeWithRetry(
-            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody, delivery),
             "sendMembershipChangeEmail"
         );
         log.info("Queued membership change email to {} for project {} ({} -> {})",
                 recipientEmail, projectName, oldRole, newRole);
     }
 
-    private boolean sendEmailSync(String to, String subject, String htmlBody, String plainBody) {
+    private EmailDelivery createEmailDelivery(String recipientEmail, String subject, String emailType) {
+        EmailDelivery delivery = new EmailDelivery();
+        delivery.setRecipientEmail(recipientEmail);
+        delivery.setSubject(subject);
+        delivery.setEmailType(emailType);
+        delivery.setStatus(EmailDelivery.DeliveryStatus.PENDING);
+        return emailDeliveryRepository.save(delivery);
+    }
+
+    private boolean sendEmailSync(String to, String subject, String htmlBody, String plainBody, EmailDelivery delivery) {
         if (!emailEnabled) {
+            delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+            delivery.setErrorMessage("Email notifications disabled");
+            emailDeliveryRepository.save(delivery);
             return true; // Not an error, just disabled
         }
 
         if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
+            delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+            delivery.setErrorMessage("SendGrid API key not configured");
+            emailDeliveryRepository.save(delivery);
             log.warn(
                     "SendGrid API key not configured. Email to {} not sent. Set SENDGRID_API_KEY environment variable.",
                     to);
@@ -183,14 +207,30 @@ public class EmailService {
             Response response = sg.api(request);
 
             if (response.getStatusCode() >= 400) {
+                delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+                delivery.setErrorMessage(String.format("HTTP %d: %s", response.getStatusCode(), response.getBody()));
+                delivery.setRetryCount(delivery.getRetryCount() + 1);
+                emailDeliveryRepository.save(delivery);
                 log.error("Failed to send email to {}: HTTP {} - {}",
                         to, response.getStatusCode(), response.getBody());
                 return false;
             } else {
+                delivery.setStatus(EmailDelivery.DeliveryStatus.SENT);
+                delivery.setSentAt(Instant.now());
+                // Extract SendGrid message ID from response headers if available
+                String messageId = response.getHeaders().get("X-Message-Id");
+                if (messageId != null) {
+                    delivery.setSendgridMessageId(messageId);
+                }
+                emailDeliveryRepository.save(delivery);
                 log.debug("Email sent successfully to {}: HTTP {}", to, response.getStatusCode());
                 return true;
             }
         } catch (IOException ex) {
+            delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+            delivery.setErrorMessage(ex.getMessage());
+            delivery.setRetryCount(delivery.getRetryCount() + 1);
+            emailDeliveryRepository.save(delivery);
             log.error("Failed to send email to {}: {}", to, ex.getMessage(), ex);
             return false;
         }
