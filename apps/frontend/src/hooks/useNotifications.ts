@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
-import { notificationsService, type NotificationDto, type NotificationFilters } from '../services/notifications';
+import { useCallback } from 'react';
+import { notificationsService, type NotificationFilters } from '../services/notifications';
 import { useNotificationStream } from './useNotificationStream';
 
-const notificationsKey = (userId: string, filters?: NotificationFilters) => 
+const notificationsKey = (userId: string | undefined, filters?: NotificationFilters) => 
   userId ? ['notifications', userId, filters] : ['notifications', 'anonymous', filters];
 
 export const useNotifications = (userId?: string, filters?: NotificationFilters) => {

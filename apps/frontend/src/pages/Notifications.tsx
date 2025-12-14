@@ -35,7 +35,6 @@ export const NotificationsPage: React.FC = () => {
     markAllAsRead,
     totalPages,
     currentPage,
-    pageSize,
   } = useNotifications(userId, filters);
 
   const handleFilterChange = useCallback((key: keyof NotificationFilters, value: any) => {
@@ -145,55 +144,62 @@ export const NotificationsPage: React.FC = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    {n.metadata?.actions && Array.isArray(n.metadata.actions) && (
-                      <div className="flex gap-1">
-                        {(n.metadata.actions as string[]).includes('VIEW_PROJECT') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await notificationsService.trackAction(n.id, 'VIEW_PROJECT');
-                              if (n.metadata?.deepLink) {
-                                navigate(n.metadata.deepLink as string);
-                              }
-                            }}
-                          >
-                            View
-                          </Button>
-                        )}
-                        {(n.metadata.actions as string[]).includes('ROTATE_SECRET') && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await notificationsService.trackAction(n.id, 'ROTATE_SECRET');
-                              if (n.metadata?.deepLink) {
-                                navigate(n.metadata.deepLink as string + '/rotate');
-                              }
-                            }}
-                          >
-                            Rotate
-                          </Button>
-                        )}
-                        {(n.metadata.actions as string[]).includes('ACCEPT_INVITATION') && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await notificationsService.trackAction(n.id, 'ACCEPT_INVITATION');
-                              if (n.metadata?.deepLink) {
-                                navigate(n.metadata.deepLink as string);
-                              }
-                            }}
-                          >
-                            Accept
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                    {(() => {
+                      const actions = n.metadata?.actions;
+                      if (actions && Array.isArray(actions) && actions.length > 0) {
+                        const actionArray = actions as string[];
+                        return (
+                          <div className="flex gap-1">
+                            {actionArray.includes('VIEW_PROJECT') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await notificationsService.trackAction(n.id, 'VIEW_PROJECT');
+                                  if (n.metadata?.deepLink) {
+                                    navigate(n.metadata.deepLink as string);
+                                  }
+                                }}
+                              >
+                                View
+                              </Button>
+                            )}
+                            {actionArray.includes('ROTATE_SECRET') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await notificationsService.trackAction(n.id, 'ROTATE_SECRET');
+                                  if (n.metadata?.deepLink) {
+                                    navigate(n.metadata.deepLink as string + '/rotate');
+                                  }
+                                }}
+                              >
+                                Rotate
+                              </Button>
+                            )}
+                            {actionArray.includes('ACCEPT_INVITATION') && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  await notificationsService.trackAction(n.id, 'ACCEPT_INVITATION');
+                                  if (n.metadata?.deepLink) {
+                                    navigate(n.metadata.deepLink as string);
+                                  }
+                                }}
+                              >
+                                Accept
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     {!n.readAt && (
                       <span className="mt-1 h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
                     )}
