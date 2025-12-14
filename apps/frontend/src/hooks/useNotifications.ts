@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { notificationsService, type NotificationDto } from '../services/notifications';
 import { useNotificationStream } from './useNotificationStream';
 
@@ -17,18 +18,23 @@ export const useNotifications = (userId?: string) => {
     staleTime: 5 * 60 * 1000, // 5 minutes (SSE handles real-time updates)
   });
 
+  // Memoize callbacks to prevent SSE reconnection on every render
+  const handleNotification = useCallback(() => {
+    // Invalidate cache when new notification arrives via SSE
+    if (userId) {
+      queryClient.invalidateQueries({ queryKey: notificationsKey(userId) });
+    }
+  }, [userId, queryClient]);
+
+  const handleError = useCallback((error: Event) => {
+    console.warn('SSE connection error, falling back to polling:', error);
+  }, []);
+
   // Set up SSE stream for real-time notifications
   useNotificationStream({
     enabled: !!userId,
-    onNotification: () => {
-      // Invalidate cache when new notification arrives via SSE
-      if (userId) {
-        queryClient.invalidateQueries({ queryKey: notificationsKey(userId) });
-      }
-    },
-    onError: (error) => {
-      console.warn('SSE connection error, falling back to polling:', error);
-    },
+    onNotification: handleNotification,
+    onError: handleError,
   });
 
   const markAsReadMutation = useMutation({

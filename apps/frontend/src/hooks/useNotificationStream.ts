@@ -11,6 +11,16 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
   const { enabled = true, onNotification, onError } = options;
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  
+  // Store callbacks in refs to avoid recreating EventSource on every render
+  const onNotificationRef = useRef(onNotification);
+  const onErrorRef = useRef(onError);
+
+  // Update refs when callbacks change
+  useEffect(() => {
+    onNotificationRef.current = onNotification;
+    onErrorRef.current = onError;
+  }, [onNotification, onError]);
 
   useEffect(() => {
     if (!enabled) {
@@ -38,7 +48,7 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
     eventSource.addEventListener('notification', (event: MessageEvent) => {
       try {
         const notification: NotificationDto = JSON.parse(event.data);
-        onNotification?.(notification);
+        onNotificationRef.current?.(notification);
       } catch (error) {
         console.error('Failed to parse notification from SSE:', error);
       }
@@ -46,7 +56,7 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
 
     eventSource.onerror = (error) => {
       setIsConnected(false);
-      onError?.(error);
+      onErrorRef.current?.(error);
       // EventSource will automatically attempt to reconnect
     };
 
@@ -57,7 +67,7 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
       eventSourceRef.current = null;
       setIsConnected(false);
     };
-  }, [enabled, onNotification, onError]);
+  }, [enabled]); // Only depend on enabled, not callbacks
 
   return { isConnected };
 };

@@ -69,11 +69,11 @@ public class NotificationSseService {
         Set<SseEmitter> emitters = userEmitters.get(userId);
         if (emitters != null) {
             emitters.remove(emitter);
+            int remainingCount = emitters.size();
             if (emitters.isEmpty()) {
                 userEmitters.remove(userId);
             }
-            log.debug("Removed SSE emitter for user {}. Remaining emitters: {}", userId, 
-                    emitters.size());
+            log.debug("Removed SSE emitter for user {}. Remaining emitters: {}", userId, remainingCount);
         }
     }
 
