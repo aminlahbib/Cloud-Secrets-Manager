@@ -25,6 +25,7 @@ public class EmailService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
 
     private final EmailTemplateService templateService;
+    private final EmailRetryService retryService;
 
     @Value("${email.enabled:true}")
     private boolean emailEnabled;
@@ -41,8 +42,9 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
 
-    public EmailService(EmailTemplateService templateService) {
+    public EmailService(EmailTemplateService templateService, EmailRetryService retryService) {
         this.templateService = templateService;
+        this.retryService = retryService;
     }
 
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
@@ -72,8 +74,11 @@ public class EmailService {
                 Secure secret management for teams
                 """, inviterName, projectName, acceptLink);
 
-        sendEmail(recipientEmail, subject, htmlBody, plainBody);
-        log.info("Sent invitation email to {} for project {}", recipientEmail, projectName);
+        retryService.executeWithRetry(
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            "sendInvitationEmail"
+        );
+        log.info("Queued invitation email to {} for project {}", recipientEmail, projectName);
     }
 
     public void sendExpirationWarning(String recipientEmail, String secretKey, String projectName,
@@ -107,8 +112,11 @@ public class EmailService {
                 Secure secret management for teams
                 """, secretKey, projectName, formattedDate, projectLink);
 
-        sendEmail(recipientEmail, subject, htmlBody, plainBody);
-        log.info("Sent expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
+        retryService.executeWithRetry(
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            "sendExpirationWarning"
+        );
+        log.info("Queued expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
     }
 
     public void sendMembershipChangeEmail(String recipientEmail, String projectName, String oldRole, String newRole) {
@@ -138,21 +146,24 @@ public class EmailService {
                 Secure secret management for teams
                 """, projectName, oldRole, newRole, projectLink);
 
-        sendEmail(recipientEmail, subject, htmlBody, plainBody);
-        log.info("Sent membership change email to {} for project {} ({} -> {})",
+        retryService.executeWithRetry(
+            () -> sendEmailSync(recipientEmail, subject, htmlBody, plainBody),
+            "sendMembershipChangeEmail"
+        );
+        log.info("Queued membership change email to {} for project {} ({} -> {})",
                 recipientEmail, projectName, oldRole, newRole);
     }
 
-    private void sendEmail(String to, String subject, String htmlBody, String plainBody) {
+    private boolean sendEmailSync(String to, String subject, String htmlBody, String plainBody) {
         if (!emailEnabled) {
-            return;
+            return true; // Not an error, just disabled
         }
 
         if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
             log.warn(
                     "SendGrid API key not configured. Email to {} not sent. Set SENDGRID_API_KEY environment variable.",
                     to);
-            return;
+            return false;
         }
 
         try {
@@ -174,11 +185,14 @@ public class EmailService {
             if (response.getStatusCode() >= 400) {
                 log.error("Failed to send email to {}: HTTP {} - {}",
                         to, response.getStatusCode(), response.getBody());
+                return false;
             } else {
                 log.debug("Email sent successfully to {}: HTTP {}", to, response.getStatusCode());
+                return true;
             }
         } catch (IOException ex) {
             log.error("Failed to send email to {}: {}", to, ex.getMessage(), ex);
+            return false;
         }
     }
 }
