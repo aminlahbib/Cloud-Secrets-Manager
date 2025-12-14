@@ -24,6 +24,8 @@ public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
 
+    private final EmailTemplateService templateService;
+
     @Value("${email.enabled:true}")
     private boolean emailEnabled;
 
@@ -39,6 +41,10 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:5173}")
     private String appBaseUrl;
 
+    public EmailService(EmailTemplateService templateService) {
+        this.templateService = templateService;
+    }
+
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping invitation email to {}", recipientEmail);
@@ -48,7 +54,8 @@ public class EmailService {
         String subject = String.format("You've been invited to %s", projectName);
         String acceptLink = String.format("%s/accept-invite?token=%s", appBaseUrl, token);
 
-        String body = String.format("""
+        String htmlBody = templateService.renderInvitationEmail(inviterName, projectName, acceptLink);
+        String plainBody = String.format("""
                 Hi,
 
                 %s has invited you to collaborate on the project "%s" in Cloud Secrets Manager.
@@ -65,7 +72,7 @@ public class EmailService {
                 Secure secret management for teams
                 """, inviterName, projectName, acceptLink);
 
-        sendEmail(recipientEmail, subject, body);
+        sendEmail(recipientEmail, subject, htmlBody, plainBody);
         log.info("Sent invitation email to {} for project {}", recipientEmail, projectName);
     }
 
@@ -80,7 +87,8 @@ public class EmailService {
         String formattedDate = expiresAt.format(DATE_FORMATTER);
         String projectLink = String.format("%s/projects", appBaseUrl);
 
-        String body = String.format("""
+        String htmlBody = templateService.renderExpirationWarningEmail(secretKey, projectName, expiresAt, projectLink);
+        String plainBody = String.format("""
                 Hi,
 
                 This is a reminder that your secret "%s" in project "%s" will expire soon.
@@ -99,7 +107,7 @@ public class EmailService {
                 Secure secret management for teams
                 """, secretKey, projectName, formattedDate, projectLink);
 
-        sendEmail(recipientEmail, subject, body);
+        sendEmail(recipientEmail, subject, htmlBody, plainBody);
         log.info("Sent expiration warning to {} for secret {} (expires: {})", recipientEmail, secretKey, formattedDate);
     }
 
@@ -112,7 +120,8 @@ public class EmailService {
         String subject = String.format("Your role in %s has changed", projectName);
         String projectLink = String.format("%s/projects", appBaseUrl);
 
-        String body = String.format("""
+        String htmlBody = templateService.renderRoleChangeEmail(projectName, oldRole, newRole, projectLink);
+        String plainBody = String.format("""
                 Hi,
 
                 Your role in the project "%s" has been updated.
@@ -129,12 +138,12 @@ public class EmailService {
                 Secure secret management for teams
                 """, projectName, oldRole, newRole, projectLink);
 
-        sendEmail(recipientEmail, subject, body);
+        sendEmail(recipientEmail, subject, htmlBody, plainBody);
         log.info("Sent membership change email to {} for project {} ({} -> {})",
                 recipientEmail, projectName, oldRole, newRole);
     }
 
-    private void sendEmail(String to, String subject, String body) {
+    private void sendEmail(String to, String subject, String htmlBody, String plainBody) {
         if (!emailEnabled) {
             return;
         }
@@ -149,8 +158,10 @@ public class EmailService {
         try {
             Email from = new Email(fromAddress, fromName);
             Email toEmail = new Email(to);
-            Content content = new Content("text/plain", body);
-            Mail mail = new Mail(from, subject, toEmail, content);
+            Content htmlContent = new Content("text/html", htmlBody);
+            Content plainContent = new Content("text/plain", plainBody);
+            Mail mail = new Mail(from, subject, toEmail, plainContent);
+            mail.addContent(htmlContent);
 
             SendGrid sg = new SendGrid(sendGridApiKey);
             Request request = new Request();

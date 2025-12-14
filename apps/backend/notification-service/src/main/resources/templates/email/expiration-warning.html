@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secret Expiration Warning</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+        <h2 style="color: #856404; margin-top: 0;">⚠️ Secret Expiration Warning</h2>
+    </div>
+    
+    <div style="background-color: #f8f9fa; padding: 30px; border-radius: 8px;">
+        <p>Hi there,</p>
+        
+        <p>This is a reminder that your secret <strong th:text="${secretKey}">SECRET_KEY</strong> in project <strong th:text="${projectName}">Project Name</strong> will expire soon.</p>
+        
+        <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 0;"><strong>Expiration Date:</strong> <span th:text="${expiresAt}">Date</span></p>
+        </div>
+        
+        <p>To prevent service disruptions, please:</p>
+        <ol>
+            <li>Rotate the secret before it expires</li>
+            <li>Update the expiration date</li>
+            <li>Or remove the expiration if no longer needed</li>
+        </ol>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a th:href="${projectLink}" 
+               style="display: inline-block; background-color: #2196F3; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                Manage Your Secrets
+            </a>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        
+        <p style="color: #999; font-size: 12px; margin: 0;">
+            Cloud Secrets Manager<br>
+            Secure secret management for teams
+        </p>
+    </div>
+</body>
+</html>
