@@ -4,10 +4,11 @@
 
 **Enterprise-Grade Secrets Management Platform**
 
-[![Website](https://img.shields.io/badge/Website-https://your-site.com-blue?style=flat-square)](https://your-site.com)
-[![Documentation](https://img.shields.io/badge/Documentation-https://docs.your-site.com-blue?style=flat-square)](https://docs.your-site.com)
-[![Demo](https://img.shields.io/badge/Demo-https://demo.your-site.com-green?style=flat-square)](https://demo.your-site.com)
+[![Website](https://img.shields.io/badge/Website-Cloud%20Secrets%20Manager-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager)
+[![Documentation](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager)
+
+### Built with
 
 [![Java](https://img.shields.io/badge/Java-21-orange?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.5-brightgreen?logo=spring&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -18,100 +19,78 @@
 [![GCP](https://img.shields.io/badge/GCP-Ready-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-</div>
 
-<!-- TODO: Add screenshot of the application -->
-<div align="center">
-  <img src="assets/logo.png" alt="Cloud Secrets Manager Dashboard" width="100%"/>
-  <p><em>Securely store, manage, and audit sensitive credentials across your organization</em></p>
-</div>
-
-
+**Securely store, manage, and audit sensitive credentials across your organization**
 
 ## 📚 Documentation
 
-📖 **[View Full Documentation](https://docs.your-site.com)** | [Wiki](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki)
-
-For detailed guides, API references, and comprehensive examples, visit our [documentation site](https://docs.your-site.com).
+For detailed documentation visit the Project's [Wiki](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki) 📖
 
 
 
 ## 💡 Why Cloud Secrets Manager?
 
-### ❌ **Without Cloud Secrets Manager**
+### 🔴 **Without Cloud Secrets Manager**
 
-- 🔴 **Hardcoded Secrets** - API keys and passwords scattered in code repositories
-- 🔴 **No Access Control** - Everyone has access to everything, or no one knows who has access
-- 🔴 **No Audit Trail** - Can't track who accessed what secrets and when
-- 🔴 **Security Breaches** - Exposed credentials lead to compromised systems
-- 🔴 **Compliance Nightmares** - No way to prove compliance with security standards
-- 🔴 **Manual Rotation** - Secret rotation is a manual, error-prone process
-- 🔴 **No Versioning** - Can't rollback to previous secret values
-- 🔴 **Scattered Management** - Secrets stored in multiple places (config files, environment variables, spreadsheets)
+-  **Hardcoded Secrets** - API keys and passwords scattered in code repositories
+-  **No Access Control** - Everyone has access to everything, or no one knows who has access
+-  **No Audit Trail** - Can't track who accessed what secrets and when
+-  **Security Breaches** - Exposed credentials lead to compromised systems
+-  **Compliance Nightmares** - No way to prove compliance with security standards
+-  **Manual Rotation** - Secret rotation is a manual, error-prone process
+-  **No Versioning** - Can't rollback to previous secret values
+-  **Scattered Management** - Secrets stored in multiple places (config files, environment variables, spreadsheets)
 
 ### ✅ **With Cloud Secrets Manager**
 
-- ✅ **Centralized Security** - All secrets encrypted and stored in one secure location
-- ✅ **Granular Access Control** - Role-based permissions (Owner, Admin, Member, Viewer) per project
-- ✅ **Complete Audit Trail** - Every access, modification, and deletion is logged with user, timestamp, and context
-- ✅ **Military-Grade Encryption** - AES-256-GCM encryption at rest, secrets never stored in plaintext
-- ✅ **Compliance Ready** - Immutable audit logs for SOC 2, GDPR, and other compliance requirements
-- ✅ **Automated Lifecycle** - Secret expiration warnings and automated rotation workflows
-- ✅ **Full Versioning** - Complete history of all secret changes with rollback capability
-- ✅ **Team Collaboration** - Project-based organization with team sharing and permissions
+-  **Centralized Security** - All secrets encrypted and stored in one secure location
+-  **Granular Access Control** - Role-based permissions (Owner, Admin, Member, Viewer) per project
+-  **Complete Audit Trail** - Every access, modification, and deletion is logged with user, timestamp, and context
+-  **Military-Grade Encryption** - AES-256-GCM encryption at rest, secrets never stored in plaintext
+-  **Compliance Ready** - Immutable audit logs for SOC 2, GDPR, and other compliance requirements
+-  **Automated Lifecycle** - Secret expiration warnings and automated rotation workflows
+-  **Full Versioning** - Complete history of all secret changes with rollback capability
+-  **Team Collaboration** - Project-based organization with team sharing and permissions
 
  
 
-## What It Does
+## Distinctive Features
 
-Cloud Secrets Manager is an enterprise-grade platform that eliminates the security risks of hardcoded secrets and provides centralized, secure credential management.
+### 1. Military-Grade Encryption with Zero-Knowledge Architecture
 
-### Core Features
+Unlike traditional secrets managers that store encrypted data server-side, Cloud Secrets Manager implements a zero-knowledge architecture where secrets are encrypted before leaving your control, ensuring that even the platform operators cannot access your sensitive data.
 
-#### **Secure Secret Storage**
-- **AES-256-GCM Encryption** - All secrets encrypted at rest before database storage
-- **Secure Key Management** - Encryption keys managed securely, never exposed
-- **Zero-Knowledge Architecture** - Secrets are encrypted client-side when possible
+- AES-256-GCM encryption at rest - All secrets encrypted before database storage
+- Zero-knowledge architecture - Secrets encrypted client-side when possible
+- Secure key management - Encryption keys stored in Google Secret Manager, never exposed
+- TLS 1.3 in transit - All communications encrypted with the latest security standards
 
-#### **Access Control & Permissions**
-- **Project-Based Organization** - Group secrets by project, team, or application
-- **Role-Based Access Control (RBAC)** - 5 permission levels:
-  -  **Owner** - Full control, can delete project
-  -  **Admin** - Manage secrets and members
-  -  **Member** - Create and edit secrets
-  -  **Viewer** - Read-only access
-  -  **Auditor** - View-only with audit log access
-- **Team Management** - Invite team members, manage permissions, track access
+### 2. Complete Audit Trail and Compliance Ready
 
-#### **Secret Lifecycle Management**
-- **Version Control** - Complete history of all secret changes
-- **Rollback Capability** - Restore previous secret versions instantly
-- **Expiration Management** - Set expiration dates, receive warnings before expiry
-- **Bulk Operations** - Update, delete, or rotate multiple secrets at once
+Unlike basic logging systems, Cloud Secrets Manager provides immutable, tamper-proof audit logs that capture every action with full context, making compliance reporting effortless and security investigations comprehensive.
 
-#### **Audit & Compliance**
-- **Immutable Audit Logs** - Every action logged with user, timestamp, IP, and context
-- **Compliance Reporting** - Export audit logs for SOC 2, GDPR, HIPAA compliance
-- **Analytics Dashboard** - Track secret access patterns and usage metrics
-- **Security Alerts** - Real-time notifications for suspicious activity
+- Immutable audit logs - Every access, modification, and deletion logged with user, timestamp, IP, and context
+- Compliance reporting - Export audit logs for SOC 2, GDPR, HIPAA compliance requirements
+- Analytics dashboard - Track secret access patterns, usage metrics, and security events
+- Real-time security alerts - Instant notifications for suspicious activity and policy violations
 
-#### **Authentication & Security**
-- **Multi-Provider Auth** - Google OAuth, Firebase Authentication
-- **Two-Factor Authentication (2FA)** - TOTP-based 2FA with recovery codes
-- **JWT Tokens** - Secure, stateless authentication
-- **Session Management** - Automatic token refresh and secure logout
+### 3. Real-Time Notifications with Smart Batching
 
-#### **Notifications & Alerts**
-- **Real-Time Notifications** - Server-Sent Events (SSE) for instant updates
-- **Email Alerts** - HTML email templates for important events
-- **Smart Batching** - Similar notifications grouped to reduce spam
-- **Customizable Preferences** - Control notification types and delivery methods
+Unlike notification systems that spam users with every event, Cloud Secrets Manager intelligently batches similar notifications and delivers them through multiple channels, ensuring you stay informed without being overwhelmed.
 
-#### **Developer Experience**
-- **RESTful API** - Complete OpenAPI/Swagger documentation
-- **Modern UI** - React-based dashboard with real-time updates
-- **Docker Support** - One-command local development setup
-- **Kubernetes Ready** - Production-ready Helm charts and manifests
+- Server-Sent Events (SSE) - Real-time in-app notifications without polling
+- Smart batching - Similar notifications grouped within 5-minute windows to reduce spam
+- Multi-channel delivery - In-app notifications, HTML email templates, and customizable preferences
+- Action tracking - Analytics on notification opens and user engagement
+
+### 4. Microservices Architecture with Event-Driven Design
+
+Unlike monolithic secrets managers that are difficult to scale and maintain, Cloud Secrets Manager uses a microservices architecture with event-driven communication, allowing each service to scale independently and ensuring high availability.
+
+- Independent service scaling - Secret, Audit, and Notification services scale separately based on load
+- Event-driven communication - Asynchronous Pub/Sub messaging for loose coupling and resilience
+- Cloud-native design - Built for Kubernetes from day one with Helm charts and Terraform modules
+- Production-ready - Complete observability stack with Prometheus, Grafana, and Loki integration
 
  
 
@@ -336,7 +315,7 @@ curl http://localhost:8082/actuator/health  # Notification Service
 - **Promtail** - Log collection
 
 
-## 📄 License
+## ⚖️ License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
