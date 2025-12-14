@@ -6,6 +6,7 @@ import com.secrets.dto.notification.NotificationEvent;
 import com.secrets.dto.notification.NotificationType;
 import com.secrets.notification.entity.Notification;
 import com.secrets.notification.entity.User;
+import com.secrets.notification.dto.NotificationDto;
 import com.secrets.notification.repository.NotificationRepository;
 import com.secrets.notification.repository.UserRepository;
 import org.slf4j.Logger;
@@ -25,15 +26,18 @@ public class NotificationHandler {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
+    private final NotificationSseService sseService;
 
     public NotificationHandler(NotificationRepository notificationRepository,
                                UserRepository userRepository,
                                EmailService emailService,
-                               ObjectMapper objectMapper) {
+                               ObjectMapper objectMapper,
+                               NotificationSseService sseService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.objectMapper = objectMapper;
+        this.sseService = sseService;
     }
 
     public void handle(NotificationEvent event) {
@@ -82,6 +86,15 @@ public class NotificationHandler {
                 }
 
                 notificationRepository.save(notification);
+
+                // Send via SSE to connected clients
+                try {
+                    NotificationDto dto = toDto(notification);
+                    sseService.sendNotification(userId, dto);
+                } catch (Exception ex) {
+                    log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
+                    // Don't fail the whole operation if SSE fails
+                }
 
                 // Send email where appropriate
                 sendEmailForEvent(user, event);
@@ -168,6 +181,30 @@ public class NotificationHandler {
 
         // default to enabled when preference missing or not boolean
         return true;
+    }
+
+    private NotificationDto toDto(Notification notification) {
+        NotificationDto dto = new NotificationDto();
+        dto.setId(notification.getId());
+        dto.setType(notification.getType());
+        dto.setTitle(notification.getTitle());
+        dto.setBody(notification.getBody());
+        dto.setCreatedAt(notification.getCreatedAt());
+        dto.setReadAt(notification.getReadAt());
+
+        if (notification.getMetadata() != null) {
+            try {
+                dto.setMetadata(objectMapper.readValue(
+                        notification.getMetadata(),
+                        new com.fasterxml.jackson.core.type.TypeReference<>() {
+                        }));
+            } catch (JsonProcessingException e) {
+                log.warn("Failed to parse notification metadata for {}: {}", notification.getId(), e.getMessage());
+                dto.setMetadata(java.util.Collections.emptyMap());
+            }
+        }
+
+        return dto;
     }
 }
 

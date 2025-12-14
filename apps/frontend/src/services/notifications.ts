@@ -10,6 +10,8 @@ export interface NotificationDto {
   readAt?: string | null;
 }
 
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:8082';
+
 export const notificationsService = {
   async list(unreadOnly: boolean = false): Promise<NotificationDto[]> {
     const { data } = await api.get<NotificationDto[]>('/api/notifications', {
@@ -24,6 +26,11 @@ export const notificationsService = {
 
   async markAllAsRead(): Promise<void> {
     await api.post('/api/notifications/read-all');
+  },
+
+  getStreamUrl(): string {
+    const token = localStorage.getItem('accessToken');
+    return `${NOTIFICATION_SERVICE_URL}/api/notifications/stream${token ? `?token=${token}` : ''}`;
   },
 };
 

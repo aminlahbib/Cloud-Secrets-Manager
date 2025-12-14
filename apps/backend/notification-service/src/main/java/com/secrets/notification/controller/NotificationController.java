@@ -7,11 +7,14 @@ import com.secrets.notification.entity.Notification;
 import com.secrets.notification.entity.User;
 import com.secrets.notification.repository.NotificationRepository;
 import com.secrets.notification.repository.UserRepository;
+import com.secrets.notification.service.NotificationSseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -28,13 +31,16 @@ public class NotificationController {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
+    private final NotificationSseService sseService;
 
     public NotificationController(NotificationRepository notificationRepository,
                                   UserRepository userRepository,
-                                  ObjectMapper objectMapper) {
+                                  ObjectMapper objectMapper,
+                                  NotificationSseService sseService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.sseService = sseService;
     }
 
     @GetMapping
@@ -77,6 +83,15 @@ public class NotificationController {
         notificationRepository.saveAll(notifications);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamNotifications(Authentication authentication) {
+        UUID userId = resolveCurrentUserId(authentication);
+        SseEmitter emitter = new SseEmitter(NotificationSseService.getSseTimeout());
+        sseService.addEmitter(userId, emitter);
+        log.info("SSE connection established for user {}", userId);
+        return emitter;
     }
 
     private UUID resolveCurrentUserId(Authentication authentication) {
