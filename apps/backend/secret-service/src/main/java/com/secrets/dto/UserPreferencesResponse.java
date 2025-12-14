@@ -42,11 +42,35 @@ public class UserPreferencesResponse {
         @JsonProperty("secretExpiration")
         private Boolean secretExpiration;
         
+        @JsonProperty("secretExpirationInApp")
+        private Boolean secretExpirationInApp;
+        
+        @JsonProperty("secretExpirationEmail")
+        private Boolean secretExpirationEmail;
+        
         @JsonProperty("projectInvitations")
         private Boolean projectInvitations;
         
+        @JsonProperty("projectInvitationsInApp")
+        private Boolean projectInvitationsInApp;
+        
+        @JsonProperty("projectInvitationsEmail")
+        private Boolean projectInvitationsEmail;
+        
         @JsonProperty("securityAlerts")
         private Boolean securityAlerts;
+        
+        @JsonProperty("securityAlertsInApp")
+        private Boolean securityAlertsInApp;
+        
+        @JsonProperty("securityAlertsEmail")
+        private Boolean securityAlertsEmail;
+        
+        @JsonProperty("roleChangedInApp")
+        private Boolean roleChangedInApp;
+        
+        @JsonProperty("roleChangedEmail")
+        private Boolean roleChangedEmail;
 
         public NotificationPreferences() {
         }
@@ -81,6 +105,70 @@ public class UserPreferencesResponse {
 
         public void setSecurityAlerts(Boolean securityAlerts) {
             this.securityAlerts = securityAlerts;
+        }
+
+        public Boolean getSecretExpirationInApp() {
+            return secretExpirationInApp;
+        }
+
+        public void setSecretExpirationInApp(Boolean secretExpirationInApp) {
+            this.secretExpirationInApp = secretExpirationInApp;
+        }
+
+        public Boolean getSecretExpirationEmail() {
+            return secretExpirationEmail;
+        }
+
+        public void setSecretExpirationEmail(Boolean secretExpirationEmail) {
+            this.secretExpirationEmail = secretExpirationEmail;
+        }
+
+        public Boolean getProjectInvitationsInApp() {
+            return projectInvitationsInApp;
+        }
+
+        public void setProjectInvitationsInApp(Boolean projectInvitationsInApp) {
+            this.projectInvitationsInApp = projectInvitationsInApp;
+        }
+
+        public Boolean getProjectInvitationsEmail() {
+            return projectInvitationsEmail;
+        }
+
+        public void setProjectInvitationsEmail(Boolean projectInvitationsEmail) {
+            this.projectInvitationsEmail = projectInvitationsEmail;
+        }
+
+        public Boolean getSecurityAlertsInApp() {
+            return securityAlertsInApp;
+        }
+
+        public void setSecurityAlertsInApp(Boolean securityAlertsInApp) {
+            this.securityAlertsInApp = securityAlertsInApp;
+        }
+
+        public Boolean getSecurityAlertsEmail() {
+            return securityAlertsEmail;
+        }
+
+        public void setSecurityAlertsEmail(Boolean securityAlertsEmail) {
+            this.securityAlertsEmail = securityAlertsEmail;
+        }
+
+        public Boolean getRoleChangedInApp() {
+            return roleChangedInApp;
+        }
+
+        public void setRoleChangedInApp(Boolean roleChangedInApp) {
+            this.roleChangedInApp = roleChangedInApp;
+        }
+
+        public Boolean getRoleChangedEmail() {
+            return roleChangedEmail;
+        }
+
+        public void setRoleChangedEmail(Boolean roleChangedEmail) {
+            this.roleChangedEmail = roleChangedEmail;
         }
     }
 }

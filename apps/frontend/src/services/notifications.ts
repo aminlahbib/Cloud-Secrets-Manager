@@ -33,6 +33,20 @@ export const notificationsService = {
     const token = tokenStorage.getAccessToken();
     return `${NOTIFICATION_SERVICE_URL}/api/notifications/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
   },
+
+  async sendTestNotification(type: string = 'SECRET_EXPIRING_SOON'): Promise<NotificationDto> {
+    const token = tokenStorage.getAccessToken();
+    const { data } = await api.post<NotificationDto>(
+      `${NOTIFICATION_SERVICE_URL}/api/notifications/test?type=${type}`,
+      {},
+      {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      }
+    );
+    return data;
+  },
 };
 
 

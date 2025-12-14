@@ -63,41 +63,52 @@ public class NotificationHandler {
                     continue;
                 }
 
+                // Check if notification type is enabled at all
                 if (!isEnabledForEvent(user, event)) {
                     log.debug("Notification {} disabled by preferences for user {}, skipping",
                             event.getType(), userId);
                     continue;
                 }
 
-                Notification notification = new Notification();
-                notification.setId(UUID.randomUUID());
-                notification.setUserId(userId);
-                notification.setType(event.getType().name());
-                notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
-                notification.setBody(event.getMessage());
-                notification.setCreatedAt(event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now());
+                // Check if in-app notifications are enabled
+                boolean inAppEnabled = isInAppEnabledForEvent(user, event);
+                // Check if email notifications are enabled
+                boolean emailEnabled = isEmailEnabledForEvent(user, event);
 
-                if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
+                Notification notification = null;
+                if (inAppEnabled) {
+                    notification = new Notification();
+                    notification.setId(UUID.randomUUID());
+                    notification.setUserId(userId);
+                    notification.setType(event.getType().name());
+                    notification.setTitle(event.getTitle() != null ? event.getTitle() : "Notification");
+                    notification.setBody(event.getMessage());
+                    notification.setCreatedAt(event.getCreatedAt() != null ? event.getCreatedAt() : Instant.now());
+
+                    if (event.getMetadata() != null && !event.getMetadata().isEmpty()) {
+                        try {
+                            notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
+                        } catch (JsonProcessingException e) {
+                            log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                        }
+                    }
+
+                    notificationRepository.save(notification);
+
+                    // Send via SSE to connected clients
                     try {
-                        notification.setMetadata(objectMapper.writeValueAsString(event.getMetadata()));
-                    } catch (JsonProcessingException e) {
-                        log.warn("Failed to serialize notification metadata for user {}: {}", userId, e.getMessage());
+                        NotificationDto dto = toDto(notification);
+                        sseService.sendNotification(userId, dto);
+                    } catch (Exception ex) {
+                        log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
+                        // Don't fail the whole operation if SSE fails
                     }
                 }
 
-                notificationRepository.save(notification);
-
-                // Send via SSE to connected clients
-                try {
-                    NotificationDto dto = toDto(notification);
-                    sseService.sendNotification(userId, dto);
-                } catch (Exception ex) {
-                    log.warn("Failed to send notification via SSE to user {}: {}", userId, ex.getMessage());
-                    // Don't fail the whole operation if SSE fails
-                }
-
                 // Send email where appropriate
-                sendEmailForEvent(user, event);
+                if (emailEnabled) {
+                    sendEmailForEvent(user, event);
+                }
             } catch (IllegalArgumentException ex) {
                 log.warn("Invalid recipient user id '{}' in notification event {}, skipping recipient",
                         userIdStr, event.getType());
@@ -181,6 +192,71 @@ public class NotificationHandler {
 
         // default to enabled when preference missing or not boolean
         return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isInAppEnabledForEvent(User user, NotificationEvent event) {
+        var prefs = user.getNotificationPreferences();
+        if (prefs == null || prefs.isEmpty()) {
+            return true;
+        }
+
+        String key;
+        switch (event.getType()) {
+            case SECRET_EXPIRING_SOON -> key = "secretExpirationInApp";
+            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsInApp";
+            case SECURITY_ALERT -> key = "securityAlertsInApp";
+            case ROLE_CHANGED -> key = "roleChangedInApp";
+            default -> {
+                // Check general preference first
+                Object generalEnabled = prefs.get("secretExpiration");
+                if (generalEnabled instanceof Boolean b && !b) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        Object value = prefs.get(key);
+        if (value instanceof Boolean b) {
+            return b;
+        }
+
+        // Fallback to general preference
+        return isEnabledForEvent(user, event);
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isEmailEnabledForEvent(User user, NotificationEvent event) {
+        var prefs = user.getNotificationPreferences();
+        if (prefs == null || prefs.isEmpty()) {
+            return true;
+        }
+
+        // Check general email toggle first
+        Object emailEnabled = prefs.get("email");
+        if (emailEnabled instanceof Boolean b && !b) {
+            return false;
+        }
+
+        String key;
+        switch (event.getType()) {
+            case SECRET_EXPIRING_SOON -> key = "secretExpirationEmail";
+            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsEmail";
+            case SECURITY_ALERT -> key = "securityAlertsEmail";
+            case ROLE_CHANGED -> key = "roleChangedEmail";
+            default -> {
+                return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
+            }
+        }
+
+        Object value = prefs.get(key);
+        if (value instanceof Boolean b) {
+            return b;
+        }
+
+        // Fallback to general email preference
+        return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
     }
 
     private NotificationDto toDto(Notification notification) {

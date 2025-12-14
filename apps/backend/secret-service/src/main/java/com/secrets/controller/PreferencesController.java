@@ -51,14 +51,30 @@ public class PreferencesController {
             Map<String, Object> prefs = user.getNotificationPreferences();
             notifications.setEmail((Boolean) prefs.getOrDefault("email", true));
             notifications.setSecretExpiration((Boolean) prefs.getOrDefault("secretExpiration", true));
+            notifications.setSecretExpirationInApp((Boolean) prefs.getOrDefault("secretExpirationInApp", true));
+            notifications.setSecretExpirationEmail((Boolean) prefs.getOrDefault("secretExpirationEmail", true));
             notifications.setProjectInvitations((Boolean) prefs.getOrDefault("projectInvitations", true));
+            notifications.setProjectInvitationsInApp((Boolean) prefs.getOrDefault("projectInvitationsInApp", true));
+            notifications.setProjectInvitationsEmail((Boolean) prefs.getOrDefault("projectInvitationsEmail", true));
             notifications.setSecurityAlerts((Boolean) prefs.getOrDefault("securityAlerts", true));
+            notifications.setSecurityAlertsInApp((Boolean) prefs.getOrDefault("securityAlertsInApp", true));
+            notifications.setSecurityAlertsEmail((Boolean) prefs.getOrDefault("securityAlertsEmail", true));
+            notifications.setRoleChangedInApp((Boolean) prefs.getOrDefault("roleChangedInApp", true));
+            notifications.setRoleChangedEmail((Boolean) prefs.getOrDefault("roleChangedEmail", true));
         } else {
             // Default values
             notifications.setEmail(true);
             notifications.setSecretExpiration(true);
+            notifications.setSecretExpirationInApp(true);
+            notifications.setSecretExpirationEmail(true);
             notifications.setProjectInvitations(true);
+            notifications.setProjectInvitationsInApp(true);
+            notifications.setProjectInvitationsEmail(true);
             notifications.setSecurityAlerts(true);
+            notifications.setSecurityAlertsInApp(true);
+            notifications.setSecurityAlertsEmail(true);
+            notifications.setRoleChangedInApp(true);
+            notifications.setRoleChangedEmail(true);
         }
         response.setNotifications(notifications);
         
@@ -84,6 +100,11 @@ public class PreferencesController {
         // Update notification preferences
         if (request.getNotifications() != null) {
             Map<String, Object> prefs = new HashMap<>();
+            // Merge with existing preferences first
+            if (user.getNotificationPreferences() != null) {
+                prefs.putAll(user.getNotificationPreferences());
+            }
+            
             UserPreferencesRequest.NotificationPreferences notifPrefs = request.getNotifications();
             if (notifPrefs.getEmail() != null) {
                 prefs.put("email", notifPrefs.getEmail());
@@ -91,17 +112,37 @@ public class PreferencesController {
             if (notifPrefs.getSecretExpiration() != null) {
                 prefs.put("secretExpiration", notifPrefs.getSecretExpiration());
             }
+            if (notifPrefs.getSecretExpirationInApp() != null) {
+                prefs.put("secretExpirationInApp", notifPrefs.getSecretExpirationInApp());
+            }
+            if (notifPrefs.getSecretExpirationEmail() != null) {
+                prefs.put("secretExpirationEmail", notifPrefs.getSecretExpirationEmail());
+            }
             if (notifPrefs.getProjectInvitations() != null) {
                 prefs.put("projectInvitations", notifPrefs.getProjectInvitations());
+            }
+            if (notifPrefs.getProjectInvitationsInApp() != null) {
+                prefs.put("projectInvitationsInApp", notifPrefs.getProjectInvitationsInApp());
+            }
+            if (notifPrefs.getProjectInvitationsEmail() != null) {
+                prefs.put("projectInvitationsEmail", notifPrefs.getProjectInvitationsEmail());
             }
             if (notifPrefs.getSecurityAlerts() != null) {
                 prefs.put("securityAlerts", notifPrefs.getSecurityAlerts());
             }
-            
-            // Merge with existing preferences
-            if (user.getNotificationPreferences() != null) {
-                prefs.putAll(user.getNotificationPreferences());
+            if (notifPrefs.getSecurityAlertsInApp() != null) {
+                prefs.put("securityAlertsInApp", notifPrefs.getSecurityAlertsInApp());
             }
+            if (notifPrefs.getSecurityAlertsEmail() != null) {
+                prefs.put("securityAlertsEmail", notifPrefs.getSecurityAlertsEmail());
+            }
+            if (notifPrefs.getRoleChangedInApp() != null) {
+                prefs.put("roleChangedInApp", notifPrefs.getRoleChangedInApp());
+            }
+            if (notifPrefs.getRoleChangedEmail() != null) {
+                prefs.put("roleChangedEmail", notifPrefs.getRoleChangedEmail());
+            }
+            
             user.setNotificationPreferences(prefs);
         }
 
@@ -125,13 +166,29 @@ public class PreferencesController {
         if (prefs != null) {
             notifications.setEmail((Boolean) prefs.getOrDefault("email", true));
             notifications.setSecretExpiration((Boolean) prefs.getOrDefault("secretExpiration", true));
+            notifications.setSecretExpirationInApp((Boolean) prefs.getOrDefault("secretExpirationInApp", true));
+            notifications.setSecretExpirationEmail((Boolean) prefs.getOrDefault("secretExpirationEmail", true));
             notifications.setProjectInvitations((Boolean) prefs.getOrDefault("projectInvitations", true));
+            notifications.setProjectInvitationsInApp((Boolean) prefs.getOrDefault("projectInvitationsInApp", true));
+            notifications.setProjectInvitationsEmail((Boolean) prefs.getOrDefault("projectInvitationsEmail", true));
             notifications.setSecurityAlerts((Boolean) prefs.getOrDefault("securityAlerts", true));
+            notifications.setSecurityAlertsInApp((Boolean) prefs.getOrDefault("securityAlertsInApp", true));
+            notifications.setSecurityAlertsEmail((Boolean) prefs.getOrDefault("securityAlertsEmail", true));
+            notifications.setRoleChangedInApp((Boolean) prefs.getOrDefault("roleChangedInApp", true));
+            notifications.setRoleChangedEmail((Boolean) prefs.getOrDefault("roleChangedEmail", true));
         } else {
             notifications.setEmail(true);
             notifications.setSecretExpiration(true);
+            notifications.setSecretExpirationInApp(true);
+            notifications.setSecretExpirationEmail(true);
             notifications.setProjectInvitations(true);
+            notifications.setProjectInvitationsInApp(true);
+            notifications.setProjectInvitationsEmail(true);
             notifications.setSecurityAlerts(true);
+            notifications.setSecurityAlertsInApp(true);
+            notifications.setSecurityAlertsEmail(true);
+            notifications.setRoleChangedInApp(true);
+            notifications.setRoleChangedEmail(true);
         }
         response.setNotifications(notifications);
         response.setTimezone(user.getTimezone() != null ? user.getTimezone() : "UTC");
