@@ -167,7 +167,8 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => auditService.getProjectAuditLogs(projectId!, { page: activityPage - 1, size: 20 }),
     enabled: !!projectId && activeTab === 'activity' && activityView === 'list',
     retry: false,
-    staleTime: 30 * 1000, // 30 seconds - real-time data
+    staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
     refetchInterval: shouldPollActivity ? 30000 : false, // Only poll when tab is active and visible
   });
 
@@ -183,7 +184,8 @@ export const ProjectDetailPage: React.FC = () => {
     },
     enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics' && !!dateRangeParams.startDate,
     retry: false,
-    staleTime: 60 * 1000, // 1 minute - aggregated data changes less frequently
+    staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
+    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
     refetchInterval: shouldPollAnalytics ? 60000 : false, // Poll every 60 seconds when active and visible
   });
 

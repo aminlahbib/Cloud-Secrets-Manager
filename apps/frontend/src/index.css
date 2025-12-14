@@ -114,35 +114,35 @@
   :root,
   [data-theme="light-orange"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Enhanced with warm tints
+       ELEVATION LAYERS (Background Hierarchy) - Modern warm neutrals
        ============================================ */
-    --elevation-0: #fefaf6;  /* Page background - warm off-white with subtle orange tint */
+    --elevation-0: #fefcfb;  /* Page background - clean warm white */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
     --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white for better contrast */
-    --elevation-3: #fff8f0;  /* Hover states, active cards - warm beige */
-    --elevation-4: #fff1e0;  /* Pressed states, modals - light peach */
+    --elevation-3: #fff7ed;  /* Hover states, active cards - subtle warm */
+    --elevation-4: #ffedd5;  /* Pressed states, modals - soft peach */
     
-    /* Enhanced gradient backgrounds with warm orange tints */
-    --gradient-hero: linear-gradient(135deg, rgba(249, 115, 22, 0.06) 0%, #ffffff 40%, rgba(251, 146, 60, 0.04) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, #ffffff 45%, rgba(251, 146, 60, 0.05) 100%);
+    /* Modern gradient backgrounds with refined orange tints */
+    --gradient-hero: linear-gradient(135deg, rgba(251, 146, 60, 0.04) 0%, #ffffff 40%, rgba(253, 186, 116, 0.03) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(251, 146, 60, 0.06) 0%, #ffffff 45%, rgba(253, 186, 116, 0.04) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Orange Theme
+       SEMANTIC COLORS - Modern Orange Theme
        ============================================ */
-    /* Primary Accent - Warm Orange/Amber */
-    --accent-primary: #f97316;        /* Primary CTA, active states - vibrant orange */
-    --accent-primary-hover: #ea580c;  /* Hover state - deeper orange */
-    --accent-primary-active: #c2410c; /* Pressed state - dark orange */
-    --accent-primary-glow: rgba(249, 115, 22, 0.25); /* Stronger glow */
-    --accent-primary-light: #fb923c;  /* Lighter orange for links and icons */
-    --accent-primary-muted: #fdba74;  /* Muted orange for section headers */
+    /* Primary Accent - Refined Terracotta/Amber */
+    --accent-primary: #ea580c;        /* Primary CTA - sophisticated terracotta */
+    --accent-primary-hover: #c2410c;  /* Hover state - deeper terracotta */
+    --accent-primary-active: #9a3412; /* Pressed state - rich terracotta */
+    --accent-primary-glow: rgba(234, 88, 12, 0.2); /* Subtle refined glow */
+    --accent-primary-light: #fb923c;  /* Lighter amber for links and icons */
+    --accent-primary-muted: #fdba74;  /* Muted peach for section headers */
     
-    /* Secondary Accent - Cool Slate */
-    --accent-secondary: #64748b;      /* Secondary actions, icons */
-    --accent-secondary-hover: #475569;
-    --accent-secondary-muted: #94a3b8;
-    --accent-secondary-bg: rgba(100, 116, 139, 0.12);  /* Owner/admin badge background */
-    --accent-secondary-border: rgba(100, 116, 139, 0.25);  /* Owner/admin badge border */
+    /* Secondary Accent - Warm Slate */
+    --accent-secondary: #78716c;      /* Secondary actions - warm stone */
+    --accent-secondary-hover: #57534e;
+    --accent-secondary-muted: #a8a29e;
+    --accent-secondary-bg: rgba(120, 113, 108, 0.12);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(120, 113, 108, 0.25);  /* Owner/admin badge border */
     
     /* Status Colors - More vibrant and distinct */
     --status-success: #16a34a;        /* Success text - vibrant green */
@@ -164,22 +164,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Enhanced with warm tones
+       BORDERS & DIVIDERS - Refined warm neutrals
        ============================================ */
-    --border-subtle: #e4e4e7;         /* Subtle borders - light grey */
-    --border-default: #d4d4d8;        /* Default borders - medium grey */
-    --border-strong: #a1a1aa;         /* Strong borders - darker grey */
-    --border-accent: rgba(249, 115, 22, 0.4);     /* Accent borders - orange */
+    --border-subtle: #e7e5e4;         /* Subtle borders - warm light grey */
+    --border-default: #d6d3d1;        /* Default borders - warm medium grey */
+    --border-strong: #a8a29e;         /* Strong borders - warm darker grey */
+    --border-accent: rgba(234, 88, 12, 0.35);     /* Accent borders - refined terracotta */
     
     /* ============================================
-       SHADOWS & GLOWS - Enhanced with warm color hints
+       SHADOWS & GLOWS - Modern refined shadows
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(249, 115, 22, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(249, 115, 22, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(249, 115, 22, 0.15);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(249, 115, 22, 0.2);
-    --glow-accent: 0 0 24px rgba(249, 115, 22, 0.35), 0 0 48px rgba(251, 146, 60, 0.2);
-    --glow-soft: 0 0 48px rgba(249, 115, 22, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(234, 88, 12, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(234, 88, 12, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(234, 88, 12, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(234, 88, 12, 0.15);
+    --glow-accent: 0 0 20px rgba(234, 88, 12, 0.25), 0 0 40px rgba(251, 146, 60, 0.15);
+    --glow-soft: 0 0 40px rgba(234, 88, 12, 0.12);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -194,8 +194,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(249, 115, 22, 0.12);  /* Orange pill background */
-    --sidebar-active-border: var(--accent-primary); /* Orange pill border */
+    --sidebar-active-bg: rgba(234, 88, 12, 0.1);  /* Refined terracotta pill background */
+    --sidebar-active-border: var(--accent-primary); /* Terracotta pill border */
     --sidebar-hover-bg: var(--elevation-3);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -252,33 +252,33 @@
      ============================================ */
   [data-theme="dark-orange"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Modern dark with warm undertones
        ============================================ */
-    --elevation-0: #050608;  /* Page background - almost black */
-    --elevation-1: #0A0D10;  /* Sidebar, main containers */
-    --elevation-2: #0F1316;  /* Cards, elevated surfaces */
-    --elevation-3: #14181C;  /* Hover states, active cards */
-    --elevation-4: #1A1F24;  /* Pressed states, modals */
+    --elevation-0: #0c0a09;  /* Page background - warm dark */
+    --elevation-1: #171412;  /* Sidebar, main containers - warm charcoal */
+    --elevation-2: #1c1917;  /* Cards, elevated surfaces - warm dark grey */
+    --elevation-3: #292524;  /* Hover states, active cards - warm medium grey */
+    --elevation-4: #3a3633;  /* Pressed states, modals - warm lighter grey */
     
-    /* Gradient backgrounds (dark mode - minimal) */
-    --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
+    /* Gradient backgrounds with subtle warm tones */
+    --gradient-hero: linear-gradient(135deg, rgba(234, 88, 12, 0.03) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(234, 88, 12, 0.05) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Orange Theme
+       SEMANTIC COLORS - Modern Orange Theme (Dark)
        ============================================ */
-    /* Primary Accent - Warm Orange/Amber */
-    --accent-primary: #FF8C42;        /* Primary CTA, active states */
-    --accent-primary-hover: #FF9D5C;  /* Hover state */
-    --accent-primary-active: #E67A35; /* Pressed state */
-    --accent-primary-glow: rgba(255, 140, 66, 0.15); /* Soft glow */
-    --accent-primary-light: #FFB380;  /* Lighter orange for links and icons */
-    --accent-primary-muted: #FFC9A3;  /* Muted orange for section headers */
+    /* Primary Accent - Refined Terracotta/Amber */
+    --accent-primary: #fb923c;        /* Primary CTA - warm amber */
+    --accent-primary-hover: #fdba74;  /* Hover state - lighter amber */
+    --accent-primary-active: #f97316; /* Pressed state - deeper terracotta */
+    --accent-primary-glow: rgba(251, 146, 60, 0.18); /* Refined glow */
+    --accent-primary-light: #fcd34d;  /* Lighter amber for links and icons */
+    --accent-primary-muted: #fde68a;  /* Muted amber for section headers */
     
-    /* Secondary Accent - Cool Slate */
-    --accent-secondary: #6B7F9F;      /* Secondary actions, icons */
-    --accent-secondary-hover: #7A8FAF;
-    --accent-secondary-muted: #4A5568;
+    /* Secondary Accent - Warm Slate */
+    --accent-secondary: #78716c;      /* Secondary actions - warm stone */
+    --accent-secondary-hover: #a8a29e;
+    --accent-secondary-muted: #57534e;
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #4ADE80;        /* Success text */
@@ -330,8 +330,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(255, 140, 66, 0.12);  /* Orange pill background */
-    --sidebar-active-border: var(--accent-primary); /* Orange pill border */
+    --sidebar-active-bg: rgba(251, 146, 60, 0.12);  /* Refined amber pill background */
+    --sidebar-active-border: var(--accent-primary); /* Amber pill border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -388,35 +388,35 @@
      ============================================ */
   [data-theme="light-violet"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Enhanced with violet tints
+       ELEVATION LAYERS (Background Hierarchy) - Modern refined violet
        ============================================ */
-    --elevation-0: #faf9ff;  /* Page background - very light violet tint */
+    --elevation-0: #fafafb;  /* Page background - clean neutral with subtle cool tint */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
     --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white for better contrast */
-    --elevation-3: #f5f3ff;  /* Hover states, active cards - light lavender */
+    --elevation-3: #f5f3ff;  /* Hover states, active cards - subtle lavender */
     --elevation-4: #ede9fe;  /* Pressed states, modals - soft violet */
     
-    /* Enhanced gradient backgrounds with violet tints */
-    --gradient-hero: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, #ffffff 40%, rgba(139, 92, 246, 0.04) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, #ffffff 45%, rgba(139, 92, 246, 0.05) 100%);
+    /* Modern gradient backgrounds with refined violet tints */
+    --gradient-hero: linear-gradient(135deg, rgba(139, 92, 246, 0.04) 0%, #ffffff 40%, rgba(167, 139, 250, 0.03) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(139, 92, 246, 0.06) 0%, #ffffff 45%, rgba(167, 139, 250, 0.04) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Violet Theme
+       SEMANTIC COLORS - Modern Violet Theme
        ============================================ */
-    /* Primary Accent - Rich Violet */
-    --accent-primary: #6366F1;        /* Primary CTA, active states - vibrant indigo */
-    --accent-primary-hover: #4F46E5;  /* Hover state - deeper violet */
-    --accent-primary-active: #4338CA; /* Pressed state - dark violet */
-    --accent-primary-glow: rgba(99, 102, 241, 0.25); /* Stronger glow */
-    --accent-primary-light: #818CF8;  /* Lighter violet for links and icons */
-    --accent-primary-muted: #A5B4FC;  /* Muted violet for section headers */
+    /* Primary Accent - Sophisticated Purple */
+    --accent-primary: #8b5cf6;        /* Primary CTA - refined purple */
+    --accent-primary-hover: #7c3aed;  /* Hover state - deeper purple */
+    --accent-primary-active: #6d28d9; /* Pressed state - rich purple */
+    --accent-primary-glow: rgba(139, 92, 246, 0.2); /* Refined glow */
+    --accent-primary-light: #a78bfa;  /* Lighter purple for links and icons */
+    --accent-primary-muted: #c4b5fd;  /* Muted lavender for section headers */
     
-    /* Secondary Accent - Soft Magenta */
-    --accent-secondary: #DB2777;      /* Secondary actions - vibrant pink */
-    --accent-secondary-hover: #BE185D;
-    --accent-secondary-muted: #EC4899;
-    --accent-secondary-bg: rgba(219, 39, 119, 0.12);  /* Owner/admin badge background */
-    --accent-secondary-border: rgba(219, 39, 119, 0.25);  /* Owner/admin badge border */
+    /* Secondary Accent - Soft Rose */
+    --accent-secondary: #e879f9;      /* Secondary actions - soft rose */
+    --accent-secondary-hover: #d946ef;
+    --accent-secondary-muted: #f0abfc;
+    --accent-secondary-bg: rgba(232, 121, 249, 0.12);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(232, 121, 249, 0.25);  /* Owner/admin badge border */
     
     /* Status Colors - More vibrant and distinct */
     --status-success: #16a34a;        /* Success text - vibrant green */
@@ -438,22 +438,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Enhanced
+       BORDERS & DIVIDERS - Refined
        ============================================ */
     --border-subtle: #e4e4e7;         /* Subtle borders - light grey */
     --border-default: #d4d4d8;        /* Default borders - medium grey */
     --border-strong: #a1a1aa;         /* Strong borders - darker grey */
-    --border-accent: rgba(99, 102, 241, 0.4);     /* Accent borders - violet */
+    --border-accent: rgba(139, 92, 246, 0.35);     /* Accent borders - refined purple */
     
     /* ============================================
-       SHADOWS & GLOWS
+       SHADOWS & GLOWS - Modern refined
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(99, 102, 241, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(99, 102, 241, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(99, 102, 241, 0.15);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(99, 102, 241, 0.2);
-    --glow-accent: 0 0 24px rgba(99, 102, 241, 0.35), 0 0 48px rgba(139, 92, 246, 0.2);
-    --glow-soft: 0 0 48px rgba(99, 102, 241, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(139, 92, 246, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(139, 92, 246, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(139, 92, 246, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(139, 92, 246, 0.15);
+    --glow-accent: 0 0 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(167, 139, 250, 0.15);
+    --glow-soft: 0 0 40px rgba(139, 92, 246, 0.12);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -468,8 +468,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(99, 102, 241, 0.12);  /* Violet pill background */
-    --sidebar-active-border: var(--accent-primary); /* Violet pill border */
+    --sidebar-active-bg: rgba(139, 92, 246, 0.1);  /* Refined purple pill background */
+    --sidebar-active-border: var(--accent-primary); /* Purple pill border */
     --sidebar-hover-bg: var(--elevation-3);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -526,33 +526,33 @@
      ============================================ */
   [data-theme="dark-violet"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Modern dark with cool undertones
        ============================================ */
-    --elevation-0: #0F0F0F;  /* Page background - deep charcoal */
-    --elevation-1: #1A1A1A;  /* Sidebar, main containers */
-    --elevation-2: #1F1F1F;  /* Cards, elevated surfaces */
-    --elevation-3: #252525;  /* Hover states, active cards */
-    --elevation-4: #2A2A2A;  /* Pressed states, modals */
+    --elevation-0: #0f0f11;  /* Page background - deep cool dark */
+    --elevation-1: #1a1a1d;  /* Sidebar, main containers - cool charcoal */
+    --elevation-2: #1f1f23;  /* Cards, elevated surfaces - cool dark grey */
+    --elevation-3: #2a2a2f;  /* Hover states, active cards - cool medium grey */
+    --elevation-4: #35353b;  /* Pressed states, modals - cool lighter grey */
     
-    /* Gradient backgrounds for hero and quick actions */
-    --gradient-hero: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(99, 102, 241, 0.02) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(99, 102, 241, 0.03) 100%);
+    /* Gradient backgrounds with subtle violet tones */
+    --gradient-hero: linear-gradient(135deg, rgba(139, 92, 246, 0.03) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Violet Theme
+       SEMANTIC COLORS - Modern Violet Theme (Dark)
        ============================================ */
-    /* Primary Accent - Rich Violet */
-    --accent-primary: #6366F1;        /* Primary CTA, active states, buttons, switches, progress, selection */
-    --accent-primary-hover: #818CF8;  /* Hover state - lighter violet */
-    --accent-primary-active: #4F46E5; /* Pressed state - darker violet */
-    --accent-primary-glow: rgba(99, 102, 241, 0.2); /* Faint violet glow for hover states */
-    --accent-primary-light: #A5B4FC;  /* Lighter violet for links and icons */
-    --accent-primary-muted: #818CF8;  /* Muted violet for section headers */
+    /* Primary Accent - Sophisticated Purple */
+    --accent-primary: #a78bfa;        /* Primary CTA - refined purple */
+    --accent-primary-hover: #c4b5fd;  /* Hover state - lighter purple */
+    --accent-primary-active: #8b5cf6; /* Pressed state - deeper purple */
+    --accent-primary-glow: rgba(167, 139, 250, 0.18); /* Refined glow */
+    --accent-primary-light: #ddd6fe;  /* Lighter lavender for links and icons */
+    --accent-primary-muted: #ede9fe;  /* Muted lavender for section headers */
     
-    /* Secondary Accent - Soft Magenta */
-    --accent-secondary: #EC4899;      /* Important statuses, owner/admin chips */
-    --accent-secondary-hover: #F472B6;
-    --accent-secondary-muted: #F9A8D4;
+    /* Secondary Accent - Soft Rose */
+    --accent-secondary: #f0abfc;      /* Important statuses, owner/admin chips - soft rose */
+    --accent-secondary-hover: #f5d0fe;
+    --accent-secondary-muted: #fae8ff;
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #4ADE80;        /* Success text */
@@ -579,7 +579,7 @@
     --border-subtle: rgba(255, 255, 255, 0.03);    /* Subtle borders - very subtle for dark mode */
     --border-default: rgba(255, 255, 255, 0.06);   /* Default borders */
     --border-strong: rgba(255, 255, 255, 0.10);    /* Strong borders */
-    --border-accent: rgba(99, 102, 241, 0.30);     /* Accent borders - violet */
+    --border-accent: rgba(167, 139, 250, 0.30);     /* Accent borders - refined purple */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -604,12 +604,12 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(99, 102, 241, 0.15);  /* Violet pill background */
-    --sidebar-active-border: var(--accent-primary); /* Violet pill border */
+    --sidebar-active-bg: rgba(167, 139, 250, 0.12);  /* Refined purple pill background */
+    --sidebar-active-border: var(--accent-primary); /* Purple pill border */
     --sidebar-hover-bg: var(--elevation-2);
-    --sidebar-link-color: var(--accent-primary-light); /* Lighter violet for links */
-    --sidebar-icon-color: var(--accent-primary-light); /* Lighter violet for icons */
-    --sidebar-section-header: var(--accent-primary-muted); /* Muted violet for section headers */
+    --sidebar-link-color: var(--accent-primary-light); /* Lighter lavender for links */
+    --sidebar-icon-color: var(--accent-primary-light); /* Lighter lavender for icons */
+    --sidebar-section-header: var(--accent-primary-muted); /* Muted lavender for section headers */
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -617,7 +617,7 @@
     --card-hover-bg: var(--elevation-3);
     --card-hover-border: var(--border-default);
     --card-shadow: var(--shadow-md);
-    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1); /* Faint violet glow on hover */
+    --card-shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4), 0 0 20px rgba(167, 139, 250, 0.1); /* Faint purple glow on hover */
     
     /* Tabs */
     --tab-bg: var(--elevation-2);
@@ -942,37 +942,37 @@
     --elevation-3: #f5f5f5;  /* Hover states, active cards - light grey */
     --elevation-4: #f0f0f0;  /* Pressed states, modals - slightly darker grey */
     
-    /* Pure grayscale gradient backgrounds */
-    --gradient-hero: linear-gradient(135deg, rgba(0, 0, 0, 0.015) 0%, #ffffff 40%, rgba(0, 0, 0, 0.015) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, #ffffff 45%, rgba(0, 0, 0, 0.015) 100%);
+    /* Refined grayscale gradient backgrounds */
+    --gradient-hero: linear-gradient(135deg, rgba(0, 0, 0, 0.01) 0%, #ffffff 40%, rgba(0, 0, 0, 0.01) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(0, 0, 0, 0.015) 0%, #ffffff 45%, rgba(0, 0, 0, 0.01) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Minimal Theme (Monochrome)
+       SEMANTIC COLORS - Modern Minimal Theme
        ============================================ */
-    /* Primary Accent - Pure Black/Grey */
-    --accent-primary: #171717;        /* Primary CTA, key links - dark grey/black */
-    --accent-primary-hover: #0a0a0a;  /* Hover state - darker */
-    --accent-primary-active: #000000; /* Pressed state - pure black */
-    --accent-primary-glow: rgba(0, 0, 0, 0.12); /* Subtle black glow */
-    --accent-primary-light: #404040;  /* Lighter grey */
-    --accent-primary-muted: #525252;  /* Muted grey */
+    /* Primary Accent - Refined Charcoal */
+    --accent-primary: #1f2937;        /* Primary CTA - sophisticated charcoal */
+    --accent-primary-hover: #111827;  /* Hover state - deeper charcoal */
+    --accent-primary-active: #0f172a; /* Pressed state - rich charcoal */
+    --accent-primary-glow: rgba(31, 41, 55, 0.1); /* Subtle refined glow */
+    --accent-primary-light: #4b5563;  /* Lighter grey */
+    --accent-primary-muted: #6b7280;  /* Muted grey */
     
-    /* Secondary Accent - Neutral grey */
-    --accent-secondary: #737373;      /* Secondary actions - calm grey */
-    --accent-secondary-hover: #525252;
-    --accent-secondary-muted: #a3a3a3;
+    /* Secondary Accent - Neutral slate */
+    --accent-secondary: #6b7280;      /* Secondary actions - refined slate */
+    --accent-secondary-hover: #4b5563;
+    --accent-secondary-muted: #9ca3af;
     --accent-secondary-bg: rgba(115, 115, 115, 0.12);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(115, 115, 115, 0.25);  /* Owner/admin badge border */
     
-    /* Status Colors - Monochrome (all shades of grey) */
-    --status-success: #404040;        /* Success text - dark grey */
-    --status-success-bg: rgba(64, 64, 64, 0.08); /* Success background */
-    --status-warning: #525252;        /* Warning text - medium grey */
-    --status-warning-bg: rgba(82, 82, 82, 0.08); /* Warning background */
-    --status-danger: #262626;         /* Danger text - darker grey */
-    --status-danger-bg: rgba(38, 38, 38, 0.08); /* Danger background */
-    --status-info: #525252;           /* Info text - grey */
-    --status-info-bg: rgba(82, 82, 82, 0.08);    /* Info background */
+    /* Status Colors - Refined monochrome with subtle distinction */
+    --status-success: #374151;        /* Success text - refined dark grey */
+    --status-success-bg: rgba(55, 65, 81, 0.08); /* Success background */
+    --status-warning: #4b5563;        /* Warning text - medium grey */
+    --status-warning-bg: rgba(75, 85, 99, 0.08); /* Warning background */
+    --status-danger: #1f2937;         /* Danger text - charcoal */
+    --status-danger-bg: rgba(31, 41, 55, 0.08); /* Danger background */
+    --status-info: #4b5563;           /* Info text - refined grey */
+    --status-info-bg: rgba(75, 85, 99, 0.08);    /* Info background */
     
     /* ============================================
        TEXT COLORS (WCAG AA Compliant)
@@ -984,22 +984,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Pure grayscale
+       BORDERS & DIVIDERS - Refined grayscale
        ============================================ */
-    --border-subtle: #e5e5e5;         /* Subtle borders - light grey */
-    --border-default: #d4d4d4;        /* Default borders - medium grey */
-    --border-strong: #a3a3a3;         /* Strong borders - darker grey */
-    --border-accent: rgba(0, 0, 0, 0.3);     /* Accent borders - black with opacity */
+    --border-subtle: #e5e7eb;         /* Subtle borders - refined light grey */
+    --border-default: #d1d5db;        /* Default borders - refined medium grey */
+    --border-strong: #9ca3af;         /* Strong borders - refined darker grey */
+    --border-accent: rgba(31, 41, 55, 0.25);     /* Accent borders - refined charcoal */
     
     /* ============================================
-       SHADOWS & GLOWS - Pure grayscale
+       SHADOWS & GLOWS - Refined grayscale
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 24px rgba(0, 0, 0, 0.12), 0 0 48px rgba(0, 0, 0, 0.08);
-    --glow-soft: 0 0 48px rgba(0, 0, 0, 0.06);
+    --glow-accent: 0 0 20px rgba(31, 41, 55, 0.1), 0 0 40px rgba(0, 0, 0, 0.06);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1010,8 +1010,8 @@
     /* Sidebar - Active item outlined rather than filled */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: transparent;  /* Outlined, not filled */
-    --sidebar-active-border: var(--accent-primary); /* Dark grey outline */
+    --sidebar-active-bg: rgba(31, 41, 55, 0.05);  /* Subtle refined background */
+    --sidebar-active-border: var(--accent-primary); /* Refined charcoal outline */
     --sidebar-hover-bg: var(--elevation-3);
     --sidebar-link-color: var(--text-secondary); /* Neutral grey */
     --sidebar-icon-color: var(--text-secondary); /* Neutral grey */
@@ -1068,44 +1068,44 @@
      ============================================ */
   [data-theme="dark-minimal"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Refined dark grayscale
        ============================================ */
-    --elevation-0: #0A0A0A;  /* Page background - almost black */
-    --elevation-1: #141414;  /* Sidebar, main containers - dark grey */
-    --elevation-2: #1A1A1A;  /* Cards - dark grey with strong typography contrast */
+    --elevation-0: #0a0a0a;  /* Page background - deep black */
+    --elevation-1: #141414;  /* Sidebar, main containers - refined dark grey */
+    --elevation-2: #1a1a1a;  /* Cards - refined dark grey with strong typography contrast */
     --elevation-3: #202020;  /* Hover states, active cards */
     --elevation-4: #262626;  /* Pressed states, modals */
     
-    /* Gradient backgrounds - pure grayscale */
+    /* Gradient backgrounds - refined grayscale */
     --gradient-hero: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
     --gradient-quick-actions: linear-gradient(135deg, var(--elevation-2) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Minimal Theme (Monochrome)
+       SEMANTIC COLORS - Modern Minimal Theme (Dark)
        ============================================ */
-    /* Primary Accent - Pure White/Grey */
-    --accent-primary: #E5E7EB;        /* Primary buttons, active tabs - light grey */
-    --accent-primary-hover: #F3F4F6;  /* Hover state - lighter */
-    --accent-primary-active: #D1D5DB; /* Pressed state - darker */
-    --accent-primary-glow: rgba(229, 231, 235, 0.15); /* Subtle grey glow */
-    --accent-primary-light: #F3F4F6;  /* Lighter grey */
-    --accent-primary-muted: #9CA3AF;  /* Muted grey */
+    /* Primary Accent - Refined Light Grey */
+    --accent-primary: #e5e7eb;        /* Primary buttons - refined light grey */
+    --accent-primary-hover: #f3f4f6;  /* Hover state - lighter */
+    --accent-primary-active: #d1d5db; /* Pressed state - darker */
+    --accent-primary-glow: rgba(229, 231, 235, 0.12); /* Subtle refined glow */
+    --accent-primary-light: #f3f4f6;  /* Lighter grey */
+    --accent-primary-muted: #9ca3af;  /* Muted grey */
     
-    /* Secondary Accent - Neutral grey */
-    --accent-secondary: #6B7280;      /* Secondary actions - calm grey */
-    --accent-secondary-hover: #7C8288;
-    --accent-secondary-muted: #9CA3AF;
+    /* Secondary Accent - Neutral slate */
+    --accent-secondary: #6b7280;      /* Secondary actions - refined slate */
+    --accent-secondary-hover: #7c8288;
+    --accent-secondary-muted: #9ca3af;
     --accent-secondary-bg: rgba(107, 114, 128, 0.15);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(107, 114, 128, 0.3);  /* Owner/admin badge border */
     
-    /* Status Colors - Monochrome with subtle tints */
-    --status-success: #9CA3AF;        /* Success text - grey */
+    /* Status Colors - Refined monochrome with subtle distinction */
+    --status-success: #9ca3af;        /* Success text - refined grey */
     --status-success-bg: rgba(156, 163, 175, 0.12); /* Success background */
-    --status-warning: #D1D5DB;        /* Warning text - light grey */
+    --status-warning: #d1d5db;        /* Warning text - refined light grey */
     --status-warning-bg: rgba(209, 213, 219, 0.12); /* Warning background */
-    --status-danger: #E5E7EB;         /* Danger text - lighter grey */
+    --status-danger: #e5e7eb;         /* Danger text - refined lighter grey */
     --status-danger-bg: rgba(229, 231, 235, 0.12); /* Danger background */
-    --status-info: #F3F4F6;           /* Info text - very light grey */
+    --status-info: #f3f4f6;           /* Info text - refined very light grey */
     --status-info-bg: rgba(243, 244, 246, 0.12);    /* Info background */
     
     /* ============================================
@@ -1148,8 +1148,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(229, 231, 235, 0.1);  /* Subtle grey background */
-    --sidebar-active-border: var(--accent-primary); /* Grey border */
+    --sidebar-active-bg: rgba(229, 231, 235, 0.08);  /* Subtle refined grey background */
+    --sidebar-active-border: var(--accent-primary); /* Refined grey border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Neutral grey */
     --sidebar-icon-color: var(--text-secondary); /* Neutral grey */
@@ -1206,33 +1206,33 @@
      ============================================ */
   [data-theme="light-blue"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Enhanced with blue tints
+       ELEVATION LAYERS (Background Hierarchy) - Modern refined blue
        ============================================ */
-    --elevation-0: #f0f9ff;  /* Page background - very light blue tint */
+    --elevation-0: #f8fafc;  /* Page background - clean cool white */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
     --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white for better contrast */
-    --elevation-3: #e0f2fe;  /* Hover states, active cards - light blue */
-    --elevation-4: #bae6fd;  /* Pressed states, modals - soft blue */
+    --elevation-3: #f1f5f9;  /* Hover states, active cards - subtle cool grey */
+    --elevation-4: #e2e8f0;  /* Pressed states, modals - soft slate */
     
-    /* Enhanced gradient backgrounds with blue tints */
-    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, #ffffff 40%, rgba(96, 165, 250, 0.04) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, #ffffff 45%, rgba(96, 165, 250, 0.05) 100%);
+    /* Modern gradient backgrounds with refined blue tints */
+    --gradient-hero: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, #ffffff 40%, rgba(59, 130, 246, 0.03) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(37, 99, 235, 0.06) 0%, #ffffff 45%, rgba(59, 130, 246, 0.04) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Cool Blue Theme
+       SEMANTIC COLORS - Modern Blue Theme
        ============================================ */
-    /* Primary Accent - Soft Azure/Blue */
-    --accent-primary: #3B82F6;        /* Primary CTA, active nav - vibrant blue */
-    --accent-primary-hover: #2563EB;  /* Hover state - deeper blue */
-    --accent-primary-active: #1D4ED8; /* Pressed state - dark blue */
-    --accent-primary-glow: rgba(59, 130, 246, 0.25); /* Stronger glow */
-    --accent-primary-light: #60A5FA;  /* Lighter blue for links and icons */
-    --accent-primary-muted: #93C5FD;  /* Muted blue for section headers */
+    /* Primary Accent - Sophisticated Blue */
+    --accent-primary: #2563eb;        /* Primary CTA - refined blue */
+    --accent-primary-hover: #1d4ed8;  /* Hover state - deeper blue */
+    --accent-primary-active: #1e40af; /* Pressed state - rich blue */
+    --accent-primary-glow: rgba(37, 99, 235, 0.2); /* Refined glow */
+    --accent-primary-light: #3b82f6;  /* Lighter blue for links and icons */
+    --accent-primary-muted: #60a5fa;  /* Muted blue for section headers */
     
-    /* Secondary Accent - Desaturated Teal */
-    --accent-secondary: #0D9488;      /* Subtle highlights - vibrant teal */
-    --accent-secondary-hover: #0F766E;
-    --accent-secondary-muted: #14B8A6;
+    /* Secondary Accent - Refined Cyan */
+    --accent-secondary: #0891b2;      /* Secondary actions - refined cyan */
+    --accent-secondary-hover: #0e7490;
+    --accent-secondary-muted: #06b6d4;
     --accent-secondary-bg: rgba(13, 148, 136, 0.12);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(13, 148, 136, 0.25);  /* Owner/admin badge border */
     
@@ -1256,22 +1256,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Enhanced
+       BORDERS & DIVIDERS - Refined
        ============================================ */
-    --border-subtle: #e4e4e7;         /* Subtle borders - light grey */
-    --border-default: #d4d4d8;        /* Default borders - medium grey */
-    --border-strong: #a1a1aa;         /* Strong borders - darker grey */
-    --border-accent: rgba(59, 130, 246, 0.4);     /* Accent borders - blue */
+    --border-subtle: #e2e8f0;         /* Subtle borders - cool light grey */
+    --border-default: #cbd5e1;        /* Default borders - cool medium grey */
+    --border-strong: #94a3b8;         /* Strong borders - cool darker grey */
+    --border-accent: rgba(37, 99, 235, 0.35);     /* Accent borders - refined blue */
     
     /* ============================================
-       SHADOWS & GLOWS
+       SHADOWS & GLOWS - Modern refined
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(59, 130, 246, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(59, 130, 246, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(59, 130, 246, 0.15);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(59, 130, 246, 0.2);
-    --glow-accent: 0 0 24px rgba(59, 130, 246, 0.35), 0 0 48px rgba(96, 165, 250, 0.2);
-    --glow-soft: 0 0 48px rgba(59, 130, 246, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(37, 99, 235, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(37, 99, 235, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(37, 99, 235, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(37, 99, 235, 0.15);
+    --glow-accent: 0 0 20px rgba(37, 99, 235, 0.25), 0 0 40px rgba(59, 130, 246, 0.15);
+    --glow-soft: 0 0 40px rgba(37, 99, 235, 0.12);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1282,7 +1282,7 @@
     /* Sidebar - Slightly darker cool grey, blue pill for active menu item, thin blue bar for active workspace */
     --sidebar-bg: var(--elevation-1);  /* Pure white */
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(59, 130, 246, 0.12);  /* Blue pill background */
+    --sidebar-active-bg: rgba(37, 99, 235, 0.1);  /* Refined blue pill background */
     --sidebar-active-border: var(--accent-primary); /* Blue pill border */
     --sidebar-hover-bg: var(--elevation-3);
     --sidebar-link-color: var(--text-secondary); /* Default text color */
@@ -1340,33 +1340,33 @@
      ============================================ */
   [data-theme="dark-blue"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Modern dark with cool blue undertones
        ============================================ */
-    --elevation-0: #0A0E1A;  /* Page background - near-black with cool tint */
-    --elevation-1: #0F172A;  /* Sidebar, main containers - dark slate */
-    --elevation-2: #1E293B;  /* Cards - dark slate greys */
-    --elevation-3: #334155;  /* Hover states, active cards */
-    --elevation-4: #475569;  /* Pressed states, modals */
+    --elevation-0: #0f172a;  /* Page background - deep slate */
+    --elevation-1: #1e293b;  /* Sidebar, main containers - refined dark slate */
+    --elevation-2: #334155;  /* Cards - refined slate grey */
+    --elevation-3: #475569;  /* Hover states, active cards */
+    --elevation-4: #64748b;  /* Pressed states, modals */
     
-    /* Gradient backgrounds */
-    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(59, 130, 246, 0.03) 100%);
+    /* Gradient backgrounds with subtle blue tones */
+    --gradient-hero: linear-gradient(135deg, rgba(37, 99, 235, 0.03) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(37, 99, 235, 0.05) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Cool Blue Theme
+       SEMANTIC COLORS - Modern Blue Theme (Dark)
        ============================================ */
-    /* Primary Accent - Soft Azure/Blue */
-    --accent-primary: #3B82F6;        /* Primary buttons, active nav, toggles, links */
-    --accent-primary-hover: #60A5FA;  /* Hover state - lighter blue */
-    --accent-primary-active: #2563EB; /* Pressed state - darker blue */
-    --accent-primary-glow: rgba(59, 130, 246, 0.2); /* Blue glow */
-    --accent-primary-light: #93C5FD;  /* Lighter blue for links and icons */
-    --accent-primary-muted: #BFDBFE;  /* Muted blue for section headers */
+    /* Primary Accent - Sophisticated Blue */
+    --accent-primary: #60a5fa;        /* Primary buttons - refined blue */
+    --accent-primary-hover: #93c5fd;  /* Hover state - lighter blue */
+    --accent-primary-active: #3b82f6; /* Pressed state - deeper blue */
+    --accent-primary-glow: rgba(96, 165, 250, 0.18); /* Refined glow */
+    --accent-primary-light: #bfdbfe;  /* Lighter blue for links and icons */
+    --accent-primary-muted: #dbeafe;  /* Muted blue for section headers */
     
-    /* Secondary Accent - Desaturated Teal */
-    --accent-secondary: #14B8A6;      /* Success/badges - teal */
-    --accent-secondary-hover: #5EEAD4;
-    --accent-secondary-muted: #99F6E4;
+    /* Secondary Accent - Refined Cyan */
+    --accent-secondary: #22d3ee;      /* Secondary actions - refined cyan */
+    --accent-secondary-hover: #67e8f9;
+    --accent-secondary-muted: #a5f3fc;
     --accent-secondary-bg: rgba(20, 184, 166, 0.15);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(20, 184, 166, 0.3);  /* Owner/admin badge border */
     
@@ -1395,14 +1395,14 @@
     --border-subtle: rgba(255, 255, 255, 0.05);    /* Subtle borders */
     --border-default: rgba(255, 255, 255, 0.08);   /* Default borders */
     --border-strong: rgba(255, 255, 255, 0.12);    /* Strong borders */
-    --border-accent: rgba(59, 130, 246, 0.30);     /* Accent borders - blue */
+    --border-accent: rgba(96, 165, 250, 0.30);     /* Accent borders - refined blue */
     
     /* ============================================
        SHADOWS & GLOWS (blue focus ring and hover shadow)
        ============================================ */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.1); /* Blue hover shadow */
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4), 0 0 20px rgba(96, 165, 250, 0.1); /* Refined blue hover shadow */
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
     --glow-accent: 0 0 20px var(--accent-primary-glow);
     --glow-soft: 0 0 40px rgba(0, 0, 0, 0.5);
@@ -1420,7 +1420,7 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(59, 130, 246, 0.15);  /* Blue pill background */
+    --sidebar-active-bg: rgba(96, 165, 250, 0.12);  /* Refined blue pill background */
     --sidebar-active-border: var(--accent-primary); /* Blue pill border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color */
@@ -1478,45 +1478,45 @@
      ============================================ */
   [data-theme="dark-neomint"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy)
+       ELEVATION LAYERS (Background Hierarchy) - Modern dark with cool undertones
        ============================================ */
-    --elevation-0: #0A0D0F;  /* Page background - very dark charcoal */
-    --elevation-1: #121518;  /* Sidebar, main containers - dark charcoal */
-    --elevation-2: #1A1D21;  /* Cards - soft grey */
-    --elevation-3: #222529;  /* Hover states, active cards */
-    --elevation-4: #2A2D31;  /* Pressed states, modals */
+    --elevation-0: #0a0f0e;  /* Page background - deep cool dark */
+    --elevation-1: #121a18;  /* Sidebar, main containers - cool charcoal */
+    --elevation-2: #1a2421;  /* Cards - cool dark grey */
+    --elevation-3: #222e2a;  /* Hover states, active cards */
+    --elevation-4: #2a3833;  /* Pressed states, modals */
     
-    /* Gradient backgrounds */
-    --gradient-hero: linear-gradient(135deg, rgba(16, 185, 185, 0.05) 0%, rgba(16, 185, 185, 0.02) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 185, 185, 0.08) 0%, rgba(16, 185, 185, 0.03) 100%);
+    /* Gradient backgrounds with subtle teal tones */
+    --gradient-hero: linear-gradient(135deg, rgba(13, 148, 136, 0.03) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(13, 148, 136, 0.05) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Neo-Mint Cyber Theme
+       SEMANTIC COLORS - Modern Neo-Mint Theme (Dark)
        ============================================ */
-    /* Primary Accent - Mint Green */
-    --accent-primary: #10D9C4;        /* Primary CTA, buttons - mint */
-    --accent-primary-hover: #2EE8D6;  /* Hover state with glow */
-    --accent-primary-active: #0BB5A3; /* Pressed state */
-    --accent-primary-glow: rgba(16, 217, 196, 0.2); /* Tiny outer glow on hover */
-    --accent-primary-light: #4DF0E0;  /* Lighter mint */
-    --accent-primary-muted: #6DF5E8;  /* Muted mint */
+    /* Primary Accent - Sophisticated Teal */
+    --accent-primary: #14b8a6;        /* Primary CTA - refined teal */
+    --accent-primary-hover: #2dd4bf;  /* Hover state - lighter teal */
+    --accent-primary-active: #0d9488; /* Pressed state - deeper teal */
+    --accent-primary-glow: rgba(20, 184, 166, 0.18); /* Refined glow */
+    --accent-primary-light: #5eead4;  /* Lighter teal */
+    --accent-primary-muted: #99f6e4;  /* Muted teal */
     
-    /* Secondary Accent - Cyan */
-    --accent-secondary: #06B6D4;      /* Links and icons - cyan */
-    --accent-secondary-hover: #22D3EE;
-    --accent-secondary-muted: #67E8F9;
+    /* Secondary Accent - Refined Cyan */
+    --accent-secondary: #22d3ee;      /* Secondary actions - refined cyan */
+    --accent-secondary-hover: #67e8f9;
+    --accent-secondary-muted: #a5f3fc;
     --accent-secondary-bg: rgba(6, 182, 212, 0.15);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(6, 182, 212, 0.3);  /* Owner/admin badge border */
     
-    /* Status Colors - Muted so nothing screams */
-    --status-success: #10D9C4;        /* Success - mint */
-    --status-success-bg: rgba(16, 217, 196, 0.12);
+    /* Status Colors - Refined */
+    --status-success: #14b8a6;        /* Success - refined teal */
+    --status-success-bg: rgba(20, 184, 166, 0.12);
     --status-warning: #FCD34D;        /* Warning - soft yellow */
     --status-warning-bg: rgba(252, 211, 77, 0.12);
     --status-danger: #F87171;         /* Danger - muted red */
     --status-danger-bg: rgba(248, 113, 113, 0.12);
-    --status-info: #06B6D4;           /* Info - cyan */
-    --status-info-bg: rgba(6, 182, 212, 0.12);
+    --status-info: #22d3ee;           /* Info - refined cyan */
+    --status-info-bg: rgba(34, 211, 238, 0.12);
     
     /* ============================================
        TEXT COLORS
@@ -1533,7 +1533,7 @@
     --border-subtle: rgba(255, 255, 255, 0.05);
     --border-default: rgba(255, 255, 255, 0.08);
     --border-strong: rgba(255, 255, 255, 0.12);
-    --border-accent: rgba(16, 217, 196, 0.30);
+    --border-accent: rgba(20, 184, 166, 0.30);
     
     /* ============================================
        SHADOWS & GLOWS
@@ -1554,14 +1554,14 @@
     --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
     --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
-    /* Sidebar - Active nav has thin cyan line on left and mint text */
+    /* Sidebar - Active nav has thin teal line on left */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(16, 217, 196, 0.1);
-    --sidebar-active-border: var(--accent-secondary); /* Thin cyan line */
+    --sidebar-active-bg: rgba(20, 184, 166, 0.12);
+    --sidebar-active-border: var(--accent-primary); /* Refined teal border */
     --sidebar-hover-bg: var(--elevation-2);
-    --sidebar-link-color: var(--accent-secondary); /* Cyan for links */
-    --sidebar-icon-color: var(--accent-secondary); /* Cyan for icons */
+    --sidebar-link-color: var(--accent-primary-light); /* Teal for links */
+    --sidebar-icon-color: var(--accent-primary-light); /* Teal for icons */
     --sidebar-section-header: var(--text-tertiary);
     
     /* Cards */
@@ -1587,7 +1587,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
-    --input-focus-ring: 0 0 0 3px rgba(16, 217, 196, 0.2);
+    --input-focus-ring: 0 0 0 3px rgba(20, 184, 166, 0.2);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -1615,33 +1615,33 @@
      ============================================ */
   [data-theme="light-neomint"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Enhanced with mint tints
+       ELEVATION LAYERS (Background Hierarchy) - Modern refined mint
        ============================================ */
-    --elevation-0: #f0fdfa;  /* Page background - very light mint tint */
+    --elevation-0: #f0fdfa;  /* Page background - clean mint-tinted white */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
     --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white for better contrast */
-    --elevation-3: #ccfbf1;  /* Hover states, active cards - light mint */
+    --elevation-3: #ccfbf1;  /* Hover states, active cards - subtle mint */
     --elevation-4: #99f6e4;  /* Pressed states, modals - soft mint */
     
-    /* Enhanced gradient backgrounds with mint tints */
-    --gradient-hero: linear-gradient(135deg, rgba(16, 217, 196, 0.06) 0%, #ffffff 40%, rgba(46, 232, 214, 0.04) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(16, 217, 196, 0.08) 0%, #ffffff 45%, rgba(46, 232, 214, 0.05) 100%);
+    /* Modern gradient backgrounds with refined mint tints */
+    --gradient-hero: linear-gradient(135deg, rgba(20, 184, 166, 0.04) 0%, #ffffff 40%, rgba(45, 212, 191, 0.03) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(20, 184, 166, 0.06) 0%, #ffffff 45%, rgba(45, 212, 191, 0.04) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Neo-Mint Cyber Theme (Light)
+       SEMANTIC COLORS - Modern Neo-Mint Theme (Light)
        ============================================ */
-    /* Primary Accent - Mint Green */
-    --accent-primary: #14B8A6;        /* Primary CTA, active states - vibrant teal */
-    --accent-primary-hover: #0D9488;  /* Hover state - deeper teal */
-    --accent-primary-active: #0F766E; /* Pressed state - dark teal */
-    --accent-primary-glow: rgba(20, 184, 166, 0.25); /* Stronger glow */
-    --accent-primary-light: #2DD4BF;  /* Lighter mint for links and icons */
-    --accent-primary-muted: #5EEAD4;  /* Muted mint for section headers */
+    /* Primary Accent - Sophisticated Teal */
+    --accent-primary: #0d9488;        /* Primary CTA - refined teal */
+    --accent-primary-hover: #0f766e;  /* Hover state - deeper teal */
+    --accent-primary-active: #115e59; /* Pressed state - rich teal */
+    --accent-primary-glow: rgba(13, 148, 136, 0.2); /* Refined glow */
+    --accent-primary-light: #14b8a6;  /* Lighter teal for links and icons */
+    --accent-primary-muted: #2dd4bf;  /* Muted teal for section headers */
     
-    /* Secondary Accent - Cyan */
-    --accent-secondary: #0891B2;      /* Links and icons - vibrant cyan */
-    --accent-secondary-hover: #0E7490;
-    --accent-secondary-muted: #06B6D4;
+    /* Secondary Accent - Refined Cyan */
+    --accent-secondary: #0891b2;      /* Secondary actions - refined cyan */
+    --accent-secondary-hover: #0e7490;
+    --accent-secondary-muted: #06b6d4;
     --accent-secondary-bg: rgba(8, 145, 178, 0.12);  /* Owner/admin badge background */
     --accent-secondary-border: rgba(8, 145, 178, 0.25);  /* Owner/admin badge border */
     
@@ -1665,22 +1665,22 @@
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Enhanced with mint/cyan tones
+       BORDERS & DIVIDERS - Refined
        ============================================ */
     --border-subtle: #e4e4e7;         /* Subtle borders - light grey */
     --border-default: #d4d4d8;        /* Default borders - medium grey */
     --border-strong: #a1a1aa;         /* Strong borders - darker grey */
-    --border-accent: rgba(20, 184, 166, 0.4);     /* Accent borders - mint */
+    --border-accent: rgba(13, 148, 136, 0.35);     /* Accent borders - refined teal */
     
     /* ============================================
-       SHADOWS & GLOWS - Enhanced with mint/cyan color hints
+       SHADOWS & GLOWS - Modern refined
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(16, 217, 196, 0.1);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(16, 217, 196, 0.1);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(16, 217, 196, 0.15);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(16, 217, 196, 0.2);
-    --glow-accent: 0 0 24px rgba(16, 217, 196, 0.35), 0 0 48px rgba(6, 182, 212, 0.2);
-    --glow-soft: 0 0 48px rgba(16, 217, 196, 0.15);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(13, 148, 136, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(13, 148, 136, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(13, 148, 136, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(13, 148, 136, 0.15);
+    --glow-accent: 0 0 20px rgba(13, 148, 136, 0.25), 0 0 40px rgba(20, 184, 166, 0.15);
+    --glow-soft: 0 0 40px rgba(13, 148, 136, 0.12);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -1691,11 +1691,11 @@
     --overlay-bg: rgba(0, 0, 0, 0.5);  /* Modal/backdrop overlay */
     --overlay-bg-light: rgba(0, 0, 0, 0.3);  /* Light overlay for mobile sidebar */
     
-    /* Sidebar - Active nav has thin cyan line on left and mint text */
+    /* Sidebar - Active nav has thin teal line on left and mint text */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(20, 184, 166, 0.12);  /* Mint pill background */
-    --sidebar-active-border: var(--accent-primary); /* Mint border */
+    --sidebar-active-bg: rgba(13, 148, 136, 0.1);  /* Refined teal pill background */
+    --sidebar-active-border: var(--accent-primary); /* Teal border */
     --sidebar-hover-bg: var(--elevation-3);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -1724,7 +1724,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
-    --input-focus-ring: 0 0 0 3px rgba(16, 217, 196, 0.1);
+    --input-focus-ring: 0 0 0 3px rgba(13, 148, 136, 0.1);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
