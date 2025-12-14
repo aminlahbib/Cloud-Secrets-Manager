@@ -94,6 +94,34 @@ public class NotificationController {
         return emitter;
     }
 
+    @PostMapping("/test")
+    public ResponseEntity<NotificationDto> sendTestNotification(
+            Authentication authentication,
+            @RequestParam(value = "type", defaultValue = "SECRET_EXPIRING_SOON") String notificationType) {
+        UUID userId = resolveCurrentUserId(authentication);
+
+        Notification notification = new Notification();
+        notification.setId(UUID.randomUUID());
+        notification.setUserId(userId);
+        notification.setType(notificationType);
+        notification.setTitle("Test Notification: " + notificationType);
+        notification.setBody("This is a test notification to verify your notification preferences are working correctly.");
+        notification.setCreatedAt(Instant.now());
+
+        notificationRepository.save(notification);
+
+        // Send via SSE
+        try {
+            NotificationDto dto = toDto(notification);
+            sseService.sendNotification(userId, dto);
+        } catch (Exception ex) {
+            log.warn("Failed to send test notification via SSE: {}", ex.getMessage());
+        }
+
+        log.info("Test notification sent to user {}", userId);
+        return ResponseEntity.ok(toDto(notification));
+    }
+
     private UUID resolveCurrentUserId(Authentication authentication) {
         String username = authentication.getName(); // email from JWT
         User user = userRepository.findByEmail(username)

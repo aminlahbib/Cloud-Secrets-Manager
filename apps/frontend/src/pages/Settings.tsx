@@ -19,6 +19,7 @@ import { usePreferences } from '../hooks/usePreferences';
 import { useNotifications } from '../contexts/NotificationContext';
 import { firebaseAuthService } from '../services/firebase-auth';
 import { preferencesService } from '../services/preferences';
+import { notificationsService } from '../services/notifications';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -210,6 +211,24 @@ export const SettingsPage: React.FC = () => {
       dateFormat,
     });
   }, [timezone, dateFormat, savePreferencesMutation]);
+
+  const testNotificationMutation = useMutation({
+    mutationFn: (type: string) => notificationsService.sendTestNotification(type),
+    onSuccess: () => {
+      showNotification({
+        type: 'success',
+        title: 'Test notification sent',
+        message: 'Check your notifications to see the test notification',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Test failed',
+        message: error?.response?.data?.message || 'Failed to send test notification',
+      });
+    },
+  });
   
 
   return (
@@ -554,6 +573,16 @@ export const SettingsPage: React.FC = () => {
                       <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
                   </div>
+                  <div className="pl-4 mt-3">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => testNotificationMutation.mutate('SECRET_EXPIRING_SOON')}
+                      disabled={testNotificationMutation.isPending}
+                    >
+                      {testNotificationMutation.isPending ? 'Sending...' : 'Send Test Notification'}
+                    </Button>
+                  </div>
                 </div>
 
                 <div 
@@ -611,6 +640,16 @@ export const SettingsPage: React.FC = () => {
                       />
                       <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
+                  </div>
+                  <div className="pl-4 mt-3">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => testNotificationMutation.mutate('PROJECT_INVITATION')}
+                      disabled={testNotificationMutation.isPending}
+                    >
+                      {testNotificationMutation.isPending ? 'Sending...' : 'Send Test Notification'}
+                    </Button>
                   </div>
                 </div>
 
@@ -670,6 +709,16 @@ export const SettingsPage: React.FC = () => {
                       <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                     </label>
                   </div>
+                  <div className="pl-4 mt-3">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => testNotificationMutation.mutate('SECURITY_ALERT')}
+                      disabled={testNotificationMutation.isPending}
+                    >
+                      {testNotificationMutation.isPending ? 'Sending...' : 'Send Test Notification'}
+                    </Button>
+                  </div>
                 </div>
 
                 <div 
@@ -703,6 +752,16 @@ export const SettingsPage: React.FC = () => {
                       />
                       <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!emailNotifications ? 'opacity-50' : ''}`}></div>
                     </label>
+                  </div>
+                  <div className="pl-4 mt-3">
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => testNotificationMutation.mutate('ROLE_CHANGED')}
+                      disabled={testNotificationMutation.isPending}
+                    >
+                      {testNotificationMutation.isPending ? 'Sending...' : 'Send Test Notification'}
+                    </Button>
                   </div>
                 </div>
 
