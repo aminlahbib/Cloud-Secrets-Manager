@@ -47,7 +47,7 @@ export const Logo: React.FC<LogoProps> = ({
         src="/assets/logo.webp"
         alt="Cloud Secrets Manager Logo"
         className={`${sizeClasses.container} object-contain flex-shrink-0 transition-all duration-200 rounded-lg ${isClickable ? 'group-hover:scale-105' : ''}`}
-        style={{ borderRadius: '8px' }}
+        style={{ borderRadius: '10px' }}
       />
       {showText && (
         <span 

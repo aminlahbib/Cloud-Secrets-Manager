@@ -3,7 +3,7 @@
 <div align="center">
 
 <div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
-  <img src="assets/logo.png" alt="Cloud Secrets Manager Logo" height="80" style="border-radius: 8px;"/>
+  <img src="assets/logo.png" alt="Cloud Secrets Manager Logo" height="80" style="border-radius: 10px;"/>
   <h1 style="margin: 0; font-size: 3.5rem; font-weight: 700;">Cloud Secrets Manager</h1>
 </div>
 
