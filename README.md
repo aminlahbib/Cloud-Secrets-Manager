@@ -1,6 +1,11 @@
+
+
 <div align="center">
 
-# Cloud Secrets Manager
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="assets/logo.png" alt="Cloud Secrets Manager Logo" height="80" style="border-radius: 8px;"/>
+  <h1 style="margin: 0; font-size: 3.5rem; font-weight: 700;">Cloud Secrets Manager</h1>
+</div>
 
 **Enterprise-Grade Secrets Management Platform**
 
@@ -21,6 +26,8 @@
 
 
 **Securely store, manage, and audit sensitive credentials across your organization**
+
+</div>
 
 ## 📚 Documentation
 
@@ -217,13 +224,15 @@ sequenceDiagram
 
 The fastest way to get started - runs all services with a single command:
 
+Clone the repository
 ```bash
-# Clone the repository
 git clone https://github.com/aminlahbib/Cloud-Secrets-Manager.git
 cd Cloud-Secrets-Manager
+```
 
-# Start all services
-docker compose -f docker/docker-compose.yml up --build
+Start all services
+```bash
+docker compose -f docker/docker-compose.yml up --build -d
 ```
 
 **Services will be available at:**
