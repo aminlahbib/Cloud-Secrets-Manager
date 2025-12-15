@@ -39,7 +39,7 @@ export const notificationsService = {
     if (type) params.type = type;
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
-    
+
     const { data } = await api.get<NotificationPage>(`${NOTIFICATION_SERVICE_URL}/api/notifications`, {
       params,
     });
@@ -47,11 +47,11 @@ export const notificationsService = {
   },
 
   async markAsRead(id: string): Promise<void> {
-    await api.post(`/api/notifications/${id}/read`);
+    await api.post(`${NOTIFICATION_SERVICE_URL}/api/notifications/${id}/read`);
   },
 
   async markAllAsRead(): Promise<void> {
-    await api.post('/api/notifications/read-all');
+    await api.post(`${NOTIFICATION_SERVICE_URL}/api/notifications/read-all`);
   },
 
   getStreamUrl(): string {
