@@ -37,7 +37,7 @@
 
 ## 📚 Documentation
 
-For detailed documentation visit the Project's [Wiki](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki) 📖
+For detailed documentation visit the Project's [Wiki](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki) 
 
 
 
