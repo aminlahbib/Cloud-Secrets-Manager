@@ -571,7 +571,19 @@ export const ProjectDetailPage: React.FC = () => {
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowDeleteProjectModal(false);
+      showNotification({
+        type: 'success',
+        title: 'Project deleted',
+        message: 'The project has been permanently deleted',
+      });
       navigate('/projects');
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to delete project',
+        message: error?.response?.data?.message || error?.message || 'An error occurred while deleting the project',
+      });
     },
   });
 
