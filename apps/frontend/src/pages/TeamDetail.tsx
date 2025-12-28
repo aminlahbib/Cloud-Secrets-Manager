@@ -19,6 +19,8 @@ import {
   Clock,
   Settings as SettingsIcon,
   LayoutGrid,
+  FileText,
+  Key,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
@@ -49,6 +51,65 @@ const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
   TEAM_OWNER: <Crown className="h-3 w-3" />,
   TEAM_ADMIN: <Shield className="h-3 w-3" />,
   TEAM_MEMBER: null,
+};
+
+const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  // v3 actions
+  SECRET_CREATE: 'success',
+  SECRET_READ: 'info',
+  SECRET_UPDATE: 'warning',
+  SECRET_DELETE: 'danger',
+  SECRET_ROTATE: 'warning',
+  SECRET_MOVE: 'info',
+  SECRET_COPY: 'info',
+  PROJECT_CREATE: 'success',
+  PROJECT_UPDATE: 'warning',
+  PROJECT_ARCHIVE: 'warning',
+  PROJECT_RESTORE: 'success',
+  PROJECT_DELETE: 'danger',
+  MEMBER_INVITE: 'info',
+  MEMBER_JOIN: 'success',
+  MEMBER_REMOVE: 'danger',
+  MEMBER_ROLE_CHANGE: 'warning',
+  WORKFLOW_CREATE: 'success',
+  WORKFLOW_UPDATE: 'warning',
+  WORKFLOW_DELETE: 'danger',
+  TEAM_CREATE: 'success',
+  TEAM_UPDATE: 'warning',
+  TEAM_DELETE: 'danger',
+  TEAM_MEMBER_ADD: 'success',
+  TEAM_MEMBER_REMOVE: 'danger',
+  TEAM_PROJECT_ADD: 'info',
+  TEAM_PROJECT_REMOVE: 'warning',
+  // Legacy actions
+  CREATE: 'success',
+  READ: 'info',
+  UPDATE: 'warning',
+  DELETE: 'danger',
+  SHARE: 'info',
+  ROTATE: 'warning',
+  UNSHARE: 'warning',
+};
+
+const ACTION_ICONS: Record<string, React.ReactNode> = {
+  SECRET_CREATE: <Key className="h-4 w-4" />,
+  SECRET_READ: <Key className="h-4 w-4" />,
+  SECRET_UPDATE: <Key className="h-4 w-4" />,
+  SECRET_DELETE: <Key className="h-4 w-4" />,
+  SECRET_ROTATE: <Key className="h-4 w-4" />,
+  PROJECT_CREATE: <Folder className="h-4 w-4" />,
+  PROJECT_UPDATE: <Folder className="h-4 w-4" />,
+  PROJECT_DELETE: <Folder className="h-4 w-4" />,
+  MEMBER_INVITE: <Users className="h-4 w-4" />,
+  MEMBER_JOIN: <Users className="h-4 w-4" />,
+  MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_CREATE: <Building2 className="h-4 w-4" />,
+  TEAM_UPDATE: <Building2 className="h-4 w-4" />,
+  TEAM_DELETE: <Building2 className="h-4 w-4" />,
+  TEAM_MEMBER_ADD: <Users className="h-4 w-4" />,
+  TEAM_MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_PROJECT_ADD: <Folder className="h-4 w-4" />,
+  TEAM_PROJECT_REMOVE: <Folder className="h-4 w-4" />,
 };
 
 export const TeamDetailPage: React.FC = () => {
@@ -790,38 +851,90 @@ export const TeamDetailPage: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="divide-y divide-theme-subtle">
+            <div className="rounded-lg border divide-y" style={{ backgroundColor: 'var(--card-bg)', borderColor: 'var(--border-subtle)', borderTopColor: 'var(--border-subtle)' }}>
               {activityData.logs.slice(0, 50).map((log: AuditLog) => {
-                const userName = log.userDisplayName || log.userEmail || 'System';
-                const userInitials = userName
-                  .split(' ')
-                  .map((n: string) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2);
+                const actionColor = ACTION_COLORS[log.action] || 'default';
+                const iconBgStyles = {
+                  success: { backgroundColor: 'var(--status-success-bg)', color: 'var(--status-success)' },
+                  danger: { backgroundColor: 'var(--status-danger-bg)', color: 'var(--status-danger)' },
+                  warning: { backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)' },
+                  info: { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' },
+                  default: { backgroundColor: 'var(--elevation-1)', color: 'var(--text-secondary)' },
+                };
+                
+                const formatAction = (action: string) => {
+                  return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+                };
+
+                const getTimeAgo = (timestamp: string) => {
+                  const now = new Date();
+                  const then = new Date(timestamp);
+                  const diffMs = now.getTime() - then.getTime();
+                  const diffMins = Math.floor(diffMs / 60000);
+                  const diffHours = Math.floor(diffMs / 3600000);
+                  const diffDays = Math.floor(diffMs / 86400000);
+
+                  if (diffMins < 1) return t('home.justNow');
+                  if (diffMins < 60) return t('home.timeAgo.minutes', { count: diffMins });
+                  if (diffHours < 24) return t('home.timeAgo.hours', { count: diffHours });
+                  if (diffDays < 7) return t('home.timeAgo.days', { count: diffDays });
+                  return then.toLocaleDateString();
+                };
+                
+                // Get project from log.project or lookup from allProjectsForActivity
+                const project = log.project || (log.projectId && allProjectsForActivity?.content?.find((p: Project) => p.id === log.projectId));
+                const projectName = project?.name || log.metadata?.projectName as string;
+                
+                // Get team name(s) from project.teams or metadata
+                let teamName: string | undefined;
+                if (project?.teams && project.teams.length > 0) {
+                  teamName = project.teams[0]?.teamName;
+                } else if (log.metadata?.teamName) {
+                  teamName = log.metadata.teamName as string;
+                }
                 
                 return (
-                  <div key={log.id} className="padding-card">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium text-xs flex-shrink-0">
-                        {userInitials}
+                  <div 
+                    key={log.id} 
+                    className="p-4 transition-colors"
+                    style={{ borderTopColor: 'var(--border-subtle)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--elevation-1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 rounded-lg" style={iconBgStyles[actionColor]}>
+                        {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
                       </div>
+                      
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-theme-primary">
-                          <span className="font-medium">{userName}</span>
-                          {' '}
-                          {log.action.replace(/_/g, ' ').toLowerCase()}
-                          {' '}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant={actionColor}>
+                            {formatAction(log.action)}
+                          </Badge>
                           {log.resourceName && (
-                            <span style={{ color: 'var(--accent-primary)' }}>
+                            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                               {log.resourceName}
                             </span>
                           )}
+                          {projectName && (
+                            <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                              in {projectName}
+                            </span>
+                          )}
+                          {teamName && (
+                            <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                              (team: {teamName})
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                          by {log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}
                         </p>
-                        <p className="text-xs text-theme-tertiary mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {new Date(log.createdAt).toLocaleString()}
-                        </p>
+                      </div>
+                      
+                      <div className="flex items-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                        <Clock className="h-4 w-4 mr-1" />
+                        {getTimeAgo(log.createdAt || '')}
                       </div>
                     </div>
                   </div>
