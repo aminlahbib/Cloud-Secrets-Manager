@@ -278,12 +278,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
                 >
                   Restore Project
                 </Button>
-                <Button 
-                  variant="danger" 
-                  className="flex-1" 
-                  onClick={onDelete}
-                  disabled={isArchiving || isRestoring}
-                >
+                <Button variant="danger" className="flex-1" onClick={onDelete}>
                   Delete Permanently
                 </Button>
               </>
