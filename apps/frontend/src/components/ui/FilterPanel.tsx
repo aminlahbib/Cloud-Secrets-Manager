@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { X, Filter, ChevronDown } from 'lucide-react';
 import { Button } from './Button';
+import { Badge } from './Badge';
 
 export interface FilterOption {
   label: string;
@@ -32,6 +33,22 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const activeFiltersCount = Object.values(values).filter(v => v !== '' && v !== null && v !== undefined).length;
+  
+  const activeFilters = useMemo(() => {
+    const active: Array<{ key: string; label: string; value: string }> = [];
+    filters.forEach((filter) => {
+      const value = values[filter.key];
+      if (value && value !== '' && value !== null && value !== undefined) {
+        const option = filter.options?.find(opt => opt.value === value);
+        active.push({
+          key: filter.key,
+          label: filter.label,
+          value: option?.label || String(value),
+        });
+      }
+    });
+    return active;
+  }, [filters, values]);
 
   return (
     <div className={`relative ${className}`}>
@@ -87,6 +104,19 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
                 </button>
               )}
             </div>
+
+            {activeFilters.length > 0 && (
+              <div className="mb-4 pb-4 border-b border-theme-subtle">
+                <p className="text-caption font-medium mb-2 text-theme-secondary">Active filters:</p>
+                <div className="flex flex-wrap gap-2">
+                  {activeFilters.map((filter) => (
+                    <Badge key={filter.key} variant="info" className="text-xs">
+                      {filter.label}: {filter.value}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-4">
               {filters.map((filter) => (
