@@ -882,8 +882,10 @@ export const TeamDetailPage: React.FC = () => {
                 };
                 
                 // Get project from log.project or lookup from allProjectsForActivity
-                const project = log.project || (log.projectId && allProjectsForActivity?.content?.find((p: Project) => p.id === log.projectId));
-                const projectName = project?.name || log.metadata?.projectName as string;
+                // Handle case where log.project might be empty string from API
+                const project: Project | undefined = (log.project && typeof log.project === 'object' && 'id' in log.project ? log.project as Project : undefined) || 
+                  (log.projectId ? allProjectsForActivity?.content?.find((p: Project) => p.id === log.projectId) : undefined);
+                const projectName = project?.name || (log.metadata?.projectName as string | undefined);
                 
                 // Get team name(s) from project.teams or metadata
                 let teamName: string | undefined;
