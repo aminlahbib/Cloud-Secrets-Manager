@@ -375,6 +375,26 @@ export const TeamDetailPage: React.FC = () => {
     return projectList;
   }, [allProjectsData?.content, teamProjects, workflows, projectFilters.workflow, projectFilters.accessSource]);
 
+  // Calculate total secrets from team projects
+  const totalSecrets = useMemo(() => {
+    if (!filteredProjects || filteredProjects.length === 0) return 0;
+    return filteredProjects.reduce((total: number, project: Project) => {
+      return total + (project.secretCount || 0);
+    }, 0);
+  }, [filteredProjects]);
+
+  // Get recent projects for overview
+  const recentProjects = useMemo(() => {
+    if (!filteredProjects || filteredProjects.length === 0) return [];
+    return [...filteredProjects]
+      .sort((a: Project, b: Project) => {
+        const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+        const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+        return dateB - dateA;
+      })
+      .slice(0, 5);
+  }, [filteredProjects]);
+
   // Separate active and archived projects
   const { activeProjects, archivedProjects } = useMemo(() => {
     const active = filteredProjects.filter((p: Project) => !p.isArchived);
@@ -456,72 +476,156 @@ export const TeamDetailPage: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'overview', label: t('teams.detail.tabs.overview'), icon: LayoutGrid },
-    { id: 'members', label: t('teams.detail.tabs.members'), icon: Users, count: members?.length },
-    { id: 'projects', label: t('teams.detail.tabs.projects'), icon: Folder, count: teamProjects?.length },
-    { id: 'activity', label: t('teams.detail.tabs.activity'), icon: Activity },
-    { id: 'settings', label: t('teams.detail.tabs.settings'), icon: SettingsIcon },
+    { id: 'overview', label: t('teamDetail.overview'), icon: LayoutGrid },
+    { id: 'members', label: t('teamDetail.members'), icon: Users, count: members?.length },
+    { id: 'projects', label: t('teamDetail.projects'), icon: Folder, count: teamProjects?.length },
+    { id: 'activity', label: t('teamDetail.activity'), icon: Activity },
+    { id: 'settings', label: t('teamDetail.settings'), icon: SettingsIcon },
   ];
 
   return (
-    <div className="space-y-6">
-      <TeamHeader
-        team={team}
-        activeTab={activeTab}
-        canManageTeam={canManageTeam()}
-        onTabChange={setActiveTab}
-      />
+    <div className="flex flex-col min-h-0 w-full max-w-full">
+      <div className="flex-shrink-0">
+        <TeamHeader
+          team={team}
+          activeTab={activeTab}
+          canManageTeam={canManageTeam()}
+          onTabChange={setActiveTab}
+        />
+      </div>
 
       {/* Tabs */}
-      <Tabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onChange={(tabId) => {
-          setActiveTab(tabId);
-        }}
-      />
+      <div className="flex-shrink-0">
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={(tabId) => {
+            setActiveTab(tabId);
+          }}
+        />
+      </div>
 
       {/* Tab Content */}
-      {activeTab === 'overview' && (
-        <div className="space-y-6">
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-elevation-1">
-                  <Users className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
-                </div>
-                <div>
-                  <p className="text-sm text-theme-secondary mb-1">
-                    Members
-                  </p>
-                  <p className="text-3xl font-bold text-theme-primary">
-                    {team.memberCount || 0}
-                  </p>
-                </div>
+      <div className="flex-1 min-h-0 overflow-auto">
+        {activeTab === 'overview' && (
+          <div className="space-y-6 w-full">
+            {/* Team Description */}
+            {team.description && (
+              <div className="card p-6">
+                <h3 className="text-h3 font-semibold mb-3 text-theme-primary">About</h3>
+                <p className="text-body-sm text-theme-secondary whitespace-pre-wrap">{team.description}</p>
               </div>
-            </div>
-            <div className="card p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-elevation-1">
-                  <Folder className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
-                </div>
-                <div>
-                  <p className="text-sm text-theme-secondary mb-1">
-                    Projects
-                  </p>
-                  <p className="text-3xl font-bold text-theme-primary">
-                    {team.projectCount || 0}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            )}
 
-      {activeTab === 'members' && (
-        <div className="card">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="card p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-elevation-1">
+                    <Users className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-theme-secondary mb-1">
+                      {t('teamDetail.membersCount')}
+                    </p>
+                    <p className="text-3xl font-bold text-theme-primary">
+                      {team.memberCount || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-elevation-1">
+                    <Folder className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-theme-secondary mb-1">
+                      {t('teamDetail.projectsCount')}
+                    </p>
+                    <p className="text-3xl font-bold text-theme-primary">
+                      {team.projectCount || 0}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="card p-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-lg bg-elevation-1">
+                    <Key className="h-6 w-6" style={{ color: 'var(--accent-primary)' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-theme-secondary mb-1">
+                      Total Secrets
+                    </p>
+                    <p className="text-3xl font-bold text-theme-primary">
+                      {totalSecrets}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Projects */}
+            {recentProjects.length > 0 && (
+              <div className="card p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-h3 font-semibold text-theme-primary">Recent Projects</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveTab('projects')}
+                  >
+                    View all
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {recentProjects.map((project: Project) => (
+                    <Link
+                      key={project.id}
+                      to={`/projects/${project.id}`}
+                      className="block p-4 rounded-lg border transition-colors hover:bg-elevation-1"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Folder className="h-4 w-4 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+                            <h4 className="text-body-sm font-semibold truncate text-theme-primary">
+                              {project.name}
+                            </h4>
+                          </div>
+                          {project.description && (
+                            <p className="text-caption text-theme-secondary line-clamp-2 mb-2">
+                              {project.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-4 text-caption text-theme-tertiary flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <Key className="h-3 w-3" />
+                              {project.secretCount || 0} secrets
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {project.memberCount || 0} members
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {getTimeAgo(project.updatedAt)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'members' && (
+          <div className="card w-full">
         <div className="padding-card border-b border-theme-subtle">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-theme-primary">
@@ -813,8 +917,8 @@ export const TeamDetailPage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'activity' && (
-        <div className="card">
+        {activeTab === 'activity' && (
+          <div className="card w-full">
           <div className="padding-card border-b border-theme-subtle">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
@@ -947,8 +1051,8 @@ export const TeamDetailPage: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'settings' && canManageTeam() && (
-        <div className="card">
+        {activeTab === 'settings' && canManageTeam() && (
+          <div className="card w-full">
           <div className="padding-card border-b border-theme-subtle">
             <h2 className="text-lg font-semibold text-theme-primary">Team Settings</h2>
           </div>
@@ -970,19 +1074,20 @@ export const TeamDetailPage: React.FC = () => {
             </div>
           </div>
         </div>
-      )}
+        )}
 
-      {activeTab === 'settings' && !canManageTeam() && (
-        <div className="card">
-          <div className="padding-card">
-            <EmptyState
-              icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
-              title="Settings not available"
-              description="You need admin or owner permissions to manage team settings"
-            />
+        {activeTab === 'settings' && !canManageTeam() && (
+          <div className="card w-full">
+            <div className="padding-card">
+              <EmptyState
+                icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
+                title="Settings not available"
+                description="You need admin or owner permissions to manage team settings"
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Add Member Modal */}
       {team && (
