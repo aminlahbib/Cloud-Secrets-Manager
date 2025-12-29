@@ -4,6 +4,7 @@ import com.secrets.dto.project.ProjectRequest;
 import com.secrets.dto.project.ProjectResponse;
 import com.secrets.entity.Project;
 import com.secrets.entity.ProjectMembership;
+import com.secrets.entity.Secret;
 import com.secrets.entity.Workflow;
 import com.secrets.entity.TeamProject;
 import com.secrets.repository.ProjectMembershipRepository;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -201,13 +203,20 @@ public class ProjectService {
             throw new SecurityException("Only owners can delete project");
         }
 
+        // Delete all secrets first (secrets don't have cascade delete from project)
+        List<Secret> secrets = secretRepository.findByProjectId(projectId, Pageable.unpaged()).getContent();
+        if (!secrets.isEmpty()) {
+            secretRepository.deleteAll(secrets);
+            log.info("Deleted {} secrets for project: {}", secrets.size(), projectId);
+        }
+        
         // Delete all workflow associations
         workflowProjectRepository.deleteAll(workflowProjectRepository.findByProjectId(projectId));
         
         // Delete all team-project associations
         teamProjectRepository.deleteByProjectId(projectId);
         
-        // Delete project (cascades to memberships and secrets)
+        // Delete project (cascades to memberships)
         projectRepository.delete(project);
         log.info("Permanently deleted project: {} by user: {}", projectId, userId);
     }
