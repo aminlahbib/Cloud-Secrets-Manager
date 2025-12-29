@@ -204,6 +204,9 @@ public class ProjectService {
         // Delete all workflow associations
         workflowProjectRepository.deleteAll(workflowProjectRepository.findByProjectId(projectId));
         
+        // Delete all team-project associations
+        teamProjectRepository.deleteByProjectId(projectId);
+        
         // Delete project (cascades to memberships and secrets)
         projectRepository.delete(project);
         log.info("Permanently deleted project: {} by user: {}", projectId, userId);
