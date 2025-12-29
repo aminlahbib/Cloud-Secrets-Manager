@@ -15,11 +15,13 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow frontend origins
-        configuration.setAllowedOrigins(Arrays.asList(
+        // Allow frontend origins - use setAllowedOriginPatterns when allowCredentials is true
+        configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:5173",  // Vite default port
             "http://localhost:5174",  // Alternative Vite port
-            "http://localhost:3000"   // Common React port
+            "http://localhost:3000",  // Common React port
+            "http://127.0.0.1:3000",  // Alternative localhost format
+            "http://127.0.0.1:5173"   // Alternative localhost format
         ));
         
         // Allow common HTTP methods

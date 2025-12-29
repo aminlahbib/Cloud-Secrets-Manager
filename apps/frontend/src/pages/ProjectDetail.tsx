@@ -81,8 +81,8 @@ export const ProjectDetailPage: React.FC = () => {
   const [importError, setImportError] = useState<string | null>(null);
   const [secretFilters, setSecretFilters] = useState<Record<string, any>>({
     status: null,
-    sortBy: 'createdAt',
-    sortDir: 'DESC',
+    sortBy: null,
+    sortDir: null,
   });
 
   // Fetch project details
@@ -431,6 +431,7 @@ export const ProjectDetailPage: React.FC = () => {
       label: 'Status',
       type: 'select',
       options: [
+        { label: 'All', value: '' },
         { label: 'Active', value: 'active' },
         { label: 'Expired', value: 'expired' },
         { label: 'Expiring Soon', value: 'expiring' },
@@ -441,6 +442,7 @@ export const ProjectDetailPage: React.FC = () => {
       label: 'Sort By',
       type: 'select',
       options: [
+        { label: 'Default', value: '' },
         { label: 'Created Date', value: 'createdAt' },
         { label: 'Updated Date', value: 'updatedAt' },
         { label: 'Key', value: 'secretKey' },
@@ -451,6 +453,7 @@ export const ProjectDetailPage: React.FC = () => {
       label: 'Order',
       type: 'select',
       options: [
+        { label: 'Default', value: '' },
         { label: 'Newest First', value: 'DESC' },
         { label: 'Oldest First', value: 'ASC' },
       ],
@@ -571,7 +574,19 @@ export const ProjectDetailPage: React.FC = () => {
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowDeleteProjectModal(false);
+      showNotification({
+        type: 'success',
+        title: 'Project deleted',
+        message: 'The project has been permanently deleted',
+      });
       navigate('/projects');
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to delete project',
+        message: error?.response?.data?.message || error?.message || 'An error occurred while deleting the project',
+      });
     },
   });
 
@@ -623,7 +638,7 @@ export const ProjectDetailPage: React.FC = () => {
   const handleAddSecret = useCallback(() => navigate(`/projects/${projectId}/secrets/new`), [navigate, projectId]);
   const handleInviteMember = useCallback(() => setShowInviteModal(true), []);
   const handleFilterChange = useCallback((key: string, value: any) => setSecretFilters(prev => ({ ...prev, [key]: value })), []);
-  const handleFilterClear = useCallback(() => setSecretFilters({ status: null, sortBy: 'createdAt', sortDir: 'DESC' }), []);
+  const handleFilterClear = useCallback(() => setSecretFilters({ status: null, sortBy: null, sortDir: null }), []);
   const handleDeleteSecret = useCallback((key: string) => setShowDeleteSecretModal(key), []);
   const handleBulkDelete = useCallback(() => setShowBulkDeleteModal(true), []);
   const handleRemoveMember = useCallback((userId: string) => removeMemberMutation.mutate(userId), [removeMemberMutation]);
