@@ -118,13 +118,13 @@
        ============================================ */
     --elevation-0: #fafafa;  /* Page background - neutral-50 */
     --elevation-1: #ffffff;  /* Sidebar, main containers - white */
-    --elevation-2: #f5f5f5;  /* Cards, elevated surfaces - neutral-100 */
-    --elevation-3: #e5e5e5;  /* Hover states, active cards - neutral-200 */
-    --elevation-4: #d4d4d4;  /* Pressed states, modals - neutral-300 */
+    --elevation-2: #ffffff;  /* Cards, elevated surfaces - white (matches other themes) */
+    --elevation-3: #f5f5f5;  /* Hover states, active cards - neutral-100 */
+    --elevation-4: #e5e5e5;  /* Pressed states, modals - neutral-200 */
     
     /* Clean gradients without color tints */
-    --gradient-hero: linear-gradient(135deg, rgba(0, 0, 0, 0.01) 0%, #ffffff 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, #ffffff 100%);
+    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, #ffffff 40%, rgba(96, 165, 250, 0.03) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, #ffffff 45%, rgba(96, 165, 250, 0.04) 100%);
     
     /* ============================================
        SEMANTIC COLORS - Neutral Gray with Subtle Blue Accent
@@ -133,7 +133,7 @@
     --accent-primary: #3b82f6;        /* Primary CTA - blue-500 */
     --accent-primary-hover: #2563eb;  /* Hover state - blue-600 */
     --accent-primary-active: #1d4ed8; /* Pressed state - blue-700 */
-    --accent-primary-glow: rgba(59, 130, 246, 0.1); /* Subtle blue glow */
+    --accent-primary-glow: rgba(59, 130, 246, 0.2); /* Subtle blue glow (matches other themes) */
     --accent-primary-light: #60a5fa;  /* Lighter blue for links and icons */
     --accent-primary-muted: #93c5fd;  /* Muted blue for section headers */
     
@@ -157,29 +157,29 @@
     /* ============================================
        TEXT COLORS (WCAG AA Compliant)
        ============================================ */
-    --text-primary: #171717;          /* Primary text - neutral-900 */
-    --text-secondary: #525252;        /* Secondary text - neutral-600 */
-    --text-tertiary: #737373;         /* Tertiary text - neutral-500 */
-    --text-disabled: #a3a3a3;         /* Disabled text - neutral-400 */
+    --text-primary: #0c0a09;          /* Primary text - very dark for better contrast (matches other themes) */
+    --text-secondary: #3f3f46;        /* Secondary text - dark grey (matches other themes) */
+    --text-tertiary: #71717a;         /* Tertiary text - medium grey (matches other themes) */
+    --text-disabled: #a1a1aa;         /* Disabled text (matches other themes) */
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
        BORDERS & DIVIDERS - Neutral grays
        ============================================ */
-    --border-subtle: #e5e5e5;         /* Subtle borders - neutral-200 */
-    --border-default: #d4d4d4;        /* Default borders - neutral-300 */
-    --border-strong: #a3a3a3;         /* Strong borders - neutral-400 */
-    --border-accent: rgba(59, 130, 246, 0.3);     /* Accent borders - blue */
+    --border-subtle: #e4e4e7;         /* Subtle borders - matches other themes */
+    --border-default: #d4d4d8;        /* Default borders - matches other themes */
+    --border-strong: #a1a1aa;         /* Strong borders - matches other themes */
+    --border-accent: rgba(59, 130, 246, 0.35);     /* Accent borders - blue (matches opacity of other themes) */
     
     /* ============================================
-       SHADOWS & GLOWS - Subtle neutral shadows
+       SHADOWS & GLOWS - Subtle neutral shadows with blue hints
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    --glow-accent: 0 0 20px rgba(59, 130, 246, 0.15);
-    --glow-soft: 0 0 40px rgba(59, 130, 246, 0.08);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(59, 130, 246, 0.08);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(59, 130, 246, 0.08);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(59, 130, 246, 0.12);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(59, 130, 246, 0.15);
+    --glow-accent: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(96, 165, 250, 0.15);
+    --glow-soft: 0 0 40px rgba(59, 130, 246, 0.12);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -194,12 +194,17 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(59, 130, 246, 0.08);  /* Subtle blue background */
+    --sidebar-active-bg: rgba(59, 130, 246, 0.1);  /* Subtle blue background (matches other themes) */
     --sidebar-active-border: var(--accent-primary); /* Blue border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -256,9 +261,9 @@
        ============================================ */
     --elevation-0: #0a0a0a;  /* Page background - neutral-950 */
     --elevation-1: #171717;  /* Sidebar, main containers - neutral-900 */
-    --elevation-2: #262626;  /* Cards, elevated surfaces - neutral-800 */
-    --elevation-3: #404040;  /* Hover states, active cards - neutral-700 */
-    --elevation-4: #525252;  /* Pressed states, modals - neutral-600 */
+    --elevation-2: #171717;  /* Cards, elevated surfaces - same as elevation-1 (matches other themes) */
+    --elevation-3: #262626;  /* Hover states, active cards - neutral-800 */
+    --elevation-4: #404040;  /* Pressed states, modals - neutral-700 */
     
     /* Clean gradients without color tints */
     --gradient-hero: linear-gradient(135deg, rgba(255, 255, 255, 0.01) 0%, var(--elevation-1) 100%);
@@ -336,6 +341,11 @@
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -475,6 +485,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -610,6 +625,11 @@
     --sidebar-link-color: var(--accent-primary-light); /* Lighter lavender for links */
     --sidebar-icon-color: var(--accent-primary-light); /* Lighter lavender for icons */
     --sidebar-section-header: var(--accent-primary-muted); /* Muted lavender for section headers */
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -749,6 +769,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -883,6 +908,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards - Project cards show small green accent lines for healthy/active */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -1016,6 +1046,11 @@
     --sidebar-link-color: var(--text-secondary); /* Neutral grey */
     --sidebar-icon-color: var(--text-secondary); /* Neutral grey */
     --sidebar-section-header: var(--text-tertiary); /* Neutral grey */
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards - Pure white with gentle shadow */
     --card-bg: var(--elevation-2);
@@ -1155,6 +1190,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Neutral grey */
     --sidebar-section-header: var(--text-tertiary); /* Neutral grey */
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards - Dark grey with strong typography contrast */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -1288,6 +1328,11 @@
     --sidebar-link-color: var(--text-secondary); /* Default text color */
     --sidebar-icon-color: var(--text-secondary); /* Default text color */
     --sidebar-section-header: var(--text-tertiary); /* Default text color */
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -1427,6 +1472,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Default text color */
     --sidebar-section-header: var(--text-tertiary); /* Default text color */
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards - Dark slate greys */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -1563,6 +1613,11 @@
     --sidebar-link-color: var(--accent-primary-light); /* Teal for links */
     --sidebar-icon-color: var(--accent-primary-light); /* Teal for icons */
     --sidebar-section-header: var(--text-tertiary);
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);
@@ -1701,6 +1756,11 @@
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary);
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -1838,6 +1898,11 @@
     --sidebar-icon-color: var(--text-secondary);
     --sidebar-section-header: var(--text-tertiary);
     
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
+    
     /* Cards - Warm sand/beige */
     --card-bg: var(--elevation-2);
     --card-border: var(--border-subtle);
@@ -1974,6 +2039,11 @@
     --sidebar-link-color: var(--text-secondary);
     --sidebar-icon-color: var(--text-secondary);
     --sidebar-section-header: var(--text-tertiary);
+    
+    /* Top Bar - Matches Sidebar */
+    --topbar-bg: var(--sidebar-bg);
+    --topbar-border: var(--sidebar-border);
+    --topbar-shadow: var(--shadow-sm);
     
     /* Cards */
     --card-bg: var(--elevation-2);

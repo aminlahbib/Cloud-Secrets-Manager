@@ -13,7 +13,6 @@ export const TopBar: React.FC = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [isDark, setIsDark] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
@@ -29,23 +28,6 @@ export const TopBar: React.FC = () => {
   React.useEffect(() => {
     setAvatarError(false);
   }, [user?.avatarUrl]);
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const html = document.documentElement;
-      const theme = html.getAttribute('data-theme') || '';
-      setIsDark(theme.includes('dark'));
-    };
-    
-    checkTheme();
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme'],
-    });
-    
-    return () => observer.disconnect();
-  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,14 +50,10 @@ export const TopBar: React.FC = () => {
     <header
       className="sticky top-0 z-50 w-full border-b transition-colors duration-200"
       style={{
-        backgroundColor: isDark ? 'rgba(20, 20, 20, 0.8)' : 'rgba(255, 255, 255, 0.6)',
-        backdropFilter: 'blur(50px) saturate(200%)',
-        WebkitBackdropFilter: 'blur(50px) saturate(200%)',
-        borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+        backgroundColor: 'var(--topbar-bg)',
+        borderBottomColor: 'var(--topbar-border)',
         borderBottomWidth: '1px',
-        boxShadow: isDark 
-          ? '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)' 
-          : '0 2px 8px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+        boxShadow: 'var(--topbar-shadow)',
       }}
     >
       <div className="flex items-center justify-between h-16 px-4 md:px-8">
