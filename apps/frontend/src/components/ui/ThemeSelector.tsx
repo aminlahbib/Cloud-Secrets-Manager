@@ -24,12 +24,10 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
   }, []);
 
   const schemeDisplayNames: Record<string, string> = {
-    orange: 'Orange',
-    violet: 'Violet Pro',
+    neutral: 'Neutral',
     emerald: 'Emerald',
-    minimal: 'Minimal',
+    monochrome: 'Monochrome',
     blue: 'Cool Blue',
-    neomint: 'Neo-Mint',
     plum: 'Plum & Sand',
   };
 
@@ -81,7 +79,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({ compact = false })
           }}
         >
           <div className="p-2">
-            {['orange', 'violet', 'emerald', 'minimal', 'blue', 'neomint', 'plum'].map((scheme) => {
+            {['neutral', 'emerald', 'monochrome', 'blue', 'plum'].map((scheme) => {
               const themeForScheme = availableThemes.find(t => t.colorScheme === scheme && t.mode === 'light') 
                 || availableThemes.find(t => t.colorScheme === scheme);
               if (!themeForScheme) return null;

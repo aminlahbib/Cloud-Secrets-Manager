@@ -485,7 +485,7 @@ export const TeamDetailPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-0 w-full max-w-full">
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 pb-6">
         <TeamHeader
           team={team}
           activeTab={activeTab}
@@ -495,7 +495,7 @@ export const TeamDetailPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 mb-6">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -508,7 +508,7 @@ export const TeamDetailPage: React.FC = () => {
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-auto">
         {activeTab === 'overview' && (
-          <div className="space-y-6 w-full">
+          <div className="space-y-6 w-full pb-6">
             {/* Team Description */}
             {team.description && (
               <div className="card p-6">
@@ -626,7 +626,7 @@ export const TeamDetailPage: React.FC = () => {
 
         {activeTab === 'members' && (
           <div className="card w-full">
-        <div className="padding-card border-b border-theme-subtle">
+        <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 className="text-lg font-semibold text-theme-primary">
               Members ({members?.length || 0})
@@ -796,7 +796,7 @@ export const TeamDetailPage: React.FC = () => {
       )}
 
       {activeTab === 'projects' && (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-6">
           <PageHeader
             title="Projects"
             description="Manage team projects"
@@ -919,7 +919,7 @@ export const TeamDetailPage: React.FC = () => {
 
         {activeTab === 'activity' && (
           <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle">
+          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
                 <Activity className="h-5 w-5" />
@@ -1053,10 +1053,10 @@ export const TeamDetailPage: React.FC = () => {
 
         {activeTab === 'settings' && canManageTeam() && (
           <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle">
+          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
             <h2 className="text-lg font-semibold text-theme-primary">Team Settings</h2>
           </div>
-          <div className="padding-card space-y-6">
+          <div className="padding-card space-y-6 pb-6">
             <div>
               <h3 className="text-sm font-medium text-theme-primary mb-2">Team Management</h3>
               <div className="flex flex-col sm:flex-row gap-3">

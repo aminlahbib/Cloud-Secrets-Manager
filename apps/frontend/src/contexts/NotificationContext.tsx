@@ -71,7 +71,12 @@ const NotificationContainer: React.FC = () => {
   if (notifications.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
+    <div 
+      className="fixed top-20 right-4 z-[9999] space-y-3 max-w-md w-full sm:w-auto"
+      style={{
+        pointerEvents: 'auto',
+      }}
+    >
       {notifications.map((notification) => (
         <NotificationItem
           key={notification.id}
@@ -96,18 +101,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onDis
     info: { color: 'var(--status-info)' },
   };
 
-  const bgStyles = {
-    success: { backgroundColor: 'var(--status-success-bg)', borderColor: 'var(--status-success)' },
-    error: { backgroundColor: 'var(--status-danger-bg)', borderColor: 'var(--status-danger)' },
-    warning: { backgroundColor: 'var(--status-warning-bg)', borderColor: 'var(--status-warning)' },
-    info: { backgroundColor: 'var(--status-info-bg)', borderColor: 'var(--status-info)' },
-  };
-
-  const textStyles = {
-    success: { color: 'var(--status-success)' },
-    error: { color: 'var(--status-danger)' },
-    warning: { color: 'var(--status-warning)' },
-    info: { color: 'var(--status-info)' },
+  const borderStyles = {
+    success: { borderLeftColor: 'var(--status-success)' },
+    error: { borderLeftColor: 'var(--status-danger)' },
+    warning: { borderLeftColor: 'var(--status-warning)' },
+    info: { borderLeftColor: 'var(--status-info)' },
   };
 
   const icons = {
@@ -119,22 +117,63 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onDis
 
   return (
     <div
-      className="border rounded-lg shadow-lg p-4 flex items-start gap-3 transition-all duration-300 ease-in-out"
-      style={bgStyles[notification.type]}
+      className="border-l-4 rounded-lg shadow-lg p-4 flex items-start gap-3 transition-all duration-300 ease-in-out animate-slide-in"
+      style={{
+        backgroundColor: 'var(--card-bg)',
+        borderColor: 'var(--border-subtle)',
+        borderLeftWidth: '4px',
+        ...borderStyles[notification.type],
+        boxShadow: 'var(--shadow-lg)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.boxShadow = 'var(--shadow-xl)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.boxShadow = 'var(--shadow-lg)';
+        e.currentTarget.style.transform = 'translateY(0)';
+      }}
     >
-      <div className="flex-shrink-0 mt-0.5">{icons[notification.type]}</div>
+      <div 
+        className="flex-shrink-0 mt-0.5 p-1.5 rounded-lg"
+        style={{
+          backgroundColor: notification.type === 'success' ? 'var(--status-success-bg)' :
+                           notification.type === 'error' ? 'var(--status-danger-bg)' :
+                           notification.type === 'warning' ? 'var(--status-warning-bg)' :
+                           'var(--status-info-bg)',
+        }}
+      >
+        {icons[notification.type]}
+      </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold" style={textStyles[notification.type]}>{notification.title}</h4>
+        <h4 
+          className="text-sm font-semibold mb-0.5"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {notification.title}
+        </h4>
         {notification.message && (
-          <p className="text-sm mt-1 opacity-90" style={textStyles[notification.type]}>{notification.message}</p>
+          <p 
+            className="text-sm leading-relaxed"
+            style={{ color: 'var(--text-secondary)' }}
+          >
+            {notification.message}
+          </p>
         )}
       </div>
       <button
         onClick={onDismiss}
-        className="flex-shrink-0 transition-colors"
+        className="flex-shrink-0 p-1 rounded-md transition-all duration-200 hover:bg-elevation-2"
         style={{ color: 'var(--text-tertiary)' }}
-        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-tertiary)'}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'var(--text-primary)';
+          e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'var(--text-tertiary)';
+          e.currentTarget.style.backgroundColor = 'transparent';
+        }}
+        aria-label="Dismiss notification"
       >
         <X className="h-4 w-4" />
       </button>
