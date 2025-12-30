@@ -23,6 +23,7 @@ export interface User {
   lastLoginAt?: string;
   twoFactorEnabled?: boolean;
   twoFactorType?: 'TOTP' | 'EMAIL' | 'SMS';
+  onboardingCompleted?: boolean;
 }
 
 export interface LoginRequest {

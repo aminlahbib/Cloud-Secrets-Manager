@@ -60,7 +60,8 @@ public class EmailService {
         }
 
         String subject = String.format("You've been invited to %s", projectName);
-        String acceptLink = String.format("%s/accept-invite?token=%s", appBaseUrl, token);
+        // Use signup page with invitation token - will redirect to login if user exists
+        String acceptLink = String.format("%s/signup?invite=%s", appBaseUrl, token);
 
         String htmlBody = templateService.renderInvitationEmail(inviterName, projectName, acceptLink);
         String plainBody = String.format("""
