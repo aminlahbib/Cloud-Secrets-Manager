@@ -294,7 +294,14 @@ export const LoginPage: React.FC = () => {
           {/* Footer */}
           {!requires2FA && (
             <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-              {t('login.noAccount')}
+              {t('login.noAccount')}{' '}
+              <button
+                onClick={() => navigate('/signup')}
+                className="font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                {t('login.signUp')}
+              </button>
             </p>
           )}
         </div>
