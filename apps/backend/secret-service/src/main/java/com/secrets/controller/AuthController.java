@@ -3,6 +3,10 @@ package com.secrets.controller;
 import com.secrets.dto.LoginRequest;
 import com.secrets.dto.RefreshTokenRequest;
 import com.secrets.dto.TokenResponse;
+import com.secrets.dto.SignupRequest;
+import com.secrets.dto.EmailCheckRequest;
+import com.secrets.dto.EmailCheckResponse;
+import com.secrets.dto.invitation.InvitationResponse;
 import com.secrets.entity.RefreshToken;
 import com.secrets.entity.User;
 import com.secrets.exception.TokenRefreshException;
@@ -12,7 +16,10 @@ import com.secrets.security.JwtTokenProvider;
 import com.secrets.service.GoogleIdentityService;
 import com.secrets.service.RefreshTokenService;
 import com.secrets.service.UserService;
+import com.secrets.service.InvitationService;
+import com.secrets.service.WorkflowService;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -49,19 +57,24 @@ public class AuthController {
     private final GoogleIdentityService googleIdentityService;
     private final UserService userService;
     private final IntermediateTokenProvider intermediateTokenProvider;
+    private final InvitationService invitationService;
+    private final WorkflowService workflowService;
 
     @Value("${two-factor.intermediate-token.expiry-ms:300000}")
     private long intermediateTokenExpiryMs;
 
     public AuthController(GoogleIdentityTokenValidator googleTokenValidator, JwtTokenProvider tokenProvider,
                          RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService,
-                         UserService userService, IntermediateTokenProvider intermediateTokenProvider) {
+                         UserService userService, IntermediateTokenProvider intermediateTokenProvider,
+                         InvitationService invitationService, WorkflowService workflowService) {
         this.googleTokenValidator = googleTokenValidator;
         this.tokenProvider = tokenProvider;
         this.refreshTokenService = refreshTokenService;
         this.googleIdentityService = googleIdentityService;
         this.userService = userService;
         this.intermediateTokenProvider = intermediateTokenProvider;
+        this.invitationService = invitationService;
+        this.workflowService = workflowService;
     }
 
     @Value("${security.jwt.expiration-ms:900000}")
@@ -116,7 +129,8 @@ public class AuthController {
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .twoFactorEnabled(user.getTwoFactorEnabled())
-                .twoFactorType(user.getTwoFactorType());
+                .twoFactorType(user.getTwoFactorType())
+                .onboardingCompleted(user.getOnboardingCompleted());
         } else {
             responseBuilder.createdAt(java.time.LocalDateTime.now());
         }
@@ -262,6 +276,150 @@ public class AuthController {
                 .body(TokenResponse.builder()
                     .error("Token refresh failed: " + e.getMessage())
                     .build());
+        }
+    }
+
+    /**
+     * Check if email exists and return pending invitations
+     * Public endpoint for signup flow
+     */
+    @PostMapping("/check-email")
+    @Operation(summary = "Check email", description = "Check if email exists and return pending invitations")
+    public ResponseEntity<EmailCheckResponse> checkEmail(@Valid @RequestBody EmailCheckRequest request) {
+        try {
+            String email = request.getEmail().toLowerCase().trim();
+            boolean exists = userService.findByEmail(email).isPresent();
+            
+            List<InvitationResponse> invitations = List.of();
+            boolean hasPendingInvitations = false;
+            
+            // Get pending invitations for this email (even if user doesn't exist yet)
+            try {
+                invitations = invitationService.listPendingInvitations(email);
+                hasPendingInvitations = !invitations.isEmpty();
+            } catch (Exception e) {
+                log.warn("Failed to fetch invitations for email {}: {}", email, e.getMessage());
+                // Continue without invitations
+            }
+            
+            EmailCheckResponse response = new EmailCheckResponse(exists, hasPendingInvitations, invitations);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error checking email: {}", e.getMessage(), e);
+            return ResponseEntity.status(500)
+                .body(new EmailCheckResponse(false, false, List.of()));
+        }
+    }
+
+    /**
+     * Signup endpoint - Create new user account
+     * Creates user in both Firebase and PostgreSQL, then auto-logs them in
+     */
+    @PostMapping("/signup")
+    @Operation(summary = "Sign up", description = "Create a new user account")
+    public ResponseEntity<Map<String, Object>> signup(@Valid @RequestBody SignupRequest request) {
+        if (!googleIdentityEnabled) {
+            log.error("Google Cloud Identity Platform is not enabled");
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Google Cloud Identity Platform is not enabled. Please configure it first.");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        try {
+            String email = request.getEmail().toLowerCase().trim();
+            
+            // Check if user already exists
+            if (userService.findByEmail(email).isPresent()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("error", "User with this email already exists");
+                return ResponseEntity.badRequest().body(error);
+            }
+
+            log.info("Creating new user account: {}", email);
+            
+            // Create user in Firebase
+            UserRecord userRecord = googleIdentityService.createUser(email, request.getPassword());
+            
+            // Set default USER role in Firebase
+            googleIdentityService.setUserRoles(userRecord.getUid(), List.of("USER"));
+            
+            // Create user in PostgreSQL immediately
+            User newUser = new User();
+            newUser.setFirebaseUid(userRecord.getUid());
+            newUser.setEmail(email);
+            newUser.setDisplayName(request.getDisplayName());
+            newUser.setPlatformRole(User.PlatformRole.USER);
+            newUser.setIsActive(true);
+            newUser.setLastLoginAt(java.time.LocalDateTime.now());
+            
+            User savedUser = userService.updateUser(newUser);
+            
+            // Create default workflow for the user
+            try {
+                workflowService.ensureDefaultWorkflow(savedUser.getId());
+                log.debug("Created default workflow for user: {}", email);
+            } catch (Exception e) {
+                log.warn("Failed to create default workflow for user, continuing: {}", e.getMessage());
+                // Don't fail signup if workflow creation fails
+            }
+            
+            // Get pending invitations for this email
+            List<InvitationResponse> pendingInvitations = List.of();
+            try {
+                pendingInvitations = invitationService.listPendingInvitations(email);
+                
+                // Auto-accept all pending invitations for the new user
+                for (InvitationResponse invitation : pendingInvitations) {
+                    try {
+                        // Find invitation entity by email and project ID to get the token
+                        java.util.Optional<com.secrets.entity.ProjectInvitation> invitationEntity = 
+                            invitationService.getInvitationEntityByEmailAndProject(
+                                email, invitation.getProjectId());
+                        if (invitationEntity.isPresent()) {
+                            com.secrets.entity.ProjectInvitation entity = invitationEntity.get();
+                            invitationService.acceptInvitation(
+                                entity.getToken(), 
+                                savedUser.getId()
+                            );
+                            log.info("Auto-accepted invitation for user {} to project {}", 
+                                email, invitation.getProjectId());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to auto-accept invitation for user {}: {}", email, e.getMessage());
+                        // Continue with other invitations
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to fetch/accept invitations for new user: {}", e.getMessage());
+            }
+            
+            // Generate JWT tokens (auto-login)
+            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            String accessToken = tokenProvider.generateToken(email, authorities);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
+            
+            // Build response
+            Map<String, Object> response = new HashMap<>();
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken.getToken());
+            response.put("tokenType", "Bearer");
+            response.put("expiresIn", expirationMs / 1000);
+            response.put("pendingInvitations", pendingInvitations);
+            response.put("userId", savedUser.getId().toString());
+            
+            log.info("User {} signed up successfully", email);
+            return ResponseEntity.ok(response);
+            
+        } catch (FirebaseAuthException e) {
+            log.error("Failed to create user in Firebase: {}", e.getMessage());
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Failed to create account: " + e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        } catch (Exception e) {
+            log.error("Unexpected error during signup", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("error", "Signup failed: " + e.getMessage());
+            return ResponseEntity.status(500).body(error);
         }
     }
 
