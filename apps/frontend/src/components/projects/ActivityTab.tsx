@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { BarChart3, List, Calendar, Download, Activity, Clock, AlertTriangle } from 'lucide-react';
+import { BarChart3, List, Calendar, Download, Activity, Clock, AlertTriangle, Key, Folder, Users, Building2, FileText } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
@@ -51,12 +51,70 @@ const formatAction = (action: string) => {
   return action.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
 };
 
+const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
+  // v3 actions
+  SECRET_CREATE: 'success',
+  SECRET_READ: 'info',
+  SECRET_UPDATE: 'warning',
+  SECRET_DELETE: 'danger',
+  SECRET_ROTATE: 'warning',
+  SECRET_MOVE: 'info',
+  SECRET_COPY: 'info',
+  PROJECT_CREATE: 'success',
+  PROJECT_UPDATE: 'warning',
+  PROJECT_ARCHIVE: 'warning',
+  PROJECT_RESTORE: 'success',
+  PROJECT_DELETE: 'danger',
+  MEMBER_INVITE: 'info',
+  MEMBER_JOIN: 'success',
+  MEMBER_REMOVE: 'danger',
+  MEMBER_ROLE_CHANGE: 'warning',
+  WORKFLOW_CREATE: 'success',
+  WORKFLOW_UPDATE: 'warning',
+  WORKFLOW_DELETE: 'danger',
+  TEAM_CREATE: 'success',
+  TEAM_UPDATE: 'warning',
+  TEAM_DELETE: 'danger',
+  TEAM_MEMBER_ADD: 'success',
+  TEAM_MEMBER_REMOVE: 'danger',
+  TEAM_PROJECT_ADD: 'info',
+  TEAM_PROJECT_REMOVE: 'warning',
+  // Legacy actions
+  CREATE: 'success',
+  READ: 'info',
+  UPDATE: 'warning',
+  DELETE: 'danger',
+  SHARE: 'info',
+  ROTATE: 'warning',
+  UNSHARE: 'warning',
+};
+
+const ACTION_ICONS: Record<string, React.ReactNode> = {
+  SECRET_CREATE: <Key className="h-4 w-4" />,
+  SECRET_READ: <Key className="h-4 w-4" />,
+  SECRET_UPDATE: <Key className="h-4 w-4" />,
+  SECRET_DELETE: <Key className="h-4 w-4" />,
+  SECRET_ROTATE: <Key className="h-4 w-4" />,
+  PROJECT_CREATE: <Folder className="h-4 w-4" />,
+  PROJECT_UPDATE: <Folder className="h-4 w-4" />,
+  PROJECT_DELETE: <Folder className="h-4 w-4" />,
+  MEMBER_INVITE: <Users className="h-4 w-4" />,
+  MEMBER_JOIN: <Users className="h-4 w-4" />,
+  MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_CREATE: <Building2 className="h-4 w-4" />,
+  TEAM_UPDATE: <Building2 className="h-4 w-4" />,
+  TEAM_DELETE: <Building2 className="h-4 w-4" />,
+  TEAM_MEMBER_ADD: <Users className="h-4 w-4" />,
+  TEAM_MEMBER_REMOVE: <Users className="h-4 w-4" />,
+  TEAM_PROJECT_ADD: <Folder className="h-4 w-4" />,
+  TEAM_PROJECT_REMOVE: <Folder className="h-4 w-4" />,
+};
+
 const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'danger' | 'info' => {
-  if (action.includes('CREATE')) return 'success';
-  if (action.includes('DELETE')) return 'danger';
-  if (action.includes('UPDATE') || action.includes('ROTATE')) return 'warning';
-  if (action.includes('READ')) return 'info';
-  return 'default';
+  return ACTION_COLORS[action] || (action.includes('CREATE') ? 'success' :
+    action.includes('DELETE') ? 'danger' :
+    action.includes('UPDATE') || action.includes('ROTATE') ? 'warning' :
+    action.includes('READ') ? 'info' : 'default');
 };
 
 // Memoized activity log item component
@@ -65,28 +123,28 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
   const actionColor = useMemo(() => getActionColor(log.action), [log.action]);
   const formattedAction = useMemo(() => formatAction(log.action), [log.action]);
   const timeAgo = useMemo(() => getTimeAgo(log.createdAt || '', t), [log.createdAt, t]);
-  const userEmail = useMemo(
-    () => log.userEmail || log.user?.email || t('activity.project.unknownUser'),
-    [log.userEmail, log.user?.email, t]
+  const userName = useMemo(
+    () => log.userDisplayName || log.userEmail || log.user?.email || 'Unknown',
+    [log.userDisplayName, log.userEmail, log.user?.email]
   );
   const teamName = useMemo(
     () => log.metadata?.teamName ? String(log.metadata.teamName) : null,
     [log.metadata?.teamName]
   );
 
+  const iconBgStyles = {
+    success: { backgroundColor: 'var(--status-success-bg)', color: 'var(--status-success)' },
+    danger: { backgroundColor: 'var(--status-danger-bg)', color: 'var(--status-danger)' },
+    warning: { backgroundColor: 'var(--status-warning-bg)', color: 'var(--status-warning)' },
+    info: { backgroundColor: 'var(--status-info-bg)', color: 'var(--status-info)' },
+    default: { backgroundColor: 'var(--elevation-1)', color: 'var(--text-secondary)' },
+  };
+
   return (
     <div className="p-4 transition-colors hover:bg-elevation-1">
       <div className="flex items-start gap-4">
-        <div
-          className={`p-2 rounded-lg ${
-            actionColor === 'success' ? 'bg-status-success-bg text-status-success' :
-            actionColor === 'danger' ? 'bg-status-danger-bg text-status-danger' :
-            actionColor === 'warning' ? 'bg-status-warning-bg text-status-warning' :
-            actionColor === 'info' ? 'bg-status-info-bg text-status-info' :
-            'bg-elevation-2 text-theme-secondary'
-          }`}
-        >
-          <Activity className="h-4 w-4" />
+        <div className="p-2 rounded-lg" style={iconBgStyles[actionColor]}>
+          {ACTION_ICONS[log.action] || <FileText className="h-4 w-4" />}
         </div>
 
         <div className="flex-1 min-w-0">
@@ -101,22 +159,24 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
                   {formattedAction}
                 </Badge>
                 {log.resourceName && (
-                  <span className="text-body-sm font-medium text-theme-primary">
+                  <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
                     {log.resourceName}
                   </span>
                 )}
-              </div>
-              <p className="mt-1 text-body-sm text-theme-tertiary">
-                by {userEmail}
                 {teamName && (
-                  <span className="text-theme-tertiary"> (team: {teamName})</span>
+                  <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                    (team: {teamName})
+                  </span>
                 )}
+              </div>
+              <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                by {userName}
               </p>
             </>
           )}
         </div>
 
-        <div className="flex items-center text-body-sm text-theme-tertiary">
+        <div className="flex items-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
           <Clock className="h-4 w-4 mr-1" />
           {timeAgo}
         </div>
