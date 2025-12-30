@@ -8,12 +8,14 @@ interface WorkflowSelectorProps {
   workflows: Workflow[] | undefined;
   selectedWorkflowId: string | null;
   onSelectWorkflow: (workflowId: string) => void;
+  isCollapsed?: boolean;
 }
 
 export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
   workflows,
   selectedWorkflowId,
   onSelectWorkflow,
+  isCollapsed = false,
 }) => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +38,66 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
     onSelectWorkflow(workflowId);
     setIsOpen(false);
   };
+
+  if (isCollapsed) {
+    return (
+      <div ref={selectorRef} className="relative">
+        <button
+          onClick={() => setIsOpen((prev) => !prev)}
+          className="w-full flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-elevation-1"
+          style={{
+            backgroundColor: isOpen ? 'var(--accent-primary-glow)' : 'transparent',
+          }}
+          title={selectedWorkflow?.name || 'Select workflow'}
+        >
+          <div 
+            className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white"
+            style={{ backgroundColor: 'var(--accent-primary)' }}
+          >
+            {selectedWorkflow?.name?.substring(0, 2).toUpperCase() || 'MW'}
+          </div>
+        </button>
+        {isOpen && (
+          <div 
+            className="absolute left-full ml-2 top-0 rounded-lg border overflow-hidden shadow-lg z-50"
+            style={{ 
+              backgroundColor: 'var(--card-bg)',
+              borderColor: 'var(--border-subtle)', 
+            }}
+          >
+            <div className="max-h-64 overflow-y-auto w-64">
+              {workflows?.map((workflow) => {
+                const isSelected = workflow.id === selectedWorkflowId;
+                return (
+                  <button
+                    key={workflow.id}
+                    onClick={() => handleWorkflowSelect(workflow.id)}
+                    className="w-full px-3 py-2.5 text-left flex items-center gap-2.5 text-sm transition-all duration-200 hover:bg-elevation-1"
+                    style={{
+                      backgroundColor: isSelected ? 'var(--accent-primary-glow)' : 'transparent',
+                    }}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                      style={{ backgroundColor: 'var(--accent-primary)' }}
+                    >
+                      {workflow.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{workflow.name}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
+                        {(workflow.projects?.length || 0)} Projects
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={selectorRef}>
