@@ -45,7 +45,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             onClick={onNavigate}
             className={`
               flex items-center rounded-lg text-sm font-medium transition-all duration-200
-              ${isCollapsed ? 'justify-center px-3 py-2' : 'gap-3 px-3 py-2.5'}
+              ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'}
               ${isActive 
                 ? 'text-accent-primary' 
                 : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
@@ -68,7 +68,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           onClick={onNavigate}
           className={`
             flex items-center rounded-lg text-sm font-medium transition-all duration-200
-            ${isCollapsed ? 'justify-center px-3 py-2' : 'gap-3 px-3 py-2.5'}
+            ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'}
             ${isActiveLink('/admin')
               ? 'text-accent-primary'
               : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
