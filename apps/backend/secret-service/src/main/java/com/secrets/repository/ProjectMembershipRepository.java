@@ -12,7 +12,9 @@ import java.util.UUID;
 
 @Repository
 public interface ProjectMembershipRepository extends JpaRepository<ProjectMembership, UUID> {
-    List<ProjectMembership> findByProjectId(UUID projectId);
+    @Query("SELECT pm FROM ProjectMembership pm LEFT JOIN FETCH pm.user WHERE pm.projectId = :projectId")
+    List<ProjectMembership> findByProjectId(@Param("projectId") UUID projectId);
+    
     List<ProjectMembership> findByUserId(UUID userId);
     Optional<ProjectMembership> findByProjectIdAndUserId(UUID projectId, UUID userId);
     boolean existsByProjectIdAndUserId(UUID projectId, UUID userId);
