@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Key, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
@@ -32,7 +31,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isPlatformAdmin = false,
   onLogout,
 }) => {
-  const navigate = useNavigate();
   const { t } = useI18n();
   const [showCreateSecretModal, setShowCreateSecretModal] = useState(false);
 
