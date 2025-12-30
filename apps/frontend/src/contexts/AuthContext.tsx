@@ -76,8 +76,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               // Extract platform role from claims (v3 architecture)
               const platformRole = (idTokenResult.claims.platformRole as PlatformRole) || 'USER';
 
-              // Store access token in memory
-              tokenStorage.setAccessToken(idTokenResult.token);
+              // Exchange Firebase token for backend JWT token
+              // Do NOT store Firebase token directly - notification service needs backend JWT
+              try {
+                const response = await authService.login({ idToken: idTokenResult.token });
+                if (response.accessToken) {
+                  tokenStorage.setAccessToken(response.accessToken);
+                  if (response.refreshToken) {
+                    tokenStorage.setRefreshToken(response.refreshToken);
+                  }
+                }
+              } catch (loginError) {
+                // If backend login fails, we can't use the backend API
+                // But we still want to show the user as logged in for Firebase
+                console.warn('Failed to exchange Firebase token for backend JWT:', loginError);
+                // Don't store Firebase token - it won't work with backend services
+              }
 
               // Construct user object from Firebase user and claims
               // Firebase profile is the source of truth when Firebase is enabled
@@ -399,11 +413,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           const currentUser = await authService.getCurrentUser();
           setUser(currentUser);
           navigate('/home');
-        } else if (idToken) {
-          // Fallback to Firebase token only (no backend JWT). This is a last resort.
-          tokenStorage.setAccessToken(idToken);
-          // User state will be set by onAuthStateChanged listener
-          navigate('/home');
+        } else {
+          // If backend login didn't return a token, we can't proceed
+          // The onAuthStateChanged listener will handle token exchange
+          throw new Error('Failed to obtain backend authentication token');
         }
       }
     } catch (error) {
