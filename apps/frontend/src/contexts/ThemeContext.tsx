@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type ColorScheme = 'orange' | 'violet' | 'emerald' | 'minimal' | 'blue' | 'neomint' | 'plum';
+export type ColorScheme = 'orange' | 'emerald' | 'monochrome' | 'blue' | 'plum';
 export type ThemeMode = 'light' | 'dark';
 export type Theme = `${ThemeMode}-${ColorScheme}`;
 
@@ -15,16 +15,12 @@ export interface ThemeInfo {
 export const AVAILABLE_THEMES: ThemeInfo[] = [
   { id: 'light-orange', name: 'Light (Orange)', mode: 'light', colorScheme: 'orange', description: 'Modern terracotta theme' },
   { id: 'dark-orange', name: 'Dark (Orange)', mode: 'dark', colorScheme: 'orange', description: 'Modern terracotta theme' },
-  { id: 'light-violet', name: 'Light (Violet Pro)', mode: 'light', colorScheme: 'violet', description: 'Modern purple theme' },
-  { id: 'dark-violet', name: 'Dark (Violet Pro)', mode: 'dark', colorScheme: 'violet', description: 'Modern purple theme' },
   { id: 'light-emerald', name: 'Light (Emerald)', mode: 'light', colorScheme: 'emerald', description: 'Security/infra theme' },
   { id: 'dark-emerald', name: 'Dark (Emerald)', mode: 'dark', colorScheme: 'emerald', description: 'Security/infra theme' },
-  { id: 'light-minimal', name: 'Light (Minimal)', mode: 'light', colorScheme: 'minimal', description: 'Refined grayscale theme' },
-  { id: 'dark-minimal', name: 'Dark (Minimal)', mode: 'dark', colorScheme: 'minimal', description: 'Refined grayscale theme' },
+  { id: 'light-monochrome', name: 'Light (Monochrome)', mode: 'light', colorScheme: 'monochrome', description: 'Refined grayscale theme' },
+  { id: 'dark-monochrome', name: 'Dark (Monochrome)', mode: 'dark', colorScheme: 'monochrome', description: 'Refined grayscale theme' },
   { id: 'light-blue', name: 'Light (Cool Blue)', mode: 'light', colorScheme: 'blue', description: 'Modern blue theme' },
   { id: 'dark-blue', name: 'Dark (Cool Blue)', mode: 'dark', colorScheme: 'blue', description: 'Modern blue theme' },
-  { id: 'light-neomint', name: 'Light (Neo-Mint)', mode: 'light', colorScheme: 'neomint', description: 'Modern teal theme' },
-  { id: 'dark-neomint', name: 'Dark (Neo-Mint)', mode: 'dark', colorScheme: 'neomint', description: 'Modern teal theme' },
   { id: 'dark-plum', name: 'Dark (Plum & Sand)', mode: 'dark', colorScheme: 'plum', description: 'Sophisticated editorial theme' },
   { id: 'light-plum', name: 'Light (Plum & Sand)', mode: 'light', colorScheme: 'plum', description: 'Sophisticated editorial theme' },
 ];
