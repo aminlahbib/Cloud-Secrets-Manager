@@ -14,16 +14,17 @@ export interface EmailCheckResponse {
 export interface InvitationResponse {
   id: string;
   projectId: string;
-  project: {
+  project?: {
     id: string;
     name: string;
   };
   email: string;
+  role?: string;
   status: string;
   createdAt: string;
   expiresAt: string;
   acceptedAt?: string;
-  inviter: {
+  inviter?: {
     id: string;
     email: string;
     displayName?: string;

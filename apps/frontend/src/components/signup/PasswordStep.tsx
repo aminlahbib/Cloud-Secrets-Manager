@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
 interface PasswordStepProps {
-  email: string;
+  email?: string;
   onSubmit: (password: string) => void;
   onBack: () => void;
 }
@@ -16,7 +16,6 @@ interface PasswordForm {
 }
 
 export const PasswordStep: React.FC<PasswordStepProps> = ({
-  email,
   onSubmit,
   onBack,
 }) => {

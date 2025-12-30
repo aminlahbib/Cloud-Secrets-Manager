@@ -1,6 +1,5 @@
 import React from 'react';
 import { Mail, Chrome } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
 
 interface AuthMethodStepProps {
   email: string;
@@ -13,7 +12,6 @@ interface AuthMethodStepProps {
 export const AuthMethodStep: React.FC<AuthMethodStepProps> = ({
   email,
   onSelect,
-  onBack,
   isLoading = false,
   error = null,
 }) => {

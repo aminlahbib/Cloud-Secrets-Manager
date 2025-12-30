@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useI18n } from '@/contexts/I18nContext';
 import { Logo } from '@/components/ui/Logo';
 import { signupService, type InvitationTokenResponse } from '@/services/signup';
-import { invitationsService } from '@/services/invitations';
-import { useQueryClient } from '@tanstack/react-query';
 import { EmailStep } from '@/components/signup/EmailStep';
 import { AuthMethodStep } from '@/components/signup/AuthMethodStep';
 import { PasswordStep } from '@/components/signup/PasswordStep';
@@ -18,15 +15,11 @@ type SignupStep = 'email' | 'auth-method' | 'password' | 'profile' | 'onboarding
 export const SignupPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { t } = useI18n();
-  const { isAuthenticated, signup, signupWithGoogle } = useAuth();
-  const queryClient = useQueryClient();
+  const { isAuthenticated, signup, signupWithGoogle, user } = useAuth();
   
   const [currentStep, setCurrentStep] = useState<SignupStep>('email');
   const [email, setEmail] = useState('');
-  const [emailExists, setEmailExists] = useState(false);
   const [pendingInvitations, setPendingInvitations] = useState<any[]>([]);
-  const [invitationToken, setInvitationToken] = useState<string | null>(null);
   const [invitationData, setInvitationData] = useState<InvitationTokenResponse | null>(null);
   const [authMethod, setAuthMethod] = useState<'email' | 'google' | null>(null);
   const [password, setPassword] = useState('');
@@ -39,7 +32,6 @@ export const SignupPage: React.FC = () => {
   useEffect(() => {
     const inviteToken = searchParams.get('invite');
     if (inviteToken) {
-      setInvitationToken(inviteToken);
       // Fetch invitation details
       signupService.getInvitationByToken(inviteToken)
         .then(data => {
@@ -63,10 +55,21 @@ export const SignupPage: React.FC = () => {
   // Update display name and avatar from user when authenticated (for Google signup)
   useEffect(() => {
     if (isAuthenticated && user && authMethod === 'google' && currentStep === 'profile') {
-      if (user.displayName && !displayName) setDisplayName(user.displayName);
-      if (user.avatarUrl && !avatarUrl) setAvatarUrl(user.avatarUrl);
+      if (user.displayName && !displayName) {
+        setDisplayName(user.displayName);
+      }
+      if (user.avatarUrl && !avatarUrl) {
+        setAvatarUrl(user.avatarUrl);
+      }
     }
   }, [isAuthenticated, user, authMethod, currentStep, displayName, avatarUrl]);
+  
+  // Handle loading state for Google signup
+  useEffect(() => {
+    if (isAuthenticated && authMethod === 'google' && isLoading) {
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, authMethod, isLoading]);
 
   const handleEmailSubmit = async (submittedEmail: string) => {
     setIsLoading(true);
@@ -75,7 +78,6 @@ export const SignupPage: React.FC = () => {
     try {
       const response = await signupService.checkEmail(submittedEmail);
       setEmail(submittedEmail);
-      setEmailExists(response.exists);
       setPendingInvitations(response.invitations || []);
       
       if (response.exists) {
@@ -101,15 +103,11 @@ export const SignupPage: React.FC = () => {
         // Sign up with Google - this will authenticate the user
         await signupWithGoogle(false);
         // After Google signup, user is authenticated
-        // Wait a bit for user state to update, then fetch profile info
-        setTimeout(() => {
-          // User state will be updated by AuthContext
-          // Proceed to profile step (user can update if needed)
-          setCurrentStep('profile');
-        }, 500);
+        // Use useEffect to wait for user state to update, then proceed to profile step
+        // The useEffect hook will handle updating displayName/avatarUrl and moving to profile step
+        setCurrentStep('profile');
       } catch (err: any) {
         setError(err?.message || 'Failed to sign up with Google');
-      } finally {
         setIsLoading(false);
       }
     } else {
@@ -143,14 +141,8 @@ export const SignupPage: React.FC = () => {
           setPendingInvitations(signupResponse.pendingInvitations);
         }
       } else {
-        // For Google signup, profile is already set, just update if needed
-        // The user is already authenticated at this point
-        setDisplayName(profile.displayName);
-        if (profile.avatarUrl) {
-          setAvatarUrl(profile.avatarUrl);
-        }
-        
-        // Get pending invitations (they will be accepted during onboarding)
+        // For Google signup, user is already authenticated
+        // Get pending invitations (they are auto-accepted by backend during signup)
         try {
           const emailCheck = await signupService.checkEmail(email);
           setPendingInvitations(emailCheck.invitations || []);
@@ -159,10 +151,13 @@ export const SignupPage: React.FC = () => {
         }
       }
       
+      // Update profile state
       setDisplayName(profile.displayName);
       if (profile.avatarUrl) {
         setAvatarUrl(profile.avatarUrl);
       }
+      
+      // Proceed to onboarding
       setCurrentStep('onboarding');
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || 'Failed to complete signup');
@@ -198,7 +193,6 @@ export const SignupPage: React.FC = () => {
       case 'password':
         return (
           <PasswordStep
-            email={email}
             onSubmit={handlePasswordSubmit}
             onBack={() => setCurrentStep('auth-method')}
           />
@@ -215,6 +209,7 @@ export const SignupPage: React.FC = () => {
             isLoading={isLoading}
             error={error}
           />
+        );
       case 'onboarding':
         return (
           <OnboardingStep

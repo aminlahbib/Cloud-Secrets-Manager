@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import type { InvitationTokenResponse } from '@/services/signup';

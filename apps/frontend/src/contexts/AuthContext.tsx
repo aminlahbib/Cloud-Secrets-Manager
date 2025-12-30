@@ -469,11 +469,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const currentUser = await authService.getCurrentUser();
         setUser(currentUser);
         
-        // Navigate based on onboarding status
-        if (currentUser.onboardingCompleted) {
-          navigate('/home');
-        }
-        // Otherwise, user will complete onboarding in SignupPage
+        // Don't navigate here - let SignupPage handle navigation
+        // SignupPage will check onboarding status and navigate accordingly
       } else if (idToken) {
         // Fallback to Firebase token
         tokenStorage.setAccessToken(idToken);
@@ -552,6 +549,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isPlatformAdmin,
         login,
         loginWithGoogle,
+        signup,
+        signupWithGoogle,
         logout,
         refreshUser
       }}

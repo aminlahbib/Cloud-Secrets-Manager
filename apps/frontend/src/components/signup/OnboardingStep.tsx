@@ -5,13 +5,12 @@ import { ProductTour } from '@/components/onboarding/ProductTour';
 import { WelcomeTips } from '@/components/onboarding/WelcomeTips';
 
 interface OnboardingStepProps {
-  email: string;
+  email?: string;
   pendingInvitations: any[];
   onComplete: () => void;
 }
 
 export const OnboardingStep: React.FC<OnboardingStepProps> = ({
-  email,
   pendingInvitations,
   onComplete,
 }) => {
@@ -60,7 +59,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
                     {invitation.project?.name || 'Unknown Project'}
                   </p>
                   <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    Invited as {invitation.role}
+                    {invitation.role ? `Invited as ${invitation.role}` : 'Project invitation'}
                   </p>
                 </div>
                 <CheckCircle className="h-5 w-5" style={{ color: 'var(--status-success)' }} />

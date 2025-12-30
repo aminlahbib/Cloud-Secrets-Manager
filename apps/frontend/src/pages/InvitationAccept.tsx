@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Loader2, Mail, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { invitationsService } from '../services/invitations';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';

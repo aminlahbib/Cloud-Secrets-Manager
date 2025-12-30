@@ -449,8 +449,6 @@ public class AuthController {
                 authorities.add(new SimpleGrantedAuthority("ROLE_" + ((String) rolesClaim).toUpperCase()));
             }
 
-            // In v3 architecture, permissions are project-scoped via membership table
-            // Global permissions from Firebase claims are not used
 
             // Default to USER role if no roles found
             if (authorities.stream().noneMatch(a -> a.getAuthority().startsWith("ROLE_"))) {

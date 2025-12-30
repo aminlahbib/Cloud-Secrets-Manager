@@ -11,6 +11,8 @@ interface ProfileStepProps {
   authMethod: 'email' | 'google' | null;
   onSubmit: (profile: { displayName: string; avatarUrl?: string }) => void;
   onBack: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 interface ProfileForm {
@@ -21,7 +23,6 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
   email,
   initialDisplayName = '',
   initialAvatarUrl = '',
-  authMethod,
   onSubmit,
   onBack,
   isLoading = false,
