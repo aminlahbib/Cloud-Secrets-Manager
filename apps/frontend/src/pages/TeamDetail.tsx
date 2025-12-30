@@ -1,20 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Building2,
-  Crown,
-  Shield,
-  Mail,
   Trash2,
-  Plus,
-  X,
   Folder,
   ArrowLeft,
   Edit,
-  Search,
-  ChevronDown,
   Activity,
   Clock,
   Settings as SettingsIcon,
@@ -46,13 +39,7 @@ import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
 import { MembersTab } from '../components/shared/MembersTab';
-import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project } from '../types';
-
-const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
-  TEAM_OWNER: <Crown className="h-3 w-3" />,
-  TEAM_ADMIN: <Shield className="h-3 w-3" />,
-  TEAM_MEMBER: null,
-};
+import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project, ProjectRole } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -253,6 +240,29 @@ export const TeamDetailPage: React.FC = () => {
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
   });
 
+  // Remove member mutation
+  const removeMemberMutation = useMutation({
+    mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
+      teamsService.removeTeamMember(teamId, memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      showNotification({
+        type: 'success',
+        title: 'Member removed',
+        message: 'The member has been removed from the team',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to remove member',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
+
   // Update member role mutation
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
@@ -278,11 +288,11 @@ export const TeamDetailPage: React.FC = () => {
   });
 
   // Handle member role change
-  const handleMemberRoleChange = useCallback((memberId: string, newRole: TeamRole) => {
+  const handleMemberRoleChange = useCallback((memberId: string, newRole: TeamRole | ProjectRole) => {
     const member = members?.find((m) => m.userId === memberId);
     if (!member || member.role === newRole) return;
     setRoleChangeTarget(memberId);
-    updateMemberRoleMutation.mutate({ memberId, role: newRole });
+    updateMemberRoleMutation.mutate({ memberId, role: newRole as TeamRole });
   }, [updateMemberRoleMutation, members]);
 
   // Handle remove member
@@ -317,29 +327,6 @@ export const TeamDetailPage: React.FC = () => {
       showNotification({
         type: 'error',
         title: 'Failed to delete team',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
-  });
-
-  // Remove member mutation
-  const removeMemberMutation = useMutation({
-    mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
-      teamsService.removeTeamMember(teamId, memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      showNotification({
-        type: 'success',
-        title: 'Member removed',
-        message: 'The member has been removed from the team',
-      });
-    },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to remove member',
         message: error?.response?.data?.message || error?.message || 'An error occurred',
       });
     },
