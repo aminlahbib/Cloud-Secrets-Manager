@@ -109,77 +109,77 @@
      ============================================ */
   
   /* ============================================
-     ORANGE THEME - Light (Default) - Enhanced
+     NEUTRAL THEME - Light (Default) - Clean & Minimal
      ============================================ */
   :root,
   [data-theme="light-orange"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Modern warm neutrals
+       ELEVATION LAYERS (Background Hierarchy) - Neutral grays
        ============================================ */
-    --elevation-0: #fefcfb;  /* Page background - clean warm white */
-    --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
-    --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white for better contrast */
-    --elevation-3: #fff7ed;  /* Hover states, active cards - subtle warm */
-    --elevation-4: #ffedd5;  /* Pressed states, modals - soft peach */
+    --elevation-0: #fafafa;  /* Page background - neutral-50 */
+    --elevation-1: #ffffff;  /* Sidebar, main containers - white */
+    --elevation-2: #f5f5f5;  /* Cards, elevated surfaces - neutral-100 */
+    --elevation-3: #e5e5e5;  /* Hover states, active cards - neutral-200 */
+    --elevation-4: #d4d4d4;  /* Pressed states, modals - neutral-300 */
     
-    /* Modern gradient backgrounds with refined orange tints */
-    --gradient-hero: linear-gradient(135deg, rgba(251, 146, 60, 0.04) 0%, #ffffff 40%, rgba(253, 186, 116, 0.03) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(251, 146, 60, 0.06) 0%, #ffffff 45%, rgba(253, 186, 116, 0.04) 100%);
+    /* Clean gradients without color tints */
+    --gradient-hero: linear-gradient(135deg, rgba(0, 0, 0, 0.01) 0%, #ffffff 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, #ffffff 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Modern Orange Theme
+       SEMANTIC COLORS - Neutral Gray with Subtle Blue Accent
        ============================================ */
-    /* Primary Accent - Refined Terracotta/Amber */
-    --accent-primary: #ea580c;        /* Primary CTA - sophisticated terracotta */
-    --accent-primary-hover: #c2410c;  /* Hover state - deeper terracotta */
-    --accent-primary-active: #9a3412; /* Pressed state - rich terracotta */
-    --accent-primary-glow: rgba(234, 88, 12, 0.2); /* Subtle refined glow */
-    --accent-primary-light: #fb923c;  /* Lighter amber for links and icons */
-    --accent-primary-muted: #fdba74;  /* Muted peach for section headers */
+    /* Primary Accent - Subtle Blue */
+    --accent-primary: #3b82f6;        /* Primary CTA - blue-500 */
+    --accent-primary-hover: #2563eb;  /* Hover state - blue-600 */
+    --accent-primary-active: #1d4ed8; /* Pressed state - blue-700 */
+    --accent-primary-glow: rgba(59, 130, 246, 0.1); /* Subtle blue glow */
+    --accent-primary-light: #60a5fa;  /* Lighter blue for links and icons */
+    --accent-primary-muted: #93c5fd;  /* Muted blue for section headers */
     
-    /* Secondary Accent - Warm Slate */
-    --accent-secondary: #78716c;      /* Secondary actions - warm stone */
-    --accent-secondary-hover: #57534e;
-    --accent-secondary-muted: #a8a29e;
-    --accent-secondary-bg: rgba(120, 113, 108, 0.12);  /* Owner/admin badge background */
-    --accent-secondary-border: rgba(120, 113, 108, 0.25);  /* Owner/admin badge border */
+    /* Secondary Accent - Neutral Gray */
+    --accent-secondary: #6b7280;      /* Secondary actions - gray-500 */
+    --accent-secondary-hover: #4b5563;
+    --accent-secondary-muted: #9ca3af;
+    --accent-secondary-bg: rgba(107, 114, 128, 0.08);  /* Owner/admin badge background */
+    --accent-secondary-border: rgba(107, 114, 128, 0.2);  /* Owner/admin badge border */
     
-    /* Status Colors - More vibrant and distinct */
-    --status-success: #16a34a;        /* Success text - vibrant green */
+    /* Status Colors - Clean and distinct */
+    --status-success: #16a34a;        /* Success text - green */
     --status-success-bg: rgba(22, 163, 74, 0.1); /* Success background */
-    --status-warning: #ea580c;        /* Warning text - orange */
-    --status-warning-bg: rgba(234, 88, 12, 0.1); /* Warning background */
+    --status-warning: #f59e0b;        /* Warning text - amber */
+    --status-warning-bg: rgba(245, 158, 11, 0.1); /* Warning background */
     --status-danger: #dc2626;         /* Danger text - red */
     --status-danger-bg: rgba(220, 38, 38, 0.1); /* Danger background */
-    --status-info: #2563eb;           /* Info text - blue */
-    --status-info-bg: rgba(37, 99, 235, 0.1);    /* Info background */
+    --status-info: #3b82f6;           /* Info text - blue */
+    --status-info-bg: rgba(59, 130, 246, 0.1);    /* Info background */
     
     /* ============================================
        TEXT COLORS (WCAG AA Compliant)
        ============================================ */
-    --text-primary: #0c0a09;          /* Primary text - very dark for better contrast */
-    --text-secondary: #3f3f46;        /* Secondary text - dark grey */
-    --text-tertiary: #71717a;         /* Tertiary text - medium grey */
-    --text-disabled: #a1a1aa;         /* Disabled text */
+    --text-primary: #171717;          /* Primary text - neutral-900 */
+    --text-secondary: #525252;        /* Secondary text - neutral-600 */
+    --text-tertiary: #737373;         /* Tertiary text - neutral-500 */
+    --text-disabled: #a3a3a3;         /* Disabled text - neutral-400 */
     --text-inverse: #ffffff;          /* Text on dark backgrounds */
     
     /* ============================================
-       BORDERS & DIVIDERS - Refined warm neutrals
+       BORDERS & DIVIDERS - Neutral grays
        ============================================ */
-    --border-subtle: #e7e5e4;         /* Subtle borders - warm light grey */
-    --border-default: #d6d3d1;        /* Default borders - warm medium grey */
-    --border-strong: #a8a29e;         /* Strong borders - warm darker grey */
-    --border-accent: rgba(234, 88, 12, 0.35);     /* Accent borders - refined terracotta */
+    --border-subtle: #e5e5e5;         /* Subtle borders - neutral-200 */
+    --border-default: #d4d4d4;        /* Default borders - neutral-300 */
+    --border-strong: #a3a3a3;         /* Strong borders - neutral-400 */
+    --border-accent: rgba(59, 130, 246, 0.3);     /* Accent borders - blue */
     
     /* ============================================
-       SHADOWS & GLOWS - Modern refined shadows
+       SHADOWS & GLOWS - Subtle neutral shadows
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(234, 88, 12, 0.08);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(234, 88, 12, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(234, 88, 12, 0.12);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(234, 88, 12, 0.15);
-    --glow-accent: 0 0 20px rgba(234, 88, 12, 0.25), 0 0 40px rgba(251, 146, 60, 0.15);
-    --glow-soft: 0 0 40px rgba(234, 88, 12, 0.12);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --glow-accent: 0 0 20px rgba(59, 130, 246, 0.15);
+    --glow-soft: 0 0 40px rgba(59, 130, 246, 0.08);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -194,9 +194,9 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(234, 88, 12, 0.1);  /* Refined terracotta pill background */
-    --sidebar-active-border: var(--accent-primary); /* Terracotta pill border */
-    --sidebar-hover-bg: var(--elevation-3);
+    --sidebar-active-bg: rgba(59, 130, 246, 0.08);  /* Subtle blue background */
+    --sidebar-active-border: var(--accent-primary); /* Blue border */
+    --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
     --sidebar-section-header: var(--text-tertiary); /* Default text color for section headers */
@@ -248,37 +248,37 @@
   }
   
   /* ============================================
-     ORANGE THEME - Dark
+     NEUTRAL THEME - Dark
      ============================================ */
   [data-theme="dark-orange"] {
     /* ============================================
-       ELEVATION LAYERS (Background Hierarchy) - Modern dark with warm undertones
+       ELEVATION LAYERS (Background Hierarchy) - Neutral dark grays
        ============================================ */
-    --elevation-0: #0c0a09;  /* Page background - warm dark */
-    --elevation-1: #171412;  /* Sidebar, main containers - warm charcoal */
-    --elevation-2: #1c1917;  /* Cards, elevated surfaces - warm dark grey */
-    --elevation-3: #292524;  /* Hover states, active cards - warm medium grey */
-    --elevation-4: #3a3633;  /* Pressed states, modals - warm lighter grey */
+    --elevation-0: #0a0a0a;  /* Page background - neutral-950 */
+    --elevation-1: #171717;  /* Sidebar, main containers - neutral-900 */
+    --elevation-2: #262626;  /* Cards, elevated surfaces - neutral-800 */
+    --elevation-3: #404040;  /* Hover states, active cards - neutral-700 */
+    --elevation-4: #525252;  /* Pressed states, modals - neutral-600 */
     
-    /* Gradient backgrounds with subtle warm tones */
-    --gradient-hero: linear-gradient(135deg, rgba(234, 88, 12, 0.03) 0%, var(--elevation-1) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(234, 88, 12, 0.05) 0%, var(--elevation-1) 100%);
+    /* Clean gradients without color tints */
+    --gradient-hero: linear-gradient(135deg, rgba(255, 255, 255, 0.01) 0%, var(--elevation-1) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, var(--elevation-1) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Modern Orange Theme (Dark)
+       SEMANTIC COLORS - Neutral Gray with Subtle Blue Accent (Dark)
        ============================================ */
-    /* Primary Accent - Refined Terracotta/Amber */
-    --accent-primary: #fb923c;        /* Primary CTA - warm amber */
-    --accent-primary-hover: #fdba74;  /* Hover state - lighter amber */
-    --accent-primary-active: #f97316; /* Pressed state - deeper terracotta */
-    --accent-primary-glow: rgba(251, 146, 60, 0.18); /* Refined glow */
-    --accent-primary-light: #fcd34d;  /* Lighter amber for links and icons */
-    --accent-primary-muted: #fde68a;  /* Muted amber for section headers */
+    /* Primary Accent - Subtle Blue */
+    --accent-primary: #60a5fa;        /* Primary CTA - blue-400 */
+    --accent-primary-hover: #3b82f6;  /* Hover state - blue-500 */
+    --accent-primary-active: #2563eb; /* Pressed state - blue-600 */
+    --accent-primary-glow: rgba(96, 165, 250, 0.15); /* Subtle blue glow */
+    --accent-primary-light: #93c5fd;  /* Lighter blue for links and icons */
+    --accent-primary-muted: #bfdbfe;  /* Muted blue for section headers */
     
-    /* Secondary Accent - Warm Slate */
-    --accent-secondary: #78716c;      /* Secondary actions - warm stone */
-    --accent-secondary-hover: #a8a29e;
-    --accent-secondary-muted: #57534e;
+    /* Secondary Accent - Neutral Gray */
+    --accent-secondary: #9ca3af;      /* Secondary actions - gray-400 */
+    --accent-secondary-hover: #d1d5db;
+    --accent-secondary-muted: #6b7280;
     
     /* Status Colors - Tuned for Dark Mode */
     --status-success: #4ADE80;        /* Success text */
@@ -302,10 +302,10 @@
     /* ============================================
        BORDERS & DIVIDERS
        ============================================ */
-    --border-subtle: rgba(255, 255, 255, 0.03);    /* Subtle borders - very subtle for dark mode */
-    --border-default: rgba(255, 255, 255, 0.06);   /* Default borders */
-    --border-strong: rgba(255, 255, 255, 0.10);    /* Strong borders */
-    --border-accent: rgba(255, 140, 66, 0.30);     /* Accent borders - orange */
+    --border-subtle: rgba(255, 255, 255, 0.05);    /* Subtle borders */
+    --border-default: rgba(255, 255, 255, 0.08);   /* Default borders */
+    --border-strong: rgba(255, 255, 255, 0.12);    /* Strong borders */
+    --border-accent: rgba(96, 165, 250, 0.3);     /* Accent borders - blue */
     
     /* ============================================
        SHADOWS & GLOWS
@@ -330,8 +330,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(251, 146, 60, 0.12);  /* Refined amber pill background */
-    --sidebar-active-border: var(--accent-primary); /* Amber pill border */
+    --sidebar-active-bg: rgba(96, 165, 250, 0.12);  /* Subtle blue background */
+    --sidebar-active-border: var(--accent-primary); /* Blue border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -360,7 +360,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
-    --input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    --input-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.1);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -2127,26 +2127,20 @@
   }
 
   .btn-primary {
-    background-color: transparent;
-    color: var(--accent-primary);
-    border: 1.5px solid var(--accent-primary);
+    background-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border: none;
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
   }
   
   .btn-primary:hover {
-    background-color: var(--accent-primary-glow);
-    border-color: var(--accent-primary-hover);
-    color: var(--accent-primary-hover);
-    box-shadow: var(--shadow-md), var(--glow-accent);
-    transform: translateY(-1px);
+    background-color: var(--btn-primary-hover);
+    box-shadow: var(--shadow-md);
   }
   
   .btn-primary:active {
-    background-color: var(--accent-primary-glow);
-    border-color: var(--accent-primary-active);
-    color: var(--accent-primary-active);
-    transform: translateY(0);
+    background-color: var(--btn-primary-active);
     box-shadow: var(--shadow-sm);
   }
   
@@ -2156,22 +2150,20 @@
   }
 
   .btn-secondary {
-    background-color: transparent;
+    background-color: var(--btn-secondary-bg);
     color: var(--btn-secondary-text);
-    border: 1.5px solid var(--btn-secondary-border);
+    border: 1px solid var(--btn-secondary-border);
     box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(8px);
+    transition: all 0.15s ease;
   }
   
   .btn-secondary:hover {
     background-color: var(--btn-secondary-hover);
-    border-color: var(--border-strong);
-    transform: translateY(-1px);
+    border-color: var(--border-default);
   }
   
   .btn-secondary:active {
-    background-color: var(--elevation-2);
-    transform: translateY(0);
+    background-color: var(--btn-secondary-bg);
   }
   
   .btn-ghost {
@@ -2210,77 +2202,32 @@
      CARDS - Pronounced Apple-like glassmorphism
      ============================================ */
   .card {
-    backdrop-filter: blur(40px) saturate(200%);
-    -webkit-backdrop-filter: blur(40px) saturate(200%);
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
-    border-radius: 1.25rem;      /* 20px - Apple-like rounded corners */
+    border-radius: 0.75rem;      /* 12px - cleaner rounded corners */
     padding: 1.5rem;           /* 24px */
-    box-shadow: 
-      0 8px 16px -4px rgba(0, 0, 0, 0.1),
-      0 4px 8px -2px rgba(0, 0, 0, 0.06),
-      0 0 0 1px rgba(0, 0, 0, 0.05),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
-      inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
-    transition: all 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: var(--shadow-sm);
     position: relative;
-    overflow: hidden;
-  }
-  
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, 
-      transparent 0%, 
-      rgba(255, 255, 255, 0.6) 50%, 
-      transparent 100%);
-    opacity: 0;
-    transition: opacity 200ms ease;
+    transition: all 0.15s ease;
   }
   
   .card:hover {
     background-color: var(--card-hover-bg);
     border-color: var(--card-hover-border);
-    box-shadow: 
-      0 16px 24px -4px rgba(0, 0, 0, 0.12),
-      0 8px 12px -4px rgba(0, 0, 0, 0.08),
-      0 0 0 1px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
-      inset 0 -1px 0 0 rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
   
-  .card:hover::before {
-    opacity: 1;
-  }
-  
-  /* Light mode card glass adjustments - Pronounced frosted glass */
+  /* Light mode card adjustments - Clean and simple */
   [data-theme="light-orange"] .card {
-    background-color: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(50px) saturate(200%);
-    -webkit-backdrop-filter: blur(50px) saturate(200%);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 
-      0 8px 16px -4px rgba(0, 0, 0, 0.12),
-      0 4px 8px -2px rgba(0, 0, 0, 0.08),
-      0 0 0 1px rgba(0, 0, 0, 0.06),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-      inset 0 -1px 0 0 rgba(0, 0, 0, 0.06);
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-sm);
   }
   
   [data-theme="light-orange"] .card:hover {
-    background-color: rgba(255, 255, 255, 0.7);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 
-      0 20px 32px -4px rgba(0, 0, 0, 0.15),
-      0 8px 16px -4px rgba(0, 0, 0, 0.1),
-      0 0 0 1px rgba(0, 0, 0, 0.08),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
-      inset 0 -1px 0 0 rgba(0, 0, 0, 0.08);
+    background-color: var(--card-hover-bg);
+    border-color: var(--card-hover-border);
+    box-shadow: var(--shadow-md);
   }
   
   [data-theme="light-violet"] .card {
@@ -2861,10 +2808,8 @@
   }
   
   [data-theme="light-orange"] .sidebar-glass {
-    background-color: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(60px) saturate(200%);
-    -webkit-backdrop-filter: blur(60px) saturate(200%);
-    border-right: 1px solid rgba(255, 255, 255, 0.4);
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
   }
   
   [data-theme="light-violet"] .glass,
