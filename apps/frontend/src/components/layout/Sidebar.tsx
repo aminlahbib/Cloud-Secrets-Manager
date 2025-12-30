@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Key, LogOut } from 'lucide-react';
+import { Key, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
 import { WorkflowSelector } from './WorkflowSelector';
@@ -10,7 +10,9 @@ import type { Workflow } from '../../types';
 
 interface SidebarProps {
   isOpen: boolean;
+  isCollapsed?: boolean;
   onNavigate?: () => void;
+  onToggleCollapse?: () => void;
   workflows: Workflow[] | undefined;
   selectedWorkflowId: string | null;
   onSelectWorkflow: (workflowId: string) => void;
@@ -20,7 +22,9 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
+  isCollapsed = false,
   onNavigate,
+  onToggleCollapse,
   workflows,
   selectedWorkflowId,
   onSelectWorkflow,
@@ -33,13 +37,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-40 w-64 flex flex-col padding-sidebar transition-all duration-200 md:translate-x-0 sidebar-glass
+        fixed inset-y-0 left-0 z-40 flex flex-col padding-sidebar transition-all duration-200 md:translate-x-0 sidebar-glass
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isCollapsed ? 'w-16' : 'w-64'}
       `}
     >
+      {/* Collapse Toggle Button */}
+      {onToggleCollapse && (
+        <button
+          onClick={onToggleCollapse}
+          className="absolute -right-3 top-20 z-50 p-1.5 rounded-full bg-card border border-theme-subtle shadow-md hover:bg-elevation-2 transition-colors hidden md:flex items-center justify-center"
+          style={{ color: 'var(--text-secondary)' }}
+          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </button>
+      )}
+
       {/* Logo */}
-      <div className="mb-8">
-        <SidebarLogo />
+      <div className={`mb-8 ${isCollapsed ? 'flex justify-center' : ''}`}>
+        <SidebarLogo isCollapsed={isCollapsed} />
       </div>
 
       {/* Workspace Selector - First */}
@@ -48,33 +69,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
           workflows={workflows}
           selectedWorkflowId={selectedWorkflowId}
           onSelectWorkflow={onSelectWorkflow}
+          isCollapsed={isCollapsed}
         />
       </div>
 
       {/* Navigation */}
       <div className="flex-1">
-        <SidebarNav onNavigate={onNavigate} isPlatformAdmin={isPlatformAdmin} />
+        <SidebarNav 
+          onNavigate={onNavigate} 
+          isPlatformAdmin={isPlatformAdmin}
+          isCollapsed={isCollapsed}
+        />
       </div>
 
       {/* Bottom Actions */}
-      <div className="mt-auto pt-6 space-y-3 border-t border-theme-subtle">
+      <div className={`mt-auto pt-6 space-y-3 border-t border-theme-subtle ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
         <Button
           onClick={() => {
             navigate('/projects');
             onNavigate?.();
           }}
-          className="w-full"
+          className={isCollapsed ? 'w-auto px-3' : 'w-full'}
           variant="primary"
+          title={isCollapsed ? t('nav.newSecret') : undefined}
         >
-          <Key className="h-4 w-4 mr-2" />
-          {t('nav.newSecret')}
+          <Key className="h-4 w-4" />
+          {!isCollapsed && <span className="ml-2">{t('nav.newSecret')}</span>}
         </Button>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-theme-secondary hover:text-theme-primary transition-colors"
+          className={`flex items-center gap-2 px-3 py-2 text-sm text-theme-secondary hover:text-theme-primary transition-colors ${isCollapsed ? 'w-auto justify-center' : 'w-full'}`}
+          title={isCollapsed ? t('nav.signOut') : undefined}
         >
           <LogOut className="h-4 w-4" />
-          {t('nav.signOut')}
+          {!isCollapsed && <span>{t('nav.signOut')}</span>}
         </button>
       </div>
     </aside>
