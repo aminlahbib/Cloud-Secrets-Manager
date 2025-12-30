@@ -13,9 +13,10 @@ interface NavItem {
 interface SidebarNavProps {
   onNavigate?: () => void;
   isPlatformAdmin?: boolean;
+  isCollapsed?: boolean;
 }
 
-export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAdmin = false }) => {
+export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAdmin = false, isCollapsed = false }) => {
   const location = useLocation();
   const { t } = useI18n();
 
@@ -43,7 +44,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             to={item.href}
             onClick={onNavigate}
             className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+              flex items-center rounded-lg text-sm font-medium transition-all duration-200
+              ${isCollapsed ? 'justify-center px-3 py-2.5' : 'gap-3 px-3 py-2.5'}
               ${isActive 
                 ? 'text-accent-primary' 
                 : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
@@ -52,9 +54,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             style={isActive ? {
               backgroundColor: 'var(--accent-primary-glow)',
             } : {}}
+            title={isCollapsed ? item.name : undefined}
           >
-            <Icon className="h-5 w-5" />
-            {item.name}
+            <Icon className="h-5 w-5 flex-shrink-0" />
+            {!isCollapsed && <span>{item.name}</span>}
           </Link>
         );
       })}
@@ -64,7 +67,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           to="/admin"
           onClick={onNavigate}
           className={`
-            flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+            flex items-center rounded-lg text-sm font-medium transition-all duration-200
+            ${isCollapsed ? 'justify-center px-3 py-2.5' : 'gap-3 px-3 py-2.5'}
             ${isActiveLink('/admin')
               ? 'text-accent-primary'
               : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
@@ -73,9 +77,10 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           style={isActiveLink('/admin') ? {
             backgroundColor: 'var(--accent-primary-glow)',
           } : {}}
+          title={isCollapsed ? t('nav.admin') : undefined}
         >
-          <Shield className="h-5 w-5" />
-          {t('nav.admin')}
+          <Shield className="h-5 w-5 flex-shrink-0" />
+          {!isCollapsed && <span>{t('nav.admin')}</span>}
         </Link>
       )}
     </div>
