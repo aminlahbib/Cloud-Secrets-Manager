@@ -25,7 +25,7 @@ import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
 import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
 import { SecretsTab } from '../components/projects/SecretsTab';
-import { MembersTab } from '../components/projects/MembersTab';
+import { MembersTab } from '../components/members/MembersTab';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
 import {
