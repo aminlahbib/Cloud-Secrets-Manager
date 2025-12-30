@@ -129,8 +129,10 @@ public class AuthController {
                 .createdAt(user.getCreatedAt())
                 .lastLoginAt(user.getLastLoginAt())
                 .twoFactorEnabled(user.getTwoFactorEnabled())
-                .twoFactorType(user.getTwoFactorType())
-                .onboardingCompleted(user.getOnboardingCompleted());
+                .twoFactorType(user.getTwoFactorType());
+            // Safely handle onboardingCompleted - may be null if column doesn't exist yet
+            Boolean onboardingCompleted = user.getOnboardingCompleted();
+            responseBuilder.onboardingCompleted(onboardingCompleted != null ? onboardingCompleted : true);
         } else {
             responseBuilder.createdAt(java.time.LocalDateTime.now());
         }
@@ -351,6 +353,7 @@ public class AuthController {
             newUser.setPlatformRole(User.PlatformRole.USER);
             newUser.setIsActive(true);
             newUser.setLastLoginAt(java.time.LocalDateTime.now());
+            newUser.setOnboardingCompleted(false); // New users need to complete onboarding
             
             User savedUser = userService.updateUser(newUser);
             

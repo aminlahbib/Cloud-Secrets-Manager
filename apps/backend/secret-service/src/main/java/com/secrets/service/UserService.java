@@ -60,6 +60,7 @@ public class UserService {
         newUser.setPlatformRole(User.PlatformRole.USER);
         newUser.setIsActive(true);
         newUser.setLastLoginAt(LocalDateTime.now());
+        newUser.setOnboardingCompleted(false); // New users need to complete onboarding
         
         User saved = userRepository.save(newUser);
         log.info("Created new user: {} ({})", email, firebaseUid);
