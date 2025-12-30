@@ -93,6 +93,9 @@ public class User {
     @Column(name = "date_format", length = 20)
     private String dateFormat;
 
+    @Column(name = "onboarding_completed", nullable = false)
+    private Boolean onboardingCompleted = false;
+
     public enum PlatformRole {
         USER,
         PLATFORM_ADMIN
@@ -268,6 +271,14 @@ public class User {
 
     public void setDateFormat(String dateFormat) {
         this.dateFormat = dateFormat;
+    }
+
+    public Boolean getOnboardingCompleted() {
+        return onboardingCompleted;
+    }
+
+    public void setOnboardingCompleted(Boolean onboardingCompleted) {
+        this.onboardingCompleted = onboardingCompleted;
     }
 }
 
