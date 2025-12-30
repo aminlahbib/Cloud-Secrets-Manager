@@ -19,6 +19,7 @@ import com.secrets.service.UserService;
 import com.secrets.service.InvitationService;
 import com.secrets.service.WorkflowService;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.UserRecord;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -170,8 +171,29 @@ public class AuthController {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String email = userDetails.getUsername();
             
+            // Extract Firebase token details to get UID, display name, and photo URL
+            FirebaseToken firebaseToken = null;
+            if (authentication.getDetails() instanceof FirebaseToken) {
+                firebaseToken = (FirebaseToken) authentication.getDetails();
+            }
+            
+            // Ensure user exists in local database (create if doesn't exist)
+            String firebaseUid = firebaseToken != null ? firebaseToken.getUid() : email;
+            String displayName = firebaseToken != null ? firebaseToken.getName() : null;
+            String photoUrl = firebaseToken != null ? firebaseToken.getPicture() : null;
+            
+            User user = userService.getOrCreateUser(firebaseUid, email, displayName, photoUrl);
+            
+            // Ensure default workflow exists for the user
+            try {
+                workflowService.ensureDefaultWorkflow(user.getId());
+                log.debug("Ensured default workflow exists for user: {}", email);
+            } catch (Exception e) {
+                log.warn("Failed to ensure default workflow for user, continuing: {}", e.getMessage());
+                // Don't fail login if workflow creation fails
+            }
+            
             // Check if user has 2FA enabled
-            User user = userService.findByEmail(email).orElse(null);
             if (user != null && Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
                 // User has 2FA enabled - return intermediate token
                 UUID userId = user.getId();
