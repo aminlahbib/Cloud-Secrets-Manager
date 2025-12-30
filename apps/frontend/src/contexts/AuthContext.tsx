@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { authService } from '@/services/auth';
 import { firebaseAuthService } from '@/services/firebase-auth';
+import { signupService, type SignupRequest, type SignupResponse } from '@/services/signup';
 import { twoFactorService } from '@/services/twoFactor';
 import { tokenStorage } from '@/utils/tokenStorage';
 import { clearUserSpecificQueries } from '@/utils/queryInvalidation';
@@ -16,6 +17,8 @@ interface AuthContextType {
   isPlatformAdmin: boolean;
   login: (credentials: LoginRequest, keepSignedIn?: boolean, intermediateToken?: string, twoFactorCode?: string) => Promise<void | { requiresTwoFactor: boolean; intermediateToken?: string }>;
   loginWithGoogle: (keepSignedIn?: boolean, intermediateToken?: string, twoFactorCode?: string) => Promise<void | { requiresTwoFactor: boolean; intermediateToken?: string }>;
+  signup: (request: SignupRequest, keepSignedIn?: boolean) => Promise<SignupResponse>;
+  signupWithGoogle: (keepSignedIn?: boolean) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -404,6 +407,81 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
     } catch (error) {
+      throw error;
+    }
+  };
+
+  const signup = async (request: SignupRequest, keepSignedIn: boolean = false): Promise<SignupResponse> => {
+    // Set storage mode based on user preference BEFORE signup
+    tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
+    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
+
+    try {
+      const response = await signupService.signupWithEmail(request);
+      
+      // Store tokens
+      tokenStorage.setAccessToken(response.accessToken);
+      if (response.refreshToken) {
+        tokenStorage.setRefreshToken(response.refreshToken);
+      }
+      
+      // Fetch user details
+      const currentUser = await authService.getCurrentUser();
+      setUser(currentUser);
+      
+      // Navigate based on onboarding status
+      if (currentUser.onboardingCompleted) {
+        navigate('/home');
+      } else {
+        // User will complete onboarding in SignupPage, then navigate
+        // Don't navigate here - let SignupPage handle it
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Signup failed:', error);
+      throw error;
+    }
+  };
+
+  const signupWithGoogle = async (keepSignedIn: boolean = false): Promise<void> => {
+    if (!isFirebaseEnabled) {
+      throw new Error('Firebase is not enabled');
+    }
+
+    // Set storage mode based on user preference BEFORE signup
+    tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
+    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
+
+    try {
+      // Get Firebase ID token
+      const idToken = await signupService.signupWithGoogle(keepSignedIn);
+      
+      // Login with the ID token (this will create user in backend if needed)
+      const response = await authService.login({ idToken });
+      
+      if (response.accessToken) {
+        tokenStorage.setAccessToken(response.accessToken);
+        if (response.refreshToken) {
+          tokenStorage.setRefreshToken(response.refreshToken);
+        }
+        // Fetch user details
+        const currentUser = await authService.getCurrentUser();
+        setUser(currentUser);
+        
+        // Navigate based on onboarding status
+        if (currentUser.onboardingCompleted) {
+          navigate('/home');
+        }
+        // Otherwise, user will complete onboarding in SignupPage
+      } else if (idToken) {
+        // Fallback to Firebase token
+        tokenStorage.setAccessToken(idToken);
+        // User state will be set by onAuthStateChanged listener
+        // Check onboarding status after user is set
+      }
+    } catch (error) {
+      console.error('Google signup failed:', error);
       throw error;
     }
   };
