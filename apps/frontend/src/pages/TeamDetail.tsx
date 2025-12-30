@@ -45,7 +45,7 @@ import { TeamHeader } from '../components/teams/TeamHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
-import { MembersTab } from '../components/members/MembersTab';
+import { MembersTab } from '../components/shared/MembersTab';
 import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project } from '../types';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
@@ -149,8 +149,7 @@ export const TeamDetailPage: React.FC = () => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [memberSearchTerm, setMemberSearchTerm] = useState('');
-  const [editingMemberRole, setEditingMemberRole] = useState<{ memberId: string; role: TeamRole } | null>(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   
   // Projects tab state
   const { projectView, setProjectView } = usePreferences();
@@ -261,7 +260,7 @@ export const TeamDetailPage: React.FC = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
-      setEditingMemberRole(null);
+      setRoleChangeTarget(null);
       showNotification({
         type: 'success',
         title: 'Role updated',
@@ -269,6 +268,7 @@ export const TeamDetailPage: React.FC = () => {
       });
     },
     onError: (error: any) => {
+      setRoleChangeTarget(null);
       showNotification({
         type: 'error',
         title: 'Failed to update role',
@@ -277,16 +277,29 @@ export const TeamDetailPage: React.FC = () => {
     },
   });
 
-  // Filter members by search term
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-    if (!memberSearchTerm.trim()) return members;
-    const search = memberSearchTerm.toLowerCase();
-    return members.filter(member =>
-      member.email.toLowerCase().includes(search) ||
-      (member.displayName && member.displayName.toLowerCase().includes(search))
-    );
-  }, [members, memberSearchTerm]);
+  // Handle member role change
+  const handleMemberRoleChange = useCallback((memberId: string, newRole: TeamRole) => {
+    const member = members?.find((m) => m.userId === memberId);
+    if (!member || member.role === newRole) return;
+    setRoleChangeTarget(memberId);
+    updateMemberRoleMutation.mutate({ memberId, role: newRole });
+  }, [updateMemberRoleMutation, members]);
+
+  // Handle remove member
+  const handleRemoveMember = useCallback((memberId: string) => {
+    removeMemberMutation.mutate({
+      teamId: team!.id,
+      memberId,
+    });
+  }, [removeMemberMutation, team]);
+
+  // Get available roles based on current user role
+  const availableRoles: TeamRole[] = useMemo(() => {
+    if (team?.currentUserRole === 'TEAM_OWNER') {
+      return ['TEAM_OWNER', 'TEAM_ADMIN', 'TEAM_MEMBER'];
+    }
+    return ['TEAM_ADMIN', 'TEAM_MEMBER'];
+  }, [team?.currentUserRole]);
 
   // Delete team mutation
   const deleteTeamMutation = useMutation({
@@ -628,35 +641,16 @@ export const TeamDetailPage: React.FC = () => {
         {activeTab === 'members' && (
           <MembersTab
             members={members}
+            type="team"
             isLoading={isMembersLoading}
             currentUserId={user?.id}
-            contextType="team"
-            currentUserRole={team?.currentUserRole}
+            currentUserRole={(team?.currentUserRole as TeamRole) || 'TEAM_MEMBER'}
             canManageMembers={canManageTeam()}
-            canInviteMembers={canManageTeam()}
-            availableRoles={
-              team?.currentUserRole === 'TEAM_OWNER'
-                ? ['TEAM_OWNER', 'TEAM_ADMIN', 'TEAM_MEMBER']
-                : ['TEAM_ADMIN', 'TEAM_MEMBER']
-            }
-            canChangeRole={(member) => {
-              if (!canManageTeam()) return false;
-              if (member.userId === user?.id) return false;
-              return team?.currentUserRole === 'TEAM_OWNER' || (member as any).role !== 'TEAM_OWNER';
-            }}
+            availableRoles={availableRoles}
+            roleChangeTarget={roleChangeTarget}
             isUpdatingRole={updateMemberRoleMutation.isPending}
-            onRoleChange={(member, newRole) => {
-              updateMemberRoleMutation.mutate({
-                memberId: member.userId || (member as any).id,
-                role: newRole as TeamRole,
-              });
-            }}
-            onRemoveMember={(member) => {
-              removeMemberMutation.mutate({
-                teamId: team!.id,
-                memberId: member.userId || (member as any).id,
-              });
-            }}
+            onRoleChange={handleMemberRoleChange}
+            onRemoveMember={handleRemoveMember}
             onInviteMember={() => setShowAddMemberModal(true)}
           />
         )}
