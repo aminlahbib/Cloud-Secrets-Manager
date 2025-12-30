@@ -66,7 +66,7 @@ export const ThemeControls: React.FC = () => {
             }}
           >
             <div className="p-2">
-              {['orange', 'emerald', 'monochrome', 'blue', 'plum'].map((scheme) => {
+              {['neutral', 'emerald', 'monochrome', 'blue', 'plum'].map((scheme) => {
                 // Get any version of the theme (prefer light, fallback to dark)
                 const themeForScheme = availableThemes.find(t => t.colorScheme === scheme && t.mode === 'light') 
                   || availableThemes.find(t => t.colorScheme === scheme);
@@ -74,7 +74,7 @@ export const ThemeControls: React.FC = () => {
                 
                 const isActive = colorScheme === scheme;
                 const schemeDisplayNames: Record<string, string> = {
-                  orange: 'Orange',
+                  neutral: 'Neutral',
                   emerald: 'Emerald',
                   monochrome: 'Monochrome',
                   blue: 'Cool Blue',

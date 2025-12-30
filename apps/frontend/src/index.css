@@ -127,7 +127,7 @@
      NEUTRAL THEME - Light (Default) - Clean & Minimal
      ============================================ */
   :root,
-  [data-theme="light-orange"] {
+  [data-theme="light-neutral"] {
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy) - Neutral grays
        ============================================ */
@@ -137,20 +137,20 @@
     --elevation-3: #f5f5f5;  /* Hover states, active cards - neutral-100 */
     --elevation-4: #e5e5e5;  /* Pressed states, modals - neutral-200 */
     
-    /* Premium enhanced gradients with rich blue accents */
-    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(96, 165, 250, 0.05) 25%, #ffffff 50%, rgba(147, 197, 253, 0.04) 75%, rgba(59, 130, 246, 0.06) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(96, 165, 250, 0.08) 30%, #ffffff 55%, rgba(147, 197, 253, 0.06) 80%, rgba(59, 130, 246, 0.08) 100%);
+    /* Premium enhanced gradients with sophisticated neutral depth */
+    --gradient-hero: linear-gradient(135deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.01) 25%, #ffffff 50%, rgba(0, 0, 0, 0.008) 75%, rgba(0, 0, 0, 0.015) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(0, 0, 0, 0.03) 0%, rgba(0, 0, 0, 0.015) 30%, #ffffff 55%, rgba(0, 0, 0, 0.012) 80%, rgba(0, 0, 0, 0.025) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Neutral Gray with Subtle Blue Accent
+       SEMANTIC COLORS - Pure Neutral Gray
        ============================================ */
-    /* Primary Accent - Subtle Blue */
-    --accent-primary: #3b82f6;        /* Primary CTA - blue-500 */
-    --accent-primary-hover: #2563eb;  /* Hover state - blue-600 */
-    --accent-primary-active: #1d4ed8; /* Pressed state - blue-700 */
-    --accent-primary-glow: rgba(59, 130, 246, 0.2); /* Subtle blue glow (matches other themes) */
-    --accent-primary-light: #60a5fa;  /* Lighter blue for links and icons */
-    --accent-primary-muted: #93c5fd;  /* Muted blue for section headers */
+    /* Primary Accent - Sophisticated Charcoal */
+    --accent-primary: #374151;        /* Primary CTA - gray-700 */
+    --accent-primary-hover: #1f2937;  /* Hover state - gray-800 */
+    --accent-primary-active: #111827; /* Pressed state - gray-900 */
+    --accent-primary-glow: rgba(55, 65, 81, 0.15); /* Subtle neutral glow */
+    --accent-primary-light: #4b5563;  /* Lighter gray for links and icons */
+    --accent-primary-muted: #6b7280;  /* Muted gray for section headers */
     
     /* Secondary Accent - Neutral Gray */
     --accent-secondary: #6b7280;      /* Secondary actions - gray-500 */
@@ -166,8 +166,8 @@
     --status-warning-bg: rgba(245, 158, 11, 0.1); /* Warning background */
     --status-danger: #dc2626;         /* Danger text - red */
     --status-danger-bg: rgba(220, 38, 38, 0.1); /* Danger background */
-    --status-info: #3b82f6;           /* Info text - blue */
-    --status-info-bg: rgba(59, 130, 246, 0.1);    /* Info background */
+    --status-info: #6b7280;           /* Info text - neutral gray */
+    --status-info-bg: rgba(107, 114, 128, 0.1);    /* Info background */
     
     /* ============================================
        TEXT COLORS (WCAG AA Compliant)
@@ -184,17 +184,17 @@
     --border-subtle: #e4e4e7;         /* Subtle borders - matches other themes */
     --border-default: #d4d4d8;        /* Default borders - matches other themes */
     --border-strong: #a1a1aa;         /* Strong borders - matches other themes */
-    --border-accent: rgba(59, 130, 246, 0.35);     /* Accent borders - blue (matches opacity of other themes) */
+    --border-accent: rgba(55, 65, 81, 0.3);     /* Accent borders - neutral gray */
     
     /* ============================================
-       SHADOWS & GLOWS - Subtle neutral shadows with blue hints
+       SHADOWS & GLOWS - Pure neutral shadows
        ============================================ */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(59, 130, 246, 0.08);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(59, 130, 246, 0.08);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(59, 130, 246, 0.12);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(59, 130, 246, 0.15);
-    --glow-accent: 0 0 20px rgba(59, 130, 246, 0.25), 0 0 40px rgba(96, 165, 250, 0.15);
-    --glow-soft: 0 0 40px rgba(59, 130, 246, 0.12);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --glow-accent: 0 0 20px rgba(55, 65, 81, 0.15), 0 0 40px rgba(75, 85, 99, 0.08);
+    --glow-soft: 0 0 40px rgba(0, 0, 0, 0.05);
     
     /* ============================================
        COMPONENT-SPECIFIC TOKENS
@@ -209,8 +209,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(59, 130, 246, 0.1);  /* Subtle blue background (matches other themes) */
-    --sidebar-active-border: var(--accent-primary); /* Blue border */
+    --sidebar-active-bg: rgba(55, 65, 81, 0.08);  /* Subtle neutral background */
+    --sidebar-active-border: var(--accent-primary); /* Neutral gray border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -244,7 +244,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
-    --input-focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    --input-focus-ring: 0 0 0 3px rgba(55, 65, 81, 0.1);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -270,7 +270,7 @@
   /* ============================================
      NEUTRAL THEME - Dark
      ============================================ */
-  [data-theme="dark-orange"] {
+  [data-theme="dark-neutral"] {
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy) - Neutral dark grays
        ============================================ */
@@ -280,20 +280,20 @@
     --elevation-3: #262626;  /* Hover states, active cards - neutral-800 */
     --elevation-4: #404040;  /* Pressed states, modals - neutral-700 */
     
-    /* Premium enhanced gradients with subtle blue glow */
-    --gradient-hero: linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(96, 165, 250, 0.04) 20%, var(--elevation-1) 50%, rgba(147, 197, 253, 0.03) 80%, rgba(59, 130, 246, 0.05) 100%);
-    --gradient-quick-actions: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(96, 165, 250, 0.06) 25%, var(--elevation-1) 55%, rgba(147, 197, 253, 0.04) 85%, rgba(59, 130, 246, 0.07) 100%);
+    /* Premium enhanced gradients with sophisticated neutral depth */
+    --gradient-hero: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 20%, var(--elevation-1) 50%, rgba(255, 255, 255, 0.008) 80%, rgba(255, 255, 255, 0.015) 100%);
+    --gradient-quick-actions: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.015) 25%, var(--elevation-1) 55%, rgba(255, 255, 255, 0.012) 85%, rgba(255, 255, 255, 0.025) 100%);
     
     /* ============================================
-       SEMANTIC COLORS - Neutral Gray with Subtle Blue Accent (Dark)
+       SEMANTIC COLORS - Pure Neutral Gray (Dark)
        ============================================ */
-    /* Primary Accent - Subtle Blue */
-    --accent-primary: #60a5fa;        /* Primary CTA - blue-400 */
-    --accent-primary-hover: #3b82f6;  /* Hover state - blue-500 */
-    --accent-primary-active: #2563eb; /* Pressed state - blue-600 */
-    --accent-primary-glow: rgba(96, 165, 250, 0.15); /* Subtle blue glow */
-    --accent-primary-light: #93c5fd;  /* Lighter blue for links and icons */
-    --accent-primary-muted: #bfdbfe;  /* Muted blue for section headers */
+    /* Primary Accent - Light Neutral Gray */
+    --accent-primary: #d1d5db;        /* Primary CTA - gray-300 */
+    --accent-primary-hover: #e5e7eb;  /* Hover state - gray-200 */
+    --accent-primary-active: #f3f4f6; /* Pressed state - gray-100 */
+    --accent-primary-glow: rgba(209, 213, 219, 0.12); /* Subtle neutral glow */
+    --accent-primary-light: #e5e7eb;  /* Lighter gray for links and icons */
+    --accent-primary-muted: #9ca3af;  /* Muted gray for section headers */
     
     /* Secondary Accent - Neutral Gray */
     --accent-secondary: #9ca3af;      /* Secondary actions - gray-400 */
@@ -307,8 +307,8 @@
     --status-warning-bg: rgba(251, 191, 36, 0.12); /* Warning background */
     --status-danger: #F87171;         /* Danger text */
     --status-danger-bg: rgba(248, 113, 113, 0.12); /* Danger background */
-    --status-info: #60A5FA;           /* Info text */
-    --status-info-bg: rgba(96, 165, 250, 0.12);    /* Info background */
+    --status-info: #9ca3af;           /* Info text - neutral gray */
+    --status-info-bg: rgba(156, 163, 175, 0.12);    /* Info background */
     
     /* ============================================
        TEXT COLORS (WCAG AA Compliant)
@@ -325,16 +325,16 @@
     --border-subtle: rgba(255, 255, 255, 0.05);    /* Subtle borders */
     --border-default: rgba(255, 255, 255, 0.08);   /* Default borders */
     --border-strong: rgba(255, 255, 255, 0.12);    /* Strong borders */
-    --border-accent: rgba(96, 165, 250, 0.3);     /* Accent borders - blue */
+    --border-accent: rgba(209, 213, 219, 0.25);     /* Accent borders - neutral gray */
     
     /* ============================================
-       SHADOWS & GLOWS
+       SHADOWS & GLOWS - Pure neutral shadows
        ============================================ */
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-    --glow-accent: 0 0 20px var(--accent-primary-glow);
+    --glow-accent: 0 0 20px rgba(209, 213, 219, 0.12), 0 0 40px rgba(229, 231, 235, 0.06);
     --glow-soft: 0 0 40px rgba(0, 0, 0, 0.5);
     
     /* ============================================
@@ -350,8 +350,8 @@
     /* Sidebar */
     --sidebar-bg: var(--elevation-1);
     --sidebar-border: var(--border-subtle);
-    --sidebar-active-bg: rgba(96, 165, 250, 0.12);  /* Subtle blue background */
-    --sidebar-active-border: var(--accent-primary); /* Blue border */
+    --sidebar-active-bg: rgba(209, 213, 219, 0.1);  /* Subtle neutral background */
+    --sidebar-active-border: var(--accent-primary); /* Neutral gray border */
     --sidebar-hover-bg: var(--elevation-2);
     --sidebar-link-color: var(--text-secondary); /* Default text color for links */
     --sidebar-icon-color: var(--text-secondary); /* Default text color for icons */
@@ -385,7 +385,7 @@
     --input-border-focus: var(--accent-primary);
     --input-text: var(--text-primary);
     --input-placeholder: var(--text-tertiary);
-    --input-focus-ring: 0 0 0 3px rgba(96, 165, 250, 0.1);
+    --input-focus-ring: 0 0 0 3px rgba(209, 213, 219, 0.15);
     
     /* Tables */
     --table-header-bg: var(--elevation-1);
@@ -1735,13 +1735,13 @@
   }
   
   /* Light mode card adjustments - Clean and simple */
-  [data-theme="light-orange"] .card {
+  [data-theme="light-neutral"] .card {
     background-color: var(--card-bg);
     border: 1px solid var(--card-border);
     box-shadow: var(--shadow-sm);
   }
   
-  [data-theme="light-orange"] .card:hover {
+  [data-theme="light-neutral"] .card:hover {
     background-color: var(--card-hover-bg);
     border-color: var(--card-hover-border);
     box-shadow: var(--shadow-md);
@@ -2261,22 +2261,22 @@
   }
   
   /* Light mode adjustments for glass effects - Pronounced frosted glass */
-  [data-theme="light-orange"] .glass,
-  [data-theme="light-orange"] .card-glass {
+  [data-theme="light-neutral"] .glass,
+  [data-theme="light-neutral"] .card-glass {
     background-color: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(60px) saturate(200%);
     -webkit-backdrop-filter: blur(60px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.4);
   }
   
-  [data-theme="light-orange"] .modal-glass {
+  [data-theme="light-neutral"] .modal-glass {
     background-color: rgba(255, 255, 255, 0.6);
     backdrop-filter: blur(70px) saturate(200%);
     -webkit-backdrop-filter: blur(70px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
   
-  [data-theme="light-orange"] .sidebar-glass {
+  [data-theme="light-neutral"] .sidebar-glass {
     background-color: var(--sidebar-bg);
     border-right: 1px solid var(--sidebar-border);
   }

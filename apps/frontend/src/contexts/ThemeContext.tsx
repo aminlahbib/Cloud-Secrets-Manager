@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 
-export type ColorScheme = 'orange' | 'emerald' | 'monochrome' | 'blue' | 'plum';
+export type ColorScheme = 'neutral' | 'emerald' | 'monochrome' | 'blue' | 'plum';
 export type ThemeMode = 'light' | 'dark';
 export type Theme = `${ThemeMode}-${ColorScheme}`;
 
@@ -13,8 +13,8 @@ export interface ThemeInfo {
 }
 
 export const AVAILABLE_THEMES: ThemeInfo[] = [
-  { id: 'light-orange', name: 'Light (Orange)', mode: 'light', colorScheme: 'orange', description: 'Modern terracotta theme' },
-  { id: 'dark-orange', name: 'Dark (Orange)', mode: 'dark', colorScheme: 'orange', description: 'Modern terracotta theme' },
+  { id: 'light-neutral', name: 'Light (Neutral)', mode: 'light', colorScheme: 'neutral', description: 'Clean neutral theme' },
+  { id: 'dark-neutral', name: 'Dark (Neutral)', mode: 'dark', colorScheme: 'neutral', description: 'Clean neutral theme' },
   { id: 'light-emerald', name: 'Light (Emerald)', mode: 'light', colorScheme: 'emerald', description: 'Security/infra theme' },
   { id: 'dark-emerald', name: 'Dark (Emerald)', mode: 'dark', colorScheme: 'emerald', description: 'Security/infra theme' },
   { id: 'light-monochrome', name: 'Light (Monochrome)', mode: 'light', colorScheme: 'monochrome', description: 'Refined grayscale theme' },
