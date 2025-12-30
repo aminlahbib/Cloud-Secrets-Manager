@@ -25,7 +25,7 @@ import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
 import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
 import { SecretsTab } from '../components/projects/SecretsTab';
-import { MembersTab } from '../components/members/MembersTab';
+import { MembersTab } from '../components/shared/MembersTab';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
 import {
@@ -514,16 +514,17 @@ export const ProjectDetailPage: React.FC = () => {
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
   );
-  const handleMemberRoleChange = useCallback((member: ProjectMember, newRole: ProjectRole) => {
-    if (member.role === newRole) return;
-    setRoleChangeTarget(member.userId);
+  const handleMemberRoleChange = useCallback((memberId: string, newRole: ProjectRole) => {
+    const member = members?.find((m) => m.userId === memberId);
+    if (!member || member.role === newRole) return;
+    setRoleChangeTarget(memberId);
     updateMemberRoleMutation.mutate(
-      { userId: member.userId, role: newRole },
+      { userId: memberId, role: newRole },
       {
         onSettled: () => setRoleChangeTarget(null),
       }
     );
-  }, [updateMemberRoleMutation]);
+  }, [updateMemberRoleMutation, members]);
   const availableRoleOptions: ProjectRole[] =
     currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
 
@@ -746,11 +747,12 @@ export const ProjectDetailPage: React.FC = () => {
       {activeTab === 'members' && (
         <MembersTab
           members={members}
+          type="project"
           isLoading={isMembersLoading}
           currentUserId={user?.id}
+          currentUserRole={currentUserRole || 'VIEWER'}
           canManageMembers={canManageMembers}
-          canEditMemberRole={canEditMemberRole}
-          availableRoleOptions={availableRoleOptions}
+          availableRoles={availableRoleOptions}
           roleChangeTarget={roleChangeTarget}
           isUpdatingRole={updateMemberRoleMutation.isPending}
           onRoleChange={handleMemberRoleChange}
