@@ -339,6 +339,14 @@ const translations: Record<Language, Record<string, string>> = {
     'members.inviteMember': 'Invite Member',
     'members.removeMember': 'Remove member',
     'members.you': '(You)',
+    'members.searchPlaceholder': 'Search by name or email...',
+    'members.showingAll': 'Showing all {{count}} members',
+    'members.showingFiltered': 'Showing {{filtered}} of {{total}} members',
+    'members.noMatches': 'No members match your search',
+    'members.clickToChangeRole': 'Click to change role',
+    'members.confirmRemove': 'Remove Member',
+    'members.confirmRemoveDescription': 'Are you sure you want to remove this member? They will lose access to this {{context}}.',
+    'members.remove': 'Remove',
     
     // TeamDetail
     'teamDetail.backToTeams': 'Back to Teams',
@@ -568,6 +576,14 @@ const translations: Record<Language, Record<string, string>> = {
     'members.inviteMember': 'Invitar miembro',
     'members.removeMember': 'Eliminar miembro',
     'members.you': '(Tú)',
+    'members.searchPlaceholder': 'Buscar por nombre o correo...',
+    'members.showingAll': 'Mostrando todos los {{count}} miembros',
+    'members.showingFiltered': 'Mostrando {{filtered}} de {{total}} miembros',
+    'members.noMatches': 'No hay miembros que coincidan con tu búsqueda',
+    'members.clickToChangeRole': 'Haz clic para cambiar el rol',
+    'members.confirmRemove': 'Eliminar miembro',
+    'members.confirmRemoveDescription': '¿Estás seguro de que deseas eliminar a este miembro? Perderá el acceso a este {{context}}.',
+    'members.remove': 'Eliminar',
     
     // TeamDetail
     'teamDetail.backToTeams': 'Volver a equipos',
