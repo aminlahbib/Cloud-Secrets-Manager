@@ -342,15 +342,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (response.requiresTwoFactor && response.intermediateToken) {
         // If we have a 2FA code, verify it
         if (intermediateToken && twoFactorCode) {
-          // Verify 2FA - let errors bubble up to LoginPage for proper handling
-          const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
-          tokenStorage.setAccessToken(verifyResponse.accessToken);
-          if (verifyResponse.refreshToken) {
-            tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+          try {
+            // Verify 2FA - let errors bubble up to LoginPage for proper handling
+            const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
+            tokenStorage.setAccessToken(verifyResponse.accessToken);
+            if (verifyResponse.refreshToken) {
+              tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+            }
+            
+            // Fetch user details - wrap in try-catch to handle potential failures
+            try {
+              const currentUser = await authService.getCurrentUser();
+              setUser(currentUser);
+            } catch (userError) {
+              // Log error but still navigate - user can refresh if needed
+              console.error('Failed to fetch user after 2FA verification:', userError);
+              // Try to set a minimal user object from the token if possible
+              // The user can refresh the page to get full user details
+            }
+            
+            // Always navigate to home after successful verification, even if user fetch failed
+            navigate('/home');
+          } catch (error) {
+            // Re-throw error to be handled by LoginPage
+            console.error('2FA verification failed:', error);
+            throw error;
           }
-          const currentUser = await authService.getCurrentUser();
-          setUser(currentUser);
-          navigate('/home');
         } else {
           // Return 2FA requirement
           return { requiresTwoFactor: true, intermediateToken: response.intermediateToken };
@@ -360,8 +377,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (response.refreshToken) {
           tokenStorage.setRefreshToken(response.refreshToken);
         }
-        const currentUser = await authService.getCurrentUser();
-        setUser(currentUser);
+        
+        // Fetch user details - wrap in try-catch to handle potential failures
+        try {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        } catch (userError) {
+          // Log error but still navigate - user can refresh if needed
+          console.error('Failed to fetch user after login:', userError);
+        }
+        
         navigate('/home');
       }
     }
@@ -383,14 +408,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // If we already have an intermediate token and 2FA code, this is the second step
     // of the 2FA flow. Do NOT re-open the Google popup; just verify 2FA.
     if (intermediateToken && twoFactorCode) {
-      const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
-      tokenStorage.setAccessToken(verifyResponse.accessToken);
-      if (verifyResponse.refreshToken) {
-        tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+      try {
+        const verifyResponse = await twoFactorService.verifyLogin(intermediateToken, twoFactorCode);
+        tokenStorage.setAccessToken(verifyResponse.accessToken);
+        if (verifyResponse.refreshToken) {
+          tokenStorage.setRefreshToken(verifyResponse.refreshToken);
+        }
+        
+        // Fetch user details - wrap in try-catch to handle potential failures
+        try {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+        } catch (userError) {
+          // Log error but still navigate - user can refresh if needed
+          console.error('Failed to fetch user after 2FA verification:', userError);
+          // Try to set a minimal user object from the token if possible
+          // The user can refresh the page to get full user details
+        }
+        
+        // Always navigate to home after successful verification, even if user fetch failed
+        navigate('/home');
+      } catch (error) {
+        // Re-throw error to be handled by LoginPage
+        console.error('2FA verification failed:', error);
+        throw error;
       }
-      const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
-      navigate('/home');
       return;
     }
 
@@ -410,8 +452,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           if (response.refreshToken) {
             tokenStorage.setRefreshToken(response.refreshToken);
           }
-          const currentUser = await authService.getCurrentUser();
-          setUser(currentUser);
+          
+          // Fetch user details - wrap in try-catch to handle potential failures
+          try {
+            const currentUser = await authService.getCurrentUser();
+            setUser(currentUser);
+          } catch (userError) {
+            // Log error but still navigate - user can refresh if needed
+            console.error('Failed to fetch user after Google login:', userError);
+          }
+          
           navigate('/home');
         } else {
           // If backend login didn't return a token, we can't proceed

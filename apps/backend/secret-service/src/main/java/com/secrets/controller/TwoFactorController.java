@@ -183,15 +183,21 @@ public class TwoFactorController {
         // Rate limiting
         String rateLimitKey = "verify-login:" + request.getIntermediateToken();
         if (!checkRateLimit(rateLimitKey, totpRateLimit, totpWindowMinutes)) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
-                    .body(Map.of("error", "Too many attempts. Please try again later."));
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Too many verification attempts");
+            errorResponse.put("errorCode", "RATE_LIMIT_EXCEEDED");
+            errorResponse.put("message", "Too many verification attempts. Please wait a few minutes and try again.");
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
         }
 
         try {
             // Validate intermediate token
             if (!intermediateTokenProvider.validateToken(request.getIntermediateToken())) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Invalid or expired intermediate token"));
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid or expired intermediate token");
+                errorResponse.put("errorCode", "EXPIRED_TOKEN");
+                errorResponse.put("message", "Your login session has expired. Please try logging in again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
             UUID userId = intermediateTokenProvider.getUserId(request.getIntermediateToken());
@@ -201,11 +207,15 @@ public class TwoFactorController {
                     .orElseThrow(() -> new IllegalStateException("User not found"));
 
             if (!Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
-                return ResponseEntity.badRequest()
-                        .body(Map.of("error", "Two-factor authentication is not enabled for this user"));
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Two-factor authentication is not enabled for this user");
+                errorResponse.put("errorCode", "2FA_NOT_ENABLED");
+                errorResponse.put("message", "Two-factor authentication is not enabled for this account.");
+                return ResponseEntity.badRequest().body(errorResponse);
             }
 
             boolean verified = false;
+            String verificationFailureReason = null;
 
             // Check if it's a recovery code
             if (twoFactorService.isRecoveryCodeFormat(request.getCode())) {
@@ -231,7 +241,11 @@ public class TwoFactorController {
                         );
                         
                         log.info("Recovery code used for user: {}", email);
+                    } else {
+                        verificationFailureReason = "Invalid recovery code";
                     }
+                } else {
+                    verificationFailureReason = "No recovery codes available";
                 }
             } else if (twoFactorService.isTotpCodeFormat(request.getCode())) {
                 // Verify TOTP code
@@ -240,7 +254,11 @@ public class TwoFactorController {
                     verified = true;
                     user.setTwoFactorLastVerifiedAt(LocalDateTime.now());
                     userService.updateUser(user);
+                } else {
+                    verificationFailureReason = "Invalid TOTP code";
                 }
+            } else {
+                verificationFailureReason = "Invalid code format";
             }
 
             if (!verified) {
@@ -252,10 +270,16 @@ public class TwoFactorController {
                         "USER",
                         userId.toString(),
                         email,
-                        Map.of("reason", "Invalid code")
+                        Map.of("reason", verificationFailureReason != null ? verificationFailureReason : "Invalid code")
                 );
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("error", "Invalid code"));
+                
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Invalid verification code");
+                errorResponse.put("errorCode", "INVALID_CODE");
+                errorResponse.put("message", verificationFailureReason != null 
+                    ? verificationFailureReason + ". Please try again." 
+                    : "The verification code you entered is incorrect. Please try again.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
             }
 
             // Log successful verification
@@ -291,10 +315,20 @@ public class TwoFactorController {
             log.info("2FA verified successfully for user: {}", email);
             return ResponseEntity.ok(response);
 
+        } catch (IllegalStateException e) {
+            log.error("User not found during 2FA verification", e);
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "User not found");
+            errorResponse.put("errorCode", "USER_NOT_FOUND");
+            errorResponse.put("message", "Your account could not be found. Please try logging in again.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
         } catch (Exception e) {
             log.error("Failed to verify 2FA during login", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to verify code: " + e.getMessage()));
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Verification failed");
+            errorResponse.put("errorCode", "VERIFICATION_ERROR");
+            errorResponse.put("message", "An error occurred while verifying your code. Please try again.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
         }
     }
 
