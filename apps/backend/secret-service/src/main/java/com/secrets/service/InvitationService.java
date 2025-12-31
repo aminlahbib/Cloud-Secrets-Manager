@@ -238,6 +238,54 @@ public class InvitationService {
     }
 
     /**
+     * Get invitation entity by email and project ID (for auto-acceptance during signup)
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<ProjectInvitation> getInvitationEntityByEmailAndProject(String email, UUID projectId) {
+        List<ProjectInvitation> invitations = invitationRepository.findByEmailAndStatus(
+            email, ProjectInvitation.InvitationStatus.PENDING);
+        return invitations.stream()
+            .filter(inv -> inv.getProjectId().equals(projectId) && inv.isValid())
+            .findFirst();
+    }
+
+    /**
+     * Get invitation details by token (public method for signup flow)
+     * Returns minimal info needed for signup without requiring authentication
+     */
+    @Transactional(readOnly = true)
+    public com.secrets.dto.invitation.InvitationTokenResponse getInvitationByToken(String token) {
+        ProjectInvitation invitation = invitationRepository.findByToken(token)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid invitation token"));
+
+        if (!invitation.isValid()) {
+            throw new IllegalStateException("Invitation is expired or already used");
+        }
+
+        var project = projectRepository.findById(invitation.getProjectId()).orElse(null);
+        var inviter = invitation.getInvitedBy() != null 
+                ? userRepository.findById(invitation.getInvitedBy()).orElse(null)
+                : null;
+
+        com.secrets.dto.invitation.InvitationTokenResponse response = 
+                new com.secrets.dto.invitation.InvitationTokenResponse();
+        response.setEmail(invitation.getEmail());
+        response.setProjectId(invitation.getProjectId());
+        response.setProjectName(project != null ? project.getName() : "Unknown Project");
+        response.setRole(invitation.getRole().name());
+        
+        if (inviter != null) {
+            response.setInviterName(inviter.getDisplayName() != null ? inviter.getDisplayName() : inviter.getEmail());
+            response.setInviterEmail(inviter.getEmail());
+        } else {
+            response.setInviterName("Unknown");
+            response.setInviterEmail("unknown@example.com");
+        }
+
+        return response;
+    }
+
+    /**
      * Clean up expired invitations (called by scheduled task)
      */
     public void cleanupExpiredInvitations() {

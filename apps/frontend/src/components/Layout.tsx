@@ -15,6 +15,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebarCollapsed');
+    return saved === 'true';
+  });
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
 
   // Fetch user's workflows
@@ -43,6 +47,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  
+  const toggleSidebarCollapse = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem('sidebarCollapsed', String(newState));
+  };
 
   return (
     <div 
@@ -55,7 +65,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <div className="flex min-h-screen">
         <Sidebar
           isOpen={isSidebarOpen}
+          isCollapsed={isSidebarCollapsed}
           onNavigate={() => setIsSidebarOpen(false)}
+          onToggleCollapse={toggleSidebarCollapse}
           workflows={workflows}
           selectedWorkflowId={selectedWorkflowId}
           onSelectWorkflow={handleWorkflowSelect}
@@ -63,7 +75,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           onLogout={logout}
         />
 
-        <div className="flex-1 flex flex-col md:ml-64">
+        <div className={`flex-1 flex flex-col transition-all duration-200 ${isSidebarCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
           {/* Top Bar - Persistent across pages */}
           <TopBar />
 

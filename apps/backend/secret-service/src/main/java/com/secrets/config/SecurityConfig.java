@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/invitations/token/**").permitAll() // Public endpoint for invitation token lookup
                         // Setup endpoint removed from public access - now requires authentication and
                         // is disabled by default
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // Admin endpoints require ADMIN role

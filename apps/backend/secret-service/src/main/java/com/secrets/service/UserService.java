@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +33,7 @@ public class UserService {
     /**
      * Get or create user from Firebase UID
      * This is called during login to ensure user exists in our database
+     * Handles race conditions where multiple requests try to create the same user simultaneously
      */
     @CacheEvict(cacheNames = "userIdsByEmail", key = "#email", condition = "#email != null")
     public User getOrCreateUser(String firebaseUid, String email, String displayName, String avatarUrl) {
@@ -51,20 +53,42 @@ public class UserService {
             return userRepository.save(user);
         }
         
-        // Create new user
-        User newUser = new User();
-        newUser.setFirebaseUid(firebaseUid);
-        newUser.setEmail(email);
-        newUser.setDisplayName(displayName);
-        newUser.setAvatarUrl(avatarUrl);
-        newUser.setPlatformRole(User.PlatformRole.USER);
-        newUser.setIsActive(true);
-        newUser.setLastLoginAt(LocalDateTime.now());
-        
-        User saved = userRepository.save(newUser);
-        log.info("Created new user: {} ({})", email, firebaseUid);
-        
-        return saved;
+        // Create new user - handle race condition where another thread might have created it
+        try {
+            User newUser = new User();
+            newUser.setFirebaseUid(firebaseUid);
+            newUser.setEmail(email);
+            newUser.setDisplayName(displayName);
+            newUser.setAvatarUrl(avatarUrl);
+            newUser.setPlatformRole(User.PlatformRole.USER);
+            newUser.setIsActive(true);
+            newUser.setLastLoginAt(LocalDateTime.now());
+            newUser.setOnboardingCompleted(false); // New users need to complete onboarding
+            
+            User saved = userRepository.save(newUser);
+            log.info("Created new user: {} ({})", email, firebaseUid);
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: another thread created the user between our check and save
+            // Fetch the existing user and return it
+            log.debug("User already exists (race condition), fetching existing user: {} ({})", email, firebaseUid);
+            Optional<User> raceConditionUser = userRepository.findByFirebaseUid(firebaseUid);
+            if (raceConditionUser.isPresent()) {
+                User user = raceConditionUser.get();
+                // Update last login
+                user.setLastLoginAt(LocalDateTime.now());
+                // Update profile info if changed
+                if (displayName != null && !displayName.equals(user.getDisplayName())) {
+                    user.setDisplayName(displayName);
+                }
+                if (avatarUrl != null && !avatarUrl.equals(user.getAvatarUrl())) {
+                    user.setAvatarUrl(avatarUrl);
+                }
+                return userRepository.save(user);
+            }
+            // If still not found, rethrow the exception
+            throw e;
+        }
     }
 
     /**

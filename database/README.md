@@ -1,188 +1,95 @@
-# Database
+# Database Directory
 
-This directory contains all database-related files for Cloud Secrets Manager.
+This directory contains the database initialization scripts and Docker configuration.
 
-## Directory Structure
+## Structure
 
 ```
 database/
-├── migrations/           # SQL migration files (run in order)
-│   ├── V001__initial_schema_v3.sql
-│   └── V002__seed_functions.sql
-├── seeds/                # Seed data for different environments
-│   ├── dev/
-│   │   └── sample_data.sql
-│   └── test/
-│       └── test_fixtures.sql
-├── scripts/              # Database utility scripts
-│   ├── reset-db.sh
-│   └── backup-db.sh
-└── README.md
+├── Dockerfile              # Custom PostgreSQL image with init scripts
+├── init/                   # Initialization scripts (executed in order)
+│   ├── 01-init-database.sql    # Creates user and grants permissions
+│   └── 02-schema-migrations.sql # Creates complete database schema
+└── README.md               # This file
 ```
 
-## Schema Overview (Architecture v3)
+## Initialization Scripts
 
-```
-┌─────────────┐       ┌─────────────┐       ┌─────────────┐
-│    users    │       │  workflows  │       │  projects   │
-├─────────────┤       ├─────────────┤       ├─────────────┤
-│ id          │──┐    │ id          │       │ id          │
-│ firebase_uid│  │    │ user_id     │───────│ name        │
-│ email       │  │    │ name        │       │ description │
-│ platform_role│ │    │ is_default  │       │ created_by  │
-└─────────────┘  │    └─────────────┘       │ is_archived │
-                 │           │              └─────────────┘
-                 │           ▼                     │
-                 │    ┌─────────────────┐          │
-                 │    │workflow_projects│          │
-                 │    └─────────────────┘          │
-                 │                                 │
-                 │    ┌───────────────────┐        │
-                 │    │project_memberships│        │
-                 └───▶│ (OWNER/ADMIN/     │────────┤
-                      │  MEMBER/VIEWER)   │        │
-                      └───────────────────┘        │
-                                                   │
-                      ┌─────────────┐              │
-                      │   secrets   │──────────────┘
-                      └─────────────┘
-                             │
-                      ┌───────────────┐
-                      │secret_versions│
-                      └───────────────┘
-```
+The scripts in `init/` are executed automatically when the PostgreSQL container is first created. They run in alphabetical order:
 
-## Key Concepts
+1. **01-init-database.sql**: 
+   - Creates `secret_user` with password `secret_pw`
+   - Grants all necessary permissions
+   - Enables required PostgreSQL extensions (uuid-ossp, pgcrypto)
 
-### Users
-- Authenticated via Firebase
-- Have a `platform_role`: `USER` or `PLATFORM_ADMIN`
-- Platform admins manage the system but can't access secrets without project membership
+2. **02-schema-migrations.sql**:
+   - Creates all database tables
+   - Sets up indexes and constraints
+   - Defines the complete schema for the application
 
-### Workflows
-- Personal organization containers (like folders)
-- Each user has their own workflows
-- NOT shared - when you invite someone to a project, they organize it in their own workflows
-- Every user gets a default "My Workflow" on signup
+## Usage
 
-### Projects
-- The core collaboration unit
-- Contains secrets
-- Members have roles: `OWNER`, `ADMIN`, `MEMBER`, `VIEWER`
-- Support soft delete with 30-day grace period
+### Using Docker Compose
 
-### Secrets
-- Encrypted key-value pairs
-- Belong to exactly one project
-- Keys are unique within a project (not globally)
-- Have version history
-
-## Running Migrations
-
-### With Docker (Recommended)
-
-Migrations run automatically when the postgres container starts:
+The database is automatically built and initialized when you run:
 
 ```bash
-cd docker
-docker-compose up postgres
+docker-compose -f docker/docker-compose.yml up postgres
 ```
 
-### Manually
+### Building the Database Image Manually
 
 ```bash
-# Connect to database
-psql -h localhost -U csm_user -d csm_dev
-
-# Run migrations in order
-\i migrations/V001__initial_schema_v3.sql
-\i migrations/V002__seed_functions.sql
-
-# Load seed data (dev only)
-\i seeds/dev/sample_data.sql
+cd database
+docker build -t csm-postgres:latest .
 ```
 
-### With Flyway (Production)
+### Running the Database Container
 
 ```bash
-flyway -url=jdbc:postgresql://localhost:5432/csm_dev \
-       -user=csm_user \
-       -password=csm_password \
-       migrate
+docker run -d \
+  --name csm-db \
+  -e POSTGRES_DB=secrets \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  csm-postgres:latest
 ```
 
-## Seed Data
+## Database Credentials
 
-### Development Seeds
+- **Database Name**: `secrets`
+- **Superuser**: `postgres` / `postgres`
+- **Application User**: `secret_user` / `secret_pw`
 
-Located in `seeds/dev/sample_data.sql`. Creates:
+## Important Notes
 
-- 4 test users (Alice, Bob, Charlie, Diana)
-- 4 projects with different sharing configurations
-- Sample secrets
-- Audit log entries
+1. **First Initialization Only**: Init scripts only run when the database data directory is empty
+2. **To Reinitialize**: Remove the Docker volume: `docker-compose down -v`
+3. **Script Order**: Scripts are executed in alphabetical order (01, 02, ...)
+4. **Permissions**: All scripts must be executable (755)
 
-```bash
-# Load dev seeds
-psql -h localhost -U csm_user -d csm_dev -f seeds/dev/sample_data.sql
-```
+## Schema Management
 
-### Test Fixtures
+- **Initial Schema**: Defined in `init/02-schema-migrations.sql`
+- **Future Migrations**: Managed by Flyway in the backend services
+- **Development**: Use `SPRING_JPA_HIBERNATE_DDL_AUTO=update` for auto-updates (not recommended for production)
 
-Located in `seeds/test/`. Used for automated testing.
+## Troubleshooting
 
-## Useful Queries
+### Database Not Initializing
 
-### List all projects for a user
+1. Check if the volume already exists (init scripts won't run)
+2. Remove volume: `docker-compose down -v`
+3. Check logs: `docker-compose logs postgres`
 
-```sql
-SELECT p.*, pm.role
-FROM projects p
-JOIN project_memberships pm ON p.id = pm.project_id
-WHERE pm.user_id = 'USER_UUID'
-  AND p.is_archived = FALSE;
-```
+### Permission Errors
 
-### List secrets in a project
+1. Ensure scripts are executable: `chmod 755 init/*.sql`
+2. Check file ownership in the container
 
-```sql
-SELECT s.secret_key, s.description, s.created_at, u.email as created_by
-FROM secrets s
-JOIN users u ON s.created_by = u.id
-WHERE s.project_id = 'PROJECT_UUID';
-```
+### Connection Issues
 
-### Check user's role in a project
-
-```sql
-SELECT role FROM project_memberships
-WHERE project_id = 'PROJECT_UUID' AND user_id = 'USER_UUID';
-```
-
-### Get project member counts
-
-```sql
-SELECT * FROM get_project_role_counts('PROJECT_UUID');
-```
-
-## Reset Database
-
-```bash
-# Via Docker (removes volume)
-docker-compose down -v
-docker-compose up
-
-# Via script
-./scripts/reset-db.sh
-```
-
-## Backup & Restore
-
-```bash
-# Backup
-pg_dump -h localhost -U csm_user csm_dev > backup.sql
-
-# Restore
-psql -h localhost -U csm_user csm_dev < backup.sql
-```
-
+1. Verify credentials match in `docker-compose.yml`
+2. Check if database is ready: `docker-compose exec postgres pg_isready -U postgres`
+3. Test connection: `docker-compose exec postgres psql -U secret_user -d secrets`

@@ -5,12 +5,16 @@ services:
   # PostgreSQL Database
   # ---------------------------------------------------------------------------
   postgres:
-    image: postgres:16-alpine
+    build:
+      context: ../database
+      dockerfile: Dockerfile
+    image: csm-postgres:latest
     container_name: csm-db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-csm}
-      POSTGRES_USER: ${POSTGRES_USER:-csm}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      POSTGRES_DB: ${POSTGRES_DB:-secrets}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      # Note: secret_user is created by init script, not via POSTGRES_USER
       # PostgreSQL memory settings
       POSTGRES_SHARED_BUFFERS: 256MB
       POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
@@ -20,10 +24,8 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ../database/migrations:/docker-entrypoint-initdb.d/migrations:ro
-      - ../database/seeds/dev:/docker-entrypoint-initdb.d/seeds:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-csm}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -52,9 +54,9 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-secrets}
+      SPRING_DATASOURCE_USERNAME: secret_user
+      SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       AUDIT_SERVICE_URL: http://audit:8081
       NOTIFICATION_SERVICE_URL: http://notification:8082
@@ -103,9 +105,9 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-secrets}
+      SPRING_DATASOURCE_USERNAME: secret_user
+      SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: dev
       # JVM memory settings
@@ -149,9 +151,9 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-csm}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-csm}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-csm}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-secrets}
+      SPRING_DATASOURCE_USERNAME: secret_user
+      SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: dev
       JWT_SECRET: ${JWT_SECRET:-mySuperStrongSecretKeyForJWTTokenGeneration123456}

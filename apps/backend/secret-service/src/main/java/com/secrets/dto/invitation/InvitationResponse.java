@@ -1,6 +1,7 @@
 package com.secrets.dto.invitation;
 
 import com.secrets.entity.ProjectInvitation;
+import com.secrets.entity.ProjectMembership;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -9,6 +10,7 @@ public class InvitationResponse {
     private UUID projectId;
     private ProjectSummary project;
     private String email;
+    private ProjectMembership.ProjectRole role;
     private ProjectInvitation.InvitationStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime expiresAt;
@@ -23,6 +25,7 @@ public class InvitationResponse {
         response.setId(invitation.getId());
         response.setProjectId(invitation.getProjectId());
         response.setEmail(invitation.getEmail());
+        response.setRole(invitation.getRole());
         response.setStatus(invitation.getStatus());
         response.setCreatedAt(invitation.getCreatedAt());
         response.setExpiresAt(invitation.getExpiresAt());
@@ -77,6 +80,14 @@ public class InvitationResponse {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public ProjectMembership.ProjectRole getRole() {
+        return role;
+    }
+
+    public void setRole(ProjectMembership.ProjectRole role) {
+        this.role = role;
     }
 
     public ProjectInvitation.InvitationStatus getStatus() {

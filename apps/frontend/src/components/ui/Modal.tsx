@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -27,8 +28,6 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
-
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -36,7 +35,9 @@ export const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-4xl',
   };
 
-  return (
+  if (!isOpen) return null;
+
+  const modalContent = (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop - Apple-like blur */}
       <div
@@ -74,5 +75,8 @@ export const Modal: React.FC<ModalProps> = ({
       </div>
     </div>
   );
+
+  // Use portal to render modal at document body level, outside any parent containers
+  return createPortal(modalContent, document.body);
 };
 

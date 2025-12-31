@@ -37,6 +37,7 @@ export const authService = {
       lastLoginAt: data.lastLoginAt,
       twoFactorEnabled: data.twoFactorEnabled,
       twoFactorType: data.twoFactorType,
+      onboardingCompleted: data.onboardingCompleted,
     };
   },
 
