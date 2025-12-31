@@ -1,20 +1,13 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Building2,
-  Crown,
-  Shield,
-  Mail,
   Trash2,
-  Plus,
-  X,
   Folder,
   ArrowLeft,
   Edit,
-  Search,
-  ChevronDown,
   Activity,
   Clock,
   Settings as SettingsIcon,
@@ -45,13 +38,8 @@ import { TeamHeader } from '../components/teams/TeamHeader';
 import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
-import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project } from '../types';
-
-const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
-  TEAM_OWNER: <Crown className="h-3 w-3" />,
-  TEAM_ADMIN: <Shield className="h-3 w-3" />,
-  TEAM_MEMBER: null,
-};
+import { MembersTab } from '../components/shared/MembersTab';
+import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project, ProjectRole } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -148,8 +136,7 @@ export const TeamDetailPage: React.FC = () => {
   const [showAddProjectModal, setShowAddProjectModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [memberSearchTerm, setMemberSearchTerm] = useState('');
-  const [editingMemberRole, setEditingMemberRole] = useState<{ memberId: string; role: TeamRole } | null>(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   
   // Projects tab state
   const { projectView, setProjectView } = usePreferences();
@@ -253,61 +240,6 @@ export const TeamDetailPage: React.FC = () => {
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
   });
 
-  // Update member role mutation
-  const updateMemberRoleMutation = useMutation({
-    mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
-      teamsService.updateMemberRole(teamId!, memberId, { role }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
-      setEditingMemberRole(null);
-      showNotification({
-        type: 'success',
-        title: 'Role updated',
-        message: 'The member role has been updated successfully',
-      });
-    },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to update role',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
-  });
-
-  // Filter members by search term
-  const filteredMembers = useMemo(() => {
-    if (!members) return [];
-    if (!memberSearchTerm.trim()) return members;
-    const search = memberSearchTerm.toLowerCase();
-    return members.filter(member =>
-      member.email.toLowerCase().includes(search) ||
-      (member.displayName && member.displayName.toLowerCase().includes(search))
-    );
-  }, [members, memberSearchTerm]);
-
-  // Delete team mutation
-  const deleteTeamMutation = useMutation({
-    mutationFn: (id: string) => teamsService.deleteTeam(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams'] });
-      showNotification({
-        type: 'success',
-        title: 'Team deleted',
-        message: 'The team has been deleted successfully',
-      });
-      navigate('/teams');
-    },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to delete team',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
-  });
-
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
@@ -326,6 +258,75 @@ export const TeamDetailPage: React.FC = () => {
       showNotification({
         type: 'error',
         title: 'Failed to remove member',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
+
+  // Update member role mutation
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
+      teamsService.updateMemberRole(teamId!, memberId, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      setRoleChangeTarget(null);
+      showNotification({
+        type: 'success',
+        title: 'Role updated',
+        message: 'The member role has been updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      setRoleChangeTarget(null);
+      showNotification({
+        type: 'error',
+        title: 'Failed to update role',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
+
+  // Handle member role change
+  const handleMemberRoleChange = useCallback((memberId: string, newRole: TeamRole | ProjectRole) => {
+    const member = members?.find((m) => m.userId === memberId);
+    if (!member || member.role === newRole) return;
+    setRoleChangeTarget(memberId);
+    updateMemberRoleMutation.mutate({ memberId, role: newRole as TeamRole });
+  }, [updateMemberRoleMutation, members]);
+
+  // Handle remove member
+  const handleRemoveMember = useCallback((memberId: string) => {
+    removeMemberMutation.mutate({
+      teamId: team!.id,
+      memberId,
+    });
+  }, [removeMemberMutation, team]);
+
+  // Get available roles based on current user role
+  const availableRoles: TeamRole[] = useMemo(() => {
+    if (team?.currentUserRole === 'TEAM_OWNER') {
+      return ['TEAM_OWNER', 'TEAM_ADMIN', 'TEAM_MEMBER'];
+    }
+    return ['TEAM_ADMIN', 'TEAM_MEMBER'];
+  }, [team?.currentUserRole]);
+
+  // Delete team mutation
+  const deleteTeamMutation = useMutation({
+    mutationFn: (id: string) => teamsService.deleteTeam(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      showNotification({
+        type: 'success',
+        title: 'Team deleted',
+        message: 'The team has been deleted successfully',
+      });
+      navigate('/teams');
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to delete team',
         message: error?.response?.data?.message || error?.message || 'An error occurred',
       });
     },
@@ -625,175 +626,21 @@ export const TeamDetailPage: React.FC = () => {
         )}
 
         {activeTab === 'members' && (
-          <div className="card w-full">
-        <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-theme-primary">
-              Members ({members?.length || 0})
-            </h2>
-            <div className="flex items-center gap-3">
-              {members && members.length > 0 && (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary" />
-                  <input
-                    type="text"
-                    value={memberSearchTerm}
-                    onChange={(e) => setMemberSearchTerm(e.target.value)}
-                    placeholder="Search members..."
-                    className="pl-9 pr-3 py-1.5 text-sm border rounded-lg transition-colors"
-                    style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--border-subtle)',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--accent-primary)';
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
-                    }}
-                  />
-                </div>
-              )}
-              {canManageTeam() && (
-                <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add Member
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {isMembersLoading ? (
-          <div className="padding-card flex justify-center">
-            <Spinner size="md" />
-          </div>
-        ) : !members || members.length === 0 ? (
-          <div className="padding-card">
-            <EmptyState
-              icon={<Users className="h-12 w-12 text-theme-tertiary" />}
-              title="No members"
-              description="Add members to start collaborating"
-            />
-          </div>
-        ) : (
-          <div className="divide-y divide-theme-subtle">
-            {filteredMembers.length === 0 ? (
-              <div className="padding-card text-center text-theme-tertiary text-sm">
-                {memberSearchTerm ? 'No members match your search' : 'No members'}
-              </div>
-            ) : (
-              filteredMembers.map((member) => {
-                const isEditing = editingMemberRole?.memberId === member.userId;
-                const canChangeRole = canManageTeam() && 
-                  member.userId !== user?.id &&
-                  (team?.currentUserRole === 'TEAM_OWNER' || member.role !== 'TEAM_OWNER');
-                
-                return (
-                  <div
-                    key={member.id}
-                    className="padding-card flex items-center justify-between hover:bg-elevation-1 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-elevation-1 text-theme-primary font-medium flex-shrink-0">
-                        <span>
-                          {(member.displayName || member.email || 'U')
-                            .split(' ')
-                            .map(n => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-theme-primary truncate">
-                          {member.displayName || 'No name'}
-                          {member.userId === user?.id && (
-                            <span className="ml-2 text-xs text-theme-secondary">
-                              (You)
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs flex items-center gap-1 text-theme-secondary truncate">
-                          <Mail className="h-3 w-3 flex-shrink-0" />
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {isEditing ? (
-                        <div className="relative">
-                          <select
-                            value={editingMemberRole?.role || member.role}
-                            onChange={(e) => {
-                              const newRole = e.target.value as TeamRole;
-                              updateMemberRoleMutation.mutate({
-                                memberId: member.userId,
-                                role: newRole,
-                              });
-                            }}
-                            className="text-xs px-2 py-1 border rounded transition-colors"
-                            style={{
-                              backgroundColor: 'var(--card-bg)',
-                              borderColor: 'var(--border-subtle)',
-                              color: 'var(--text-primary)',
-                            }}
-                            onBlur={() => setEditingMemberRole(null)}
-                            autoFocus
-                          >
-                            {team?.currentUserRole === 'TEAM_OWNER' && (
-                              <option value="TEAM_OWNER">Owner</option>
-                            )}
-                            <option value="TEAM_ADMIN">Admin</option>
-                            <option value="TEAM_MEMBER">Member</option>
-                          </select>
-                        </div>
-                      ) : (
-                        <>
-                          <div
-                            className="cursor-pointer inline-block"
-                            onClick={() => canChangeRole && setEditingMemberRole({ memberId: member.userId, role: member.role })}
-                            title={canChangeRole ? 'Click to change role' : ''}
-                          >
-                            <Badge
-                              variant={
-                                member.role === 'TEAM_OWNER' || member.role === 'TEAM_ADMIN'
-                                  ? 'owner-admin'
-                                  : 'default'
-                              }
-                            >
-                              {ROLE_ICONS[member.role] && <span className="mr-1">{ROLE_ICONS[member.role]}</span>}
-                              {member.role.replace('TEAM_', '')}
-                              {canChangeRole && <ChevronDown className="h-3 w-3 ml-1 inline" />}
-                            </Badge>
-                          </div>
-                          {canManageTeam() && member.userId !== user?.id && (
-                            <button
-                              onClick={() =>
-                                removeMemberMutation.mutate({
-                                  teamId: team.id,
-                                  memberId: member.userId,
-                                })
-                              }
-                              className="p-2 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                              title="Remove member"
-                              disabled={removeMemberMutation.isPending}
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
+          <MembersTab
+            members={members}
+            type="team"
+            isLoading={isMembersLoading}
+            currentUserId={user?.id}
+            currentUserRole={(team?.currentUserRole as TeamRole) || 'TEAM_MEMBER'}
+            canManageMembers={canManageTeam()}
+            availableRoles={availableRoles}
+            roleChangeTarget={roleChangeTarget}
+            isUpdatingRole={updateMemberRoleMutation.isPending}
+            onRoleChange={handleMemberRoleChange}
+            onRemoveMember={handleRemoveMember}
+            onInviteMember={() => setShowAddMemberModal(true)}
+          />
         )}
-        </div>
-      )}
 
       {activeTab === 'projects' && (
         <div className="space-y-6 pb-6">

@@ -15,6 +15,7 @@ public class UserResponse {
     private LocalDateTime lastLoginAt;
     private Boolean twoFactorEnabled;
     private String twoFactorType;
+    private Boolean onboardingCompleted;
 
     public UserResponse() {
     }
@@ -116,6 +117,14 @@ public class UserResponse {
         this.twoFactorType = twoFactorType;
     }
 
+    public Boolean getOnboardingCompleted() {
+        return onboardingCompleted;
+    }
+
+    public void setOnboardingCompleted(Boolean onboardingCompleted) {
+        this.onboardingCompleted = onboardingCompleted;
+    }
+
     public static UserResponseBuilder builder() {
         return new UserResponseBuilder();
     }
@@ -132,6 +141,7 @@ public class UserResponse {
         private LocalDateTime lastLoginAt;
         private Boolean twoFactorEnabled;
         private String twoFactorType;
+        private Boolean onboardingCompleted;
 
         public UserResponseBuilder id(String id) {
             this.id = id;
@@ -188,6 +198,11 @@ public class UserResponse {
             return this;
         }
 
+        public UserResponseBuilder onboardingCompleted(Boolean onboardingCompleted) {
+            this.onboardingCompleted = onboardingCompleted;
+            return this;
+        }
+
         public UserResponse build() {
             UserResponse response = new UserResponse(id, email, role, permissions, active, createdAt);
             response.setDisplayName(displayName);
@@ -195,6 +210,7 @@ public class UserResponse {
             response.setLastLoginAt(lastLoginAt);
             response.setTwoFactorEnabled(twoFactorEnabled);
             response.setTwoFactorType(twoFactorType);
+            response.setOnboardingCompleted(onboardingCompleted);
             return response;
         }
     }

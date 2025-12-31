@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -13,7 +13,7 @@ import type { LoginRequest } from '@/types';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { login, loginWithGoogle, isFirebaseEnabled } = useAuth();
+  const { login, loginWithGoogle, isFirebaseEnabled, user } = useAuth();
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
@@ -22,6 +22,14 @@ export const LoginPage: React.FC = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [intermediateToken, setIntermediateToken] = useState<string | null>(null);
   const [loginCredentials, setLoginCredentials] = useState<LoginRequest | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  // Navigation guard: redirect if already authenticated
+  useEffect(() => {
+    if (user && !requires2FA) {
+      navigate('/home', { replace: true });
+    }
+  }, [user, navigate, requires2FA]);
 
   const {
     register,
@@ -54,45 +62,85 @@ export const LoginPage: React.FC = () => {
     if (!intermediateToken) {
       setError('Session expired. Please try logging in again.');
       setRequires2FA(false);
+      setIntermediateToken(null);
+      setLoginCredentials(null);
       return;
     }
 
     setIsLoading(true);
+    setIsVerifying(true);
     setError(null);
 
     try {
       if (loginCredentials) {
         // Email/password login
         await login(loginCredentials, keepSignedIn, intermediateToken, code);
-        // Login successful - navigation handled by AuthContext
+        // Login successful - clear 2FA state and navigation handled by AuthContext
+        // Small delay to show success feedback before redirect
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setRequires2FA(false);
+        setIntermediateToken(null);
+        setLoginCredentials(null);
       } else {
         // Google login
         await loginWithGoogle(keepSignedIn, intermediateToken, code);
-        // Login successful - navigation handled by AuthContext
+        // Login successful - clear 2FA state and navigation handled by AuthContext
+        // Small delay to show success feedback before redirect
+        await new Promise(resolve => setTimeout(resolve, 300));
+        setRequires2FA(false);
+        setIntermediateToken(null);
+        setLoginCredentials(null);
       }
     } catch (err: any) {
-      // Extract error message from API response
-      const errorMessage = err?.response?.data?.error || 
-                          err?.response?.data?.message || 
+      // Extract error message and code from API response
+      const errorData = err?.response?.data || {};
+      const errorCode = errorData.errorCode;
+      const errorMessage = errorData.message || 
+                          errorData.error || 
                           err?.message || 
                           'Invalid verification code. Please try again.';
       
-      // Check if it's a 2FA-specific error (invalid code, expired token, etc.)
-      const is2FAError = errorMessage.toLowerCase().includes('invalid') ||
-                        errorMessage.toLowerCase().includes('code') ||
-                        errorMessage.toLowerCase().includes('expired') ||
-                        errorMessage.toLowerCase().includes('verification');
-      
-      if (is2FAError) {
+      // Handle specific error codes
+      if (errorCode === 'EXPIRED_TOKEN') {
+        setError(errorMessage);
+        setIntermediateToken(null);
+        setRequires2FA(false);
+        setLoginCredentials(null);
+      } else if (errorCode === 'INVALID_CODE' || errorCode === 'RATE_LIMIT_EXCEEDED') {
         // Keep user on 2FA screen with error message
         setError(errorMessage);
         // Don't reset requires2FA - let user try again
+      } else if (errorCode === 'USER_NOT_FOUND' || errorCode === '2FA_NOT_ENABLED') {
+        // These are more serious errors - reset 2FA state
+        setError(errorMessage);
+        setRequires2FA(false);
+        setIntermediateToken(null);
+        setLoginCredentials(null);
       } else {
-        // For other errors (network, server, etc.), show error but keep on 2FA screen
-        setError(errorMessage || 'Verification failed. Please try again.');
+        // Check if it's a 2FA-specific error by message content (fallback for old API responses)
+        const is2FAError = errorMessage.toLowerCase().includes('invalid') ||
+                          errorMessage.toLowerCase().includes('code') ||
+                          errorMessage.toLowerCase().includes('expired') ||
+                          errorMessage.toLowerCase().includes('verification') ||
+                          errorMessage.toLowerCase().includes('token');
+        
+        if (is2FAError) {
+          // Keep user on 2FA screen with error message
+          setError(errorMessage);
+          // But clear intermediate token if it's expired
+          if (errorMessage.toLowerCase().includes('expired') || 
+              (errorMessage.toLowerCase().includes('invalid') && errorMessage.toLowerCase().includes('token'))) {
+            setIntermediateToken(null);
+            setRequires2FA(false);
+          }
+        } else {
+          // For other errors (network, server, etc.), show error but keep on 2FA screen
+          setError(errorMessage || 'Verification failed. Please try again.');
+        }
       }
     } finally {
       setIsLoading(false);
+      setIsVerifying(false);
     }
   };
 
@@ -178,7 +226,7 @@ export const LoginPage: React.FC = () => {
             <TwoFactorVerification
               onVerify={handle2FAVerify}
               onCancel={handle2FACancel}
-              isLoading={isLoading}
+              isLoading={isLoading || isVerifying}
               error={error}
               onErrorClear={() => setError(null)}
             />
@@ -294,7 +342,14 @@ export const LoginPage: React.FC = () => {
           {/* Footer */}
           {!requires2FA && (
             <p className="mt-6 text-center text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-              {t('login.noAccount')}
+              {t('login.noAccount')}{' '}
+              <button
+                onClick={() => navigate('/signup')}
+                className="font-medium transition-colors hover:opacity-80"
+                style={{ color: 'var(--accent-primary)' }}
+              >
+                {t('login.signUp')}
+              </button>
             </p>
           )}
         </div>

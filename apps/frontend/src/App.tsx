@@ -7,6 +7,7 @@ import { Spinner } from './components/ui/Spinner';
 // Lazy load pages for code splitting
 const LandingPage = lazy(() => import('./pages/Landing').then(m => ({ default: m.LandingPage })));
 const LoginPage = lazy(() => import('./pages/Login').then(m => ({ default: m.LoginPage })));
+const SignupPage = lazy(() => import('./pages/Signup').then(m => ({ default: m.SignupPage })));
 const HomePage = lazy(() => import('./pages/Home').then(m => ({ default: m.HomePage })));
 const ProjectsPage = lazy(() => import('./pages/Projects').then(m => ({ default: m.ProjectsPage })));
 const ProjectDetailPage = lazy(() => import('./pages/ProjectDetail').then(m => ({ default: m.ProjectDetailPage })));
@@ -80,7 +81,9 @@ const App: React.FC = () => {
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/invitations/:token" element={<InvitationAcceptPage />} />
+        <Route path="/accept-invite" element={<InvitationAcceptPage />} />
 
         {/* Protected Routes (Wrapped in Layout) */}
         <Route element={<ProtectedLayout />}>

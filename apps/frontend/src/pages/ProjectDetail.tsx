@@ -21,11 +21,11 @@ import { Input } from '../components/ui/Input';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import type { Project, Secret, ProjectMember, ProjectRole } from '../types';
+import type { Project, Secret, ProjectMember, ProjectRole, TeamRole } from '../types';
 import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
 import { SecretsTab } from '../components/projects/SecretsTab';
-import { MembersTab } from '../components/projects/MembersTab';
+import { MembersTab } from '../components/shared/MembersTab';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
 import {
@@ -514,25 +514,19 @@ export const ProjectDetailPage: React.FC = () => {
     () => (members || []).filter((member) => member.userId !== user?.id),
     [members, user?.id]
   );
-  const handleMemberRoleChange = useCallback((member: ProjectMember, newRole: ProjectRole) => {
-    if (member.role === newRole) return;
-    setRoleChangeTarget(member.userId);
+  const handleMemberRoleChange = useCallback((memberId: string, newRole: ProjectRole | TeamRole) => {
+    const member = members?.find((m) => m.userId === memberId);
+    if (!member || member.role === newRole) return;
+    setRoleChangeTarget(memberId);
     updateMemberRoleMutation.mutate(
-      { userId: member.userId, role: newRole },
+      { userId: memberId, role: newRole as ProjectRole },
       {
         onSettled: () => setRoleChangeTarget(null),
       }
     );
-  }, [updateMemberRoleMutation]);
+  }, [updateMemberRoleMutation, members]);
   const availableRoleOptions: ProjectRole[] =
     currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
-
-  const canEditMemberRole = (member: ProjectMember) => {
-    if (!canManageMembers) return false;
-    if (member.userId === user?.id) return false;
-    if (member.role === 'OWNER' && (currentUserRole !== 'OWNER' || ownerCount <= 1)) return false;
-    return true;
-  };
 
   const isArchived = project?.isArchived || Boolean(project?.deletedAt);
   const metaPairs = useMemo(() => {
@@ -746,11 +740,12 @@ export const ProjectDetailPage: React.FC = () => {
       {activeTab === 'members' && (
         <MembersTab
           members={members}
+          type="project"
           isLoading={isMembersLoading}
           currentUserId={user?.id}
+          currentUserRole={currentUserRole || 'VIEWER'}
           canManageMembers={canManageMembers}
-          canEditMemberRole={canEditMemberRole}
-          availableRoleOptions={availableRoleOptions}
+          availableRoles={availableRoleOptions}
           roleChangeTarget={roleChangeTarget}
           isUpdatingRole={updateMemberRoleMutation.isPending}
           onRoleChange={handleMemberRoleChange}

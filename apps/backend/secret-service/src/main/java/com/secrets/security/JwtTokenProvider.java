@@ -52,16 +52,21 @@ public class JwtTokenProvider {
      * Generate a refresh token (longer-lived token for obtaining new access tokens)
      * Refresh tokens are stored in the database and can be revoked
      * Note: The actual expiration is managed in the database, this JWT just needs to be valid
+     * Includes a unique ID (jti) to prevent duplicate tokens in concurrent scenarios
      */
     public String generateRefreshToken(String username, long refreshTokenExpirationMs) {
         Date now = new Date();
         // Refresh tokens have longer expiration (configured separately)
         // This is just the JWT part - actual expiration is managed in database
         Date expiry = new Date(now.getTime() + refreshTokenExpirationMs);
+        
+        // Generate a unique token ID to prevent collisions in concurrent scenarios
+        String tokenId = java.util.UUID.randomUUID().toString();
 
         return Jwts.builder()
             .subject(username)
             .claim("type", "refresh")
+            .id(tokenId) // JWT ID (jti) - ensures uniqueness even for concurrent requests
             .issuedAt(now)
             .expiration(expiry)
             .signWith(secretKey)

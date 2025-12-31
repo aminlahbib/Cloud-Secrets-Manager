@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, XCircle, Loader2, Mail, ArrowRight } from 'lucide-react';
+import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { invitationsService } from '../services/invitations';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -57,32 +57,20 @@ export const InvitationAcceptPage: React.FC = () => {
     );
   }
 
-  // If not authenticated, prompt to login
+  // If not authenticated, redirect to signup with invitation token
+  useEffect(() => {
+    if (!isAuthenticated && !isAuthLoading && token) {
+      navigate(`/signup?invite=${token}`);
+    }
+  }, [isAuthenticated, isAuthLoading, token, navigate]);
+
+  // If not authenticated, show loading while redirecting
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
-        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
-          <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
-            <Mail className="h-8 w-8" style={{ color: 'var(--text-secondary)' }} />
-          </div>
-          
-          <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-            You've Been Invited!
-          </h1>
-          <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
-            Sign in or create an account to accept this project invitation.
-          </p>
-          
-          <Link to="/login">
-            <Button className="w-full">
-              Continue to Sign In
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          </Link>
-          
-          <p className="mt-6 text-sm" style={{ color: 'var(--text-tertiary)' }}>
-            After signing in, you'll automatically join the project.
-          </p>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
+          <p style={{ color: 'var(--text-secondary)' }}>Redirecting to signup...</p>
         </div>
       </div>
     );

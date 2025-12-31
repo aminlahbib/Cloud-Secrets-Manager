@@ -1,11 +1,11 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { Key, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { SidebarLogo } from './SidebarLogo';
 import { SidebarNav } from './SidebarNav';
 import { WorkflowSelector } from './WorkflowSelector';
 import { Button } from '../ui/Button';
 import { useI18n } from '../../contexts/I18nContext';
+import { CreateSecretModal } from '../secrets/CreateSecretModal';
 import type { Workflow } from '../../types';
 
 interface SidebarProps {
@@ -31,8 +31,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isPlatformAdmin = false,
   onLogout,
 }) => {
-  const navigate = useNavigate();
   const { t } = useI18n();
+  const [showCreateSecretModal, setShowCreateSecretModal] = useState(false);
 
   return (
     <aside
@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`mt-auto pt-6 space-y-3 border-t border-theme-subtle ${isCollapsed ? 'flex flex-col items-center' : ''}`}>
         <Button
           onClick={() => {
-            navigate('/projects');
+            setShowCreateSecretModal(true);
             onNavigate?.();
           }}
           className={isCollapsed ? 'w-auto px-3' : 'w-full'}
@@ -105,6 +105,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!isCollapsed && <span>{t('nav.signOut')}</span>}
         </button>
       </div>
+
+      {/* Create Secret Modal */}
+      <CreateSecretModal
+        isOpen={showCreateSecretModal}
+        onClose={() => setShowCreateSecretModal(false)}
+      />
     </aside>
   );
 };

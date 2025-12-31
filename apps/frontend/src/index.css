@@ -131,11 +131,11 @@
     /* ============================================
        ELEVATION LAYERS (Background Hierarchy) - Warm beige and cream tones
        ============================================ */
-    --elevation-0: #E0E0D5;  /* Page background - creamy off-white */
+    --elevation-0: #f8f8f6;  /* Page background - very soft warm off-white */
     --elevation-1: #ffffff;  /* Sidebar, main containers - pure white */
     --elevation-2: #ffffff;  /* Cards, elevated surfaces - pure white */
-    --elevation-3: #D0CABA;  /* Hover states, active cards - light beige taupe */
-    --elevation-4: #CBCCC7;  /* Pressed states, modals - light grey-beige */
+    --elevation-3: #f0f0ed;  /* Hover states, active cards - very light warm beige */
+    --elevation-4: #e8e8e5;  /* Pressed states, modals - soft warm grey-beige */
     
     /* Premium enhanced gradients with warm beige depth */
     --gradient-hero: linear-gradient(135deg, rgba(184, 171, 144, 0.03) 0%, rgba(208, 202, 186, 0.02) 25%, #ffffff 50%, rgba(203, 204, 199, 0.015) 75%, rgba(184, 171, 144, 0.025) 100%);
