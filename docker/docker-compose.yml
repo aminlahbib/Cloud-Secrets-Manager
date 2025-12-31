@@ -8,6 +8,7 @@ services:
     build:
       context: ../database
       dockerfile: Dockerfile
+    image: csm-postgres:latest
     container_name: csm-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-secrets}

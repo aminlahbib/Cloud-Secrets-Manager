@@ -7,6 +7,7 @@ import com.secrets.security.JwtTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,26 +33,53 @@ public class RefreshTokenService {
 
     /**
      * Create a new refresh token for a user
+     * Handles race conditions where duplicate tokens might be generated
      */
     @Transactional
     public RefreshToken createRefreshToken(String username) {
         // Revoke all existing refresh tokens for this user (token rotation)
         refreshTokenRepository.revokeAllUserTokens(username);
 
-        // Generate a new refresh token
-        String token = jwtTokenProvider.generateRefreshToken(username, refreshTokenExpirationMs);
-        LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000);
+        // Retry logic to handle potential duplicate token collisions
+        int maxRetries = 3;
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                // Generate a new refresh token (includes unique JWT ID to prevent collisions)
+                String token = jwtTokenProvider.generateRefreshToken(username, refreshTokenExpirationMs);
+                LocalDateTime expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000);
 
-        RefreshToken refreshToken = RefreshToken.builder()
-            .token(token)
-            .username(username)
-            .expiresAt(expiresAt)
-            .revoked(false)
-            .build();
+                RefreshToken refreshToken = RefreshToken.builder()
+                    .token(token)
+                    .username(username)
+                    .expiresAt(expiresAt)
+                    .revoked(false)
+                    .build();
 
-        RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
-        log.debug("Created refresh token for user: {}", username);
-        return savedToken;
+                RefreshToken savedToken = refreshTokenRepository.save(refreshToken);
+                log.debug("Created refresh token for user: {}", username);
+                return savedToken;
+            } catch (DataIntegrityViolationException e) {
+                // Duplicate token detected (should be rare with UUID in JWT ID)
+                if (attempt < maxRetries - 1) {
+                    log.warn("Duplicate refresh token detected for user {}, retrying (attempt {}/{})", 
+                        username, attempt + 1, maxRetries);
+                    // Small delay before retry
+                    try {
+                        Thread.sleep(10 + (attempt * 5)); // 10ms, 15ms, 20ms delays
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("Interrupted while retrying token creation", ie);
+                    }
+                } else {
+                    log.error("Failed to create unique refresh token for user {} after {} attempts", 
+                        username, maxRetries);
+                    throw new RuntimeException("Failed to create unique refresh token after multiple attempts", e);
+                }
+            }
+        }
+        
+        // Should never reach here, but compiler requires return
+        throw new RuntimeException("Failed to create refresh token");
     }
 
     /**
