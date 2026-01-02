@@ -59,8 +59,6 @@ export const ProjectDetailPage: React.FC = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
@@ -981,8 +979,6 @@ export const ProjectDetailPage: React.FC = () => {
         isOpen={showInviteModal}
         onClose={() => {
           setShowInviteModal(false);
-          setInviteEmail('');
-          setInviteRole('MEMBER');
         }}
         projectId={projectId!}
         projectName={project?.name || ''}
