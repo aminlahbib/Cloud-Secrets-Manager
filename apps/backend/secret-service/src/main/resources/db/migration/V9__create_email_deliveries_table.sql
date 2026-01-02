@@ -1,6 +1,6 @@
 -- Table to track email delivery status
 CREATE TABLE IF NOT EXISTS email_deliveries (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     recipient_email VARCHAR(255) NOT NULL,
     subject VARCHAR(500) NOT NULL,
     email_type VARCHAR(50) NOT NULL,

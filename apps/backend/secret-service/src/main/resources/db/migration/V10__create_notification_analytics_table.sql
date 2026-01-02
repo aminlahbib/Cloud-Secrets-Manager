@@ -1,6 +1,6 @@
 -- Table to track notification analytics (opens, clicks, etc.)
 CREATE TABLE IF NOT EXISTS notification_analytics (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     notification_id UUID NOT NULL,
     user_id UUID NOT NULL,
     action VARCHAR(50),
