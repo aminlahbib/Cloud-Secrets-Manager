@@ -814,6 +814,17 @@ export const ProjectDetailPage: React.FC = () => {
           isArchiving={archiveProjectMutation.isPending}
           isRestoring={restoreProjectMutation.isPending}
           isLeaving={leaveProjectMutation.isPending}
+          members={members}
+          currentUserRole={currentUserRole}
+          canManageMembers={canManageMembers}
+          pendingInvitations={pendingInvitations}
+          onInviteMember={handleInviteMember}
+          onCancelInvitation={handleCancelInvitation}
+          onRoleChange={handleMemberRoleChange}
+          onRemoveMember={handleRemoveMember}
+          availableRoles={availableRoleOptions}
+          roleChangeTarget={roleChangeTarget}
+          isUpdatingRole={updateMemberRoleMutation.isPending}
         />
       )}
       {/* Archive Modal */}
