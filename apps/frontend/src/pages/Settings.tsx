@@ -10,8 +10,7 @@ import {
   Globe,
   Clock,
   Palette,
-  Check,
-  Users
+  Check
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -29,10 +28,8 @@ import { Badge } from '../components/ui/Badge';
 import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal';
 import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
 import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
-import { MembersManagement } from '../components/settings/MembersManagement';
-import { InvitationManagement } from '../components/settings/InvitationManagement';
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences' | 'analytics' | 'members';
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences' | 'analytics';
 
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin, isFirebaseEnabled, refreshUser } = useAuth();
@@ -107,7 +104,6 @@ export const SettingsPage: React.FC = () => {
     { id: 'security' as const, label: t('settings.security'), icon: Shield },
     { id: 'notifications' as const, label: t('settings.notifications'), icon: Bell },
     { id: 'preferences' as const, label: t('settings.preferences'), icon: SettingsIcon },
-    { id: 'members' as const, label: 'Members', icon: Users },
   ];
 
   const saveProfileMutation = useMutation({
@@ -957,32 +953,6 @@ export const SettingsPage: React.FC = () => {
             </div>
           )}
 
-          {activeTab === 'members' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-semibold mb-2 text-theme-primary">Members & Invitations</h2>
-                <p className="text-body-sm text-theme-secondary">
-                  Manage members and invitations across all projects where you have admin or owner permissions.
-                </p>
-              </div>
-
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2 text-theme-primary">Members Management</h3>
-                <p className="text-body-sm text-theme-secondary mb-6">
-                  View members and their roles across your projects. Role changes must be made from the project's members tab.
-                </p>
-                <MembersManagement userId={user?.id} />
-              </Card>
-
-              <Card className="p-6">
-                <h3 className="text-lg font-semibold mb-2 text-theme-primary">Invitation Management</h3>
-                <p className="text-body-sm text-theme-secondary mb-6">
-                  Manage pending, accepted, and rejected invitations for your projects.
-                </p>
-                <InvitationManagement userId={user?.id} />
-              </Card>
-            </div>
-          )}
         </div>
       </div>
 
