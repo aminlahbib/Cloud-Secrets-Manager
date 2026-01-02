@@ -236,13 +236,15 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, 
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL,
     type VARCHAR(64) NOT NULL,
     title VARCHAR(255) NOT NULL,
     body TEXT,
     metadata JSONB,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    read_at TIMESTAMP WITH TIME ZONE
+    read_at TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT fk_notifications_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
@@ -275,12 +277,16 @@ CREATE INDEX IF NOT EXISTS idx_email_deliveries_created ON email_deliveries(crea
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS notification_analytics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    notification_id UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    notification_id UUID NOT NULL,
+    user_id UUID NOT NULL,
     action VARCHAR(50),
     opened_at TIMESTAMP WITH TIME ZONE,
     clicked_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    CONSTRAINT fk_notification_analytics_notification
+        FOREIGN KEY (notification_id) REFERENCES notifications(id) ON DELETE CASCADE,
+    CONSTRAINT fk_notification_analytics_user
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_notification_analytics_user ON notification_analytics(user_id);
