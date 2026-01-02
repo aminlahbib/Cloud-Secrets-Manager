@@ -127,7 +127,7 @@ graph LR
     subgraph API["API Layer"]
         SecretAPI[Secret Service<br/>:8080]
         AuditAPI[Audit Service<br/>:8081]
-        NotifAPI[Simple Notification Service<br/>:8082]
+        NotifAPI[Notification Service<br/>:8082]
     end
     
     subgraph Bus["Event Bus"]
@@ -156,7 +156,7 @@ graph LR
     AuditAPI --> PG
     NotifAPI --> PG
     NotifAPI --> Email
-    React -->|REST| NotifAPI
+    NotifAPI -.->|SSE| React
     
     style User fill:#E8F4F8
     style UI fill:#D4EDDA

@@ -29,9 +29,6 @@ public class NotificationSubscriberConfig implements DisposableBean {
     @Value("${notifications.subscription-name:notifications-events-sub}")
     private String subscriptionName;
 
-    @Value("${notifications.pubsub.executor-thread-count:4}")
-    private int executorThreadCount;
-
     private Subscriber subscriber;
 
     @Bean
@@ -45,23 +42,15 @@ public class NotificationSubscriberConfig implements DisposableBean {
                 ProjectSubscriptionName.of(gcpProjectId, subscriptionName);
 
         try {
-            // Validate thread count
-            int threads = Math.max(1, Math.min(executorThreadCount, 20)); // Clamp between 1 and 20
-            if (threads != executorThreadCount) {
-                log.warn("Pub/Sub executor thread count adjusted from {} to {} (valid range: 1-20)", 
-                        executorThreadCount, threads);
-            }
-            
             this.subscriber = Subscriber.newBuilder(subName, messageReceiver)
                     .setExecutorProvider(
                             InstantiatingExecutorProvider.newBuilder()
-                                    .setExecutorThreadCount(threads)
+                                    .setExecutorThreadCount(4)
                                     .build()
                     )
                     .build();
             this.subscriber.startAsync().awaitRunning();
-            log.info("Started Pub/Sub subscriber for {} with {} executor threads", 
-                    subName.toString(), threads);
+            log.info("Started Pub/Sub subscriber for {}", subName.toString());
         } catch (ApiException ex) {
             log.error("Failed to start Pub/Sub subscriber for {}: {}", subName, ex.getMessage(), ex);
         }

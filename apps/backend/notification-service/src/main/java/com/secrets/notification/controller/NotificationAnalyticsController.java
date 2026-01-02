@@ -3,6 +3,8 @@ package com.secrets.notification.controller;
 import com.secrets.notification.entity.User;
 import com.secrets.notification.repository.UserRepository;
 import com.secrets.notification.service.NotificationAnalyticsService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/notifications/analytics")
 public class NotificationAnalyticsController {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationAnalyticsController.class);
 
     private final NotificationAnalyticsService analyticsService;
     private final UserRepository userRepository;
@@ -37,9 +41,6 @@ public class NotificationAnalyticsController {
             @PathVariable("notificationId") UUID notificationId,
             @RequestParam("action") String action,
             Authentication authentication) {
-        if (action == null || action.isBlank()) {
-            return ResponseEntity.badRequest().build();
-        }
         UUID userId = resolveCurrentUserId(authentication);
         analyticsService.trackAction(notificationId, userId, action);
         return ResponseEntity.noContent().build();

@@ -1,9 +1,14 @@
 package com.secrets.scheduler;
 
+import com.secrets.dto.notification.NotificationEvent;
+import com.secrets.dto.notification.NotificationType;
 import com.secrets.entity.Project;
 import com.secrets.entity.Secret;
+import com.secrets.entity.User;
 import com.secrets.repository.ProjectRepository;
 import com.secrets.repository.SecretRepository;
+import com.secrets.repository.UserRepository;
+import com.secrets.service.NotificationEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Scheduled tasks for secret expiration notifications
@@ -23,11 +29,17 @@ public class SecretExpirationScheduler {
 
     private final SecretRepository secretRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    private final NotificationEventPublisher notificationEventPublisher;
 
     public SecretExpirationScheduler(SecretRepository secretRepository,
-            ProjectRepository projectRepository) {
+            ProjectRepository projectRepository,
+            UserRepository userRepository,
+            NotificationEventPublisher notificationEventPublisher) {
         this.secretRepository = secretRepository;
         this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     /**
@@ -60,11 +72,37 @@ public class SecretExpirationScheduler {
                     continue;
                 }
 
-                // Note: Expiration notifications removed - only invitation notifications are supported
-                log.debug("Secret {} in project {} is expiring soon (expiration notifications disabled)", 
-                        secret.getSecretKey(), project.getName());
+                // Get secret owner
+                User owner = userRepository.findById(secret.getCreatedBy()).orElse(null);
+                if (owner == null) {
+                    log.warn("Owner not found for secret {}, skipping notification", secret.getSecretKey());
+                    continue;
+                }
+
+                // Publish notification event for expiration
+                NotificationEvent event = new NotificationEvent();
+                event.setType(NotificationType.SECRET_EXPIRING_SOON);
+                event.setActorUserId(null); // system-generated
+                event.setRecipientUserIds(List.of(owner.getId().toString()));
+                event.setProjectId(project.getId().toString());
+                event.setSecretId(secret.getId().toString());
+                event.setTitle("Secret expiring soon: " + secret.getSecretKey());
+                event.setMessage(String.format(
+                        "Your secret \"%s\" in project \"%s\" will expire on %s.",
+                        secret.getSecretKey(),
+                        project.getName(),
+                        secret.getExpiresAt()));
+                String secretLink = String.format("/projects/%s/secrets/%s", project.getId(), secret.getId());
+                event.setMetadata(Map.of(
+                        "secretKey", secret.getSecretKey(),
+                        "projectName", project.getName(),
+                        "expiresAt", secret.getExpiresAt().toString(),
+                        "deepLink", secretLink,
+                        "actions", "[\"VIEW_SECRET\", \"ROTATE_SECRET\", \"UPDATE_EXPIRATION\"]"
+                ));
+                notificationEventPublisher.publish(event);
             } catch (Exception e) {
-                log.error("Error processing expiration for secret {}: {}",
+                log.error("Failed to publish expiration warning event for secret {}: {}",
                         secret.getSecretKey(), e.getMessage());
             }
         }

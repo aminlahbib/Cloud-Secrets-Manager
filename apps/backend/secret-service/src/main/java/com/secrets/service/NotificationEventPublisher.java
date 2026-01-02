@@ -35,20 +35,12 @@ public class NotificationEventPublisher {
     }
 
     /**
-     * Publish a notification event. Only PROJECT_INVITATION and TEAM_INVITATION events are allowed.
-     * Failures are logged but do not interrupt the main application flow.
+     * Publish a notification event. Failures are logged but do not
+     * interrupt the main application flow.
      */
     public void publish(NotificationEvent event) {
         if (publisher.isEmpty()) {
             log.debug("Notification publisher is not configured. Skipping event: {}", event.getType());
-            return;
-        }
-
-        // Only allow invitation events
-        if (event.getType() != com.secrets.dto.notification.NotificationType.PROJECT_INVITATION &&
-            event.getType() != com.secrets.dto.notification.NotificationType.TEAM_INVITATION) {
-            log.warn("Skipping non-invitation notification event: {}. Only PROJECT_INVITATION and TEAM_INVITATION are supported.", 
-                    event.getType());
             return;
         }
 

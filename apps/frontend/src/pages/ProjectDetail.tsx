@@ -26,6 +26,7 @@ import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
 import { SecretsTab } from '../components/projects/SecretsTab';
 import { MembersTab } from '../components/shared/MembersTab';
+import { InviteMemberModal } from '../components/projects/InviteMemberModal';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
 import {
@@ -134,6 +135,14 @@ export const ProjectDetailPage: React.FC = () => {
     queryFn: () => membersService.listMembers(projectId!),
     enabled: !!projectId,
     staleTime: 2 * 60 * 1000, // 2 minutes - members rarely change
+  });
+
+  // Fetch pending invitations
+  const { data: pendingInvitations } = useQuery({
+    queryKey: ['project-invitations', projectId],
+    queryFn: () => membersService.listPendingInvitations(projectId!),
+    enabled: !!projectId && canManageMembers,
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   // Calculate date range for analytics (memoized)
@@ -347,7 +356,7 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
-  // Invite member mutation
+  // Invite member mutation (kept for backward compatibility, but InviteMemberModal handles its own mutation)
   const inviteMutation = useMutation({
     mutationFn: () => membersService.inviteMember(projectId!, { email: inviteEmail, role: inviteRole }),
     onSuccess: () => {
@@ -636,6 +645,19 @@ export const ProjectDetailPage: React.FC = () => {
   const handleDeleteSecret = useCallback((key: string) => setShowDeleteSecretModal(key), []);
   const handleBulkDelete = useCallback(() => setShowBulkDeleteModal(true), []);
   const handleRemoveMember = useCallback((userId: string) => removeMemberMutation.mutate(userId), [removeMemberMutation]);
+  
+  const revokeInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) => membersService.revokeInvitation(projectId!, invitationId),
+    onSuccess: () => {
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
+      queryClient.invalidateQueries({ queryKey: ['project-invitations', projectId] });
+    },
+  });
+
+  const handleCancelInvitation = useCallback(
+    (invitationId: string) => revokeInvitationMutation.mutate(invitationId),
+    [revokeInvitationMutation]
+  );
   const handleWorkflowChange = useCallback((workflowId: string | null) => {
     const oldWorkflowId = currentWorkflow?.id || null;
     setSelectedWorkflowId(workflowId || '');
@@ -748,9 +770,11 @@ export const ProjectDetailPage: React.FC = () => {
           availableRoles={availableRoleOptions}
           roleChangeTarget={roleChangeTarget}
           isUpdatingRole={updateMemberRoleMutation.isPending}
+          pendingInvitations={pendingInvitations}
           onRoleChange={handleMemberRoleChange}
           onRemoveMember={handleRemoveMember}
           onInviteMember={handleInviteMember}
+          onCancelInvitation={handleCancelInvitation}
         />
       )}
 
@@ -963,58 +987,20 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Invite Member Modal */}
-      <Modal
+      <InviteMemberModal
         isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        title="Invite Member"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Email Address"
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="colleague@example.com"
-          />
-
-          <div>
-            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-              Role
-            </label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
-            >
-              <option value="VIEWER">Viewer - Read-only access</option>
-              <option value="MEMBER">Member - Can create and update secrets</option>
-              <option value="ADMIN">Admin - Can manage secrets and members</option>
-              {currentUserRole === 'OWNER' && (
-                <option value="OWNER">Owner - Full control</option>
-              )}
-            </select>
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => inviteMutation.mutate()}
-              isLoading={inviteMutation.isPending}
-              disabled={!inviteEmail}
-            >
-              Send Invitation
-            </Button>
-          </div>
-
-          {inviteMutation.isError && (
-            <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
-              Failed to send invitation. Please try again.
-            </p>
-          )}
-        </div>
-      </Modal>
+        onClose={() => {
+          setShowInviteModal(false);
+          setInviteEmail('');
+          setInviteRole('MEMBER');
+        }}
+        projectId={projectId!}
+        projectName={project?.name || ''}
+        currentUserRole={currentUserRole || 'VIEWER'}
+        onSuccess={() => {
+          invalidateProjectQueries(queryClient, projectId!, user?.id);
+        }}
+      />
 
       {/* Import Secrets Modal */}
       <Modal

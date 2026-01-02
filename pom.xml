@@ -22,7 +22,7 @@
     <modules>
         <module>apps/backend/secret-service</module>
         <module>apps/backend/audit-service</module>
-        <module>apps/backend/simple-notification-service</module>
+        <module>apps/backend/notification-service</module>
     </modules>
 
     <properties>

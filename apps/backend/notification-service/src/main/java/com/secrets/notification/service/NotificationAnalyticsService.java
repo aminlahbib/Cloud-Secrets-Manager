@@ -30,38 +30,22 @@ public class NotificationAnalyticsService {
      */
     @Transactional
     public void trackOpen(UUID notificationId, UUID userId) {
-        if (notificationId == null) {
-            log.warn("Attempted to track open for null notification ID");
+        // Check if already tracked
+        List<NotificationAnalytics> existing = analyticsRepository.findByNotificationId(notificationId);
+        boolean alreadyTracked = existing.stream()
+                .anyMatch(a -> a.getUserId().equals(userId) && a.getOpenedAt() != null);
+
+        if (alreadyTracked) {
+            log.debug("Open already tracked for notification {} by user {}", notificationId, userId);
             return;
         }
-        
-        if (userId == null) {
-            log.warn("Attempted to track open for null user ID");
-            return;
-        }
-        
-        try {
-            // Check if already tracked
-            List<NotificationAnalytics> existing = analyticsRepository.findByNotificationId(notificationId);
-            boolean alreadyTracked = existing.stream()
-                    .anyMatch(a -> a.getUserId() != null && a.getUserId().equals(userId) && a.getOpenedAt() != null);
 
-            if (alreadyTracked) {
-                log.debug("Open already tracked for notification {} by user {}", notificationId, userId);
-                return;
-            }
-
-            NotificationAnalytics analytics = new NotificationAnalytics();
-            analytics.setNotificationId(notificationId);
-            analytics.setUserId(userId);
-            analytics.setOpenedAt(Instant.now());
-            analyticsRepository.save(analytics);
-            log.debug("Tracked notification open: notificationId={}, userId={}", notificationId, userId);
-        } catch (Exception e) {
-            log.error("Failed to track notification open for notification {} by user {}: {}", 
-                    notificationId, userId, e.getMessage(), e);
-            // Don't throw - analytics failures shouldn't break the main flow
-        }
+        NotificationAnalytics analytics = new NotificationAnalytics();
+        analytics.setNotificationId(notificationId);
+        analytics.setUserId(userId);
+        analytics.setOpenedAt(Instant.now());
+        analyticsRepository.save(analytics);
+        log.debug("Tracked notification open: notificationId={}, userId={}", notificationId, userId);
     }
 
     /**
@@ -69,53 +53,22 @@ public class NotificationAnalyticsService {
      */
     @Transactional
     public void trackAction(UUID notificationId, UUID userId, String action) {
-        if (notificationId == null) {
-            log.warn("Attempted to track action for null notification ID");
-            return;
-        }
-        
-        if (userId == null) {
-            log.warn("Attempted to track action for null user ID");
-            return;
-        }
-        
-        if (action == null || action.isBlank()) {
-            log.warn("Attempted to track action with null or blank action name");
-            return;
-        }
-        
-        try {
-            NotificationAnalytics analytics = new NotificationAnalytics();
-            analytics.setNotificationId(notificationId);
-            analytics.setUserId(userId);
-            analytics.setAction(action.length() > 50 ? action.substring(0, 50) : action); // Enforce max length
-            analytics.setClickedAt(Instant.now());
-            analyticsRepository.save(analytics);
-            log.debug("Tracked notification action: notificationId={}, userId={}, action={}", notificationId, userId, action);
-        } catch (Exception e) {
-            log.error("Failed to track notification action for notification {} by user {} with action {}: {}", 
-                    notificationId, userId, action, e.getMessage(), e);
-            // Don't throw - analytics failures shouldn't break the main flow
-        }
+        NotificationAnalytics analytics = new NotificationAnalytics();
+        analytics.setNotificationId(notificationId);
+        analytics.setUserId(userId);
+        analytics.setAction(action);
+        analytics.setClickedAt(Instant.now());
+        analyticsRepository.save(analytics);
+        log.debug("Tracked notification action: notificationId={}, userId={}, action={}", notificationId, userId, action);
     }
 
     /**
      * Get analytics summary for a user
      */
     public AnalyticsSummary getSummaryForUser(UUID userId) {
-        if (userId == null) {
-            log.warn("Attempted to get analytics summary for null user ID");
-            return new AnalyticsSummary(0L, 0L);
-        }
-        
-        try {
-            Long opens = analyticsRepository.countOpensByUserId(userId);
-            Long clicks = analyticsRepository.countClicksByUserId(userId);
-            return new AnalyticsSummary(opens != null ? opens : 0L, clicks != null ? clicks : 0L);
-        } catch (Exception e) {
-            log.error("Failed to get analytics summary for user {}: {}", userId, e.getMessage(), e);
-            return new AnalyticsSummary(0L, 0L); // Return empty summary on error
-        }
+        Long opens = analyticsRepository.countOpensByUserId(userId);
+        Long clicks = analyticsRepository.countClicksByUserId(userId);
+        return new AnalyticsSummary(opens != null ? opens : 0L, clicks != null ? clicks : 0L);
     }
 
     public static class AnalyticsSummary {
