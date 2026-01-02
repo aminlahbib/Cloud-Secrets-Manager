@@ -39,7 +39,7 @@ export const InvitationManagement: React.FC<InvitationManagementProps> = ({ user
       await Promise.all(
         projects.map(async (project) => {
           try {
-            const invitations = await membersService.listPendingInvitations(project.id);
+            const invitations = await membersService.listAllInvitations(project.id);
             invitationsMap[project.id] = invitations;
           } catch (error) {
             console.error(`Failed to fetch invitations for project ${project.id}:`, error);

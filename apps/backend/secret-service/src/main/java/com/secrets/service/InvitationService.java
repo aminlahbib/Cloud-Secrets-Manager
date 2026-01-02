@@ -146,6 +146,17 @@ public class InvitationService {
     }
 
     /**
+     * List all invitations for a project (pending, accepted, rejected, expired)
+     */
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> listAllProjectInvitations(UUID projectId) {
+        List<ProjectInvitation> invitations = invitationRepository.findByProjectId(projectId);
+        return invitations.stream()
+                .map(InvitationResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Accept an invitation
      */
     public void acceptInvitation(String token, UUID userId) {
