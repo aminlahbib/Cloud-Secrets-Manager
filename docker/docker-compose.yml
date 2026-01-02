@@ -10,6 +10,7 @@ services:
       dockerfile: Dockerfile
     image: csm-postgres:latest
     container_name: csm-db
+    pull_policy: build
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-secrets}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
