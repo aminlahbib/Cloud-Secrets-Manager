@@ -244,11 +244,13 @@ export const InvitationManagement: React.FC<InvitationManagementProps> = ({ user
                             {invitation.email}
                           </p>
                           <p className="text-xs text-theme-tertiary">
-                            {invitation.status} • {new Date(invitation.createdAt).toLocaleDateString()}
+                            {invitation.status === 'REVOKED' ? 'Cancelled' : 'Expired'} • {new Date(invitation.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="default">{invitation.status}</Badge>
+                      <Badge variant="default">
+                        {invitation.status === 'REVOKED' ? 'Cancelled' : 'Expired'}
+                      </Badge>
                     </div>
                   ))}
                 </div>
