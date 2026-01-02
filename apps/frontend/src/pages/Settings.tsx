@@ -10,7 +10,8 @@ import {
   Globe,
   Clock,
   Palette,
-  Check
+  Check,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -28,8 +29,10 @@ import { Badge } from '../components/ui/Badge';
 import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal';
 import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
 import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
+import { MembersManagement } from '../components/settings/MembersManagement';
+import { InvitationManagement } from '../components/settings/InvitationManagement';
 
-type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences' | 'analytics';
+type SettingsTab = 'profile' | 'security' | 'notifications' | 'preferences' | 'analytics' | 'members';
 
 export const SettingsPage: React.FC = () => {
   const { user, isPlatformAdmin, isFirebaseEnabled, refreshUser } = useAuth();
@@ -104,6 +107,7 @@ export const SettingsPage: React.FC = () => {
     { id: 'security' as const, label: t('settings.security'), icon: Shield },
     { id: 'notifications' as const, label: t('settings.notifications'), icon: Bell },
     { id: 'preferences' as const, label: t('settings.preferences'), icon: SettingsIcon },
+    { id: 'members' as const, label: 'Members', icon: Users },
   ];
 
   const saveProfileMutation = useMutation({
@@ -945,6 +949,26 @@ export const SettingsPage: React.FC = () => {
               <div className="flex justify-end">
                 <Button onClick={handleSavePreferences} isLoading={savePreferencesMutation.isPending} disabled={isLoadingPreferences}>Save Preferences</Button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'members' && (
+            <div className="space-y-6">
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-2 text-theme-primary">Members Management</h2>
+                <p className="text-body-sm text-theme-secondary mb-6">
+                  View and manage members across all projects where you have admin or owner permissions.
+                </p>
+                <MembersManagement userId={user?.id} />
+              </Card>
+
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold mb-2 text-theme-primary">Invitation Management</h2>
+                <p className="text-body-sm text-theme-secondary mb-6">
+                  Manage pending, accepted, and rejected invitations for your projects.
+                </p>
+                <InvitationManagement userId={user?.id} />
+              </Card>
             </div>
           )}
         </div>
