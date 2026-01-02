@@ -242,9 +242,14 @@ export const SettingsPage: React.FC = () => {
         <p className="text-body-sm text-theme-secondary mt-1">{t('settings.description')}</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-8">
         {/* Settings Navigation */}
-        <div className="w-full lg:w-64 space-y-1">
+        <div className="w-full lg:w-72 space-y-2">
+          <div className="hidden lg:block mb-4">
+            <p className="text-xs uppercase tracking-wider text-theme-tertiary font-medium">
+              Settings
+            </p>
+          </div>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -253,7 +258,7 @@ export const SettingsPage: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-150"
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium transition-all duration-150"
                 style={{
                   backgroundColor: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
                   color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -282,7 +287,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {/* Settings Content */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           {activeTab === 'profile' && (
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-6 text-theme-primary">{t('settings.profileSettings')}</h2>
@@ -954,16 +959,23 @@ export const SettingsPage: React.FC = () => {
 
           {activeTab === 'members' && (
             <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold mb-2 text-theme-primary">Members & Invitations</h2>
+                <p className="text-body-sm text-theme-secondary">
+                  Manage members and invitations across all projects where you have admin or owner permissions.
+                </p>
+              </div>
+
               <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-2 text-theme-primary">Members Management</h2>
+                <h3 className="text-lg font-semibold mb-2 text-theme-primary">Members Management</h3>
                 <p className="text-body-sm text-theme-secondary mb-6">
-                  View and manage members across all projects where you have admin or owner permissions.
+                  View members and their roles across your projects. Role changes must be made from the project's members tab.
                 </p>
                 <MembersManagement userId={user?.id} />
               </Card>
 
               <Card className="p-6">
-                <h2 className="text-xl font-semibold mb-2 text-theme-primary">Invitation Management</h2>
+                <h3 className="text-lg font-semibold mb-2 text-theme-primary">Invitation Management</h3>
                 <p className="text-body-sm text-theme-secondary mb-6">
                   Manage pending, accepted, and rejected invitations for your projects.
                 </p>
