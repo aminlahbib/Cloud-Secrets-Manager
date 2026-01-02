@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { membersService } from '../../services/members';
 import { signupService, type EmailCheckResponse } from '../../services/signup';
-import { CheckCircle, Mail, User, AlertCircle } from 'lucide-react';
+import { CheckCircle, User, AlertCircle } from 'lucide-react';
 import type { ProjectRole } from '../../types';
 
 interface InviteMemberModalProps {

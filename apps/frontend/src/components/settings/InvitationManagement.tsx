@@ -22,9 +22,10 @@ export const InvitationManagement: React.FC<InvitationManagementProps> = ({ user
   const { data: projects, isLoading: isLoadingProjects } = useQuery<Project[]>({
     queryKey: ['user-projects'],
     queryFn: async () => {
-      const allProjects = await projectsService.listProjects();
+      const response = await projectsService.listProjects();
+      const allProjects = response.content || [];
       return allProjects.filter(
-        (p) => p.currentUserRole === 'OWNER' || p.currentUserRole === 'ADMIN'
+        (p: Project) => p.currentUserRole === 'OWNER' || p.currentUserRole === 'ADMIN'
       );
     },
     enabled: !!userId,

@@ -17,7 +17,6 @@ import { useWorkflows } from '../hooks/useWorkflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -136,6 +135,17 @@ export const ProjectDetailPage: React.FC = () => {
     enabled: !!projectId,
     staleTime: 2 * 60 * 1000, // 2 minutes - members rarely change
   });
+
+  // Calculate permissions early (before queries that depend on them)
+  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
+  const currentUserRole = project?.currentUserRole;
+  const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
+  const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+  const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+  const canManageProject = currentUserRole === 'OWNER';
+  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
+  const canLeaveProject =
+    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   // Fetch pending invitations
   const { data: pendingInvitations } = useQuery({
@@ -356,16 +366,6 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
-  // Invite member mutation (kept for backward compatibility, but InviteMemberModal handles its own mutation)
-  const inviteMutation = useMutation({
-    mutationFn: () => membersService.inviteMember(projectId!, { email: inviteEmail, role: inviteRole }),
-    onSuccess: () => {
-      invalidateProjectQueries(queryClient, projectId!, user?.id);
-      setShowInviteModal(false);
-      setInviteEmail('');
-      setInviteRole('MEMBER');
-    },
-  });
 
   // Remove member mutation
   const removeMemberMutation = useMutation({
@@ -423,16 +423,6 @@ export const ProjectDetailPage: React.FC = () => {
       setTransferTarget('');
     }
   }, [showTransferModal]);
-
-  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
-  const currentUserRole = project?.currentUserRole;
-  const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
-  const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
-  const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
-  const canManageProject = currentUserRole === 'OWNER';
-  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
-  const canLeaveProject =
-    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secretFilterConfigs: FilterConfig[] = useMemo(() => [
     {
