@@ -59,7 +59,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       AUDIT_SERVICE_URL: http://audit:8081
-      NOTIFICATION_SERVICE_URL: http://notification:8082
       SPRING_PROFILES_ACTIVE: dev
       GOOGLE_IDENTITY_ENABLED: ${GOOGLE_IDENTITY_ENABLED:-true}
       GOOGLE_PROJECT_ID: ${GOOGLE_PROJECT_ID:-your-firebase-project-id}
@@ -138,13 +137,13 @@ services:
       - csm
 
   # ---------------------------------------------------------------------------
-  # Notification Service
+  # Simple Notification Service
   # ---------------------------------------------------------------------------
-  notification:
+  simple-notification:
     build:
       context: ..
-      dockerfile: apps/backend/notification-service/Dockerfile
-    container_name: csm-notification
+      dockerfile: apps/backend/simple-notification-service/Dockerfile
+    container_name: csm-simple-notification
     depends_on:
       postgres:
         condition: service_healthy

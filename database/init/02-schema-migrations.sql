@@ -232,90 +232,37 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DE
 CREATE INDEX IF NOT EXISTS idx_audit_logs_resource ON audit_logs(resource_type, resource_id);
 
 -- =============================================================================
--- NOTIFICATIONS TABLE
+-- INVITE NOTIFICATIONS TABLE
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS invite_notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(64) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    body TEXT,
-    metadata JSONB,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    read_at TIMESTAMP WITH TIME ZONE
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE, -- Nullable for invitations to non-existing users
+    type VARCHAR(20) NOT NULL CHECK (type IN ('PROJECT_INVITATION', 'TEAM_INVITATION')),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+    inviter_email VARCHAR(255),
+    inviter_name VARCHAR(255),
+    message TEXT,
+    email_sent BOOLEAN DEFAULT FALSE,
+    email_sent_at TIMESTAMP WITH TIME ZONE,
+    read_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Index for user notifications query (most common query pattern)
-CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_invite_notifications_user 
+    ON invite_notifications(user_id, created_at DESC) WHERE user_id IS NOT NULL;
 
--- Composite index for batching queries (userId, type, readAt, createdAt)
--- This index is optimized for finding unread notifications of the same type within a time window
-CREATE INDEX IF NOT EXISTS idx_notifications_batching 
-    ON notifications(user_id, type, read_at, created_at DESC) 
-    WHERE read_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_invite_notifications_unread 
+    ON invite_notifications(user_id, read_at) 
+    WHERE read_at IS NULL AND user_id IS NOT NULL;
 
--- Index for type filtering
-CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
+CREATE INDEX IF NOT EXISTS idx_invite_notifications_project 
+    ON invite_notifications(project_id) 
+    WHERE project_id IS NOT NULL;
 
--- =============================================================================
--- EMAIL DELIVERIES TABLE
--- =============================================================================
-CREATE TABLE IF NOT EXISTS email_deliveries (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    recipient_email VARCHAR(255) NOT NULL,
-    subject VARCHAR(500) NOT NULL,
-    email_type VARCHAR(50) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    sendgrid_message_id VARCHAR(255),
-    error_message TEXT,
-    retry_count INTEGER NOT NULL DEFAULT 0,
-    sent_at TIMESTAMP WITH TIME ZONE,
-    delivered_at TIMESTAMP WITH TIME ZONE,
-    opened_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
--- Index for recipient email lookups
-CREATE INDEX IF NOT EXISTS idx_email_deliveries_recipient ON email_deliveries(recipient_email);
-
--- Index for status filtering
-CREATE INDEX IF NOT EXISTS idx_email_deliveries_status ON email_deliveries(status);
-
--- Composite index for cleanup queries (status, createdAt)
--- This index is optimized for finding old email delivery records for cleanup
-CREATE INDEX IF NOT EXISTS idx_email_deliveries_status_created 
-    ON email_deliveries(status, created_at);
-
--- Index for created_at for time-based queries
-CREATE INDEX IF NOT EXISTS idx_email_deliveries_created ON email_deliveries(created_at DESC);
-
--- =============================================================================
--- NOTIFICATION ANALYTICS TABLE
--- =============================================================================
-CREATE TABLE IF NOT EXISTS notification_analytics (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    notification_id UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    action VARCHAR(50),
-    opened_at TIMESTAMP WITH TIME ZONE,
-    clicked_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
-);
-
--- Index for user analytics queries
-CREATE INDEX IF NOT EXISTS idx_notification_analytics_user ON notification_analytics(user_id);
-
--- Index for notification analytics queries
-CREATE INDEX IF NOT EXISTS idx_notification_analytics_notification ON notification_analytics(notification_id);
-
--- Composite index for analytics queries (userId, notificationId)
--- This index is optimized for finding analytics data for a specific user and notification
-CREATE INDEX IF NOT EXISTS idx_notification_analytics_user_notification 
-    ON notification_analytics(user_id, notification_id);
-
--- Index for created_at for time-based analytics
-CREATE INDEX IF NOT EXISTS idx_notification_analytics_created ON notification_analytics(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_invite_notifications_team 
+    ON invite_notifications(team_id) 
+    WHERE team_id IS NOT NULL;
 
 -- =============================================================================
 -- REFRESH TOKENS TABLE
@@ -353,9 +300,7 @@ ALTER TABLE teams OWNER TO secret_user;
 ALTER TABLE team_memberships OWNER TO secret_user;
 ALTER TABLE team_projects OWNER TO secret_user;
 ALTER TABLE audit_logs OWNER TO secret_user;
-ALTER TABLE notifications OWNER TO secret_user;
-ALTER TABLE email_deliveries OWNER TO secret_user;
-ALTER TABLE notification_analytics OWNER TO secret_user;
+ALTER TABLE invite_notifications OWNER TO secret_user;
 ALTER TABLE refresh_tokens OWNER TO secret_user;
 
 -- Set ownership of all sequences to secret_user

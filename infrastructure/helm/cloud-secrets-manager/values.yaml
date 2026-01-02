@@ -1,7 +1,6 @@
 image:
   repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
   repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
-  repositoryNotificationService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service"
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -27,17 +26,6 @@ auditService:
       memory: "256Mi"
       cpu: "250m"
 
-notificationService:
-  replicaCount: 1
-  port: 8082
-  resources:
-    requests:
-      memory: "128Mi"
-      cpu: "100m"
-    limits:
-      memory: "256Mi"
-      cpu: "250m"
-
 serviceAccount:
   create: true
   annotations:
@@ -50,12 +38,6 @@ auditServiceAccount:
   annotations:
     # Workload Identity binding for audit-service
     iam.gke.io/gcp-service-account: "audit-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
-
-notificationServiceAccount:
-  create: true
-  annotations:
-    # Workload Identity binding for notification-service
-    iam.gke.io/gcp-service-account: "notification-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
 
 # Secrets Configuration
 # Set to false if using External Secrets Operator (recommended for production)

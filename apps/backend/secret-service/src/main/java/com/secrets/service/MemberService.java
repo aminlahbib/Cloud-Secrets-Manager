@@ -2,8 +2,6 @@ package com.secrets.service;
 
 import com.secrets.dto.member.MemberRequest;
 import com.secrets.dto.member.MemberResponse;
-import com.secrets.dto.notification.NotificationEvent;
-import com.secrets.dto.notification.NotificationType;
 import com.secrets.entity.ProjectMembership;
 import com.secrets.entity.User;
 import com.secrets.entity.Workflow;
@@ -19,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -41,7 +38,6 @@ public class MemberService {
     private final WorkflowRepository workflowRepository;
     private final WorkflowProjectRepository workflowProjectRepository;
     private final WorkflowService workflowService;
-    private final NotificationEventPublisher notificationEventPublisher;
 
     public MemberService(ProjectMembershipRepository membershipRepository,
                         ProjectRepository projectRepository,
@@ -50,8 +46,7 @@ public class MemberService {
                         InvitationService invitationService,
                         WorkflowRepository workflowRepository,
                         WorkflowProjectRepository workflowProjectRepository,
-                        WorkflowService workflowService,
-                        NotificationEventPublisher notificationEventPublisher) {
+                        WorkflowService workflowService) {
         this.membershipRepository = membershipRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
@@ -60,7 +55,6 @@ public class MemberService {
         this.workflowRepository = workflowRepository;
         this.workflowProjectRepository = workflowProjectRepository;
         this.workflowService = workflowService;
-        this.notificationEventPublisher = notificationEventPublisher;
     }
 
     /**
@@ -153,37 +147,7 @@ public class MemberService {
 
         log.info("Updated role of user {} in project {} to {}", memberUserId, projectId, newRole);
 
-        try {
-            User member = userRepository.findById(memberUserId)
-                .orElse(null);
-
-            var project = projectRepository.findById(projectId).orElse(null);
-
-            if (member != null && project != null) {
-                NotificationEvent event = new NotificationEvent();
-                event.setType(NotificationType.ROLE_CHANGED);
-                event.setActorUserId(userId != null ? userId.toString() : null);
-                event.setRecipientUserIds(List.of(memberUserId.toString()));
-                event.setProjectId(projectId.toString());
-                event.setTitle("Your role has changed");
-                event.setMessage(String.format(
-                    "Your role in project \"%s\" has been updated to %s.",
-                    project.getName(),
-                    newRole.name()));
-                String projectLink = String.format("/projects/%s", projectId);
-                event.setMetadata(Map.of(
-                    "projectName", project.getName(),
-                    "oldRole", existing.getRole().name(),
-                    "newRole", newRole.name(),
-                    "deepLink", projectLink,
-                    "actions", "[\"VIEW_PROJECT\"]"
-                ));
-                notificationEventPublisher.publish(event);
-            }
-        } catch (Exception e) {
-            log.error("Failed to publish role change notification for user {} in project {}: {}",
-                memberUserId, projectId, e.getMessage());
-        }
+        // Note: Role change notifications removed - only invitation notifications are supported
 
         return MemberResponse.from(saved);
     }

@@ -5,7 +5,6 @@
 image:
   repositorySecretService: "csm/secret-service"
   repositoryAuditService: "csm/audit-service"
-  repositoryNotificationService: "csm/notification-service"
   tag: "local"
   pullPolicy: Never  # Use local images
 
@@ -31,27 +30,12 @@ auditService:
       memory: "256Mi"
       cpu: "250m"
 
-notificationService:
-  replicaCount: 1
-  port: 8082
-  resources:
-    requests:
-      memory: "128Mi"
-      cpu: "50m"
-    limits:
-      memory: "256Mi"
-      cpu: "250m"
-
 # Service accounts (no GCP annotations for local)
 serviceAccount:
   create: true
   annotations: {}
 
 auditServiceAccount:
-  create: true
-  annotations: {}
-
-notificationServiceAccount:
   create: true
   annotations: {}
 
