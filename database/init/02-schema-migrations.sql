@@ -245,7 +245,17 @@ CREATE TABLE IF NOT EXISTS notifications (
     read_at TIMESTAMP WITH TIME ZONE
 );
 
+-- Index for user notifications query (most common query pattern)
 CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+
+-- Composite index for batching queries (userId, type, readAt, createdAt)
+-- This index is optimized for finding unread notifications of the same type within a time window
+CREATE INDEX IF NOT EXISTS idx_notifications_batching 
+    ON notifications(user_id, type, read_at, created_at DESC) 
+    WHERE read_at IS NULL;
+
+-- Index for type filtering
+CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);
 
 -- =============================================================================
 -- EMAIL DELIVERIES TABLE
@@ -266,8 +276,18 @@ CREATE TABLE IF NOT EXISTS email_deliveries (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Index for recipient email lookups
 CREATE INDEX IF NOT EXISTS idx_email_deliveries_recipient ON email_deliveries(recipient_email);
+
+-- Index for status filtering
 CREATE INDEX IF NOT EXISTS idx_email_deliveries_status ON email_deliveries(status);
+
+-- Composite index for cleanup queries (status, createdAt)
+-- This index is optimized for finding old email delivery records for cleanup
+CREATE INDEX IF NOT EXISTS idx_email_deliveries_status_created 
+    ON email_deliveries(status, created_at);
+
+-- Index for created_at for time-based queries
 CREATE INDEX IF NOT EXISTS idx_email_deliveries_created ON email_deliveries(created_at DESC);
 
 -- =============================================================================
@@ -283,8 +303,18 @@ CREATE TABLE IF NOT EXISTS notification_analytics (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Index for user analytics queries
 CREATE INDEX IF NOT EXISTS idx_notification_analytics_user ON notification_analytics(user_id);
+
+-- Index for notification analytics queries
 CREATE INDEX IF NOT EXISTS idx_notification_analytics_notification ON notification_analytics(notification_id);
+
+-- Composite index for analytics queries (userId, notificationId)
+-- This index is optimized for finding analytics data for a specific user and notification
+CREATE INDEX IF NOT EXISTS idx_notification_analytics_user_notification 
+    ON notification_analytics(user_id, notification_id);
+
+-- Index for created_at for time-based analytics
 CREATE INDEX IF NOT EXISTS idx_notification_analytics_created ON notification_analytics(created_at DESC);
 
 -- =============================================================================

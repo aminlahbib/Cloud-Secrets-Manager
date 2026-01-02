@@ -27,6 +27,15 @@ public class EmailRetryService {
      */
     @Async
     public CompletableFuture<Boolean> executeWithRetry(Supplier<Boolean> operation, String operationName) {
+        if (operation == null) {
+            log.error("Email retry operation is null for operation '{}'", operationName);
+            return CompletableFuture.completedFuture(false);
+        }
+        
+        if (operationName == null || operationName.isBlank()) {
+            operationName = "unknown";
+        }
+        
         int attempt = 0;
         long delay = INITIAL_DELAY_MS;
 

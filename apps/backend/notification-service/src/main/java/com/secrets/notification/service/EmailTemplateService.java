@@ -8,7 +8,6 @@ import org.thymeleaf.context.Context;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 /**
  * Service for rendering HTML email templates using Thymeleaf.
@@ -22,6 +21,9 @@ public class EmailTemplateService {
     private final TemplateEngine templateEngine;
 
     public EmailTemplateService(TemplateEngine templateEngine) {
+        if (templateEngine == null) {
+            throw new IllegalArgumentException("TemplateEngine cannot be null");
+        }
         this.templateEngine = templateEngine;
     }
 
@@ -29,34 +31,49 @@ public class EmailTemplateService {
      * Render invitation email HTML template.
      */
     public String renderInvitationEmail(String inviterName, String projectName, String acceptLink) {
-        Context context = new Context();
-        context.setVariable("inviterName", inviterName);
-        context.setVariable("projectName", projectName);
-        context.setVariable("acceptLink", acceptLink);
-        return templateEngine.process("email/invitation", context);
+        try {
+            Context context = new Context();
+            context.setVariable("inviterName", inviterName != null ? inviterName : "A teammate");
+            context.setVariable("projectName", projectName != null ? projectName : "a project");
+            context.setVariable("acceptLink", acceptLink != null ? acceptLink : "");
+            return templateEngine.process("email/invitation", context);
+        } catch (Exception e) {
+            log.error("Failed to render invitation email template: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to render invitation email template", e);
+        }
     }
 
     /**
      * Render expiration warning email HTML template.
      */
     public String renderExpirationWarningEmail(String secretKey, String projectName, LocalDateTime expiresAt, String projectLink) {
-        Context context = new Context();
-        context.setVariable("secretKey", secretKey);
-        context.setVariable("projectName", projectName);
-        context.setVariable("expiresAt", expiresAt.format(DATE_FORMATTER));
-        context.setVariable("projectLink", projectLink);
-        return templateEngine.process("email/expiration-warning", context);
+        try {
+            Context context = new Context();
+            context.setVariable("secretKey", secretKey != null ? secretKey : "");
+            context.setVariable("projectName", projectName != null ? projectName : "");
+            context.setVariable("expiresAt", expiresAt != null ? expiresAt.format(DATE_FORMATTER) : "");
+            context.setVariable("projectLink", projectLink != null ? projectLink : "");
+            return templateEngine.process("email/expiration-warning", context);
+        } catch (Exception e) {
+            log.error("Failed to render expiration warning email template: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to render expiration warning email template", e);
+        }
     }
 
     /**
      * Render role change email HTML template.
      */
     public String renderRoleChangeEmail(String projectName, String oldRole, String newRole, String projectLink) {
-        Context context = new Context();
-        context.setVariable("projectName", projectName);
-        context.setVariable("oldRole", oldRole);
-        context.setVariable("newRole", newRole);
-        context.setVariable("projectLink", projectLink);
-        return templateEngine.process("email/role-change", context);
+        try {
+            Context context = new Context();
+            context.setVariable("projectName", projectName != null ? projectName : "");
+            context.setVariable("oldRole", oldRole != null ? oldRole : "");
+            context.setVariable("newRole", newRole != null ? newRole : "");
+            context.setVariable("projectLink", projectLink != null ? projectLink : "");
+            return templateEngine.process("email/role-change", context);
+        } catch (Exception e) {
+            log.error("Failed to render role change email template: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to render role change email template", e);
+        }
     }
 }

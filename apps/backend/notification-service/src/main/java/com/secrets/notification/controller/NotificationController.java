@@ -1,10 +1,9 @@
 package com.secrets.notification.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.secrets.notification.dto.NotificationDto;
 import com.secrets.notification.entity.Notification;
 import com.secrets.notification.entity.User;
+import com.secrets.notification.mapper.NotificationMapper;
 import com.secrets.notification.repository.NotificationRepository;
 import com.secrets.notification.repository.UserRepository;
 import com.secrets.notification.service.NotificationSseService;
@@ -21,10 +20,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -34,18 +31,18 @@ public class NotificationController {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
+    private final NotificationMapper notificationMapper;
     private final NotificationSseService sseService;
     private final com.secrets.notification.service.NotificationAnalyticsService analyticsService;
 
     public NotificationController(NotificationRepository notificationRepository,
                                   UserRepository userRepository,
-                                  ObjectMapper objectMapper,
+                                  NotificationMapper notificationMapper,
                                   NotificationSseService sseService,
                                   com.secrets.notification.service.NotificationAnalyticsService analyticsService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
-        this.objectMapper = objectMapper;
+        this.notificationMapper = notificationMapper;
         this.sseService = sseService;
         this.analyticsService = analyticsService;
     }
@@ -82,7 +79,7 @@ public class NotificationController {
                     : notificationRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         }
 
-        Page<NotificationDto> response = notifications.map(this::toDto);
+        Page<NotificationDto> response = notifications.map(notificationMapper::toDto);
 
         return ResponseEntity.ok(response);
     }
@@ -91,13 +88,29 @@ public class NotificationController {
     public ResponseEntity<Void> markAsRead(
             @PathVariable("id") UUID id,
             Authentication authentication) {
+        if (id == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
         UUID userId = resolveCurrentUserId(authentication);
         notificationRepository.findById(id).ifPresent(notification -> {
+            // Verify the notification belongs to the current user
+            if (!notification.getUserId().equals(userId)) {
+                log.warn("User {} attempted to mark notification {} as read, but notification belongs to user {}",
+                        userId, id, notification.getUserId());
+                return;
+            }
+            
             if (notification.getReadAt() == null) {
                 notification.setReadAt(Instant.now());
                 notificationRepository.save(notification);
                 // Track analytics
-                analyticsService.trackOpen(notification.getId(), userId);
+                try {
+                    analyticsService.trackOpen(notification.getId(), userId);
+                } catch (Exception e) {
+                    log.warn("Failed to track notification open for {}: {}", id, e.getMessage());
+                    // Don't fail the request if analytics tracking fails
+                }
             }
         });
         return ResponseEntity.noContent().build();
@@ -109,9 +122,24 @@ public class NotificationController {
         List<Notification> notifications =
                 notificationRepository.findTop50ByUserIdAndReadAtIsNullOrderByCreatedAtDesc(userId);
 
+        if (notifications.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
         Instant now = Instant.now();
-        notifications.forEach(n -> n.setReadAt(now));
-        notificationRepository.saveAll(notifications);
+        notifications.forEach(n -> {
+            if (n.getReadAt() == null) {
+                n.setReadAt(now);
+            }
+        });
+        
+        try {
+            notificationRepository.saveAll(notifications);
+            log.info("Marked {} notifications as read for user {}", notifications.size(), userId);
+        } catch (Exception e) {
+            log.error("Failed to mark notifications as read for user {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
 
         return ResponseEntity.noContent().build();
     }
@@ -119,9 +147,10 @@ public class NotificationController {
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter streamNotifications(Authentication authentication) {
         UUID userId = resolveCurrentUserId(authentication);
-        SseEmitter emitter = new SseEmitter(NotificationSseService.getSseTimeout());
+        SseEmitter emitter = new SseEmitter(sseService.getSseTimeout());
         sseService.addEmitter(userId, emitter);
-        log.info("SSE connection established for user {}", userId);
+        log.info("SSE connection established for user {}. Active connections: {}", 
+                userId, sseService.getActiveConnectionCount());
         return emitter;
     }
 
@@ -131,6 +160,11 @@ public class NotificationController {
             @RequestParam(value = "type", defaultValue = "SECRET_EXPIRING_SOON") String notificationType) {
         UUID userId = resolveCurrentUserId(authentication);
 
+        // Validate notification type
+        if (notificationType == null || notificationType.isBlank()) {
+            return ResponseEntity.badRequest().build();
+        }
+
         Notification notification = new Notification();
         notification.setId(UUID.randomUUID());
         notification.setUserId(userId);
@@ -139,18 +173,24 @@ public class NotificationController {
         notification.setBody("This is a test notification to verify your notification preferences are working correctly.");
         notification.setCreatedAt(Instant.now());
 
-        notificationRepository.save(notification);
+        try {
+            notification = notificationRepository.save(notification);
+        } catch (Exception e) {
+            log.error("Failed to save test notification for user {}: {}", userId, e.getMessage(), e);
+            return ResponseEntity.status(500).build();
+        }
 
         // Send via SSE
         try {
-            NotificationDto dto = toDto(notification);
+            NotificationDto dto = notificationMapper.toDto(notification);
             sseService.sendNotification(userId, dto);
         } catch (Exception ex) {
             log.warn("Failed to send test notification via SSE: {}", ex.getMessage());
+            // Don't fail the request if SSE fails
         }
 
         log.info("Test notification sent to user {}", userId);
-        return ResponseEntity.ok(toDto(notification));
+        return ResponseEntity.ok(notificationMapper.toDto(notification));
     }
 
     private UUID resolveCurrentUserId(Authentication authentication) {
@@ -158,30 +198,6 @@ public class NotificationController {
         User user = userRepository.findByEmail(username)
                 .orElseThrow(() -> new IllegalStateException("User not found for email " + username));
         return user.getId();
-    }
-
-    private NotificationDto toDto(Notification notification) {
-        NotificationDto dto = new NotificationDto();
-        dto.setId(notification.getId());
-        dto.setType(notification.getType());
-        dto.setTitle(notification.getTitle());
-        dto.setBody(notification.getBody());
-        dto.setCreatedAt(notification.getCreatedAt());
-        dto.setReadAt(notification.getReadAt());
-
-        if (notification.getMetadata() != null) {
-            try {
-                dto.setMetadata(objectMapper.readValue(
-                        notification.getMetadata(),
-                        new TypeReference<>() {
-                        }));
-            } catch (Exception ex) {
-                log.warn("Failed to parse notification metadata for {}: {}", notification.getId(), ex.getMessage());
-                dto.setMetadata(Collections.emptyMap());
-            }
-        }
-
-        return dto;
     }
 }
 

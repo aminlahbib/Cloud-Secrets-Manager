@@ -6,12 +6,15 @@ import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.secrets.notification.entity.EmailDelivery;
 import com.secrets.notification.repository.EmailDeliveryRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -48,12 +51,31 @@ public class EmailService {
 
     public EmailService(EmailTemplateService templateService, EmailRetryService retryService,
                        EmailDeliveryRepository emailDeliveryRepository) {
+        if (templateService == null) {
+            throw new IllegalArgumentException("EmailTemplateService cannot be null");
+        }
+        if (retryService == null) {
+            throw new IllegalArgumentException("EmailRetryService cannot be null");
+        }
+        if (emailDeliveryRepository == null) {
+            throw new IllegalArgumentException("EmailDeliveryRepository cannot be null");
+        }
         this.templateService = templateService;
         this.retryService = retryService;
         this.emailDeliveryRepository = emailDeliveryRepository;
     }
 
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Attempted to send invitation email to null or blank email address");
+            return;
+        }
+        
+        if (token == null || token.isBlank()) {
+            log.warn("Attempted to send invitation email with null or blank token");
+            return;
+        }
+        
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping invitation email to {}", recipientEmail);
             return;
@@ -91,6 +113,21 @@ public class EmailService {
 
     public void sendExpirationWarning(String recipientEmail, String secretKey, String projectName,
                                       LocalDateTime expiresAt) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Attempted to send expiration warning to null or blank email address");
+            return;
+        }
+        
+        if (secretKey == null || secretKey.isBlank()) {
+            log.warn("Attempted to send expiration warning with null or blank secret key");
+            return;
+        }
+        
+        if (expiresAt == null) {
+            log.warn("Attempted to send expiration warning with null expiration date");
+            return;
+        }
+        
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping expiration warning to {}", recipientEmail);
             return;
@@ -129,6 +166,21 @@ public class EmailService {
     }
 
     public void sendMembershipChangeEmail(String recipientEmail, String projectName, String oldRole, String newRole) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            log.warn("Attempted to send membership change email to null or blank email address");
+            return;
+        }
+        
+        if (projectName == null || projectName.isBlank()) {
+            log.warn("Attempted to send membership change email with null or blank project name");
+            return;
+        }
+        
+        if (newRole == null || newRole.isBlank()) {
+            log.warn("Attempted to send membership change email with null or blank new role");
+            return;
+        }
+        
         if (!emailEnabled) {
             log.debug("Email notifications disabled, skipping membership change email to {}", recipientEmail);
             return;
@@ -165,14 +217,32 @@ public class EmailService {
     }
 
     private EmailDelivery createEmailDelivery(String recipientEmail, String subject, String emailType) {
+        if (recipientEmail == null || recipientEmail.isBlank()) {
+            throw new IllegalArgumentException("Recipient email cannot be null or blank");
+        }
+        
+        if (subject == null || subject.isBlank()) {
+            throw new IllegalArgumentException("Email subject cannot be null or blank");
+        }
+        
+        if (emailType == null || emailType.isBlank()) {
+            throw new IllegalArgumentException("Email type cannot be null or blank");
+        }
+        
         EmailDelivery delivery = new EmailDelivery();
         delivery.setRecipientEmail(recipientEmail);
-        delivery.setSubject(subject);
-        delivery.setEmailType(emailType);
+        delivery.setSubject(subject.length() > 500 ? subject.substring(0, 500) : subject); // Enforce max length
+        delivery.setEmailType(emailType.length() > 50 ? emailType.substring(0, 50) : emailType); // Enforce max length
         delivery.setStatus(EmailDelivery.DeliveryStatus.PENDING);
         return emailDeliveryRepository.save(delivery);
     }
 
+    /**
+     * Send email synchronously with circuit breaker and retry protection.
+     * Uses Resilience4j circuit breaker to prevent cascading failures.
+     */
+    @CircuitBreaker(name = "sendgrid", fallbackMethod = "sendEmailFallback")
+    @Retry(name = "sendgrid")
     private boolean sendEmailSync(String to, String subject, String htmlBody, String plainBody, EmailDelivery delivery) {
         if (!emailEnabled) {
             delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
@@ -207,15 +277,11 @@ public class EmailService {
 
             Response response = sg.api(request);
 
-            if (response.getStatusCode() >= 400) {
-                delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
-                delivery.setErrorMessage(String.format("HTTP %d: %s", response.getStatusCode(), response.getBody()));
-                delivery.setRetryCount(delivery.getRetryCount() + 1);
-                emailDeliveryRepository.save(delivery);
-                log.error("Failed to send email to {}: HTTP {} - {}",
-                        to, response.getStatusCode(), response.getBody());
-                return false;
-            } else {
+            int statusCode = response.getStatusCode();
+            
+            // Handle different HTTP status codes
+            if (statusCode >= 200 && statusCode < 300) {
+                // Success
                 delivery.setStatus(EmailDelivery.DeliveryStatus.SENT);
                 delivery.setSentAt(Instant.now());
                 // Extract SendGrid message ID from response headers if available
@@ -224,17 +290,75 @@ public class EmailService {
                     delivery.setSendgridMessageId(messageId);
                 }
                 emailDeliveryRepository.save(delivery);
-                log.debug("Email sent successfully to {}: HTTP {}", to, response.getStatusCode());
+                log.debug("Email sent successfully to {}: HTTP {}", to, statusCode);
                 return true;
+            } else if (statusCode >= 400 && statusCode < 500) {
+                // Client errors (4xx) - likely permanent, don't retry
+                delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+                delivery.setErrorMessage(String.format("HTTP %d: %s", statusCode, response.getBody()));
+                emailDeliveryRepository.save(delivery);
+                log.error("Failed to send email to {}: HTTP {} - {} (client error, not retrying)",
+                        to, statusCode, response.getBody());
+                return false;
+            } else {
+                // Server errors (5xx) - transient, will retry
+                delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+                delivery.setErrorMessage(String.format("HTTP %d: %s", statusCode, response.getBody()));
+                delivery.setRetryCount(delivery.getRetryCount() + 1);
+                emailDeliveryRepository.save(delivery);
+                log.warn("Failed to send email to {}: HTTP {} - {} (server error, will retry)",
+                        to, statusCode, response.getBody());
+                throw new RuntimeException("SendGrid server error: " + statusCode);
             }
-        } catch (IOException ex) {
+        } catch (SocketTimeoutException ex) {
+            // Timeout - transient error
             delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
-            delivery.setErrorMessage(ex.getMessage());
+            delivery.setErrorMessage("SendGrid request timeout: " + ex.getMessage());
             delivery.setRetryCount(delivery.getRetryCount() + 1);
             emailDeliveryRepository.save(delivery);
-            log.error("Failed to send email to {}: {}", to, ex.getMessage(), ex);
-            return false;
+            log.warn("SendGrid request timeout for email to {}: {}", to, ex.getMessage());
+            throw new RuntimeException("SendGrid request timeout", ex); // Wrap for retry mechanism
+        } catch (IOException ex) {
+            // Network errors - transient
+            delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+            delivery.setErrorMessage("Network error: " + ex.getMessage());
+            delivery.setRetryCount(delivery.getRetryCount() + 1);
+            emailDeliveryRepository.save(delivery);
+            log.warn("Network error sending email to {}: {}", to, ex.getMessage());
+            throw new RuntimeException("Network error sending email", ex); // Wrap for retry mechanism
+        } catch (Exception ex) {
+            // Check if it's a SendGrid-related error by message
+            if (ex.getMessage() != null && ex.getMessage().contains("SendGrid")) {
+                delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+                delivery.setErrorMessage("SendGrid error: " + ex.getMessage());
+                delivery.setRetryCount(delivery.getRetryCount() + 1);
+                emailDeliveryRepository.save(delivery);
+                log.error("SendGrid exception sending email to {}: {}", to, ex.getMessage(), ex);
+                throw new RuntimeException("SendGrid error", ex); // Wrap for retry mechanism
+            }
+            // Unexpected errors
+            delivery.setStatus(EmailDelivery.DeliveryStatus.FAILED);
+            delivery.setErrorMessage("Unexpected error: " + ex.getMessage());
+            delivery.setRetryCount(delivery.getRetryCount() + 1);
+            emailDeliveryRepository.save(delivery);
+            log.error("Unexpected error sending email to {}: {}", to, ex.getMessage(), ex);
+            throw new RuntimeException("Unexpected error sending email", ex);
         }
+    }
+    
+    /**
+     * Fallback method when circuit breaker is open.
+     * This method is called by Resilience4j when the circuit breaker is open.
+     */
+    @SuppressWarnings("unused")
+    private boolean sendEmailFallback(String to, String subject, String htmlBody, String plainBody, 
+                                     EmailDelivery delivery, Exception ex) {
+        log.warn("Circuit breaker open for SendGrid. Email to {} queued for later retry. Error: {}", 
+                to, ex.getMessage());
+        delivery.setStatus(EmailDelivery.DeliveryStatus.PENDING);
+        delivery.setErrorMessage("Circuit breaker open: " + ex.getMessage());
+        emailDeliveryRepository.save(delivery);
+        return false; // Will be retried later
     }
 }
 

@@ -3,22 +3,42 @@ spring:
     name: notification-service
 
   # Disable Redis auto-configuration (not needed for notification-service)
+  # Also disable Flyway auto-configuration to use custom FlywayConfig
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
       - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/secrets}
     username: ${SPRING_DATASOURCE_USERNAME:secret_user}
     password: ${SPRING_DATASOURCE_PASSWORD:secret_pw}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: ${DB_MIN_IDLE:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}  # Use validate in production, Flyway handles migrations
     show-sql: false
     open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  flyway:
+    enabled: false  # Disable auto-configuration, using custom FlywayConfig bean instead
 
 server:
   port: 8082
@@ -50,18 +70,58 @@ gcp:
 
 notifications:
   subscription-name: notifications-events-sub
+  # SSE configuration
+  sse:
+    timeout-ms: ${SSE_TIMEOUT_MS:1800000}  # 30 minutes default
+  # Batching configuration
+  batching:
+    time-window-minutes: ${BATCH_TIME_WINDOW_MINUTES:5}
+  # Pub/Sub subscriber configuration
+  pubsub:
+    executor-thread-count: ${PUBSUB_THREAD_COUNT:4}
+    ack-deadline-seconds: ${PUBSUB_ACK_DEADLINE:30}
+
+# Resilience4j Circuit Breaker Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      sendgrid:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 2s
+        recordExceptions:
+          - java.io.IOException
+          - com.sendgrid.exceptions.SendGridException
+  retry:
+    instances:
+      sendgrid:
+        maxAttempts: 3
+        waitDuration: 1s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - java.io.IOException
+          - java.net.SocketTimeoutException
 
 # Actuator health check configuration
 management:
   health:
     redis:
       enabled: false  # Disable Redis health check
+    circuitbreakers:
+      enabled: true
     defaults:
       enabled: true
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,circuitbreakers
   endpoint:
     health:
       show-details: when-authorized

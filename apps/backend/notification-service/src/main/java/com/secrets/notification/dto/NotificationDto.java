@@ -1,17 +1,34 @@
 package com.secrets.notification.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
 public class NotificationDto {
 
+    @NotNull
     private UUID id;
+    
+    @NotBlank
+    @Size(max = 64)
     private String type;
+    
+    @NotBlank
+    @Size(max = 255)
     private String title;
+    
+    @Size(max = 5000)
     private String body;
+    
     private Map<String, Object> metadata;
+    
+    @NotNull
     private Instant createdAt;
+    
     private Instant readAt;
 
     public UUID getId() {
