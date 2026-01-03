@@ -35,6 +35,7 @@ export const useCreateProject = () => {
                 id: `temp-${Date.now()}`,
                 name: data.name,
                 description: data.description,
+                createdBy: '', // Will be replaced by server response
                 secretCount: 0,
                 memberCount: 1,
                 isArchived: false,

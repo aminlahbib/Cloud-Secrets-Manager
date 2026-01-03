@@ -33,7 +33,7 @@ import {
   prepareChartData,
 } from '../utils/analytics';
 import { useDebounce } from '../utils/debounce';
-import { invalidateProjectQueries, updateProjectCache, updateMemberCache } from '../utils/queryInvalidation';
+import { invalidateProjectQueries, updateProjectCache, updateMemberCache, updateSecretCache } from '../utils/queryInvalidation';
 
 
 export const ProjectDetailPage: React.FC = () => {
@@ -279,7 +279,7 @@ export const ProjectDetailPage: React.FC = () => {
       const previous = queryClient.getQueryData(['project-secrets', projectId]);
       
       // Optimistically remove all selected secrets
-      updateSecretCache(queryClient, projectId!, (secrets) =>
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) =>
         secrets.filter(s => !keys.includes(s.secretKey))
       );
       
@@ -335,7 +335,7 @@ export const ProjectDetailPage: React.FC = () => {
         expired: false,
       }));
       
-      updateSecretCache(queryClient, projectId!, (secrets) => [...secrets, ...optimisticSecrets]);
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) => [...secrets, ...optimisticSecrets]);
       
       // Update project secret count
       const project = queryClient.getQueryData<Project>(['project', projectId]);
@@ -364,10 +364,10 @@ export const ProjectDetailPage: React.FC = () => {
         .map(r => r.value);
       
       if (successful.length > 0) {
-        updateSecretCache(queryClient, projectId!, (secrets) => {
+        updateSecretCache(queryClient, projectId!, (secrets: Secret[]) => {
           // Replace optimistic secrets with server responses
           const optimisticKeys = new Set(secretsToImport.map(s => s.key));
-          const withoutOptimistic = secrets.filter(s => !optimisticKeys.has(s.secretKey));
+          const withoutOptimistic = secrets.filter((s: Secret) => !optimisticKeys.has(s.secretKey));
           return [...withoutOptimistic, ...successful];
         });
       }
@@ -531,7 +531,7 @@ export const ProjectDetailPage: React.FC = () => {
         }
       } else {
         updateProjectCache(queryClient, projectId!, {
-          workflowId: null,
+          workflowId: undefined,
           workflowName: undefined,
         });
       }
@@ -753,7 +753,7 @@ export const ProjectDetailPage: React.FC = () => {
       const previous = queryClient.getQueryData(['project', projectId]);
       
       // Optimistically update
-      updateProjectCache(queryClient, projectId!, { isArchived: false, deletedAt: null });
+      updateProjectCache(queryClient, projectId!, { isArchived: false, deletedAt: undefined });
       
       return { previous };
     },

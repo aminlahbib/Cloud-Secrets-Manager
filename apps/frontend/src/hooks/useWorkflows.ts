@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workflowsService } from '../services/workflows';
 import type { CreateWorkflowRequest, UpdateWorkflowRequest, Workflow } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 export const useWorkflows = (userId?: string) => {
     return useQuery({
@@ -21,6 +22,7 @@ export const useWorkflow = (workflowId?: string) => {
 
 export const useCreateWorkflow = () => {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
 
     return useMutation({
         mutationFn: (data: CreateWorkflowRequest) => workflowsService.createWorkflow(data),
@@ -31,8 +33,11 @@ export const useCreateWorkflow = () => {
             // Optimistically add workflow
             const optimisticWorkflow: Workflow = {
                 id: `temp-${Date.now()}`,
+                userId: user?.id || '', // Will be replaced by server response
                 name: data.name,
                 description: data.description,
+                isDefault: false, // Will be replaced by server response
+                displayOrder: 0, // Will be replaced by server response
                 projects: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),

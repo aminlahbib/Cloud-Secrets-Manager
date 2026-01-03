@@ -57,10 +57,12 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
             } else {
                 // Optimistically add new secret
                 const optimisticSecret: Secret = {
+                    id: `temp-${Date.now()}`,
                     secretKey: variables.key,
                     description: variables.description || undefined,
                     expiresAt: variables.expiresAt?.toISOString(),
                     version: 1,
+                    createdBy: user?.id || '', // Will be replaced by server response
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                     expired: false,

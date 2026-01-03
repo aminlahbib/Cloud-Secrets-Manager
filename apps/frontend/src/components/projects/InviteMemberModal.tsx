@@ -45,8 +45,11 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
       // Optimistically add invitation
       const optimisticInvitation: ProjectInvitation = {
         id: `temp-${Date.now()}`,
+        projectId,
         email: email.trim(),
         role,
+        invitedBy: '', // Will be replaced by server response
+        token: '', // Will be replaced by server response
         status: 'PENDING',
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
@@ -70,7 +73,6 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
       // Update with server response
       queryClient.setQueryData(['project-invitations', projectId], (old: any) => {
         if (!old) return Array.isArray(old) ? [data] : { content: [data] };
-        const tempId = `temp-${Date.now() - 1000}`;
         return Array.isArray(old)
           ? old.map(inv => inv.id?.toString().startsWith('temp-') ? data : inv)
           : { ...old, content: old.content?.map((inv: any) => inv.id?.toString().startsWith('temp-') ? data : inv) || [data] };
@@ -246,7 +248,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-theme-subtle">
-            <Button variant="secondary" onClick={handleBack} disabled={isInviting}>
+            <Button variant="secondary" onClick={handleBack} disabled={inviteMutation.isPending}>
               Back
             </Button>
             <Button onClick={handleSendInvitation} isLoading={inviteMutation.isPending} disabled={!email.trim()}>

@@ -52,26 +52,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
     navigate('/projects');
   }, [navigate]);
 
-  const handleActivityClick = useCallback(() => {
-    if (onTabChange) {
-      onTabChange('activity');
-    }
-  }, [onTabChange]);
-
-  const handleSettingsClick = useCallback(() => {
-    if (onTabChange) {
-      onTabChange('settings');
-    }
-  }, [onTabChange]);
-
   return (
     <div>
-      <Button variant="ghost" onClick={handleBack} className="mb-4">
+      <Button variant="ghost" onClick={handleBack} className="mb-6">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back to Projects
       </Button>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3">
