@@ -62,6 +62,26 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  // Get available role options for filter
+  const roleFilterOptions = useMemo(() => {
+    if (type === 'project') {
+      return [
+        { value: 'all', label: t('members.filterAllRoles') },
+        { value: 'OWNER', label: 'Owner' },
+        { value: 'ADMIN', label: 'Admin' },
+        { value: 'MEMBER', label: 'Member' },
+        { value: 'VIEWER', label: 'Viewer' },
+      ];
+    } else {
+      return [
+        { value: 'all', label: t('members.filterAllRoles') },
+        { value: 'OWNER', label: 'Owner' },
+        { value: 'ADMIN', label: 'Admin' },
+        { value: 'MEMBER', label: 'Member' },
+      ];
+    }
+  }, [type, t]);
+
   // Filter config for role filter
   const roleFilterConfigs: FilterConfig[] = useMemo(() => [
     {
