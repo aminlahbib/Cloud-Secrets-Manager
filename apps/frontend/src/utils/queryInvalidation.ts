@@ -1,9 +1,11 @@
 /**
  * Query invalidation utilities
  * Centralized functions to batch query invalidations and reduce code duplication
+ * Includes immediate cache update functions for real-time UI updates
  */
 
 import { QueryClient } from '@tanstack/react-query';
+import type { Project, ProjectMember, Secret, Team, TeamMember } from '../types';
 
 /**
  * Invalidate all project-related queries
@@ -100,5 +102,100 @@ export const clearUserSpecificQueries = (queryClient: QueryClient) => {
   // - ['teams', teamId, 'activity', ...] - Team activity queries (preserved)
   // These are based on projects/teams, not user sessions, and should persist.
   // When user logs back in, projects will be re-fetched and audit queries will continue seamlessly.
+};
+
+/**
+ * Immediately update project cache with new data
+ */
+export const updateProjectCache = (
+  queryClient: QueryClient,
+  projectId: string,
+  updates: Partial<Project>
+): void => {
+  queryClient.setQueryData<Project>(['project', projectId], (old) => {
+    if (!old) return old;
+    return { ...old, ...updates };
+  });
+};
+
+/**
+ * Immediately update member list in cache
+ */
+export const updateMemberCache = (
+  queryClient: QueryClient,
+  projectId: string,
+  updater: (members: ProjectMember[]) => ProjectMember[]
+): void => {
+  queryClient.setQueryData(['project-members', projectId], (old: any) => {
+    if (!old) return old;
+    const members = Array.isArray(old) ? old : old.content || [];
+    const updated = updater(members);
+    return Array.isArray(old) ? updated : { ...old, content: updated };
+  });
+};
+
+/**
+ * Immediately update secret list in cache
+ */
+export const updateSecretCache = (
+  queryClient: QueryClient,
+  projectId: string,
+  updater: (secrets: Secret[]) => Secret[]
+): void => {
+  queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
+    if (!old?.content) return old;
+    return {
+      ...old,
+      content: updater(old.content),
+    };
+  });
+};
+
+/**
+ * Immediately update team cache with new data
+ */
+export const updateTeamCache = (
+  queryClient: QueryClient,
+  teamId: string,
+  updates: Partial<Team>
+): void => {
+  queryClient.setQueryData<Team>(['teams', teamId], (old) => {
+    if (!old) return old;
+    return { ...old, ...updates };
+  });
+};
+
+/**
+ * Immediately update team member list in cache
+ */
+export const updateTeamMemberCache = (
+  queryClient: QueryClient,
+  teamId: string,
+  updater: (members: TeamMember[]) => TeamMember[]
+): void => {
+  queryClient.setQueryData(['teams', teamId, 'members'], (old: any) => {
+    if (!old) return old;
+    const members = Array.isArray(old) ? old : old.content || [];
+    const updated = updater(members);
+    return Array.isArray(old) ? updated : { ...old, content: updated };
+  });
+};
+
+/**
+ * Smart invalidation - only invalidate if query exists and is stale
+ * Reduces unnecessary refetches
+ */
+export const smartInvalidate = (
+  queryClient: QueryClient,
+  queryKey: unknown[],
+  options?: { refetchType?: 'active' | 'inactive' | 'all' | 'none' }
+): void => {
+  const state = queryClient.getQueryState(queryKey);
+  if (state && (state.dataUpdatedAt === 0 || state.isStale)) {
+    queryClient.invalidateQueries({ 
+      queryKey,
+      refetchType: options?.refetchType || 'active',
+    });
+  }
 };
 
