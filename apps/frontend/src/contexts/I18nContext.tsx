@@ -377,6 +377,14 @@ const translations: Record<Language, Record<string, string>> = {
     'projectDetail.settings.noWorkflow': 'No workflow',
     'projectDetail.settings.teamAccess': 'Team Access',
     'projectDetail.settings.membersDescription': 'Manage project members, their roles, and pending invitations. Role changes must respect the authorization hierarchy.',
+    'projectDetail.settings.invitedAs': 'Invited as {{role}} • {{date}}',
+    'projectDetail.settings.cancelInvitation': 'Cancel invitation',
+    'projectDetail.settings.members': 'Members ({{count}})',
+    'projectDetail.settings.inviteMember': 'Invite Member',
+    'projectDetail.settings.inviteFirstMember': 'Invite First Member',
+    'projectDetail.settings.removeMember': 'Remove member',
+    'projectDetail.settings.noMembersOrInvitations': 'No members or invitations',
+    'projectDetail.settings.unknown': 'Unknown',
     
     // TeamDetail
     'teamDetail.backToTeams': 'Back to Teams',
@@ -430,6 +438,15 @@ const translations: Record<Language, Record<string, string>> = {
     'teamDetail.settings.description': 'Description',
     'teamDetail.settings.descriptionHint': 'Team description can be changed by editing the team.',
     'teamDetail.settings.membersDescription': 'Manage team members and their roles. Role changes must respect the authorization hierarchy.',
+    'teamDetail.settings.members': 'Members ({{count}})',
+    'teamDetail.settings.addMember': 'Add Member',
+    'teamDetail.settings.addFirstMember': 'Add First Member',
+    'teamDetail.settings.removeMember': 'Remove member',
+    'teamDetail.settings.noMembers': 'No members in this team',
+    'teamDetail.settings.role.member': 'Member',
+    'teamDetail.settings.role.admin': 'Admin',
+    'teamDetail.settings.role.owner': 'Owner',
+    'teamDetail.settings.unknown': 'Unknown',
     
     // ActivityTab
     'activityTab.projectActivity': 'Project Activity',

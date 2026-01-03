@@ -42,12 +42,12 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-theme-tertiary" />
                 <h3 className="text-sm font-medium text-theme-primary">
-                  Members ({members.length})
+                  {t('teamDetail.settings.members', { count: members.length })}
                 </h3>
               </div>
               {onAddMember && (
                 <Button size="sm" onClick={onAddMember}>
-                  Add Member
+                  {t('teamDetail.settings.addMember')}
                 </Button>
               )}
             </div>
@@ -75,7 +75,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-theme-primary truncate">
-                          {member.displayName || member.email || 'Unknown'}
+                          {member.displayName || member.email || t('teamDetail.settings.unknown')}
                         </p>
                         <p className="text-xs text-theme-tertiary flex items-center gap-1 truncate">
                           <Mail className="h-3 w-3" />
@@ -91,11 +91,11 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
                           className="input-theme px-3 py-1.5 rounded-lg text-body-sm focus:outline-none focus:ring-2"
                           disabled={isUpdatingRole && roleChangeTarget === member.userId}
                         >
-                          <option value="TEAM_MEMBER">Member</option>
+                          <option value="TEAM_MEMBER">{t('teamDetail.settings.role.member')}</option>
                           {team.currentUserRole === 'TEAM_OWNER' && (
                             <>
-                              <option value="TEAM_ADMIN">Admin</option>
-                              <option value="TEAM_OWNER">Owner</option>
+                              <option value="TEAM_ADMIN">{t('teamDetail.settings.role.admin')}</option>
+                              <option value="TEAM_OWNER">{t('teamDetail.settings.role.owner')}</option>
                             </>
                           )}
                         </select>
@@ -110,7 +110,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
                         <button
                           onClick={() => onRemoveMember(member.userId)}
                           className="p-1.5 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                          title="Remove member"
+                          title={t('teamDetail.settings.removeMember')}
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -124,10 +124,10 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
         ) : (
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto mb-4 text-theme-tertiary" />
-            <p className="text-sm text-theme-secondary mb-2">No members in this team</p>
+            <p className="text-sm text-theme-secondary mb-2">{t('teamDetail.settings.noMembers')}</p>
             {onAddMember && (
               <Button size="sm" onClick={onAddMember}>
-                Add First Member
+                {t('teamDetail.settings.addFirstMember')}
               </Button>
             )}
           </div>

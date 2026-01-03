@@ -72,7 +72,10 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
                         {invitation.email}
                       </p>
                       <p className="text-xs text-theme-tertiary">
-                        Invited as {invitation.role} • {new Date(invitation.createdAt).toLocaleDateString()}
+                        {t('projectDetail.settings.invitedAs', { 
+                          role: invitation.role, 
+                          date: new Date(invitation.createdAt).toLocaleDateString() 
+                        })}
                       </p>
                     </div>
                   </div>
@@ -80,7 +83,7 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
                     <button
                       onClick={() => onCancelInvitation(invitation.id)}
                       className="p-1.5 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                      title="Cancel invitation"
+                      title={t('projectDetail.settings.cancelInvitation')}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -98,12 +101,12 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-theme-tertiary" />
                 <h3 className="text-sm font-medium text-theme-primary">
-                  Members ({members.length})
+                  {t('projectDetail.settings.members', { count: members.length })}
                 </h3>
               </div>
               {onInviteMember && (
                 <Button size="sm" onClick={onInviteMember}>
-                  Invite Member
+                  {t('projectDetail.settings.inviteMember')}
                 </Button>
               )}
             </div>
@@ -131,7 +134,7 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-theme-primary truncate">
-                          {member.user?.displayName || member.user?.email || 'Unknown'}
+                          {member.user?.displayName || member.user?.email || t('projectDetail.settings.unknown')}
                         </p>
                         <p className="text-xs text-theme-tertiary flex items-center gap-1 truncate">
                           <Mail className="h-3 w-3" />
@@ -164,7 +167,7 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
                         <button
                           onClick={() => onRemoveMember(member.userId)}
                           className="p-1.5 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                          title="Remove member"
+                          title={t('projectDetail.settings.removeMember')}
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -180,10 +183,10 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
         {(!members || members.length === 0) && (!pendingInvitations || pendingInvitations.length === 0) && (
           <div className="text-center py-8">
             <Users className="h-12 w-12 mx-auto mb-4 text-theme-tertiary" />
-            <p className="text-sm text-theme-secondary mb-2">No members or invitations</p>
+            <p className="text-sm text-theme-secondary mb-2">{t('projectDetail.settings.noMembersOrInvitations')}</p>
             {onInviteMember && (
               <Button size="sm" onClick={onInviteMember}>
-                Invite First Member
+                {t('projectDetail.settings.inviteFirstMember')}
               </Button>
             )}
           </div>
