@@ -530,7 +530,7 @@ export const TeamDetailPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0 mb-6">
+      <div className="flex-shrink-0">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -543,7 +543,7 @@ export const TeamDetailPage: React.FC = () => {
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-auto">
         {activeTab === 'overview' && (
-          <div className="space-y-6 w-full pb-6">
+          <div className="tab-content-container space-y-6">
             {/* Team Description */}
             {team.description && (
               <div className="card p-6">
@@ -677,7 +677,7 @@ export const TeamDetailPage: React.FC = () => {
         )}
 
       {activeTab === 'projects' && (
-        <div className="space-y-6 pb-6">
+        <div className="tab-content-container space-y-6">
           <PageHeader
             title="Projects"
             description="Manage team projects"
@@ -799,8 +799,9 @@ export const TeamDetailPage: React.FC = () => {
       )}
 
         {activeTab === 'activity' && (
-          <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
+          <div className="tab-content-container">
+            <div className="card w-full">
+              <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
                 <Activity className="h-5 w-5" />
@@ -929,8 +930,9 @@ export const TeamDetailPage: React.FC = () => {
               })}
             </div>
           )}
-        </div>
-      )}
+            </div>
+          </div>
+        )}
 
         {activeTab === 'settings' && canManageTeam() && team && (
           <TeamSettingsTab
