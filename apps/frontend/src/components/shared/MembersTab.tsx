@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { Mail, Users, Trash2, Crown, Shield, Search, Plus, Filter, Clock, X } from 'lucide-react';
+import { Mail, Users, Trash2, Crown, Shield, Search, Plus, Clock, X } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import { EmptyState } from '../ui/EmptyState';
 import { Badge } from '../ui/Badge';
