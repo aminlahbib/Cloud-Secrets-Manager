@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown, Shield, Users, Folder } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { LanguageSelector } from '../ui/LanguageSelector';
 import type { Team, TeamRole } from '../../types';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
@@ -58,7 +59,7 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
 
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-1">
             <div 
               className="w-16 h-16 rounded-full border flex items-center justify-center font-bold text-xl flex-shrink-0"
               style={{ 
@@ -105,6 +106,9 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
                 </div>
               </div>
             </div>
+          </div>
+          <div className="flex items-center">
+            <LanguageSelector iconOnly={true} />
           </div>
         </div>
       </div>

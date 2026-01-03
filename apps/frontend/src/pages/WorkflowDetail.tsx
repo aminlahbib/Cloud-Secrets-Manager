@@ -67,6 +67,9 @@ export const WorkflowDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div className="flex justify-end">
+        <LanguageSelector iconOnly={true} />
+      </div>
       <div>
         <Button
           variant="ghost"

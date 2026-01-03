@@ -7,6 +7,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 import type { AuditLog } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -111,6 +112,9 @@ export const AuditLogsPage: React.FC = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center sm:justify-between mb-8">
+        <div className="flex items-center gap-2">
+          <LanguageSelector iconOnly={true} />
+        </div>
         <div>
           <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Audit Logs</h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>

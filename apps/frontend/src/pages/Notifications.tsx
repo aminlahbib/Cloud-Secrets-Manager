@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Pagination } from '../components/ui/Pagination';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 import type { NotificationFilters } from '../services/notifications';
 
 const NOTIFICATION_TYPES = [
@@ -54,7 +55,8 @@ export const NotificationsPage: React.FC = () => {
             Review important updates about projects, secrets, and teams.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <LanguageSelector iconOnly={true} />
           <Button variant="secondary" size="sm" onClick={() => setShowFilters(!showFilters)}>
             {showFilters ? 'Hide Filters' : 'Show Filters'}
           </Button>

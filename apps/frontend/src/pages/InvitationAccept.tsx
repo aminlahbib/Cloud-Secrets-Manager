@@ -48,7 +48,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // Show loading while checking auth
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center relative" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="absolute top-4 right-4">
+          <LanguageSelector iconOnly={true} />
+        </div>
         <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
           <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
@@ -67,7 +70,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // If not authenticated, show loading while redirecting
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center relative" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="absolute top-4 right-4">
+          <LanguageSelector iconOnly={true} />
+        </div>
         <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
           <p style={{ color: 'var(--text-secondary)' }}>Redirecting to signup...</p>
@@ -79,7 +85,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // Processing state
   if (acceptMutation.isPending || status === 'pending') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center relative" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="absolute top-4 right-4">
+          <LanguageSelector iconOnly={true} />
+        </div>
         <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4 text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" style={{ color: 'var(--text-primary)' }} />
           <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
@@ -96,7 +105,10 @@ export const InvitationAcceptPage: React.FC = () => {
   // Success state
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="min-h-screen flex items-center justify-center px-4 relative" style={{ backgroundColor: 'var(--page-bg)' }}>
+        <div className="absolute top-4 right-4">
+          <LanguageSelector iconOnly={true} />
+        </div>
         <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
           <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
             <CheckCircle className="h-8 w-8" style={{ color: 'var(--status-success)' }} />
@@ -120,7 +132,10 @@ export const InvitationAcceptPage: React.FC = () => {
 
   // Error state
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: 'var(--page-bg)' }}>
+    <div className="min-h-screen flex items-center justify-center px-4 relative" style={{ backgroundColor: 'var(--page-bg)' }}>
+      <div className="absolute top-4 right-4">
+        <LanguageSelector iconOnly={true} />
+      </div>
       <div className="rounded-2xl shadow-2xl p-8 max-w-md w-full text-center" style={{ backgroundColor: 'var(--card-bg)', boxShadow: 'var(--shadow-xl)' }}>
         <div className="p-4 rounded-full w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--elevation-1)' }}>
           <XCircle className="h-8 w-8" style={{ color: 'var(--status-danger)' }} />

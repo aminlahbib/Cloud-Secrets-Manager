@@ -93,9 +93,12 @@ export const SecretFormPage: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen py-10 px-4 transition-colors"
+      className="min-h-screen py-10 px-4 transition-colors relative"
       style={{ backgroundColor: 'var(--page-bg)' }}
     >
+      <div className="absolute top-4 right-4">
+        <LanguageSelector iconOnly={true} />
+      </div>
       <div className="max-w-3xl mx-auto space-y-6">
         <button
           onClick={() => navigate(`/projects/${projectId}`)}

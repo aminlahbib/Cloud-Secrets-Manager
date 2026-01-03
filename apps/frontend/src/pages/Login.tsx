@@ -7,6 +7,7 @@ import { useI18n } from '@/contexts/I18nContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Logo } from '@/components/ui/Logo';
+import { LanguageSelector } from '@/components/ui/LanguageSelector';
 import { TwoFactorVerification } from '@/components/twofactor/TwoFactorVerification';
 import { handleApiError } from '@/services/api';
 import type { LoginRequest } from '@/types';
@@ -176,9 +177,12 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center px-4 py-8"
+      className="min-h-screen flex items-center justify-center px-4 py-8 relative"
       style={{ backgroundColor: 'var(--page-bg)' }}
     >
+      <div className="absolute top-4 right-4">
+        <LanguageSelector iconOnly={true} />
+      </div>
       <div className="w-full max-w-md">
         {/* Back Button */}
         <button

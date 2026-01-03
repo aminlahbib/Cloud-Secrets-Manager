@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, UserPlus, Download, Upload, Crown, Shield, Building2, LayoutGrid } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { LanguageSelector } from '../ui/LanguageSelector';
 import { ProjectSourceIndicator } from './ProjectSourceIndicator';
 import type { Project, ProjectRole } from '../../types';
 
@@ -103,7 +104,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
+            <LanguageSelector iconOnly={true} />
             {activeTab === 'secrets' && canManageSecrets && (
               <>
                 <Button

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, HelpCircle, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
 import { ThemeControls } from './ThemeControls';
@@ -141,14 +141,6 @@ export const TopBar: React.FC = () => {
               </>
             )}
           </div>
-
-          {/* Help */}
-          <button
-            className="p-2 rounded-lg hover:bg-elevation-1 transition-colors text-theme-tertiary hover:text-theme-primary"
-            title={t('topbar.help')}
-          >
-            <HelpCircle className="h-5 w-5" />
-          </button>
 
           {/* Language Selector */}
           <LanguageSelector iconOnly={true} />

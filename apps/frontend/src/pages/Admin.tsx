@@ -8,6 +8,7 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 
 const ROLES = ['USER', 'MANAGER', 'ADMIN'];
 
@@ -53,10 +54,11 @@ export const AdminPage: React.FC = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>User Management</h1>
-        <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
-          Manage user roles and permissions
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>User Management</h1>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Manage user roles and permissions
         </p>
       </div>
 

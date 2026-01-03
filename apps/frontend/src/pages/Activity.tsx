@@ -296,7 +296,8 @@ export const ActivityPage: React.FC = () => {
               : t('activity.subtitle.user')}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <LanguageSelector iconOnly={true} />
           <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-5 w-5 mr-2" />
             {showFilters ? t('activity.hideFilters') : t('activity.filters')}

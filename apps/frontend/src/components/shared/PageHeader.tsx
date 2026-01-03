@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Search, LayoutGrid, List, Layers, Building2 } from 'lucide-react';
 import { FilterPanel, FilterConfig } from '../ui/FilterPanel';
+import { LanguageSelector } from '../ui/LanguageSelector';
 
 interface PageHeaderProps {
   title: string;
@@ -62,6 +63,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSelector iconOnly={true} />
           <div 
             className="border rounded-lg p-1 flex gap-1 shadow-sm"
             style={{
