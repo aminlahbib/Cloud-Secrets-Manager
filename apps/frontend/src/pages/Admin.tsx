@@ -59,7 +59,9 @@ export const AdminPage: React.FC = () => {
           <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>User Management</h1>
           <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
             Manage user roles and permissions
-        </p>
+          </p>
+        </div>
+        <LanguageSelector iconOnly={true} />
       </div>
 
       {/* Warning Banner */}

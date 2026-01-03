@@ -588,25 +588,6 @@ export const SettingsPage: React.FC = () => {
 
                 {/* Notification Type Cards */}
                 <div className="space-y-4">
-                <div 
-                  className="flex items-center justify-between py-4 border-b"
-                  style={{ borderBottomColor: 'var(--border-subtle)' }}
-                >
-                  <div>
-                    <h3 className="font-medium" style={{ color: 'var(--text-primary)' }}>Email Notifications (Global)</h3>
-                    <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>Master toggle for all email notifications</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={emailNotifications}
-                      onChange={(e) => setEmailNotifications(e.target.checked)}
-                    />
-                    <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                  </label>
-                </div>
-
                   {/* Secret Expiration Alerts */}
                   <Card className="p-6">
                     <div className="flex items-start gap-4 mb-4">
@@ -987,7 +968,7 @@ export const SettingsPage: React.FC = () => {
                 </Card>
               </div>
               )}
-            </Card>
+            </div>
           )}
 
           {activeTab === 'analytics' && (

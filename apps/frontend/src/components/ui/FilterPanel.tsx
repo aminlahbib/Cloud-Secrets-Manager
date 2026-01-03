@@ -32,7 +32,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; right?: number } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left?: number; right?: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const activeFiltersCount = Object.values(values).filter(v => v !== '' && v !== null && v !== undefined).length;
   

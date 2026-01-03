@@ -8,6 +8,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog, Project } from '../types';

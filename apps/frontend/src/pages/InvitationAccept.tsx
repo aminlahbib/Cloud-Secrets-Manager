@@ -5,6 +5,7 @@ import { CheckCircle, XCircle, Loader2, ArrowRight } from 'lucide-react';
 import { invitationsService } from '../services/invitations';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
+import { LanguageSelector } from '../components/ui/LanguageSelector';
 
 export const InvitationAcceptPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
