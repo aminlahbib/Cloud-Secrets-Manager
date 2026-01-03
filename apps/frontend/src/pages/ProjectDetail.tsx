@@ -155,16 +155,20 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Calculate date range for analytics (memoized)
   const dateRangeParams = useMemo(() => {
-    if (dateRange === 'all') return {};
     const endDate = new Date();
     const startDate = new Date();
-    if (dateRange === '24h') {
+    
+    if (dateRange === 'all') {
+      // For "all time", use a very old date (10 years ago) to get all activity
+      startDate.setFullYear(startDate.getFullYear() - 10);
+    } else if (dateRange === '24h') {
       startDate.setHours(startDate.getHours() - 24);
     } else if (dateRange === '7d') {
       startDate.setDate(startDate.getDate() - 7);
     } else if (dateRange === '30d') {
       startDate.setDate(startDate.getDate() - 30);
     }
+    
     return {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -199,12 +203,9 @@ export const ProjectDetailPage: React.FC = () => {
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['project-activity-analytics', projectId, dateRange],
     queryFn: () => {
-      if (!dateRangeParams.startDate || !dateRangeParams.endDate) {
-        throw new Error('Date range is required for analytics');
-      }
       return auditService.getProjectAnalytics(projectId!, dateRangeParams.startDate, dateRangeParams.endDate);
     },
-    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics' && !!dateRangeParams.startDate,
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
@@ -242,7 +243,8 @@ export const ProjectDetailPage: React.FC = () => {
     } else if (dateRange === '30d') {
       days = 30;
     } else {
-      days = 30; // Default for 'all'
+      // For 'all', show last 90 days in the chart for better visualization
+      days = 90;
     }
     const dayKeys = getLastNDays(days);
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
