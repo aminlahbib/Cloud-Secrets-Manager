@@ -355,7 +355,7 @@ public class AuthController {
             // Check if user already exists
             if (userService.findByEmail(email).isPresent()) {
                 Map<String, Object> error = new HashMap<>();
-                error.put("error", "User with this email already exists");
+                error.put("error", "This email is already registered. Please sign in instead.");
                 return ResponseEntity.badRequest().body(error);
             }
 
@@ -436,14 +436,33 @@ public class AuthController {
             return ResponseEntity.ok(response);
             
         } catch (FirebaseAuthException e) {
-            log.error("Failed to create user in Firebase: {}", e.getMessage());
+            log.error("Failed to create user in Firebase: {} (Error code: {})", e.getMessage(), e.getErrorCode());
             Map<String, Object> error = new HashMap<>();
-            error.put("error", "Failed to create account: " + e.getMessage());
+            
+            // Check for duplicate email error codes
+            String errorCode = e.getErrorCode() != null ? e.getErrorCode().name() : "";
+            String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if ("EMAIL_EXISTS".equals(errorCode) || 
+                "EMAIL_ALREADY_EXISTS".equals(errorCode) ||
+                errorMessage.contains("email already exists")) {
+                error.put("error", "This email is already registered. Please sign in instead.");
+            } else {
+                error.put("error", "Failed to create account: " + e.getMessage());
+            }
             return ResponseEntity.badRequest().body(error);
         } catch (Exception e) {
             log.error("Unexpected error during signup", e);
             Map<String, Object> error = new HashMap<>();
-            error.put("error", "Signup failed: " + e.getMessage());
+            
+            // Check if error message indicates duplicate email
+            String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (errorMessage.contains("email already exists") || 
+                errorMessage.contains("already registered") ||
+                errorMessage.contains("duplicate key")) {
+                error.put("error", "This email is already registered. Please sign in instead.");
+            } else {
+                error.put("error", "Signup failed: " + e.getMessage());
+            }
             return ResponseEntity.status(500).body(error);
         }
     }

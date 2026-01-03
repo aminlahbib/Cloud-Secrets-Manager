@@ -1,6 +1,6 @@
 -- Table to persist user notifications for in-app inbox
 CREATE TABLE IF NOT EXISTS notifications (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     type VARCHAR(64) NOT NULL,
     title VARCHAR(255) NOT NULL,

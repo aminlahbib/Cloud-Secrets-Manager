@@ -146,6 +146,30 @@ public class InvitationService {
     }
 
     /**
+     * List all invitations for a project (pending, accepted, rejected, expired)
+     */
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> listAllProjectInvitations(UUID projectId) {
+        // Verify project exists and user has permission
+        projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("Project not found"));
+        
+        List<ProjectInvitation> invitations = invitationRepository.findByProjectId(projectId);
+        // Load relationships
+        invitations.forEach(inv -> {
+            if (inv.getProject() == null) {
+                projectRepository.findById(inv.getProjectId()).ifPresent(inv::setProject);
+            }
+            if (inv.getInviter() == null) {
+                userRepository.findById(inv.getInvitedBy()).ifPresent(inv::setInviter);
+            }
+        });
+        return invitations.stream()
+                .map(InvitationResponse::from)
+                .collect(Collectors.toList());
+    }
+
+    /**
      * Accept an invitation
      */
     public void acceptInvitation(String token, UUID userId) {

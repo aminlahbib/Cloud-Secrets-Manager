@@ -100,6 +100,15 @@ export const SignupPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
+        // Re-check email before Google signup to ensure it's still available
+        const emailCheck = await signupService.checkEmail(email);
+        if (emailCheck.exists) {
+          setError('This email is already registered. Please sign in instead.');
+          setIsLoading(false);
+          navigate(`/login?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        
         // Sign up with Google - this will authenticate the user
         await signupWithGoogle(false);
         // After Google signup, user is authenticated
@@ -111,13 +120,47 @@ export const SignupPage: React.FC = () => {
         setIsLoading(false);
       }
     } else {
-      setCurrentStep('password');
+      // Re-check email before allowing password step
+      setIsLoading(true);
+      setError(null);
+      try {
+        const emailCheck = await signupService.checkEmail(email);
+        if (emailCheck.exists) {
+          setError('This email is already registered. Please sign in instead.');
+          setIsLoading(false);
+          navigate(`/login?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        // Email is available - proceed to password step
+        setCurrentStep('password');
+      } catch (err: any) {
+        setError(err?.response?.data?.error || err?.message || 'Failed to verify email');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handlePasswordSubmit = (pwd: string) => {
-    setPassword(pwd);
-    setCurrentStep('profile');
+  const handlePasswordSubmit = async (pwd: string) => {
+    // Final check before proceeding to profile step
+    setIsLoading(true);
+    setError(null);
+    try {
+      const emailCheck = await signupService.checkEmail(email);
+      if (emailCheck.exists) {
+        setError('This email is already registered. Please sign in instead.');
+        setIsLoading(false);
+        navigate(`/login?email=${encodeURIComponent(email)}`);
+        return;
+      }
+      // Email is still available - proceed
+      setPassword(pwd);
+      setCurrentStep('profile');
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.message || 'Failed to verify email');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleProfileSubmit = async (profile: { displayName: string; avatarUrl?: string }) => {
@@ -126,6 +169,19 @@ export const SignupPage: React.FC = () => {
     
     try {
       if (authMethod === 'email') {
+        // Re-check email before final signup to catch race conditions
+        try {
+          const emailCheck = await signupService.checkEmail(email);
+          if (emailCheck.exists) {
+            setError(`This email was registered while you were filling out the form. Please sign in instead.`);
+            setIsLoading(false);
+            return;
+          }
+        } catch (checkErr) {
+          // If check fails, continue with signup attempt (backend will catch it)
+          console.warn('Failed to re-check email before signup:', checkErr);
+        }
+
         // Sign up with email/password
         const signupResponse = await signup({
           email,
@@ -160,7 +216,22 @@ export const SignupPage: React.FC = () => {
       // Proceed to onboarding
       setCurrentStep('onboarding');
     } catch (err: any) {
-      setError(err?.response?.data?.error || err?.message || 'Failed to complete signup');
+      // Parse error messages to detect email already exists
+      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to complete signup';
+      const errorString = typeof errorMessage === 'string' ? errorMessage.toLowerCase() : '';
+      
+      // Check for various email already exists error patterns
+      if (
+        errorString.includes('email already exists') ||
+        errorString.includes('already registered') ||
+        errorString.includes('user with this email') ||
+        errorString.includes('email-already-in-use') ||
+        errorString.includes('auth/email-already-in-use')
+      ) {
+        setError(`This email is already registered. Please sign in instead.`);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -193,8 +264,11 @@ export const SignupPage: React.FC = () => {
       case 'password':
         return (
           <PasswordStep
+            email={email}
             onSubmit={handlePasswordSubmit}
             onBack={() => setCurrentStep('auth-method')}
+            isLoading={isLoading}
+            error={error}
           />
         );
       case 'profile':

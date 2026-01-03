@@ -7,6 +7,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -27,6 +28,7 @@ interface FilterState {
 }
 
 export const AuditLogsPage: React.FC = () => {
+  const { t } = useI18n();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FilterState>({
     action: '',
@@ -145,37 +147,37 @@ export const AuditLogsPage: React.FC = () => {
                 onChange={(e) => handleFilterChange('action', e.target.value)}
                 className="input-theme"
               >
-                <option value="">All</option>
-                <option value="SECRET_CREATE">Secret Create</option>
-                <option value="SECRET_READ">Secret Read</option>
-                <option value="SECRET_UPDATE">Secret Update</option>
-                <option value="SECRET_DELETE">Secret Delete</option>
-                <option value="SECRET_ROTATE">Secret Rotate</option>
-                <option value="PROJECT_CREATE">Project Create</option>
-                <option value="PROJECT_UPDATE">Project Update</option>
-                <option value="MEMBER_INVITE">Member Invite</option>
-                <option value="MEMBER_REMOVE">Member Remove</option>
+                <option value="">{t('auditLogs.all')}</option>
+                <option value="SECRET_CREATE">{t('auditLogs.secretCreate')}</option>
+                <option value="SECRET_READ">{t('auditLogs.secretRead')}</option>
+                <option value="SECRET_UPDATE">{t('auditLogs.secretUpdate')}</option>
+                <option value="SECRET_DELETE">{t('auditLogs.secretDelete')}</option>
+                <option value="SECRET_ROTATE">{t('auditLogs.secretRotate')}</option>
+                <option value="PROJECT_CREATE">{t('auditLogs.projectCreate')}</option>
+                <option value="PROJECT_UPDATE">{t('auditLogs.projectUpdate')}</option>
+                <option value="MEMBER_INVITE">{t('auditLogs.memberInvite')}</option>
+                <option value="MEMBER_REMOVE">{t('auditLogs.memberRemove')}</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Resource Type
+                {t('auditLogs.resourceType')}
               </label>
               <select
                 value={filters.resourceType}
                 onChange={(e) => handleFilterChange('resourceType', e.target.value)}
                 className="input-theme"
               >
-                <option value="">All</option>
-                <option value="SECRET">Secret</option>
-                <option value="PROJECT">Project</option>
-                <option value="MEMBER">Member</option>
-                <option value="WORKFLOW">Workflow</option>
+                <option value="">{t('auditLogs.all')}</option>
+                <option value="SECRET">{t('auditLogs.secret')}</option>
+                <option value="PROJECT">{t('auditLogs.project')}</option>
+                <option value="MEMBER">{t('auditLogs.member')}</option>
+                <option value="WORKFLOW">{t('auditLogs.workflow')}</option>
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                Start Date
+                {t('auditLogs.startDate')}
               </label>
               <input
                 type="date"
@@ -186,7 +188,7 @@ export const AuditLogsPage: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                End Date
+                {t('auditLogs.endDate')}
               </label>
               <input
                 type="date"
@@ -265,7 +267,7 @@ export const AuditLogsPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceType || '—'}</td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceName || log.resourceId || '—'}</td>
-                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.userEmail || log.user?.email || 'Unknown'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}</td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{log.ipAddress || '—'}</td>
                     </tr>
                   ))}

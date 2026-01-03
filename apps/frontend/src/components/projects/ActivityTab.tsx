@@ -18,8 +18,8 @@ interface ActivityTabProps {
   projectId: string | undefined;
   activityView: 'analytics' | 'list';
   onViewChange: (view: 'analytics' | 'list') => void;
-  dateRange: '7d' | '30d' | '90d' | 'all';
-  onDateRangeChange: (range: '7d' | '30d' | '90d' | 'all') => void;
+  dateRange: '24h' | '7d' | '30d';
+  onDateRangeChange: (range: '24h' | '7d' | '30d') => void;
   // Analytics props
   analyticsStats: any;
   isAnalyticsLoading: boolean;
@@ -209,7 +209,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
     onViewChange(view);
   }, [onViewChange]);
 
-  const handleDateRangeChange = useCallback((range: '7d' | '30d' | '90d' | 'all') => {
+  const handleDateRangeChange = useCallback((range: '24h' | '7d' | '30d') => {
     onDateRangeChange(range);
   }, [onDateRangeChange]);
 
@@ -245,13 +245,12 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   <Calendar className="h-4 w-4 text-theme-tertiary" />
                   <select
                     value={dateRange}
-                    onChange={(e) => handleDateRangeChange(e.target.value as '7d' | '30d' | '90d' | 'all')}
+                    onChange={(e) => handleDateRangeChange(e.target.value as '24h' | '7d' | '30d')}
                     className="bg-transparent border-none text-body-sm font-medium focus:outline-none cursor-pointer text-theme-primary"
                   >
+                    <option value="24h">Last 24 hours</option>
                     <option value="7d">{t('activityTab.last7Days')}</option>
                     <option value="30d">{t('activityTab.last30Days')}</option>
-                    <option value="90d">{t('activityTab.last90Days')}</option>
-                    <option value="all">{t('activityTab.allTime')}</option>
                   </select>
                 </div>
                 {analyticsStats && (
@@ -366,21 +365,24 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                       <p className="text-body-sm text-theme-tertiary">{t('activityTab.noUserData')}</p>
                     ) : (
                       <div className="space-y-3">
-                        {analyticsStats.topUsers.map((user: { userId: string; email?: string; count: number }, index: number) => (
-                          <div key={user.userId} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full flex items-center justify-center text-body-sm font-semibold bg-elevation-2 text-theme-secondary">
-                                {index + 1}
-                              </div>
-                              <div>
-                                <p className="text-body-sm font-medium text-theme-primary">
-                                  {user.email || t('activity.project.unknownUser')}
-                                </p>
-                                <p className="text-caption text-theme-tertiary">{user.count} {t('activityTab.actions')}</p>
+                        {analyticsStats.topUsers.map((user: { userId: string; email?: string; displayName?: string; count: number }, index: number) => {
+                          const userName = user.displayName || user.email || t('activity.project.unknownUser');
+                          return (
+                            <div key={user.userId} className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-body-sm font-semibold bg-elevation-2 text-theme-secondary">
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <p className="text-body-sm font-medium text-theme-primary">
+                                    {userName}
+                                  </p>
+                                  <p className="text-caption text-theme-tertiary">{user.count} {t('activityTab.actions')}</p>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </Card>

@@ -84,6 +84,13 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
     setIsAdding(true);
     try {
       await teamsService.addProjectToTeam(teamId, selectedProjectId);
+      
+      // Invalidate queries to refresh data (use exact: false to catch all variations)
+      queryClient.invalidateQueries({ queryKey: ['projects'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'projects'] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams'], exact: false });
+      
       showNotification({
         type: 'success',
         title: 'Project added',
@@ -154,10 +161,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       // Add the project to the team
       await teamsService.addProjectToTeam(teamId, newProject.id);
       
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      // Invalidate queries to refresh data (use exact: false to catch all variations)
+      queryClient.invalidateQueries({ queryKey: ['projects'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'projects'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams'], exact: false });
       
       showNotification({
         type: 'success',

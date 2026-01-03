@@ -123,5 +123,12 @@ export const teamsService = {
   async removeProjectFromTeam(teamId: string, projectId: string): Promise<void> {
     await api.delete(`/api/teams/${teamId}/projects/${projectId}`);
   },
+
+  /**
+   * Transfer team ownership to another member
+   */
+  async transferOwnership(teamId: string, request: { newOwnerUserId: string }): Promise<void> {
+    await api.post(`/api/teams/${teamId}/transfer-ownership`, request);
+  },
 };
 

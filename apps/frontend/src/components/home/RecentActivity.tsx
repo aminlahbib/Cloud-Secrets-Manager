@@ -53,7 +53,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         ) : (
           activity.slice(0, 3).map((log: AuditLog) => {
             // Get user initials for avatar
-            const userName = log.userDisplayName || log.userEmail || 'System';
+            const userName = log.userDisplayName || log.userEmail || log.user?.email || 'Unknown';
             const userInitials = userName
               .split(' ')
               .map((n: string) => n[0])
