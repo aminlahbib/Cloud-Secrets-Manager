@@ -182,8 +182,8 @@ export const updateTeamMemberCache = (
 };
 
 /**
- * Smart invalidation - only invalidate if query exists and is stale
- * Reduces unnecessary refetches
+ * Smart invalidation - only invalidate if query exists
+ * Reduces unnecessary refetches by checking if query state exists
  */
 export const smartInvalidate = (
   queryClient: QueryClient,
@@ -191,7 +191,7 @@ export const smartInvalidate = (
   options?: { refetchType?: 'active' | 'inactive' | 'all' | 'none' }
 ): void => {
   const state = queryClient.getQueryState(queryKey);
-  if (state && (state.dataUpdatedAt === 0 || state.isStale)) {
+  if (state) {
     queryClient.invalidateQueries({ 
       queryKey,
       refetchType: options?.refetchType || 'active',
