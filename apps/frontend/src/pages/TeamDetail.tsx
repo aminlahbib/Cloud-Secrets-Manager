@@ -953,13 +953,15 @@ export const TeamDetailPage: React.FC = () => {
         )}
 
         {activeTab === 'settings' && !canManageTeam() && (
-          <div className="card w-full">
-            <div className="padding-card">
-              <EmptyState
-                icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
-                title="Settings not available"
-                description="You need admin or owner permissions to manage team settings"
-              />
+          <div className="tab-content-container">
+            <div className="card w-full">
+              <div className="padding-card">
+                <EmptyState
+                  icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
+                  title="Settings not available"
+                  description="You need admin or owner permissions to manage team settings"
+                />
+              </div>
             </div>
           </div>
         )}
