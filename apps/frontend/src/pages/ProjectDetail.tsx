@@ -275,8 +275,13 @@ export const ProjectDetailPage: React.FC = () => {
       await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
     },
     onMutate: async (keys: string[]) => {
-      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
-      const previous = queryClient.getQueryData(['project-secrets', projectId]);
+      // Cancel all matching queries (including those with filters/search)
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      
+      // Get previous data from first matching query
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previous = matchingQueries[0]?.state?.data;
       
       // Optimistically remove all selected secrets
       updateSecretCache(queryClient, projectId!, (secrets: Secret[]) =>
@@ -294,8 +299,9 @@ export const ProjectDetailPage: React.FC = () => {
       return { previous };
     },
     onError: (_err, _keys, context) => {
+      // Invalidate to refetch on error
       if (context?.previous) {
-        queryClient.setQueryData(['project-secrets', projectId], context.previous);
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
       }
     },
     onSuccess: () => {
@@ -321,8 +327,13 @@ export const ProjectDetailPage: React.FC = () => {
       return results;
     },
     onMutate: async (secretsToImport) => {
-      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
-      const previous = queryClient.getQueryData(['project-secrets', projectId]);
+      // Cancel all matching queries (including those with filters/search)
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      
+      // Get previous data from first matching query
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previous = matchingQueries[0]?.state?.data;
       
       // Optimistically add all secrets
       const optimisticSecrets: Secret[] = secretsToImport.map((secret, index) => ({
@@ -350,8 +361,9 @@ export const ProjectDetailPage: React.FC = () => {
       return { previous };
     },
     onError: (_err, _secrets, context) => {
+      // Invalidate to refetch on error
       if (context?.previous) {
-        queryClient.setQueryData(['project-secrets', projectId], context.previous);
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
       }
       showNotification({
         type: 'error',
@@ -400,27 +412,33 @@ export const ProjectDetailPage: React.FC = () => {
   const deleteSecretMutation = useMutation({
     mutationFn: (key: string) => secretsService.deleteProjectSecret(projectId!, key),
     onMutate: async (key) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      // Cancel outgoing refetches for all matching query keys
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
 
-      // Snapshot previous value
-      const previousSecrets = queryClient.getQueryData(['project-secrets', projectId]);
+      // Snapshot previous value (get the first matching query)
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previousSecrets = matchingQueries[0]?.state?.data;
 
-      // Optimistically update
-      queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
-        if (!old?.content) return old;
-        return {
-          ...old,
-          content: old.content.filter((secret: Secret) => secret.secretKey !== key),
-        };
-      });
+      // Optimistically update all matching queries
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) =>
+        secrets.filter(s => s.secretKey !== key)
+      );
+
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: Math.max(0, (project.secretCount || 1) - 1),
+        });
+      }
 
       return { previousSecrets };
     },
     onError: (_err, _key, context) => {
-      // Rollback on error
+      // Rollback on error - invalidate to refetch
       if (context?.previousSecrets) {
-        queryClient.setQueryData(['project-secrets', projectId], context.previousSecrets);
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
       }
     },
     onSuccess: () => {

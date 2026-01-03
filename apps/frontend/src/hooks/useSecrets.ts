@@ -42,8 +42,13 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
             return result;
         },
         onMutate: async (variables) => {
-            await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
-            const previous = queryClient.getQueryData(['project-secrets', projectId]);
+            // Cancel all matching queries (including those with filters/search)
+            await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
+            
+            // Get previous data from first matching query
+            const queryCache = queryClient.getQueryCache();
+            const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+            const previous = matchingQueries[0]?.state?.data;
             
             if (isEditMode) {
                 // Optimistically update existing secret
@@ -78,8 +83,9 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
             return { previous };
         },
         onError: (_err, _variables, context) => {
+            // Invalidate to refetch on error
             if (context?.previous) {
-                queryClient.setQueryData(['project-secrets', projectId], context.previous);
+                queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
             }
         },
         onSuccess: (result, variables) => {

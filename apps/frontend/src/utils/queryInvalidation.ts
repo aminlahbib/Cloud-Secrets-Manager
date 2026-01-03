@@ -17,7 +17,8 @@ export const invalidateProjectQueries = (
   userId?: string
 ) => {
   // Project-specific queries
-  queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
+  // Use exact: false for secrets to invalidate all variations (with filters/search)
+  queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
   queryClient.invalidateQueries({ queryKey: ['project', projectId] });
   queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
   queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
@@ -136,19 +137,25 @@ export const updateMemberCache = (
 
 /**
  * Immediately update secret list in cache
+ * Updates all query keys that start with ['project-secrets', projectId]
+ * to handle queries with filters/search parameters
  */
 export const updateSecretCache = (
   queryClient: QueryClient,
   projectId: string,
   updater: (secrets: Secret[]) => Secret[]
 ): void => {
-  queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
-    if (!old?.content) return old;
-    return {
-      ...old,
-      content: updater(old.content),
-    };
-  });
+  // Update all queries that match the pattern ['project-secrets', projectId, ...]
+  queryClient.setQueriesData(
+    { queryKey: ['project-secrets', projectId], exact: false },
+    (old: any) => {
+      if (!old?.content) return old;
+      return {
+        ...old,
+        content: updater(old.content),
+      };
+    }
+  );
 };
 
 /**
