@@ -379,7 +379,7 @@ const translations: Record<Language, Record<string, string>> = {
     'projectDetail.settings.membersDescription': 'Manage project members, their roles, and pending invitations. Role changes must respect the authorization hierarchy.',
     'projectDetail.settings.invitedAs': 'Invited as {{role}} • {{date}}',
     'projectDetail.settings.cancelInvitation': 'Cancel invitation',
-    'projectDetail.settings.members': 'Members ({{count}})',
+    'projectDetail.settings.membersCount': 'Members ({{count}})',
     'projectDetail.settings.inviteMember': 'Invite Member',
     'projectDetail.settings.inviteFirstMember': 'Invite First Member',
     'projectDetail.settings.removeMember': 'Remove member',
