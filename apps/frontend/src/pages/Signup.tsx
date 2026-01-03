@@ -100,6 +100,15 @@ export const SignupPage: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
+        // Re-check email before Google signup to ensure it's still available
+        const emailCheck = await signupService.checkEmail(email);
+        if (emailCheck.exists) {
+          setError('This email is already registered. Please sign in instead.');
+          setIsLoading(false);
+          navigate(`/login?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        
         // Sign up with Google - this will authenticate the user
         await signupWithGoogle(false);
         // After Google signup, user is authenticated
@@ -111,13 +120,47 @@ export const SignupPage: React.FC = () => {
         setIsLoading(false);
       }
     } else {
-      setCurrentStep('password');
+      // Re-check email before allowing password step
+      setIsLoading(true);
+      setError(null);
+      try {
+        const emailCheck = await signupService.checkEmail(email);
+        if (emailCheck.exists) {
+          setError('This email is already registered. Please sign in instead.');
+          setIsLoading(false);
+          navigate(`/login?email=${encodeURIComponent(email)}`);
+          return;
+        }
+        // Email is available - proceed to password step
+        setCurrentStep('password');
+      } catch (err: any) {
+        setError(err?.response?.data?.error || err?.message || 'Failed to verify email');
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handlePasswordSubmit = (pwd: string) => {
-    setPassword(pwd);
-    setCurrentStep('profile');
+  const handlePasswordSubmit = async (pwd: string) => {
+    // Final check before proceeding to profile step
+    setIsLoading(true);
+    setError(null);
+    try {
+      const emailCheck = await signupService.checkEmail(email);
+      if (emailCheck.exists) {
+        setError('This email is already registered. Please sign in instead.');
+        setIsLoading(false);
+        navigate(`/login?email=${encodeURIComponent(email)}`);
+        return;
+      }
+      // Email is still available - proceed
+      setPassword(pwd);
+      setCurrentStep('profile');
+    } catch (err: any) {
+      setError(err?.response?.data?.error || err?.message || 'Failed to verify email');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleProfileSubmit = async (profile: { displayName: string; avatarUrl?: string }) => {
@@ -221,8 +264,11 @@ export const SignupPage: React.FC = () => {
       case 'password':
         return (
           <PasswordStep
+            email={email}
             onSubmit={handlePasswordSubmit}
             onBack={() => setCurrentStep('auth-method')}
+            isLoading={isLoading}
+            error={error}
           />
         );
       case 'profile':

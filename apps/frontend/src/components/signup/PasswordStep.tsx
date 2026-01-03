@@ -8,6 +8,8 @@ interface PasswordStepProps {
   email?: string;
   onSubmit: (password: string) => void;
   onBack: () => void;
+  isLoading?: boolean;
+  error?: string | null;
 }
 
 interface PasswordForm {
@@ -18,6 +20,8 @@ interface PasswordForm {
 export const PasswordStep: React.FC<PasswordStepProps> = ({
   onSubmit,
   onBack,
+  isLoading = false,
+  error = null,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -161,12 +165,26 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
           )}
         </div>
 
+        {error && (
+          <div 
+            className="p-3 rounded-lg flex items-center gap-2"
+            style={{
+              backgroundColor: 'var(--status-danger-bg)',
+              color: 'var(--status-danger)',
+            }}
+          >
+            <AlertCircle className="h-4 w-4" />
+            <span className="text-sm">{error}</span>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <Button
             type="button"
             variant="secondary"
             onClick={onBack}
             className="flex-1"
+            disabled={isLoading}
           >
             Back
           </Button>
@@ -174,8 +192,10 @@ export const PasswordStep: React.FC<PasswordStepProps> = ({
             type="submit"
             variant="primary"
             className="flex-1"
+            disabled={isLoading}
+            isLoading={isLoading}
           >
-            Continue
+            {isLoading ? 'Verifying...' : 'Continue'}
           </Button>
         </div>
       </form>
