@@ -547,7 +547,7 @@ export const TeamDetailPage: React.FC = () => {
             {/* Team Description */}
             {team.description && (
               <div className="card p-6">
-                <h3 className="text-h3 font-semibold mb-3 text-theme-primary">About</h3>
+                <h3 className="text-h3 font-semibold mb-3 text-theme-primary">{t('teamDetail.about')}</h3>
                 <p className="text-body-sm text-theme-secondary whitespace-pre-wrap">{team.description}</p>
               </div>
             )}
@@ -591,7 +591,7 @@ export const TeamDetailPage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-theme-secondary mb-1">
-                      Total Secrets
+                      {t('teamDetail.totalSecrets')}
                     </p>
                     <p className="text-3xl font-bold text-theme-primary">
                       {totalSecrets}

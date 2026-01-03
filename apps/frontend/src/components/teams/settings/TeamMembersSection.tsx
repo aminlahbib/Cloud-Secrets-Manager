@@ -3,6 +3,7 @@ import { Users, Mail, Crown, Shield, X } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { FormSection } from '../../ui/FormSection';
+import { useI18n } from '../../../contexts/I18nContext';
 import type { Team, TeamMember, TeamRole } from '../../../types';
 
 interface TeamMembersSectionProps {
@@ -26,11 +27,12 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
   roleChangeTarget,
   isUpdatingRole,
 }) => {
+  const { t } = useI18n();
   return (
     <FormSection
       variant="card"
-      title="Members & Invitations"
-      description="Manage team members and their roles. Role changes must respect the authorization hierarchy."
+      title={t('teamDetail.settings.members')}
+      description={t('teamDetail.settings.membersDescription')}
       className="rounded-3xl"
     >
       <div className="space-y-6">

@@ -1,5 +1,6 @@
 import React from 'react';
 import { FormSection } from '../../ui/FormSection';
+import { useI18n } from '../../../contexts/I18nContext';
 import type { Team } from '../../../types';
 
 interface TeamOverviewSectionProps {
@@ -13,16 +14,17 @@ export const TeamOverviewSection: React.FC<TeamOverviewSectionProps> = ({
   memberCount,
   projectCount,
 }) => {
+  const { t } = useI18n();
   const metaPairs = [
-    { label: 'Members', value: memberCount ?? team.memberCount ?? 0 },
-    { label: 'Projects', value: projectCount ?? team.projectCount ?? 0 },
-    { label: 'Created', value: new Date(team.createdAt).toLocaleDateString() },
+    { label: t('teamDetail.settings.members'), value: memberCount ?? team.memberCount ?? 0 },
+    { label: t('teamDetail.settings.projects'), value: projectCount ?? team.projectCount ?? 0 },
+    { label: t('teamDetail.settings.created'), value: new Date(team.createdAt).toLocaleDateString() },
   ];
 
   return (
     <FormSection
       variant="card"
-      title="Team Overview"
+      title={t('teamDetail.settings.overview')}
       className="rounded-3xl"
     >
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -33,8 +35,8 @@ export const TeamOverviewSection: React.FC<TeamOverviewSectionProps> = ({
           </div>
         ))}
         <div className="rounded-2xl border border-theme-subtle p-4 bg-elevation-1">
-          <p className="text-xs uppercase tracking-[0.2em] text-theme-tertiary">Status</p>
-          <p className="mt-2 text-lg font-semibold text-theme-primary">Active</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-theme-tertiary">{t('teamDetail.settings.status')}</p>
+          <p className="mt-2 text-lg font-semibold text-theme-primary">{t('teamDetail.settings.statusActive')}</p>
         </div>
       </div>
     </FormSection>

@@ -3,6 +3,7 @@ import { Users, Clock, Mail, Crown, Shield, X } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Badge';
 import { FormSection } from '../../ui/FormSection';
+import { useI18n } from '../../../contexts/I18nContext';
 import type { ProjectMember, ProjectRole, ProjectInvitation, Project } from '../../../types';
 
 interface ProjectMembersSectionProps {
@@ -34,6 +35,8 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
   roleChangeTarget,
   isUpdatingRole,
 }) => {
+  const { t } = useI18n();
+  
   if (!canManageMembers) {
     return null;
   }
@@ -41,8 +44,8 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
   return (
     <FormSection
       variant="default"
-      title="Members & Invitations"
-      description="Manage project members, their roles, and pending invitations. Role changes must respect the authorization hierarchy."
+      title={t('projectDetail.settings.members')}
+      description={t('projectDetail.settings.membersDescription')}
     >
       <div className="space-y-6">
         {/* Pending Invitations */}

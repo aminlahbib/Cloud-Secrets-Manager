@@ -908,12 +908,12 @@ export const ProjectDetailPage: React.FC = () => {
             borderColor: 'var(--status-danger)',
           }}
         >
-          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Project Not Found</h2>
+          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>{t('projectDetail.projectNotFound')}</h2>
           <p className="text-body-sm mb-4" style={{ color: 'var(--status-danger)' }}>
-            This project may have been deleted or you don't have access to it.
+            {t('projectDetail.projectNotFoundDescription')}
           </p>
           <Button variant="secondary" onClick={() => navigate('/projects')}>
-            Back to Projects
+            {t('projectDetail.backToProjects')}
           </Button>
         </div>
       </div>
@@ -921,10 +921,10 @@ export const ProjectDetailPage: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'secrets', label: 'Secrets', icon: Key, count: project.secretCount },
-    { id: 'members', label: 'Members', icon: Users, count: project.memberCount },
-    { id: 'activity', label: 'Activity', icon: Activity },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'secrets', label: t('projectDetail.secrets'), icon: Key, count: project.secretCount },
+    { id: 'members', label: t('projectDetail.members'), icon: Users, count: project.memberCount },
+    { id: 'activity', label: t('projectDetail.activity'), icon: Activity },
+    { id: 'settings', label: t('projectDetail.settings'), icon: SettingsIcon },
   ];
 
   return (

@@ -4,6 +4,7 @@ import { LayoutGrid, Building2 } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { FormSection } from '../../ui/FormSection';
+import { useI18n } from '../../../contexts/I18nContext';
 import { ProjectSourceIndicator } from '../ProjectSourceIndicator';
 import type { Workflow, Project } from '../../../types';
 
@@ -43,10 +44,12 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
     onWorkflowChange(newWorkflowId);
   }, [onWorkflowChange]);
 
+  const { t } = useI18n();
+
   return (
     <FormSection
       variant="default"
-      title="General Settings"
+      title={t('projectDetail.settings.general')}
       actions={
         canManageProject ? (
           <Button
@@ -54,14 +57,14 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
             disabled={!hasFormChanges || isSaving}
             isLoading={isSaving}
           >
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving ? t('projectDetail.settings.saving') : t('projectDetail.settings.saveChanges')}
           </Button>
         ) : undefined
       }
     >
       <div className="max-w-2xl">
         <div>
-          <label className="block text-body-sm font-medium mb-2 text-theme-secondary">Project Name</label>
+          <label className="block text-body-sm font-medium mb-2 text-theme-secondary">{t('projectDetail.settings.projectName')}</label>
           <Input
             value={projectName}
             onChange={(e) => onProjectNameChange(e.target.value)}
@@ -70,7 +73,7 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
         </div>
 
         <div>
-          <label className="block text-body-sm font-medium mb-2 text-theme-secondary">Description</label>
+          <label className="block text-body-sm font-medium mb-2 text-theme-secondary">{t('projectDetail.settings.description')}</label>
           <textarea
             className="input-theme w-full px-4 py-3 rounded-xl focus:ring-2"
             rows={4}
@@ -84,7 +87,7 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
         {/* Workflow Selection */}
         <div>
           <label className="block text-body-sm font-medium mb-2 text-theme-secondary">
-            Workflow
+            {t('projectDetail.settings.workflow')}
             <span className="font-normal ml-1 text-theme-tertiary">(optional)</span>
           </label>
           <div className="relative">
@@ -97,7 +100,7 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
               disabled={!canManageProject || isMovingWorkflow}
               className="input-theme w-full pl-10 pr-4 py-2 rounded-xl appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option value="">No Workflow (Unassigned)</option>
+              <option value="">{t('projectDetail.settings.noWorkflow')}</option>
               {workflows?.map((w) => (
                 <option key={w.id} value={w.id}>
                   {w.name} {w.isDefault && '(Default)'}
@@ -122,7 +125,7 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
         {(project.teams && project.teams.length > 0) || project.accessSource ? (
           <div>
             <label className="block text-body-sm font-medium mb-2 text-theme-secondary">
-              Team Access
+              {t('projectDetail.settings.teamAccess')}
             </label>
             <div className="rounded-xl border border-theme-subtle p-4 bg-elevation-1">
               {project.teams && project.teams.length > 0 ? (

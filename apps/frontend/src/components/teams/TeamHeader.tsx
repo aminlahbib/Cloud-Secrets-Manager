@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Crown, Shield, Users, Folder } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
+import { useI18n } from '../../contexts/I18nContext';
 import type { Team, TeamRole } from '../../types';
 
 const ROLE_ICONS: Record<TeamRole, React.ReactNode> = {
@@ -34,6 +35,7 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
   team,
 }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const currentUserRole = team.currentUserRole;
 
   const handleBack = useCallback(() => {
@@ -53,7 +55,7 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
     <div>
       <Button variant="ghost" onClick={handleBack} className="mb-6">
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Teams
+        {t('teamDetail.backToTeams')}
       </Button>
 
       <div className="flex flex-col gap-6">
@@ -83,7 +85,7 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
                     {ROLE_ICONS[currentUserRole as TeamRole] && (
                       <span className="mr-1">{ROLE_ICONS[currentUserRole as TeamRole]}</span>
                     )}
-                    {currentUserRole.replace('TEAM_', '')}
+                    {t(`teamDetail.role.${currentUserRole}`)}
                   </Badge>
                 )}
               </div>
@@ -94,13 +96,13 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
                 <div className="flex items-center gap-1.5 text-body-sm">
                   <Users className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
                   <span className="text-theme-secondary font-medium">
-                    {team.memberCount || 0} {team.memberCount === 1 ? 'member' : 'members'}
+                    {team.memberCount || 0} {team.memberCount === 1 ? t('teamDetail.member') : t('teamDetail.members')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-body-sm">
                   <Folder className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
                   <span className="text-theme-secondary font-medium">
-                    {team.projectCount || 0} {team.projectCount === 1 ? 'project' : 'projects'}
+                    {team.projectCount || 0} {team.projectCount === 1 ? t('teamDetail.project') : t('teamDetail.projects')}
                   </span>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Settings, Users, AlertTriangle } from 'lucide-react';
 import { SettingsLayout, type SettingsSection } from '../shared/SettingsLayout';
+import { useI18n } from '../../contexts/I18nContext';
 import { TeamOverviewSection } from './settings/TeamOverviewSection';
 import { TeamGeneralSettingsSection } from './settings/TeamGeneralSettingsSection';
 import { TeamMembersSection } from './settings/TeamMembersSection';
@@ -38,27 +39,28 @@ export const TeamSettingsTab: React.FC<TeamSettingsTabProps> = ({
   roleChangeTarget,
   isUpdatingRole,
 }) => {
+  const { t } = useI18n();
   const [activeSection, setActiveSection] = useState<string>('overview');
 
   const sections: SettingsSection[] = [
     {
       id: 'overview',
-      title: 'Team Overview',
+      title: t('teamDetail.settings.overview'),
       icon: <FileText className="h-4 w-4" />,
     },
     {
       id: 'general',
-      title: 'General Settings',
+      title: t('teamDetail.settings.general'),
       icon: <Settings className="h-4 w-4" />,
     },
     {
       id: 'members',
-      title: 'Members & Invitations',
+      title: t('teamDetail.settings.members'),
       icon: <Users className="h-4 w-4" />,
     },
     {
       id: 'advanced',
-      title: 'Advanced',
+      title: t('teamDetail.settings.advanced'),
       icon: <AlertTriangle className="h-4 w-4" />,
     },
   ];
