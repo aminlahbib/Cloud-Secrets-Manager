@@ -4,7 +4,6 @@ import { Spinner } from '../ui/Spinner';
 import { EmptyState } from '../ui/EmptyState';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
 import { useI18n } from '../../contexts/I18nContext';
 import { useDebounce } from '../../utils/debounce';
 import type { ProjectMember, TeamMember, ProjectRole, TeamRole, ProjectInvitation } from '../../types';
