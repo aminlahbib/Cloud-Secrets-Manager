@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { User, Upload } from 'lucide-react';
+import { User, Upload, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 
@@ -148,13 +148,31 @@ export const ProfileStep: React.FC<ProfileStepProps> = ({
 
         {error && (
           <div 
-            className="p-3 rounded-lg flex items-center gap-2"
+            className="p-3 rounded-lg flex items-start gap-2"
             style={{
               backgroundColor: 'var(--status-danger-bg)',
               color: 'var(--status-danger)',
             }}
           >
-            <span className="text-sm">{error}</span>
+            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+            <div className="flex-1 text-sm">
+              {error}
+              {(error.toLowerCase().includes('already registered') || 
+                error.toLowerCase().includes('email already exists') ||
+                error.toLowerCase().includes('sign in')) && (
+                <div className="mt-2">
+                  <a
+                    href={`/login?email=${encodeURIComponent(email)}`}
+                    className="underline font-medium"
+                    style={{ color: 'var(--accent-primary)' }}
+                    onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                    onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                  >
+                    Sign in instead
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

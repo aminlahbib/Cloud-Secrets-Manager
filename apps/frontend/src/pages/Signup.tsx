@@ -126,6 +126,19 @@ export const SignupPage: React.FC = () => {
     
     try {
       if (authMethod === 'email') {
+        // Re-check email before final signup to catch race conditions
+        try {
+          const emailCheck = await signupService.checkEmail(email);
+          if (emailCheck.exists) {
+            setError(`This email was registered while you were filling out the form. Please sign in instead.`);
+            setIsLoading(false);
+            return;
+          }
+        } catch (checkErr) {
+          // If check fails, continue with signup attempt (backend will catch it)
+          console.warn('Failed to re-check email before signup:', checkErr);
+        }
+
         // Sign up with email/password
         const signupResponse = await signup({
           email,
@@ -160,7 +173,22 @@ export const SignupPage: React.FC = () => {
       // Proceed to onboarding
       setCurrentStep('onboarding');
     } catch (err: any) {
-      setError(err?.response?.data?.error || err?.message || 'Failed to complete signup');
+      // Parse error messages to detect email already exists
+      const errorMessage = err?.response?.data?.error || err?.message || 'Failed to complete signup';
+      const errorString = typeof errorMessage === 'string' ? errorMessage.toLowerCase() : '';
+      
+      // Check for various email already exists error patterns
+      if (
+        errorString.includes('email already exists') ||
+        errorString.includes('already registered') ||
+        errorString.includes('user with this email') ||
+        errorString.includes('email-already-in-use') ||
+        errorString.includes('auth/email-already-in-use')
+      ) {
+        setError(`This email is already registered. Please sign in instead.`);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
