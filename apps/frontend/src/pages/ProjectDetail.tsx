@@ -720,9 +720,27 @@ export const ProjectDetailPage: React.FC = () => {
   
   const revokeInvitationMutation = useMutation({
     mutationFn: (invitationId: string) => membersService.revokeInvitation(projectId!, invitationId),
+    onMutate: async (invitationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['project-invitations', projectId] });
+      const previous = queryClient.getQueryData(['project-invitations', projectId]);
+      
+      // Optimistically remove invitation
+      queryClient.setQueryData(['project-invitations', projectId], (old: any) => {
+        if (!old) return old;
+        return Array.isArray(old) 
+          ? old.filter((inv: any) => inv.id !== invitationId)
+          : { ...old, content: old.content?.filter((inv: any) => inv.id !== invitationId) || [] };
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _invitationId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-invitations', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
-      queryClient.invalidateQueries({ queryKey: ['project-invitations', projectId] });
     },
   });
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -6,7 +7,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import { membersService } from '../../services/members';
 import { signupService, type EmailCheckResponse } from '../../services/signup';
 import { CheckCircle, User, AlertCircle } from 'lucide-react';
-import type { ProjectRole } from '../../types';
+import type { ProjectRole, ProjectInvitation } from '../../types';
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -28,12 +29,58 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   onSuccess,
 }) => {
   const { showNotification } = useNotifications();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('check');
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<ProjectRole>('MEMBER');
   const [isChecking, setIsChecking] = useState(false);
-  const [isInviting, setIsInviting] = useState(false);
   const [emailCheckResult, setEmailCheckResult] = useState<EmailCheckResponse | null>(null);
+  
+  const inviteMutation = useMutation({
+    mutationFn: () => membersService.inviteMember(projectId, { email: email.trim(), role }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project-invitations', projectId] });
+      const previous = queryClient.getQueryData(['project-invitations', projectId]);
+      
+      // Optimistically add invitation
+      const optimisticInvitation: ProjectInvitation = {
+        id: `temp-${Date.now()}`,
+        email: email.trim(),
+        role,
+        status: 'PENDING',
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      };
+      
+      queryClient.setQueryData(['project-invitations', projectId], (old: any) => {
+        if (!old) return [optimisticInvitation];
+        return Array.isArray(old) 
+          ? [...old, optimisticInvitation]
+          : { ...old, content: [...(old.content || []), optimisticInvitation] };
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-invitations', projectId], context.previous);
+      }
+    },
+    onSuccess: (data) => {
+      // Update with server response
+      queryClient.setQueryData(['project-invitations', projectId], (old: any) => {
+        if (!old) return Array.isArray(old) ? [data] : { content: [data] };
+        const tempId = `temp-${Date.now() - 1000}`;
+        return Array.isArray(old)
+          ? old.map(inv => inv.id?.toString().startsWith('temp-') ? data : inv)
+          : { ...old, content: old.content?.map((inv: any) => inv.id?.toString().startsWith('temp-') ? data : inv) || [data] };
+      });
+      
+      // Invalidate to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['project-invitations', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['project-members', projectId] });
+    },
+  });
 
   const availableRoles: ProjectRole[] =
     currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
@@ -65,31 +112,30 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   };
 
   const handleSendInvitation = async () => {
-    setIsInviting(true);
-    try {
-      await membersService.inviteMember(projectId, { email: email.trim(), role });
-      showNotification({
-        type: 'success',
-        title: 'Invitation sent',
-        message: emailCheckResult?.exists
-          ? `${email} will receive both an in-app notification and an email invitation`
-          : `${email} will receive an email invitation`,
-      });
-      handleClose();
-      onSuccess();
-    } catch (error: any) {
-      showNotification({
-        type: 'error',
-        title: 'Failed to send invitation',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    } finally {
-      setIsInviting(false);
-    }
+    inviteMutation.mutate(undefined, {
+      onSuccess: () => {
+        showNotification({
+          type: 'success',
+          title: 'Invitation sent',
+          message: emailCheckResult?.exists
+            ? `${email} will receive both an in-app notification and an email invitation`
+            : `${email} will receive an email invitation`,
+        });
+        handleClose();
+        onSuccess();
+      },
+      onError: (error: any) => {
+        showNotification({
+          type: 'error',
+          title: 'Failed to send invitation',
+          message: error?.response?.data?.message || error?.message || 'An error occurred',
+        });
+      },
+    });
   };
 
   const handleClose = () => {
-    if (!isChecking && !isInviting) {
+    if (!isChecking && !inviteMutation.isPending) {
       setStep('check');
       setEmail('');
       setRole('MEMBER');
@@ -178,7 +224,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
               value={role}
               onChange={(e) => setRole(e.target.value as ProjectRole)}
               className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
-              disabled={isInviting}
+              disabled={inviteMutation.isPending}
             >
               {availableRoles.map((r) => (
                 <option key={r} value={r}>
@@ -203,7 +249,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
             <Button variant="secondary" onClick={handleBack} disabled={isInviting}>
               Back
             </Button>
-            <Button onClick={handleSendInvitation} isLoading={isInviting} disabled={!email.trim()}>
+            <Button onClick={handleSendInvitation} isLoading={inviteMutation.isPending} disabled={!email.trim()}>
               Send Invitation
             </Button>
           </div>
