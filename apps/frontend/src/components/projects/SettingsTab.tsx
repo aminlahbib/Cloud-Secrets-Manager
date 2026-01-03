@@ -183,13 +183,15 @@ export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
   };
 
   return (
-    <SettingsLayout
-      sections={sections}
-      activeSection={activeSection}
-      onSectionChange={setActiveSection}
-    >
-      {renderSectionContent()}
-    </SettingsLayout>
+    <div className="tab-content-container">
+      <SettingsLayout
+        sections={sections}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+      >
+        {renderSectionContent()}
+      </SettingsLayout>
+    </div>
   );
 });
 

@@ -39,12 +39,11 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
   }
 
   return (
-    <div className="tab-content-container">
-      <FormSection
-        variant="default"
-        title="Members & Invitations"
-        description="Manage project members, their roles, and pending invitations. Role changes must respect the authorization hierarchy."
-      >
+    <FormSection
+      variant="default"
+      title="Members & Invitations"
+      description="Manage project members, their roles, and pending invitations. Role changes must respect the authorization hierarchy."
+    >
       <div className="space-y-6">
         {/* Pending Invitations */}
         {pendingInvitations && pendingInvitations.length > 0 && (
@@ -188,7 +187,6 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
         )}
       </div>
     </FormSection>
-    </div>
   );
 };
 

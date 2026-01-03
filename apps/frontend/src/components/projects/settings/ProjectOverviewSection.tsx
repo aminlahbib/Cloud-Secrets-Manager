@@ -11,11 +11,10 @@ export const ProjectOverviewSection: React.FC<ProjectOverviewSectionProps> = ({
   isArchived,
 }) => {
   return (
-    <div className="tab-content-container">
-      <FormSection
-        variant="default"
-        title="Project Overview"
-      >
+    <FormSection
+      variant="default"
+      title="Project Overview"
+    >
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {metaPairs.map((item) => (
             <div key={item.label} className="rounded-2xl border border-theme-subtle p-4 bg-elevation-1">
@@ -30,8 +29,7 @@ export const ProjectOverviewSection: React.FC<ProjectOverviewSectionProps> = ({
             </p>
           </div>
         </div>
-      </FormSection>
-    </div>
+    </FormSection>
   );
 };
 
