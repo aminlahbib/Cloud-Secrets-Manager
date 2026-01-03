@@ -42,7 +42,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-theme-tertiary" />
                 <h3 className="text-sm font-medium text-theme-primary">
-                  {t('teamDetail.settings.members').replace('{{count}}', String(members.length))}
+                  {t('teamDetail.settings.membersCount').replace('{{count}}', String(members.length))}
                 </h3>
               </div>
               {onAddMember && (

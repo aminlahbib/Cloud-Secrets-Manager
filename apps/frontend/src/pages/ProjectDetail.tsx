@@ -20,6 +20,7 @@ import { Modal } from '../components/ui/Modal';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useI18n } from '../contexts/I18nContext';
 import type { Project, Secret, ProjectMember, ProjectRole, TeamRole } from '../types';
 import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
@@ -42,6 +43,7 @@ export const ProjectDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showNotification } = useNotifications();
+  const { t } = useI18n();
 
   // Persist activeTab in sessionStorage to prevent reset on errors
   const [activeTab, setActiveTab] = useState(() => {

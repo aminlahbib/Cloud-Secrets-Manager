@@ -50,6 +50,7 @@ interface SettingsTabProps {
   availableRoles?: ProjectRole[];
   roleChangeTarget?: string | null;
   isUpdatingRole?: boolean;
+  secretCount?: number;
 }
 
 export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
@@ -90,6 +91,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
   availableRoles,
   roleChangeTarget,
   isUpdatingRole,
+  secretCount,
 }) => {
   const { t } = useI18n();
   const [activeSection, setActiveSection] = useState<string>('overview');
@@ -177,6 +179,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = React.memo(({
             isArchiving={isArchiving}
             isRestoring={isRestoring}
             isLeaving={isLeaving}
+            secretCount={secretCount}
           />
         );
       default:

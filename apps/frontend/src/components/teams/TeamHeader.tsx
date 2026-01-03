@@ -96,13 +96,13 @@ export const TeamHeader: React.FC<TeamHeaderProps> = React.memo(({
                 <div className="flex items-center gap-1.5 text-body-sm">
                   <Users className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
                   <span className="text-theme-secondary font-medium">
-                    {team.memberCount || 0} {team.memberCount === 1 ? t('teamDetail.member') : t('teamDetail.members')}
+                    {team.memberCount || 0} {team.memberCount === 1 ? t('teamDetail.member') : t('teamDetail.memberPlural')}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-body-sm">
                   <Folder className="h-3.5 w-3.5" style={{ color: 'var(--text-tertiary)' }} />
                   <span className="text-theme-secondary font-medium">
-                    {team.projectCount || 0} {team.projectCount === 1 ? t('teamDetail.project') : t('teamDetail.projects')}
+                    {team.projectCount || 0} {team.projectCount === 1 ? t('teamDetail.project') : t('teamDetail.projectPlural')}
                   </span>
                 </div>
               </div>

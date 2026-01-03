@@ -16,7 +16,7 @@ export const TeamOverviewSection: React.FC<TeamOverviewSectionProps> = ({
 }) => {
   const { t } = useI18n();
   const metaPairs = [
-    { label: t('teamDetail.settings.members'), value: memberCount ?? team.memberCount ?? 0 },
+    { label: t('teamDetail.settings.membersLabel'), value: memberCount ?? team.memberCount ?? 0 },
     { label: t('teamDetail.settings.projects'), value: projectCount ?? team.projectCount ?? 0 },
     { label: t('teamDetail.settings.created'), value: new Date(team.createdAt).toLocaleDateString() },
   ];
