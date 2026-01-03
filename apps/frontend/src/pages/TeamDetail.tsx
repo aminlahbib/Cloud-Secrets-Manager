@@ -44,6 +44,7 @@ import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
 import { MembersTab } from '../components/shared/MembersTab';
+import { TeamSettingsTab } from '../components/teams/TeamSettingsTab';
 import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project, ProjectRole } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -937,125 +938,22 @@ export const TeamDetailPage: React.FC = () => {
         </div>
       )}
 
-        {activeTab === 'settings' && canManageTeam() && (
-          <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
-            <h2 className="text-lg font-semibold text-theme-primary">Team Settings</h2>
-          </div>
-          <div className="padding-card space-y-6 pb-6">
-            {/* Members Management */}
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-medium text-theme-primary mb-1">Members & Roles</h3>
-                  <p className="text-xs text-theme-tertiary">
-                    Manage team members and their roles. Role changes must respect the authorization hierarchy.
-                  </p>
-                </div>
-                <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
-                  Add Member
-                </Button>
-              </div>
-              
-              {members && members.length > 0 ? (
-                <div className="space-y-2">
-                  {members.map((member) => {
-                    const canEdit = canManageTeam() && 
-                      member.userId !== team?.createdBy && 
-                      (team?.currentUserRole === 'TEAM_OWNER' || (team?.currentUserRole === 'TEAM_ADMIN' && member.role !== 'TEAM_OWNER'));
-                    const canRemove = canManageTeam() && 
-                      member.userId !== team?.createdBy &&
-                      (team?.currentUserRole === 'TEAM_OWNER' || (team?.currentUserRole === 'TEAM_ADMIN' && member.role !== 'TEAM_OWNER'));
-
-                    return (
-                      <div
-                        key={member.id}
-                        className="flex items-center justify-between p-3 bg-elevation-1 rounded-lg"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center bg-elevation-2 text-theme-primary font-medium flex-shrink-0">
-                            <span>
-                              {(member.displayName || member.email || 'U')
-                                .charAt(0)
-                                .toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-theme-primary truncate">
-                              {member.displayName || member.email || 'Unknown'}
-                            </p>
-                            <p className="text-xs text-theme-tertiary flex items-center gap-1 truncate">
-                              <Mail className="h-3 w-3" />
-                              {member.email}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {canEdit ? (
-                            <select
-                              value={member.role}
-                              onChange={(e) => handleMemberRoleChange(member.userId, e.target.value as TeamRole)}
-                              className="input-theme px-3 py-1.5 rounded-lg text-body-sm focus:outline-none focus:ring-2"
-                              disabled={updateMemberRoleMutation.isPending && roleChangeTarget === member.userId}
-                            >
-                              <option value="TEAM_MEMBER">Member</option>
-                              {team?.currentUserRole === 'TEAM_OWNER' && (
-                                <>
-                                  <option value="TEAM_ADMIN">Admin</option>
-                                  <option value="TEAM_OWNER">Owner</option>
-                                </>
-                              )}
-                            </select>
-                          ) : (
-                            <Badge variant={member.role === 'TEAM_OWNER' || member.role === 'TEAM_ADMIN' ? 'owner-admin' : 'default'}>
-                              {member.role === 'TEAM_OWNER' && <Crown className="h-3 w-3 mr-1" />}
-                              {member.role === 'TEAM_ADMIN' && <Shield className="h-3 w-3 mr-1" />}
-                              {member.role.replace('TEAM_', '')}
-                            </Badge>
-                          )}
-                          {canRemove && (
-                            <button
-                              onClick={() => handleRemoveMember(member.userId)}
-                              className="p-1.5 rounded-lg text-status-danger hover:bg-elevation-2 transition-colors"
-                              title="Remove member"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 mx-auto mb-4 text-theme-tertiary" />
-                  <p className="text-sm text-theme-secondary mb-2">No members in this team</p>
-                  <Button size="sm" onClick={() => setShowAddMemberModal(true)}>
-                    Add First Member
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Team Management */}
-            <div className="border-t border-theme-subtle pt-6">
-              <h3 className="text-sm font-medium text-theme-primary mb-2">Team Management</h3>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button variant="secondary" onClick={() => setShowEditModal(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Team
-                </Button>
-                {canDeleteTeam() && (
-                  <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Team
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        {activeTab === 'settings' && canManageTeam() && team && (
+          <TeamSettingsTab
+            team={team}
+            members={members}
+            memberCount={team.memberCount}
+            projectCount={team.projectCount}
+            canManageTeam={canManageTeam()}
+            canDeleteTeam={canDeleteTeam()}
+            onAddMember={() => setShowAddMemberModal(true)}
+            onRoleChange={handleMemberRoleChange}
+            onRemoveMember={handleRemoveMember}
+            onEditTeam={() => setShowEditModal(true)}
+            onDeleteTeam={() => setShowDeleteConfirm(true)}
+            roleChangeTarget={roleChangeTarget}
+            isUpdatingRole={updateMemberRoleMutation.isPending}
+          />
         )}
 
         {activeTab === 'settings' && !canManageTeam() && (
