@@ -22,6 +22,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { updateTeamCache, updateTeamMemberCache } from '../utils/queryInvalidation';
 import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
 import { auditService } from '../services/audit';
@@ -248,8 +249,36 @@ export const TeamDetailPage: React.FC = () => {
   const removeMemberMutation = useMutation({
     mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
       teamsService.removeTeamMember(teamId, memberId),
+    onMutate: async ({ memberId }) => {
+      await queryClient.cancelQueries({ queryKey: ['teams', teamId, 'members'] });
+      const previous = queryClient.getQueryData(['teams', teamId, 'members']);
+      
+      // Optimistically remove member
+      updateTeamMemberCache(queryClient, teamId!, (members) =>
+        members.filter(m => m.userId !== memberId)
+      );
+      
+      // Update team member count
+      const team = queryClient.getQueryData<Team>(['teams', teamId]);
+      if (team) {
+        updateTeamCache(queryClient, teamId!, {
+          memberCount: Math.max(0, (team.memberCount || 1) - 1),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
+      }
+      showNotification({
+        type: 'error',
+        title: 'Failed to remove member',
+        message: 'An error occurred',
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       showNotification({
@@ -258,35 +287,41 @@ export const TeamDetailPage: React.FC = () => {
         message: 'The member has been removed from the team',
       });
     },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to remove member',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
   });
 
   // Update member role mutation
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
       teamsService.updateMemberRole(teamId!, memberId, { role }),
+    onMutate: async ({ memberId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['teams', teamId, 'members'] });
+      const previous = queryClient.getQueryData(['teams', teamId, 'members']);
+      
+      // Optimistically update role
+      updateTeamMemberCache(queryClient, teamId!, (members) =>
+        members.map(m => m.userId === memberId ? { ...m, role } : m)
+      );
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
+      }
+      setRoleChangeTarget(null);
+      showNotification({
+        type: 'error',
+        title: 'Failed to update role',
+        message: 'An error occurred',
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
       setRoleChangeTarget(null);
       showNotification({
         type: 'success',
         title: 'Role updated',
         message: 'The member role has been updated successfully',
-      });
-    },
-    onError: (error: any) => {
-      setRoleChangeTarget(null);
-      showNotification({
-        type: 'error',
-        title: 'Failed to update role',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
       });
     },
   });
