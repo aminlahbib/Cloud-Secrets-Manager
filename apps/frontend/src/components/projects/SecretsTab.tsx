@@ -81,12 +81,13 @@ export const SecretsTab: React.FC<SecretsTabProps> = React.memo(({
             }}
           />
         </div>
-        <div className="flex-shrink-0">
+        <div className="flex-shrink-0 relative">
           <FilterPanel
             filters={secretFilterConfigs}
             values={secretFilters}
             onChange={onFilterChange}
             onClear={onFilterClear}
+            className="relative"
           />
         </div>
       </div>

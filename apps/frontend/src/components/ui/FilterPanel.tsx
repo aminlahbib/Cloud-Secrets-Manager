@@ -119,7 +119,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             onClick={() => setIsOpen(false)}
           />
           <div 
-            className={`absolute top-full mt-2 border border-theme-subtle rounded-xl shadow-lg p-4 z-50 min-w-[300px] max-w-[90vw] transition-all dropdown-glass ${
+            className={`absolute top-full mt-2 border border-theme-subtle rounded-xl shadow-lg p-4 z-50 min-w-[300px] max-w-[min(90vw,400px)] transition-all dropdown-glass ${
               dropdownPosition === 'right' ? 'right-0' : 'left-0'
             }`}
             style={{
@@ -128,6 +128,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
               overflowY: 'auto',
               boxShadow: 'var(--shadow-lg)',
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-body-sm font-semibold text-theme-primary">Filters</h3>
