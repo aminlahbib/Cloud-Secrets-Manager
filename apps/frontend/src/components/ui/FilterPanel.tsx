@@ -32,7 +32,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('left');
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; right?: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const activeFiltersCount = Object.values(values).filter(v => v !== '' && v !== null && v !== undefined).length;
   
@@ -52,21 +52,44 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
     return active;
   }, [filters, values]);
 
-  // Calculate dropdown position to prevent cropping
+  // Calculate dropdown position using fixed positioning to prevent cropping
   useEffect(() => {
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
-      const dropdownWidth = 300; // min-w-[300px]
+      const viewportHeight = window.innerHeight;
+      const dropdownWidth = 400; // max-w-[min(90vw,400px)]
+      const dropdownHeight = 500; // estimated max height
       const spaceOnRight = viewportWidth - rect.right;
       const spaceOnLeft = rect.left;
       
+      // Calculate position
+      let left: number | undefined;
+      let right: number | undefined;
+      
       // If not enough space on right, align to right edge
       if (spaceOnRight < dropdownWidth && spaceOnLeft > spaceOnRight) {
-        setDropdownPosition('right');
+        right = viewportWidth - rect.right;
+        left = undefined;
       } else {
-        setDropdownPosition('left');
+        left = rect.left;
+        right = undefined;
       }
+      
+      // Calculate top position (below the button with some margin)
+      const top = rect.bottom + 8; // mt-2 = 8px
+      
+      // Ensure dropdown doesn't go below viewport
+      const maxTop = viewportHeight - dropdownHeight - 20; // 20px padding from bottom
+      const finalTop = Math.min(top, maxTop);
+      
+      setDropdownPosition({
+        top: finalTop,
+        left: left,
+        right: right,
+      });
+    } else {
+      setDropdownPosition(null);
     }
   }, [isOpen]);
 
@@ -119,14 +142,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             onClick={() => setIsOpen(false)}
           />
           <div 
-            className={`absolute top-full mt-2 border border-theme-subtle rounded-xl shadow-lg p-4 z-50 min-w-[300px] max-w-[min(90vw,400px)] transition-all dropdown-glass ${
-              dropdownPosition === 'right' ? 'right-0' : 'left-0'
-            }`}
+            className="fixed border border-theme-subtle rounded-xl shadow-lg p-4 z-50 min-w-[300px] max-w-[min(90vw,400px)] transition-all dropdown-glass"
             style={{
               backgroundColor: 'var(--card-bg)',
               maxHeight: 'calc(100vh - 200px)',
               overflowY: 'auto',
               boxShadow: 'var(--shadow-lg)',
+              top: dropdownPosition?.top ? `${dropdownPosition.top}px` : undefined,
+              left: dropdownPosition?.left !== undefined ? `${dropdownPosition.left}px` : undefined,
+              right: dropdownPosition?.right !== undefined ? `${dropdownPosition.right}px` : undefined,
             }}
             onClick={(e) => e.stopPropagation()}
           >

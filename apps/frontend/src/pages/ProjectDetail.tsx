@@ -71,7 +71,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   const [activityPage, setActivityPage] = useState(1);
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
-  const [dateRange, setDateRange] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
+  const [dateRange, setDateRange] = useState<'24h' | '7d' | '30d'>('7d');
   const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -158,10 +158,7 @@ export const ProjectDetailPage: React.FC = () => {
     const endDate = new Date();
     const startDate = new Date();
     
-    if (dateRange === 'all') {
-      // For "all time", use a very old date (10 years ago) to get all activity
-      startDate.setFullYear(startDate.getFullYear() - 10);
-    } else if (dateRange === '24h') {
+    if (dateRange === '24h') {
       startDate.setHours(startDate.getHours() - 24);
     } else if (dateRange === '7d') {
       startDate.setDate(startDate.getDate() - 7);

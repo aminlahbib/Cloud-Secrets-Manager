@@ -18,8 +18,8 @@ interface ActivityTabProps {
   projectId: string | undefined;
   activityView: 'analytics' | 'list';
   onViewChange: (view: 'analytics' | 'list') => void;
-  dateRange: '24h' | '7d' | '30d' | 'all';
-  onDateRangeChange: (range: '24h' | '7d' | '30d' | 'all') => void;
+  dateRange: '24h' | '7d' | '30d';
+  onDateRangeChange: (range: '24h' | '7d' | '30d') => void;
   // Analytics props
   analyticsStats: any;
   isAnalyticsLoading: boolean;
@@ -209,7 +209,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
     onViewChange(view);
   }, [onViewChange]);
 
-  const handleDateRangeChange = useCallback((range: '24h' | '7d' | '30d' | 'all') => {
+  const handleDateRangeChange = useCallback((range: '24h' | '7d' | '30d') => {
     onDateRangeChange(range);
   }, [onDateRangeChange]);
 
@@ -245,13 +245,12 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   <Calendar className="h-4 w-4 text-theme-tertiary" />
                   <select
                     value={dateRange}
-                    onChange={(e) => handleDateRangeChange(e.target.value as '24h' | '7d' | '30d' | 'all')}
+                    onChange={(e) => handleDateRangeChange(e.target.value as '24h' | '7d' | '30d')}
                     className="bg-transparent border-none text-body-sm font-medium focus:outline-none cursor-pointer text-theme-primary"
                   >
                     <option value="24h">Last 24 hours</option>
                     <option value="7d">{t('activityTab.last7Days')}</option>
                     <option value="30d">{t('activityTab.last30Days')}</option>
-                    <option value="all">{t('activityTab.allTime')}</option>
                   </select>
                 </div>
                 {analyticsStats && (
