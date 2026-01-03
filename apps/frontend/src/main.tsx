@@ -13,10 +13,10 @@ import './index.css';
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 2 * 60 * 1000, // 2 minutes - reduced for more frequent updates
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true, // Enable to catch updates from other tabs
       refetchOnMount: true,
       refetchOnReconnect: true,
       // Enable query deduplication
@@ -28,6 +28,10 @@ export const queryClient = new QueryClient({
     mutations: {
       retry: 0, // Don't retry mutations by default
       networkMode: 'online',
+      // Enable optimistic updates by default
+      onError: (error) => {
+        console.error('Mutation error:', error);
+      },
     },
   },
 });
