@@ -65,18 +65,18 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
               </Button>
               <Button 
                 variant="danger" 
-                className="flex-1 relative" 
+                className="flex-1 flex items-center justify-center gap-2" 
                 onClick={onDelete}
                 title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
               >
-                Delete Project
+                <span>Delete Project</span>
                 {secretCount > 0 && (
                   <Badge 
                     variant="warning" 
-                    className="ml-2"
+                    className="flex items-center gap-1"
                     title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
                   >
-                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    <AlertTriangle className="h-3 w-3" />
                     {secretCount}
                   </Badge>
                 )}
@@ -93,18 +93,18 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
               </Button>
               <Button 
                 variant="danger" 
-                className="flex-1 relative" 
+                className="flex-1 flex items-center justify-center gap-2" 
                 onClick={onDelete}
                 title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
               >
-                Delete Permanently
+                <span>Delete Permanently</span>
                 {secretCount > 0 && (
                   <Badge 
                     variant="warning" 
-                    className="ml-2"
+                    className="flex items-center gap-1"
                     title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
                   >
-                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    <AlertTriangle className="h-3 w-3" />
                     {secretCount}
                   </Badge>
                 )}
