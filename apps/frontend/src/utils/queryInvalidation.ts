@@ -120,6 +120,28 @@ export const updateProjectCache = (
 };
 
 /**
+ * Immediately update projects list cache
+ * Updates all query keys that start with ['projects', ...]
+ * to handle queries with filters/search parameters
+ */
+export const updateProjectsListCache = (
+  queryClient: QueryClient,
+  updater: (projects: Project[]) => Project[]
+): void => {
+  // Update all queries that match the pattern ['projects', ...]
+  queryClient.setQueriesData(
+    { queryKey: ['projects'], exact: false },
+    (old: any) => {
+      if (!old?.content) return old;
+      return {
+        ...old,
+        content: updater(old.content),
+      };
+    }
+  );
+};
+
+/**
  * Immediately update member list in cache
  */
 export const updateMemberCache = (

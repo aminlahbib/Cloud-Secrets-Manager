@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectsService } from '../services/projects';
+import { updateProjectsListCache } from '../utils/queryInvalidation';
 import type { CreateProjectRequest, Project } from '../types';
 
 interface UseProjectsOptions {
@@ -27,10 +28,13 @@ export const useCreateProject = () => {
     return useMutation({
         mutationFn: (data: CreateProjectRequest) => projectsService.createProject(data),
         onMutate: async (data) => {
-            await queryClient.cancelQueries({ queryKey: ['projects'] });
-            const previous = queryClient.getQueryData(['projects']);
+            // Cancel all project queries to prevent race conditions
+            await queryClient.cancelQueries({ queryKey: ['projects'], exact: false });
             
-            // Optimistically add project
+            // Store previous data for rollback
+            const previousQueries = queryClient.getQueriesData({ queryKey: ['projects'], exact: false });
+            
+            // Optimistically add project to all project list queries
             const optimisticProject: Project = {
                 id: `temp-${Date.now()}`,
                 name: data.name,
@@ -44,35 +48,32 @@ export const useCreateProject = () => {
                 updatedAt: new Date().toISOString(),
             };
             
-            queryClient.setQueryData(['projects'], (old: any) => {
-                if (!old?.content) return old;
-                return {
-                    ...old,
-                    content: [optimisticProject, ...old.content],
-                };
-            });
+            // Update all project list queries (with any filters/search)
+            updateProjectsListCache(queryClient, (projects) => [optimisticProject, ...projects]);
             
-            return { previous };
+            return { previousQueries };
         },
         onError: (_err, _variables, context) => {
-            if (context?.previous) {
-                queryClient.setQueryData(['projects'], context.previous);
+            // Rollback all queries to previous state
+            if (context?.previousQueries) {
+                context.previousQueries.forEach(([queryKey, data]) => {
+                    queryClient.setQueryData(queryKey, data);
+                });
             }
         },
         onSuccess: (data) => {
-            // Update with server response
-            queryClient.setQueryData(['projects'], (old: any) => {
-                if (!old?.content) return old;
-                return {
-                    ...old,
-                    content: old.content.map((p: Project) => 
-                        p.id?.toString().startsWith('temp-') ? data : p
-                    ),
-                };
-            });
+            // Update all project list queries with server response
+            updateProjectsListCache(queryClient, (projects) =>
+                projects.map((p: Project) => 
+                    p.id?.toString().startsWith('temp-') ? data : p
+                )
+            );
+            
+            // Invalidate related queries
             queryClient.invalidateQueries({ queryKey: ['workflows'] });
             queryClient.invalidateQueries({ queryKey: ['projects', 'recent'] });
             queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+            queryClient.invalidateQueries({ queryKey: ['teams'] }); // Teams might have project counts
         },
     });
 };
