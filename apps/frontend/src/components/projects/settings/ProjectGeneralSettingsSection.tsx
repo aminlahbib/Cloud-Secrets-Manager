@@ -44,22 +44,22 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
   }, [onWorkflowChange]);
 
   return (
-    <FormSection
-      variant="card"
-      title="General Settings"
-      actions={
-        canManageProject ? (
-          <Button
-            onClick={onSave}
-            disabled={!hasFormChanges || isSaving}
-            isLoading={isSaving}
-          >
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </Button>
-        ) : undefined
-      }
-      className="rounded-3xl"
-    >
+    <div className="tab-content-container">
+      <FormSection
+        variant="default"
+        title="General Settings"
+        actions={
+          canManageProject ? (
+            <Button
+              onClick={onSave}
+              disabled={!hasFormChanges || isSaving}
+              isLoading={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          ) : undefined
+        }
+      >
       <div className="max-w-2xl">
         <div>
           <label className="block text-body-sm font-medium mb-2 text-theme-secondary">Project Name</label>
@@ -185,6 +185,7 @@ export const ProjectGeneralSettingsSection: React.FC<ProjectGeneralSettingsSecti
         ) : null}
       </div>
     </FormSection>
+    </div>
   );
 };
 

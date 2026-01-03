@@ -69,9 +69,7 @@ export const SettingsLayout: React.FC<SettingsLayoutProps> = ({
 
       {/* Right Content Area */}
       <div className="flex-1 min-w-0 overflow-auto">
-        <div className="tab-content-container">
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );

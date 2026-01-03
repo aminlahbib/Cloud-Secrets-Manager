@@ -934,7 +934,7 @@ export const ProjectDetailPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0 mb-6">
+      <div className="flex-shrink-0">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}

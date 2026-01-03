@@ -36,12 +36,12 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
 }) => {
   if (canManageProject) {
     return (
-      <FormSection
-        variant="card"
-        title="Project Lifecycle"
-        description="Archive projects you no longer need but may want to restore later. Permanently deleting removes all secrets and activity forever."
-        className="rounded-3xl"
-      >
+      <div className="tab-content-container">
+        <FormSection
+          variant="default"
+          title="Project Lifecycle"
+          description="Archive projects you no longer need but may want to restore later. Permanently deleting removes all secrets and activity forever."
+        >
         {transferableMembers.length > 0 && (
           <div className="flex flex-col gap-3 md:flex-row">
             <Button variant="secondary" className="flex-1" onClick={onTransferOwnership}>
@@ -80,16 +80,17 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
           )}
         </div>
       </FormSection>
+      </div>
     );
   }
 
   return (
-    <FormSection
-      variant="card"
-      title="Leave Project"
-      description="Remove your access to this project. You will need to be re-invited to regain access."
-      className="rounded-3xl"
-    >
+    <div className="tab-content-container">
+      <FormSection
+        variant="default"
+        title="Leave Project"
+        description="Remove your access to this project. You will need to be re-invited to regain access."
+      >
       {isSoleOwner && (
         <p className="text-caption mb-4 text-status-danger">
           Promote another member to Owner before leaving. Projects require at least one active owner.
@@ -105,6 +106,7 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
         </Button>
       )}
     </FormSection>
+    </div>
   );
 };
 
