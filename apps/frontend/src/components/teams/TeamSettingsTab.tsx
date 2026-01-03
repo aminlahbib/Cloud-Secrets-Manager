@@ -96,8 +96,8 @@ export const TeamSettingsTab: React.FC<TeamSettingsTabProps> = ({
         return (
           <TeamAdvancedSection
             canDeleteTeam={canDeleteTeam}
-            onEditTeam={onEditTeam}
-            onDeleteTeam={onDeleteTeam}
+            onEditTeam={onEditTeam || (() => {})}
+            onDeleteTeam={onDeleteTeam || (() => {})}
           />
         );
       default:

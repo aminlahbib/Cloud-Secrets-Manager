@@ -4,20 +4,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Building2,
-  Trash2,
   Folder,
   ArrowLeft,
-  Edit,
   Activity,
   Clock,
   Settings as SettingsIcon,
   LayoutGrid,
   FileText,
   Key,
-  Mail,
-  Crown,
-  Shield,
-  X,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
