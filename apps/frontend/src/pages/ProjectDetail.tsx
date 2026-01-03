@@ -237,11 +237,9 @@ export const ProjectDetailPage: React.FC = () => {
       days = 1;
     } else if (dateRange === '7d') {
       days = 7;
-    } else if (dateRange === '30d') {
-      days = 30;
     } else {
-      // For 'all', show last 90 days in the chart for better visualization
-      days = 90;
+      // 30d
+      days = 30;
     }
     const dayKeys = getLastNDays(days);
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
