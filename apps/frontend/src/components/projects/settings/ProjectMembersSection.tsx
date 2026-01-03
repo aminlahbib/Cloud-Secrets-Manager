@@ -72,10 +72,9 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
                         {invitation.email}
                       </p>
                       <p className="text-xs text-theme-tertiary">
-                        {t('projectDetail.settings.invitedAs', { 
-                          role: invitation.role, 
-                          date: new Date(invitation.createdAt).toLocaleDateString() 
-                        })}
+                        {t('projectDetail.settings.invitedAs')
+                          .replace('{{role}}', invitation.role)
+                          .replace('{{date}}', new Date(invitation.createdAt).toLocaleDateString())}
                       </p>
                     </div>
                   </div>
@@ -101,7 +100,7 @@ export const ProjectMembersSection: React.FC<ProjectMembersSectionProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-theme-tertiary" />
                 <h3 className="text-sm font-medium text-theme-primary">
-                  {t('projectDetail.settings.members', { count: members.length })}
+                  {t('projectDetail.settings.members').replace('{{count}}', String(members.length))}
                 </h3>
               </div>
               {onInviteMember && (
