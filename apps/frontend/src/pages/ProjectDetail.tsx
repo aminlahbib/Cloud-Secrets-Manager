@@ -33,7 +33,7 @@ import {
   prepareChartData,
 } from '../utils/analytics';
 import { useDebounce } from '../utils/debounce';
-import { invalidateProjectQueries } from '../utils/queryInvalidation';
+import { invalidateProjectQueries, updateProjectCache, updateMemberCache } from '../utils/queryInvalidation';
 
 
 export const ProjectDetailPage: React.FC = () => {
@@ -368,6 +368,27 @@ export const ProjectDetailPage: React.FC = () => {
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: (userId: string) => membersService.removeMember(projectId!, userId),
+    onMutate: async (userId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['project-members', projectId] });
+      const previous = queryClient.getQueryData(['project-members', projectId]);
+      
+      // Optimistically remove member
+      updateMemberCache(queryClient, projectId!, (members) => 
+        members.filter(m => m.userId !== userId)
+      );
+      
+      // Update project member count
+      updateProjectCache(queryClient, projectId!, {
+        memberCount: (project?.memberCount || 1) - 1,
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _userId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-members', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
@@ -376,6 +397,22 @@ export const ProjectDetailPage: React.FC = () => {
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: ProjectRole }) =>
       membersService.updateMemberRole(projectId!, userId, { role }),
+    onMutate: async ({ userId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['project-members', projectId] });
+      const previous = queryClient.getQueryData(['project-members', projectId]);
+      
+      // Optimistically update role
+      updateMemberCache(queryClient, projectId!, (members) =>
+        members.map(m => m.userId === userId ? { ...m, role } : m)
+      );
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-members', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
@@ -547,13 +584,46 @@ export const ProjectDetailPage: React.FC = () => {
         name: projectName.trim(),
         description: projectDescription.trim() || undefined,
       }),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, {
+        name: projectName.trim(),
+        description: projectDescription.trim() || undefined,
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
+    onSuccess: (data) => {
+      // Update with server response
+      queryClient.setQueryData(['project', projectId], data);
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
   const archiveProjectMutation = useMutation({
     mutationFn: () => projectsService.archiveProject(projectId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, { isArchived: true });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowArchiveModal(false);
@@ -583,6 +653,20 @@ export const ProjectDetailPage: React.FC = () => {
 
   const restoreProjectMutation = useMutation({
     mutationFn: () => projectsService.restoreProject(projectId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, { isArchived: false, deletedAt: null });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowRestoreModal(false);
@@ -700,30 +784,35 @@ export const ProjectDetailPage: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      <ProjectHeader
-        project={project}
-        activeTab={activeTab}
-        canManageSecrets={canManageSecrets}
-        canManageMembers={canManageMembers}
-        onExportSecrets={handleExportSecrets}
-        onImportSecrets={handleImportSecrets}
-        onAddSecret={handleAddSecret}
-        onInviteMember={handleInviteMember}
-        onTabChange={setActiveTab}
-        secretsCount={secrets.length}
-      />
+    <div className="flex flex-col min-h-0 w-full max-w-full">
+      <div className="flex-shrink-0 pb-6">
+        <ProjectHeader
+          project={project}
+          activeTab={activeTab}
+          canManageSecrets={canManageSecrets}
+          canManageMembers={canManageMembers}
+          onExportSecrets={handleExportSecrets}
+          onImportSecrets={handleImportSecrets}
+          onAddSecret={handleAddSecret}
+          onInviteMember={handleInviteMember}
+          onTabChange={setActiveTab}
+          secretsCount={secrets.length}
+        />
+      </div>
 
       {/* Tabs */}
-      <Tabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onChange={(tabId) => {
-          setActiveTab(tabId);
-        }}
-      />
+      <div className="flex-shrink-0 mb-6">
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={(tabId) => {
+            setActiveTab(tabId);
+          }}
+        />
+      </div>
 
       {/* Tab Content */}
+      <div className="flex-1 min-h-0 overflow-auto">
       {activeTab === 'secrets' && (
         <SecretsTab
                     projectId={projectId!}
@@ -1109,6 +1198,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      </div>
     </div>
   );
 };
