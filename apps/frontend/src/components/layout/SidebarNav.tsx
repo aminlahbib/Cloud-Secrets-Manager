@@ -34,7 +34,7 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
   ];
 
   return (
-    <div className={isCollapsed ? 'space-y-0.5' : 'space-y-1'}>
+    <div className={isCollapsed ? 'space-y-1' : 'space-y-1'}>
       {navigation.map((item) => {
         const Icon = item.icon;
         const isActive = isActiveLink(item.href);
@@ -45,18 +45,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             onClick={onNavigate}
             className={`
               flex items-center rounded-lg text-sm font-medium transition-all duration-200
-              ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'}
+              ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}
               ${isActive 
                 ? 'text-accent-primary' 
                 : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
               }
+              ${isCollapsed && isActive ? 'border border-accent-primary' : ''}
             `}
             style={isActive ? {
               backgroundColor: 'var(--accent-primary-glow)',
             } : {}}
             title={isCollapsed ? item.name : undefined}
           >
-            <Icon className="h-5 w-5 flex-shrink-0" />
+            <Icon className={`${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'} flex-shrink-0`} />
             {!isCollapsed && <span>{item.name}</span>}
           </Link>
         );
@@ -68,18 +69,19 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           onClick={onNavigate}
           className={`
             flex items-center rounded-lg text-sm font-medium transition-all duration-200
-            ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5'}
+            ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}
             ${isActiveLink('/admin')
               ? 'text-accent-primary'
               : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
             }
+            ${isCollapsed && isActiveLink('/admin') ? 'border border-accent-primary' : ''}
           `}
           style={isActiveLink('/admin') ? {
             backgroundColor: 'var(--accent-primary-glow)',
           } : {}}
           title={isCollapsed ? t('nav.admin') : undefined}
         >
-          <Shield className="h-5 w-5 flex-shrink-0" />
+          <Shield className={`${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'} flex-shrink-0`} />
           {!isCollapsed && <span>{t('nav.admin')}</span>}
         </Link>
       )}

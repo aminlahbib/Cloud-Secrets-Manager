@@ -44,14 +44,15 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
       <div ref={selectorRef} className="relative">
         <button
           onClick={() => setIsOpen((prev) => !prev)}
-          className="w-full flex items-center justify-center p-2 rounded-lg transition-all duration-200 hover:bg-elevation-1"
+          className="w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:bg-elevation-1"
           style={{
             backgroundColor: isOpen ? 'var(--accent-primary-glow)' : 'transparent',
+            border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
           }}
           title={selectedWorkflow?.name || 'Select workflow'}
         >
           <div 
-            className="w-8 h-8 rounded-md flex items-center justify-center text-xs font-semibold text-white"
+            className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-semibold text-white shadow-sm"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             {selectedWorkflow?.name?.substring(0, 2).toUpperCase() || 'MW'}

@@ -1,6 +1,8 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { FormSection } from '../../ui/FormSection';
+import { Badge } from '../../ui/Badge';
 import type { ProjectMember } from '../../../types';
 
 interface ProjectAdvancedSectionProps {
@@ -17,6 +19,7 @@ interface ProjectAdvancedSectionProps {
   isArchiving: boolean;
   isRestoring: boolean;
   isLeaving: boolean;
+  secretCount?: number;
 }
 
 export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
@@ -33,6 +36,7 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
   isArchiving,
   isRestoring,
   isLeaving,
+  secretCount = 0,
 }) => {
   if (canManageProject) {
     return (
@@ -59,8 +63,23 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
               >
                 Archive Project
               </Button>
-              <Button variant="danger" className="flex-1" onClick={onDelete}>
+              <Button 
+                variant="danger" 
+                className="flex-1 relative" 
+                onClick={onDelete}
+                title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
+              >
                 Delete Project
+                {secretCount > 0 && (
+                  <Badge 
+                    variant="warning" 
+                    className="ml-2"
+                    title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
+                  >
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    {secretCount}
+                  </Badge>
+                )}
               </Button>
             </>
           ) : (
@@ -72,8 +91,23 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
               >
                 Restore Project
               </Button>
-              <Button variant="danger" className="flex-1" onClick={onDelete}>
+              <Button 
+                variant="danger" 
+                className="flex-1 relative" 
+                onClick={onDelete}
+                title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
+              >
                 Delete Permanently
+                {secretCount > 0 && (
+                  <Badge 
+                    variant="warning" 
+                    className="ml-2"
+                    title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
+                  >
+                    <AlertTriangle className="h-3 w-3 mr-1" />
+                    {secretCount}
+                  </Badge>
+                )}
               </Button>
             </>
           )}

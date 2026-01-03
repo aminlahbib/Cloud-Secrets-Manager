@@ -1047,6 +1047,7 @@ export const ProjectDetailPage: React.FC = () => {
           isArchiving={archiveProjectMutation.isPending}
           isRestoring={restoreProjectMutation.isPending}
           isLeaving={leaveProjectMutation.isPending}
+          secretCount={project.secretCount}
           members={members}
           currentUserRole={currentUserRole}
           canManageMembers={canManageMembers}
@@ -1142,16 +1143,37 @@ export const ProjectDetailPage: React.FC = () => {
       {/* Delete Project Modal */}
       <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
         <div className="space-y-4">
-          <p style={{ color: 'var(--text-primary)' }}>
-            Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
-            action cannot be undone.
-          </p>
+          {project && project.secretCount && project.secretCount > 0 ? (
+            <div className="rounded-lg border p-4" style={{ 
+              backgroundColor: 'var(--status-danger-bg)', 
+              borderColor: 'var(--status-danger)' 
+            }}>
+              <p className="text-sm font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>
+                Warning: This project contains {project.secretCount} secret{project.secretCount !== 1 ? 's' : ''}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                Deleting <strong>{project.name}</strong> will permanently delete all {project.secretCount} secret{project.secretCount !== 1 ? 's' : ''}, along with all history and membership. This action cannot be undone.
+              </p>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-primary)' }}>
+              Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
+              action cannot be undone.
+            </p>
+          )}
           <div className="flex justify-end space-x-3">
             <Button variant="secondary" onClick={() => setShowDeleteProjectModal(false)}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={() => deleteProjectMutation.mutate()} isLoading={deleteProjectMutation.isPending}>
-              Delete Permanently
+            <Button 
+              variant="danger" 
+              onClick={() => deleteProjectMutation.mutate()} 
+              isLoading={deleteProjectMutation.isPending}
+            >
+              {project && project.secretCount && project.secretCount > 0 
+                ? `Delete Project and ${project.secretCount} Secret${project.secretCount !== 1 ? 's' : ''}`
+                : 'Delete Permanently'
+              }
             </Button>
           </div>
         </div>
