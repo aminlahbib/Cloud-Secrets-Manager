@@ -222,26 +222,6 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
     return grouped;
   }, [filteredMembers, type, getMemberInfo]);
 
-  // Get available role options for filter
-  const roleFilterOptions = useMemo(() => {
-    if (type === 'project') {
-      return [
-        { value: 'all', label: t('members.filterAllRoles') },
-        { value: 'OWNER', label: 'Owner' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MEMBER', label: 'Member' },
-        { value: 'VIEWER', label: 'Viewer' },
-      ];
-    } else {
-      return [
-        { value: 'all', label: t('members.filterAllRoles') },
-        { value: 'OWNER', label: 'Owner' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MEMBER', label: 'Member' },
-      ];
-    }
-  }, [type, t]);
-
   // Check if user can edit member role
   const canEditMemberRole = useCallback((member: UnifiedMember) => {
     if (!canManageMembers) return false;
