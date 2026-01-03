@@ -8,7 +8,6 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 
 const ROLES = ['USER', 'MANAGER', 'ADMIN'];
 
@@ -61,7 +60,6 @@ export const AdminPage: React.FC = () => {
             Manage user roles and permissions
           </p>
         </div>
-        <LanguageSelector iconOnly={true} />
       </div>
 
       {/* Warning Banner */}

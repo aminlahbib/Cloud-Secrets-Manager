@@ -952,7 +952,6 @@ export const ProjectDetailPage: React.FC = () => {
           onChange={(tabId) => {
             setActiveTab(tabId);
           }}
-          showLanguageSelector={true}
         />
       </div>
 

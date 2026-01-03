@@ -8,7 +8,6 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { CreateProjectModal } from '../components/projects/CreateProjectModal';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { useI18n } from '../contexts/I18nContext';
 
 export const WorkflowDetailPage: React.FC = () => {
@@ -68,9 +67,6 @@ export const WorkflowDetailPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-end">
-        <LanguageSelector iconOnly={true} />
-      </div>
       <div>
         <Button
           variant="ghost"

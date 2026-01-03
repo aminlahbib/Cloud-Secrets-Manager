@@ -8,7 +8,6 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { Pagination } from '../components/ui/Pagination';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog, Project } from '../types';
@@ -297,8 +296,7 @@ export const ActivityPage: React.FC = () => {
               : t('activity.subtitle.user')}
           </p>
         </div>
-        <div className="flex gap-2 items-center">
-          <LanguageSelector iconOnly={true} />
+        <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-5 w-5 mr-2" />
             {showFilters ? t('activity.hideFilters') : t('activity.filters')}

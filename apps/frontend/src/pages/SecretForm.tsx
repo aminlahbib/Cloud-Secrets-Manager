@@ -7,7 +7,6 @@ import { useI18n } from '../contexts/I18nContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Textarea } from '../components/ui/Textarea';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 import type { SecretFormValues } from '../types';
 
 export const SecretFormPage: React.FC = () => {
@@ -94,12 +93,9 @@ export const SecretFormPage: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen py-10 px-4 transition-colors relative"
+      className="min-h-screen py-10 px-4 transition-colors"
       style={{ backgroundColor: 'var(--page-bg)' }}
     >
-      <div className="absolute top-4 right-4">
-        <LanguageSelector iconOnly={true} />
-      </div>
       <div className="max-w-3xl mx-auto space-y-6">
         <button
           onClick={() => navigate(`/projects/${projectId}`)}

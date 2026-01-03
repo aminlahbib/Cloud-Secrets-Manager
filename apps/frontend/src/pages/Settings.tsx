@@ -32,7 +32,6 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal';
 import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
 import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
@@ -288,9 +287,6 @@ export const SettingsPage: React.FC = () => {
               </button>
             );
           })}
-          <div className="pt-4 mt-4 border-t" style={{ borderTopColor: 'var(--border-subtle)' }}>
-            <LanguageSelector compact={true} />
-          </div>
         </div>
 
         {/* Settings Content */}

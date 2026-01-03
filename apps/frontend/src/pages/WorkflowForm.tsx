@@ -7,7 +7,6 @@ import type { CreateWorkflowRequest } from '../types';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 
 export const WorkflowFormPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,9 +34,6 @@ export const WorkflowFormPage: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <div className="mb-6 flex justify-end">
-        <LanguageSelector iconOnly={true} />
-      </div>
       <div className="mb-6">
         <Button
           variant="ghost"

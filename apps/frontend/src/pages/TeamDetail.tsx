@@ -537,7 +537,6 @@ export const TeamDetailPage: React.FC = () => {
           onChange={(tabId) => {
             setActiveTab(tabId);
           }}
-          showLanguageSelector={true}
         />
       </div>
 

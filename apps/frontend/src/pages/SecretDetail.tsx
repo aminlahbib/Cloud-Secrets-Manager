@@ -9,7 +9,6 @@ import { Card } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
-import { LanguageSelector } from '../components/ui/LanguageSelector';
 import { queryClient } from '../main';
 import { useI18n } from '../contexts/I18nContext';
 import { updateSecretCache, updateProjectCache } from '../utils/queryInvalidation';
@@ -237,9 +236,6 @@ export const SecretDetailPage: React.FC = () => {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6">
       <div className="max-w-6xl mx-auto space-y-6">
-        <div className="flex justify-end">
-          <LanguageSelector iconOnly={true} />
-        </div>
         <Button variant="ghost" onClick={() => navigate(`/projects/${projectId}`)} className="w-fit">
           <ArrowLeft className="h-4 w-4 mr-2" />
           {t('secrets.detail.backToProject')}

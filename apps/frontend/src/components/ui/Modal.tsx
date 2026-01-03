@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { LanguageSelector } from './LanguageSelector';
 
 interface ModalProps {
   isOpen: boolean;
@@ -9,7 +8,6 @@ interface ModalProps {
   title: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
-  showLanguageSelector?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -18,7 +16,6 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
-  showLanguageSelector = false,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -64,15 +61,12 @@ export const Modal: React.FC<ModalProps> = ({
             className="flex items-center justify-between p-4 border-b border-theme-subtle transition-colors"
           >
             <h2 className="text-xl font-semibold text-theme-primary">{title}</h2>
-            <div className="flex items-center gap-2">
-              {showLanguageSelector && <LanguageSelector iconOnly={true} />}
-              <button
-                onClick={onClose}
-                className="transition-colors text-theme-tertiary hover:text-theme-primary"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="transition-colors text-theme-tertiary hover:text-theme-primary"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           {/* Content */}
