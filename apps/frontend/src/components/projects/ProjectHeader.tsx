@@ -145,29 +145,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
             )}
           </div>
         </div>
-        <div className="rounded-3xl border border-theme-subtle px-6 py-4 text-body-sm bg-elevation-1 text-theme-secondary">
-          <p>
-            Need help?{' '}
-            <button 
-              className="underline hover:no-underline transition-all" 
-              type="button" 
-              onClick={handleActivityClick}
-              style={{ color: 'var(--accent-primary)' }}
-            >
-              View project activity
-            </button>{' '}
-            or visit{' '}
-            <button 
-              className="underline hover:no-underline transition-all" 
-              type="button" 
-              onClick={handleSettingsClick}
-              style={{ color: 'var(--accent-primary)' }}
-            >
-              project settings
-            </button>{' '}
-            for more tools.
-          </p>
-        </div>
       </div>
     </div>
   );

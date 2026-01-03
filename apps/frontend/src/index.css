@@ -230,7 +230,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -371,7 +371,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -514,7 +514,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -653,7 +653,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -792,7 +792,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -1074,7 +1074,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -1217,7 +1217,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -1359,7 +1359,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
@@ -1501,7 +1501,7 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
     --tab-content-bg: var(--elevation-2);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
