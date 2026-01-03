@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { X, Filter, ChevronDown } from 'lucide-react';
 import { Button } from './Button';
 import { Badge } from './Badge';
@@ -32,6 +32,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('left');
+  const containerRef = useRef<HTMLDivElement>(null);
   const activeFiltersCount = Object.values(values).filter(v => v !== '' && v !== null && v !== undefined).length;
   
   const activeFilters = useMemo(() => {
@@ -50,21 +52,45 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
     return active;
   }, [filters, values]);
 
+  // Calculate dropdown position to prevent cropping
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 300; // min-w-[300px]
+      const spaceOnRight = viewportWidth - rect.right;
+      const spaceOnLeft = rect.left;
+      
+      // If not enough space on right, align to right edge
+      if (spaceOnRight < dropdownWidth && spaceOnLeft > spaceOnRight) {
+        setDropdownPosition('right');
+      } else {
+        setDropdownPosition('left');
+      }
+    }
+  }, [isOpen]);
+
   return (
-    <div className={`relative ${className}`}>
+    <div ref={containerRef} className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="px-3 py-2 border font-medium rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
+        className="px-4 py-2.5 border font-medium rounded-xl text-body-sm transition-all shadow-sm flex items-center gap-2 hover:shadow-md"
         style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-subtle)',
+          backgroundColor: 'var(--elevation-1)',
+          borderColor: isOpen ? 'var(--accent-primary)' : 'var(--border-subtle)',
           color: 'var(--text-primary)',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+          if (!isOpen) {
+            e.currentTarget.style.borderColor = 'var(--border-default)';
+            e.currentTarget.style.backgroundColor = 'var(--elevation-2)';
+          }
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+          if (!isOpen) {
+            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            e.currentTarget.style.backgroundColor = 'var(--elevation-1)';
+          }
         }}
       >
         <Filter className="w-4 h-4" style={{ color: 'var(--text-tertiary)' }} />
@@ -92,7 +118,17 @@ export const FilterPanel: React.FC<FilterPanelProps> = React.memo(({
             className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute top-full left-0 mt-2 border border-theme-subtle rounded-lg shadow-theme-lg p-4 z-20 min-w-[300px] transition-colors dropdown-glass">
+          <div 
+            className={`absolute top-full mt-2 border border-theme-subtle rounded-xl shadow-lg p-4 z-50 min-w-[300px] max-w-[90vw] transition-all dropdown-glass ${
+              dropdownPosition === 'right' ? 'right-0' : 'left-0'
+            }`}
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              maxHeight: 'calc(100vh - 200px)',
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+          >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-body-sm font-semibold text-theme-primary">Filters</h3>
               {activeFiltersCount > 0 && (

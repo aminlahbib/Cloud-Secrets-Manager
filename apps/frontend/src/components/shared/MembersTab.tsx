@@ -355,27 +355,33 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
       )}
 
       {/* Header with search and filters */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex-1 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="flex-1 flex flex-col sm:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1 sm:flex-initial sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary" />
-            <Input
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-theme-tertiary pointer-events-none z-10" />
+            <input
+              type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t('members.searchPlaceholder')}
-              className="pl-9"
-              icon={<Search className="h-4 w-4" />}
+              className="input-theme pl-10 pr-4 py-2.5 w-full text-body-sm rounded-xl border border-theme-subtle focus:border-accent-primary focus:ring-2 focus:ring-accent-primary-glow transition-all"
+              style={{
+                backgroundColor: 'var(--elevation-1)',
+              }}
             />
           </div>
 
           {/* Role Filter */}
           <div className="relative flex-1 sm:flex-initial sm:w-40">
-            <Filter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-tertiary pointer-events-none" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-theme-tertiary pointer-events-none z-10" />
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="input-theme pl-9 pr-3 py-2 w-full text-body-sm focus:outline-none focus:ring-2"
+              className="input-theme pl-10 pr-8 py-2.5 w-full text-body-sm rounded-xl border border-theme-subtle focus:border-accent-primary focus:ring-2 focus:ring-accent-primary-glow transition-all appearance-none cursor-pointer"
+              style={{
+                backgroundColor: 'var(--elevation-1)',
+              }}
             >
               {roleFilterOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -383,6 +389,11 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
                 </option>
               ))}
             </select>
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+              <svg className="w-4 h-4 text-theme-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
           </div>
         </div>
 

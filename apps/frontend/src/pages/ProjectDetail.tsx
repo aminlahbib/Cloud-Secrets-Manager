@@ -71,7 +71,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   const [activityPage, setActivityPage] = useState(1);
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<'24h' | '7d' | '30d' | 'all'>('7d');
   const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -156,10 +156,15 @@ export const ProjectDetailPage: React.FC = () => {
   // Calculate date range for analytics (memoized)
   const dateRangeParams = useMemo(() => {
     if (dateRange === 'all') return {};
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    if (dateRange === '24h') {
+      startDate.setHours(startDate.getHours() - 24);
+    } else if (dateRange === '7d') {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (dateRange === '30d') {
+      startDate.setDate(startDate.getDate() - 30);
+    }
     return {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -229,7 +234,16 @@ export const ProjectDetailPage: React.FC = () => {
   // Prepare chart data
   const chartData = useMemo(() => {
     if (!analyticsStats) return [];
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    let days: number;
+    if (dateRange === '24h') {
+      days = 1;
+    } else if (dateRange === '7d') {
+      days = 7;
+    } else if (dateRange === '30d') {
+      days = 30;
+    } else {
+      days = 30; // Default for 'all'
+    }
     const dayKeys = getLastNDays(days);
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
   }, [analyticsStats, dateRange]);

@@ -67,23 +67,28 @@ export const SecretsTab: React.FC<SecretsTabProps> = React.memo(({
   return (
     <div className="tab-content-container space-y-4">
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-theme-tertiary" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-theme-tertiary pointer-events-none z-10" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search secrets..."
-            className="input-theme pl-10 pr-4 py-2"
+            className="input-theme pl-10 pr-4 py-2.5 w-full text-body-sm rounded-xl border border-theme-subtle focus:border-accent-primary focus:ring-2 focus:ring-accent-primary-glow transition-all"
+            style={{
+              backgroundColor: 'var(--elevation-1)',
+            }}
           />
         </div>
-        <FilterPanel
-          filters={secretFilterConfigs}
-          values={secretFilters}
-          onChange={onFilterChange}
-          onClear={onFilterClear}
-        />
+        <div className="flex-shrink-0">
+          <FilterPanel
+            filters={secretFilterConfigs}
+            values={secretFilters}
+            onChange={onFilterChange}
+            onClear={onFilterClear}
+          />
+        </div>
       </div>
 
       {/* Bulk Actions Toolbar */}
