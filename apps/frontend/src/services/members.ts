@@ -59,6 +59,14 @@ export const membersService = {
   },
 
   /**
+   * Get all invitations for a project (pending, accepted, rejected)
+   */
+  async listAllInvitations(projectId: string): Promise<ProjectInvitation[]> {
+    const { data } = await api.get(`/api/projects/${projectId}/invitations?all=true`);
+    return data;
+  },
+
+  /**
    * Revoke a pending invitation
    */
   async revokeInvitation(projectId: string, invitationId: string): Promise<void> {

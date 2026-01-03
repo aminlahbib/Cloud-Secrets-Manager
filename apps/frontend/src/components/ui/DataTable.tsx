@@ -122,7 +122,7 @@ export function DataTable<T>({
               return (
                 <tr
                   key={key}
-                  className={`transition-colors hover:bg-elevation-1 border-t border-theme-subtle ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`border-t border-theme-subtle ${onRowClick ? 'cursor-pointer' : ''}`}
                   onClick={() => handleRowClick(item)}
                 >
                   {showCheckboxes && (

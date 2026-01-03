@@ -372,7 +372,7 @@ public class AuditLogProxyService {
                             UUID userId = UUID.fromString(topUser.getUserId());
                             userService.findById(userId).ifPresent(user -> {
                                 topUser.setEmail(user.getEmail());
-                                // Note: displayName could be added to TopUser if needed
+                                topUser.setDisplayName(user.getDisplayName());
                             });
                         } catch (IllegalArgumentException e) {
                             log.warn("Invalid user ID in analytics: {}", topUser.getUserId());

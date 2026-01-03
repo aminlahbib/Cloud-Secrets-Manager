@@ -65,7 +65,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, onTabChan
 
       {/* Tab Content (only if tabs have content) */}
       {hasContent && (
-        <div className="mt-6">
+        <div>
           {tabs.find((tab) => tab.id === activeTab)?.content}
         </div>
       )}

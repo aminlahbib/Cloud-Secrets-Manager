@@ -230,8 +230,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -251,6 +251,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -371,8 +374,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -392,6 +395,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(208, 202, 186, 0.02) 0%, rgba(203, 204, 199, 0.01) 50%, rgba(208, 202, 186, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(208, 202, 186, 0.08) 0%, rgba(203, 204, 199, 0.06) 50%, rgba(208, 202, 186, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(208, 202, 186, 0.15) 0%, rgba(203, 204, 199, 0.12) 50%, rgba(208, 202, 186, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -514,8 +520,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -535,6 +541,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(5, 150, 105, 0.02) 0%, rgba(16, 185, 129, 0.01) 50%, rgba(34, 211, 153, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.06) 50%, rgba(34, 211, 153, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(16, 185, 129, 0.12) 50%, rgba(34, 211, 153, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -653,8 +662,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -674,6 +683,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(52, 211, 153, 0.01) 50%, rgba(110, 231, 183, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.06) 50%, rgba(110, 231, 183, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.12) 50%, rgba(110, 231, 183, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -792,8 +804,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -813,6 +825,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.02) 0%, rgba(17, 24, 39, 0.01) 50%, rgba(31, 41, 55, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(31, 41, 55, 0.08) 0%, rgba(17, 24, 39, 0.06) 50%, rgba(31, 41, 55, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.15) 0%, rgba(17, 24, 39, 0.12) 50%, rgba(31, 41, 55, 0.14) 100%);
     
     /* Buttons - Only CTAs use blue-grey */
     --btn-primary-bg: var(--accent-primary);
@@ -936,7 +951,7 @@
     
     /* Tabs - Accent appears mainly on active tabs */
     --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -956,6 +971,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.02) 0%, rgba(17, 24, 39, 0.01) 50%, rgba(31, 41, 55, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(31, 41, 55, 0.08) 0%, rgba(17, 24, 39, 0.06) 50%, rgba(31, 41, 55, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.15) 0%, rgba(17, 24, 39, 0.12) 50%, rgba(31, 41, 55, 0.14) 100%);
     
     /* Buttons - Accent appears mainly on primary buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -1074,8 +1092,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -1095,6 +1113,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.02) 0%, rgba(59, 130, 246, 0.01) 50%, rgba(147, 197, 253, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(147, 197, 253, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.12) 50%, rgba(147, 197, 253, 0.14) 100%);
     
     /* Buttons - Filled blue primary, outlined blue secondary */
     --btn-primary-bg: var(--accent-primary);
@@ -1217,8 +1238,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -1238,6 +1259,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(96, 165, 250, 0.02) 0%, rgba(59, 130, 246, 0.01) 50%, rgba(147, 197, 253, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(147, 197, 253, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(59, 130, 246, 0.12) 50%, rgba(147, 197, 253, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -1359,8 +1383,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -1380,6 +1404,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(251, 146, 60, 0.02) 0%, rgba(249, 115, 22, 0.01) 50%, rgba(251, 146, 60, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(249, 115, 22, 0.06) 50%, rgba(251, 146, 60, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(251, 146, 60, 0.15) 0%, rgba(249, 115, 22, 0.12) 50%, rgba(251, 146, 60, 0.14) 100%);
     
     /* Buttons - Primary in coral, secondary in beige outline with plum text */
     --btn-primary-bg: var(--accent-primary);
@@ -1501,8 +1528,8 @@
     --card-shadow-hover: var(--shadow-lg);
     
     /* Tabs */
-    --tab-bg: var(--elevation-2);
-    --tab-content-bg: var(--elevation-2);
+    --tab-bg: var(--elevation-1);
+    --tab-content-bg: var(--elevation-1);
     --tab-border: var(--border-subtle);
     --tab-active-border: var(--accent-primary);
     --tab-text: var(--text-primary);
@@ -1522,6 +1549,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
+    --table-row-gradient: linear-gradient(135deg, rgba(124, 58, 237, 0.02) 0%, rgba(139, 92, 246, 0.01) 50%, rgba(167, 139, 250, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(139, 92, 246, 0.06) 50%, rgba(167, 139, 250, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(139, 92, 246, 0.12) 50%, rgba(167, 139, 250, 0.14) 100%);
     
     /* Buttons - Plum buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -1910,6 +1940,12 @@
     transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   }
   
+  /* Remove gap between tab header and content */
+  .tab-container + .tab-content-container,
+  .tab-container ~ .tab-content-container {
+    margin-top: 0;
+  }
+  
   .tab-button {
     padding: 1rem 0.25rem;
     border-bottom: 2px solid transparent;
@@ -2084,14 +2120,63 @@
     border-color: var(--table-divider);
   }
   
-  /* Ensure table rows have subtle borders */
+  /* Ensure table rows have subtle borders and gradients */
   .table-theme tr {
     border-color: var(--table-divider);
+    background: var(--table-row-gradient);
+    transition: background 200ms ease;
+  }
+  
+  .table-theme tr:hover {
+    background: var(--table-row-gradient-hover);
   }
   
   .table-theme th,
   .table-theme td {
     border-color: var(--table-divider);
+  }
+  
+  /* Checkbox styling with gradient */
+  input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 1rem;
+    height: 1rem;
+    border: 1.5px solid var(--border-default);
+    border-radius: 0.25rem;
+    background: var(--checkbox-gradient);
+    cursor: pointer;
+    position: relative;
+    transition: all 200ms ease;
+  }
+  
+  input[type="checkbox"]:checked {
+    background: var(--checkbox-gradient);
+    border-color: var(--accent-primary);
+  }
+  
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 4px;
+    height: 8px;
+    border: solid var(--accent-primary);
+    border-width: 0 2px 2px 0;
+  }
+  
+  input[type="checkbox"]:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-glow);
+  }
+  
+  input[type="checkbox"]:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-primary-glow);
   }
   
   /* ============================================
@@ -2301,6 +2386,20 @@
     backdrop-filter: blur(60px) saturate(200%);
     -webkit-backdrop-filter: blur(60px) saturate(200%);
     border-right: 1px solid rgba(255, 255, 255, 0.4);
+  }
+
+  /* Collapsed sidebar enhancements */
+  .sidebar-glass[class*="w-16"] .flex.items-center.rounded-lg {
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-glass[class*="w-16"] .flex.items-center.rounded-lg:hover {
+    background-color: var(--elevation-1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .sidebar-glass[class*="w-16"] .flex.items-center.rounded-lg[style*="accent-primary-glow"] {
+    box-shadow: 0 0 0 1px var(--accent-primary), 0 2px 8px rgba(0, 0, 0, 0.1);
   }
   
   [data-theme="light-monochrome"] .glass,

@@ -60,16 +60,38 @@ export const signupService = {
    * Check if email exists and get pending invitations
    */
   async checkEmail(email: string): Promise<EmailCheckResponse> {
-    const { data } = await api.post<EmailCheckResponse>('/api/auth/check-email', { email });
-    return data;
+    try {
+      const { data } = await api.post<EmailCheckResponse>('/api/auth/check-email', { email });
+      return data;
+    } catch (error: any) {
+      // Handle network errors gracefully
+      if (!error?.response && error?.message) {
+        throw new Error('Unable to verify email. Please check your connection and try again.');
+      }
+      // Re-throw other errors as-is
+      throw error;
+    }
   },
 
   /**
    * Sign up with email and password
    */
   async signupWithEmail(request: SignupRequest): Promise<SignupResponse> {
-    const { data } = await api.post<SignupResponse>('/api/auth/signup', request);
-    return data;
+    try {
+      const { data } = await api.post<SignupResponse>('/api/auth/signup', request);
+      return data;
+    } catch (error: any) {
+      // Parse and enhance error messages
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to sign up';
+      
+      // Check for network errors
+      if (!error?.response && error?.message) {
+        throw new Error('Unable to verify email. Please check your connection and try again.');
+      }
+      
+      // Re-throw with enhanced message (backend already provides user-friendly messages)
+      throw new Error(errorMessage);
+    }
   },
 
   /**

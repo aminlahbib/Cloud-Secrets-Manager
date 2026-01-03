@@ -56,4 +56,7 @@ public interface SecretRepository extends JpaRepository<Secret, UUID> {
        List<Secret> findSecretsExpiringBetween(
                      @Param("now") LocalDateTime now,
                      @Param("threshold") LocalDateTime threshold);
+
+       // Delete all secrets for a project
+       void deleteByProjectId(UUID projectId);
 }

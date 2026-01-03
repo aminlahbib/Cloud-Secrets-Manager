@@ -32,9 +32,12 @@ public class ProjectInvitationController {
     @Operation(summary = "List project invitations", description = "Get all pending invitations for a project")
     public ResponseEntity<List<InvitationResponse>> listProjectInvitations(
             @PathVariable UUID projectId,
+            @RequestParam(required = false, defaultValue = "false") boolean all,
             @AuthenticationPrincipal UserDetails userDetails) {
         // Permission check is done in service layer
-        List<InvitationResponse> invitations = invitationService.listProjectInvitations(projectId);
+        List<InvitationResponse> invitations = all
+                ? invitationService.listAllProjectInvitations(projectId)
+                : invitationService.listProjectInvitations(projectId);
         return ResponseEntity.ok(invitations);
     }
 

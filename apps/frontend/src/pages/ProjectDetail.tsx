@@ -17,15 +17,16 @@ import { useWorkflows } from '../hooks/useWorkflows';
 import { Spinner } from '../components/ui/Spinner';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
 import { Tabs } from '../components/ui/Tabs';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { useI18n } from '../contexts/I18nContext';
 import type { Project, Secret, ProjectMember, ProjectRole, TeamRole } from '../types';
 import { FilterConfig } from '../components/ui/FilterPanel';
 import { ProjectHeader } from '../components/projects/ProjectHeader';
 import { SecretsTab } from '../components/projects/SecretsTab';
 import { MembersTab } from '../components/shared/MembersTab';
+import { InviteMemberModal } from '../components/projects/InviteMemberModal';
 import { ActivityTab } from '../components/projects/ActivityTab';
 import { SettingsTab } from '../components/projects/SettingsTab';
 import {
@@ -33,7 +34,7 @@ import {
   prepareChartData,
 } from '../utils/analytics';
 import { useDebounce } from '../utils/debounce';
-import { invalidateProjectQueries } from '../utils/queryInvalidation';
+import { invalidateProjectQueries, updateProjectCache, updateMemberCache, updateSecretCache } from '../utils/queryInvalidation';
 
 
 export const ProjectDetailPage: React.FC = () => {
@@ -42,6 +43,7 @@ export const ProjectDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const { showNotification } = useNotifications();
+  const { t } = useI18n();
 
   // Persist activeTab in sessionStorage to prevent reset on errors
   const [activeTab, setActiveTab] = useState(() => {
@@ -59,8 +61,6 @@ export const ProjectDetailPage: React.FC = () => {
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showDeleteSecretModal, setShowDeleteSecretModal] = useState<string | null>(null);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<ProjectRole>('MEMBER');
   const [projectName, setProjectName] = useState('');
   const [projectDescription, setProjectDescription] = useState('');
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>('');
@@ -73,7 +73,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [roleChangeTarget, setRoleChangeTarget] = useState<string | null>(null);
   const [activityPage, setActivityPage] = useState(1);
   const [activityView, setActivityView] = useState<'analytics' | 'list'>('analytics');
-  const [dateRange, setDateRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  const [dateRange, setDateRange] = useState<'24h' | '7d' | '30d'>('7d');
   const [selectedSecrets, setSelectedSecrets] = useState<Set<string>>(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -136,13 +136,38 @@ export const ProjectDetailPage: React.FC = () => {
     staleTime: 2 * 60 * 1000, // 2 minutes - members rarely change
   });
 
+  // Calculate permissions early (before queries that depend on them)
+  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
+  const currentUserRole = project?.currentUserRole;
+  const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
+  const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+  const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
+  const canManageProject = currentUserRole === 'OWNER';
+  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
+  const canLeaveProject =
+    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
+
+  // Fetch pending invitations
+  const { data: pendingInvitations } = useQuery({
+    queryKey: ['project-invitations', projectId],
+    queryFn: () => membersService.listPendingInvitations(projectId!),
+    enabled: !!projectId && canManageMembers,
+    staleTime: 1 * 60 * 1000, // 1 minute
+  });
+
   // Calculate date range for analytics (memoized)
   const dateRangeParams = useMemo(() => {
-    if (dateRange === 'all') return {};
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    
+    if (dateRange === '24h') {
+      startDate.setHours(startDate.getHours() - 24);
+    } else if (dateRange === '7d') {
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (dateRange === '30d') {
+      startDate.setDate(startDate.getDate() - 30);
+    }
+    
     return {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -177,12 +202,9 @@ export const ProjectDetailPage: React.FC = () => {
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
     queryKey: ['project-activity-analytics', projectId, dateRange],
     queryFn: () => {
-      if (!dateRangeParams.startDate || !dateRangeParams.endDate) {
-        throw new Error('Date range is required for analytics');
-      }
       return auditService.getProjectAnalytics(projectId!, dateRangeParams.startDate, dateRangeParams.endDate);
     },
-    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics' && !!dateRangeParams.startDate,
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
@@ -212,7 +234,15 @@ export const ProjectDetailPage: React.FC = () => {
   // Prepare chart data
   const chartData = useMemo(() => {
     if (!analyticsStats) return [];
-    const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
+    let days: number;
+    if (dateRange === '24h') {
+      days = 1;
+    } else if (dateRange === '7d') {
+      days = 7;
+    } else {
+      // 30d
+      days = 30;
+    }
     const dayKeys = getLastNDays(days);
     return prepareChartData(analyticsStats.actionsByDay, dayKeys);
   }, [analyticsStats, dateRange]);
@@ -257,6 +287,36 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: async (keys: string[]) => {
       await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
     },
+    onMutate: async (keys: string[]) => {
+      // Cancel all matching queries (including those with filters/search)
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      
+      // Get previous data from first matching query
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previous = matchingQueries[0]?.state?.data;
+      
+      // Optimistically remove all selected secrets
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) =>
+        secrets.filter(s => !keys.includes(s.secretKey))
+      );
+      
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: Math.max(0, (project.secretCount || keys.length) - keys.length),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _keys, context) => {
+      // Invalidate to refetch on error
+      if (context?.previous) {
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setSelectedSecrets(new Set());
@@ -279,12 +339,71 @@ export const ProjectDetailPage: React.FC = () => {
       );
       return results;
     },
-    onSuccess: (results) => {
+    onMutate: async (secretsToImport) => {
+      // Cancel all matching queries (including those with filters/search)
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      
+      // Get previous data from first matching query
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previous = matchingQueries[0]?.state?.data;
+      
+      // Optimistically add all secrets
+      const optimisticSecrets: Secret[] = secretsToImport.map((secret, index) => ({
+        id: `temp-${Date.now()}-${index}`,
+        secretKey: secret.key,
+        description: secret.description,
+        expiresAt: secret.expiresAt?.toISOString(),
+        version: 1,
+        createdBy: user?.id || '', // Will be replaced by server response
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        expired: false,
+      }));
+      
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) => [...secrets, ...optimisticSecrets]);
+      
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: (project.secretCount || 0) + secretsToImport.length,
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _secrets, context) => {
+      // Invalidate to refetch on error
+      if (context?.previous) {
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
+      }
+      showNotification({
+        type: 'error',
+        title: 'Import failed',
+        message: 'Failed to import secrets',
+      });
+    },
+    onSuccess: (results, secretsToImport) => {
+      // Update with server responses
+      const successful = results
+        .filter((r): r is PromiseFulfilledResult<Secret> => r.status === 'fulfilled')
+        .map(r => r.value);
+      
+      if (successful.length > 0) {
+        updateSecretCache(queryClient, projectId!, (secrets: Secret[]) => {
+          // Replace optimistic secrets with server responses
+          const optimisticKeys = new Set(secretsToImport.map(s => s.key));
+          const withoutOptimistic = secrets.filter((s: Secret) => !optimisticKeys.has(s.secretKey));
+          return [...withoutOptimistic, ...successful];
+        });
+      }
+      
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowImportModal(false);
       setImportFile(null);
       setImportError(null);
-      const successCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'fulfilled').length;
+      const successCount = successful.length;
       const errorCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'rejected').length;
       if (errorCount > 0) {
         showNotification({
@@ -300,40 +419,39 @@ export const ProjectDetailPage: React.FC = () => {
         });
       }
     },
-    onError: (error) => {
-      showNotification({
-        type: 'error',
-        title: 'Import failed',
-        message: error instanceof Error ? error.message : 'Failed to import secrets',
-      });
-    },
   });
 
   // Delete secret mutation with optimistic update
   const deleteSecretMutation = useMutation({
     mutationFn: (key: string) => secretsService.deleteProjectSecret(projectId!, key),
     onMutate: async (key) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      // Cancel outgoing refetches for all matching query keys
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId], exact: false });
 
-      // Snapshot previous value
-      const previousSecrets = queryClient.getQueryData(['project-secrets', projectId]);
+      // Snapshot previous value (get the first matching query)
+      const queryCache = queryClient.getQueryCache();
+      const matchingQueries = queryCache.findAll({ queryKey: ['project-secrets', projectId], exact: false });
+      const previousSecrets = matchingQueries[0]?.state?.data;
 
-      // Optimistically update
-      queryClient.setQueryData(['project-secrets', projectId], (old: any) => {
-        if (!old?.content) return old;
-        return {
-          ...old,
-          content: old.content.filter((secret: Secret) => secret.secretKey !== key),
-        };
-      });
+      // Optimistically update all matching queries
+      updateSecretCache(queryClient, projectId!, (secrets: Secret[]) =>
+        secrets.filter(s => s.secretKey !== key)
+      );
+
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: Math.max(0, (project.secretCount || 1) - 1),
+        });
+      }
 
       return { previousSecrets };
     },
     onError: (_err, _key, context) => {
-      // Rollback on error
+      // Rollback on error - invalidate to refetch
       if (context?.previousSecrets) {
-        queryClient.setQueryData(['project-secrets', projectId], context.previousSecrets);
+        queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId], exact: false });
       }
     },
     onSuccess: () => {
@@ -347,20 +465,31 @@ export const ProjectDetailPage: React.FC = () => {
     },
   });
 
-  // Invite member mutation
-  const inviteMutation = useMutation({
-    mutationFn: () => membersService.inviteMember(projectId!, { email: inviteEmail, role: inviteRole }),
-    onSuccess: () => {
-      invalidateProjectQueries(queryClient, projectId!, user?.id);
-      setShowInviteModal(false);
-      setInviteEmail('');
-      setInviteRole('MEMBER');
-    },
-  });
 
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: (userId: string) => membersService.removeMember(projectId!, userId),
+    onMutate: async (userId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['project-members', projectId] });
+      const previous = queryClient.getQueryData(['project-members', projectId]);
+      
+      // Optimistically remove member
+      updateMemberCache(queryClient, projectId!, (members) => 
+        members.filter(m => m.userId !== userId)
+      );
+      
+      // Update project member count
+      updateProjectCache(queryClient, projectId!, {
+        memberCount: (project?.memberCount || 1) - 1,
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _userId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-members', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
@@ -369,6 +498,22 @@ export const ProjectDetailPage: React.FC = () => {
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: ProjectRole }) =>
       membersService.updateMemberRole(projectId!, userId, { role }),
+    onMutate: async ({ userId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['project-members', projectId] });
+      const previous = queryClient.getQueryData(['project-members', projectId]);
+      
+      // Optimistically update role
+      updateMemberCache(queryClient, projectId!, (members) =>
+        members.map(m => m.userId === userId ? { ...m, role } : m)
+      );
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-members', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
@@ -404,6 +549,33 @@ export const ProjectDetailPage: React.FC = () => {
         await workflowsService.addProjectToWorkflow(toWorkflowId, projectId!);
       }
     },
+    onMutate: async ({ toWorkflowId }) => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update workflow (we'll need to fetch workflow name)
+      if (toWorkflowId && workflows) {
+        const targetWorkflow = workflows.find(w => w.id === toWorkflowId);
+        if (targetWorkflow) {
+          updateProjectCache(queryClient, projectId!, {
+            workflowId: toWorkflowId,
+            workflowName: targetWorkflow.name,
+          });
+        }
+      } else {
+        updateProjectCache(queryClient, projectId!, {
+          workflowId: undefined,
+          workflowName: undefined,
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
@@ -414,16 +586,6 @@ export const ProjectDetailPage: React.FC = () => {
       setTransferTarget('');
     }
   }, [showTransferModal]);
-
-  const ownerCount = members?.filter((member) => member.role === 'OWNER').length ?? 0;
-  const currentUserRole = project?.currentUserRole;
-  const canManageSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN' || currentUserRole === 'MEMBER';
-  const canDeleteSecrets = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
-  const canManageMembers = currentUserRole === 'OWNER' || currentUserRole === 'ADMIN';
-  const canManageProject = currentUserRole === 'OWNER';
-  const isSoleOwner = currentUserRole === 'OWNER' && ownerCount <= 1;
-  const canLeaveProject =
-    !currentUserRole ? false : currentUserRole !== 'OWNER' ? true : ownerCount > 1;
 
   const secretFilterConfigs: FilterConfig[] = useMemo(() => [
     {
@@ -550,13 +712,46 @@ export const ProjectDetailPage: React.FC = () => {
         name: projectName.trim(),
         description: projectDescription.trim() || undefined,
       }),
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, {
+        name: projectName.trim(),
+        description: projectDescription.trim() || undefined,
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
+    onSuccess: (data) => {
+      // Update with server response
+      queryClient.setQueryData(['project', projectId], data);
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
   });
 
   const archiveProjectMutation = useMutation({
     mutationFn: () => projectsService.archiveProject(projectId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, { isArchived: true });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowArchiveModal(false);
@@ -586,6 +781,20 @@ export const ProjectDetailPage: React.FC = () => {
 
   const restoreProjectMutation = useMutation({
     mutationFn: () => projectsService.restoreProject(projectId!),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update
+      updateProjectCache(queryClient, projectId!, { isArchived: false, deletedAt: undefined });
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowRestoreModal(false);
@@ -636,6 +845,37 @@ export const ProjectDetailPage: React.FC = () => {
   const handleDeleteSecret = useCallback((key: string) => setShowDeleteSecretModal(key), []);
   const handleBulkDelete = useCallback(() => setShowBulkDeleteModal(true), []);
   const handleRemoveMember = useCallback((userId: string) => removeMemberMutation.mutate(userId), [removeMemberMutation]);
+  
+  const revokeInvitationMutation = useMutation({
+    mutationFn: (invitationId: string) => membersService.revokeInvitation(projectId!, invitationId),
+    onMutate: async (invitationId: string) => {
+      await queryClient.cancelQueries({ queryKey: ['project-invitations', projectId] });
+      const previous = queryClient.getQueryData(['project-invitations', projectId]);
+      
+      // Optimistically remove invitation
+      queryClient.setQueryData(['project-invitations', projectId], (old: any) => {
+        if (!old) return old;
+        return Array.isArray(old) 
+          ? old.filter((inv: any) => inv.id !== invitationId)
+          : { ...old, content: old.content?.filter((inv: any) => inv.id !== invitationId) || [] };
+      });
+      
+      return { previous };
+    },
+    onError: (_err, _invitationId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-invitations', projectId], context.previous);
+      }
+    },
+    onSuccess: () => {
+      invalidateProjectQueries(queryClient, projectId!, user?.id);
+    },
+  });
+
+  const handleCancelInvitation = useCallback(
+    (invitationId: string) => revokeInvitationMutation.mutate(invitationId),
+    [revokeInvitationMutation]
+  );
   const handleWorkflowChange = useCallback((workflowId: string | null) => {
     const oldWorkflowId = currentWorkflow?.id || null;
     setSelectedWorkflowId(workflowId || '');
@@ -670,12 +910,12 @@ export const ProjectDetailPage: React.FC = () => {
             borderColor: 'var(--status-danger)',
           }}
         >
-          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>Project Not Found</h2>
+          <h2 className="text-h3 font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>{t('projectDetail.projectNotFound')}</h2>
           <p className="text-body-sm mb-4" style={{ color: 'var(--status-danger)' }}>
-            This project may have been deleted or you don't have access to it.
+            {t('projectDetail.projectNotFoundDescription')}
           </p>
           <Button variant="secondary" onClick={() => navigate('/projects')}>
-            Back to Projects
+            {t('projectDetail.backToProjects')}
           </Button>
         </div>
       </div>
@@ -683,37 +923,42 @@ export const ProjectDetailPage: React.FC = () => {
   }
 
   const tabs = [
-    { id: 'secrets', label: 'Secrets', icon: Key, count: project.secretCount },
-    { id: 'members', label: 'Members', icon: Users, count: project.memberCount },
-    { id: 'activity', label: 'Activity', icon: Activity },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'secrets', label: t('projectDetail.secrets'), icon: Key, count: project.secretCount },
+    { id: 'members', label: t('projectDetail.members'), icon: Users, count: project.memberCount },
+    { id: 'activity', label: t('projectDetail.activity'), icon: Activity },
+    { id: 'settings', label: t('projectDetail.settings'), icon: SettingsIcon },
   ];
 
   return (
-    <div className="space-y-6">
-      <ProjectHeader
-        project={project}
-        activeTab={activeTab}
-        canManageSecrets={canManageSecrets}
-        canManageMembers={canManageMembers}
-        onExportSecrets={handleExportSecrets}
-        onImportSecrets={handleImportSecrets}
-        onAddSecret={handleAddSecret}
-        onInviteMember={handleInviteMember}
-        onTabChange={setActiveTab}
-        secretsCount={secrets.length}
-      />
+    <div className="flex flex-col min-h-0 w-full max-w-full">
+      <div className="flex-shrink-0 pb-6">
+        <ProjectHeader
+          project={project}
+          activeTab={activeTab}
+          canManageSecrets={canManageSecrets}
+          canManageMembers={canManageMembers}
+          onExportSecrets={handleExportSecrets}
+          onImportSecrets={handleImportSecrets}
+          onAddSecret={handleAddSecret}
+          onInviteMember={handleInviteMember}
+          onTabChange={setActiveTab}
+          secretsCount={secrets.length}
+        />
+      </div>
 
       {/* Tabs */}
-      <Tabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onChange={(tabId) => {
-          setActiveTab(tabId);
-        }}
-      />
+      <div className="flex-shrink-0">
+        <Tabs
+          tabs={tabs}
+          activeTab={activeTab}
+          onChange={(tabId) => {
+            setActiveTab(tabId);
+          }}
+        />
+      </div>
 
       {/* Tab Content */}
+      <div className="flex-1 min-h-0 overflow-auto">
       {activeTab === 'secrets' && (
         <SecretsTab
                     projectId={projectId!}
@@ -748,9 +993,11 @@ export const ProjectDetailPage: React.FC = () => {
           availableRoles={availableRoleOptions}
           roleChangeTarget={roleChangeTarget}
           isUpdatingRole={updateMemberRoleMutation.isPending}
+          pendingInvitations={pendingInvitations}
           onRoleChange={handleMemberRoleChange}
           onRemoveMember={handleRemoveMember}
           onInviteMember={handleInviteMember}
+          onCancelInvitation={handleCancelInvitation}
         />
       )}
 
@@ -802,10 +1049,22 @@ export const ProjectDetailPage: React.FC = () => {
           isArchiving={archiveProjectMutation.isPending}
           isRestoring={restoreProjectMutation.isPending}
           isLeaving={leaveProjectMutation.isPending}
+          secretCount={project.secretCount}
+          members={members}
+          currentUserRole={currentUserRole}
+          canManageMembers={canManageMembers}
+          pendingInvitations={pendingInvitations}
+          onInviteMember={handleInviteMember}
+          onCancelInvitation={handleCancelInvitation}
+          onRoleChange={handleMemberRoleChange}
+          onRemoveMember={handleRemoveMember}
+          availableRoles={availableRoleOptions}
+          roleChangeTarget={roleChangeTarget}
+          isUpdatingRole={updateMemberRoleMutation.isPending}
         />
       )}
       {/* Archive Modal */}
-      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
+      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
@@ -813,17 +1072,17 @@ export const ProjectDetailPage: React.FC = () => {
           </p>
           <div className="flex justify-end space-x-3">
             <Button variant="secondary" onClick={() => setShowArchiveModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="danger" onClick={() => archiveProjectMutation.mutate()} isLoading={archiveProjectMutation.isPending}>
-              Archive Project
+              {t('projectAdvanced.archiveProject')}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Transfer Ownership Modal */}
-      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
+      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title={t('modal.transferOwnership')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
@@ -862,7 +1121,7 @@ export const ProjectDetailPage: React.FC = () => {
       <Modal
         isOpen={showBulkDeleteModal}
         onClose={() => setShowBulkDeleteModal(false)}
-        title="Delete Selected Secrets"
+        title={t('modal.deleteSelectedSecrets')}
       >
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
@@ -884,25 +1143,46 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Delete Project Modal */}
-      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
+      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
-          <p style={{ color: 'var(--text-primary)' }}>
-            Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
-            action cannot be undone.
-          </p>
+          {project && project.secretCount && project.secretCount > 0 ? (
+            <div className="rounded-lg border p-4" style={{ 
+              backgroundColor: 'var(--status-danger-bg)', 
+              borderColor: 'var(--status-danger)' 
+            }}>
+              <p className="text-sm font-semibold mb-2" style={{ color: 'var(--status-danger)' }}>
+                Warning: This project contains {project.secretCount} secret{project.secretCount !== 1 ? 's' : ''}
+              </p>
+              <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                Deleting <strong>{project.name}</strong> will permanently delete all {project.secretCount} secret{project.secretCount !== 1 ? 's' : ''}, along with all history and membership. This action cannot be undone.
+              </p>
+            </div>
+          ) : (
+            <p style={{ color: 'var(--text-primary)' }}>
+              Deleting <strong>{project?.name}</strong> permanently removes all secrets, history, and membership. This
+              action cannot be undone.
+            </p>
+          )}
           <div className="flex justify-end space-x-3">
             <Button variant="secondary" onClick={() => setShowDeleteProjectModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
-            <Button variant="danger" onClick={() => deleteProjectMutation.mutate()} isLoading={deleteProjectMutation.isPending}>
-              Delete Permanently
+            <Button 
+              variant="danger" 
+              onClick={() => deleteProjectMutation.mutate()} 
+              isLoading={deleteProjectMutation.isPending}
+            >
+              {project && project.secretCount && project.secretCount > 0 
+                ? `Delete Project and ${project.secretCount} Secret${project.secretCount !== 1 ? 's' : ''}`
+                : 'Delete Permanently'
+              }
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Restore Modal */}
-      <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title="Restore Project">
+      <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title={t('modal.restoreProject')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Restore <strong>{project?.name}</strong> to make it active again.
@@ -919,7 +1199,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Leave Modal */}
-      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
+      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
@@ -940,7 +1220,7 @@ export const ProjectDetailPage: React.FC = () => {
       <Modal
         isOpen={!!showDeleteSecretModal}
         onClose={() => setShowDeleteSecretModal(null)}
-        title="Delete Secret"
+        title={t('modal.deleteSecret')}
       >
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
@@ -963,58 +1243,18 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Invite Member Modal */}
-      <Modal
+      <InviteMemberModal
         isOpen={showInviteModal}
-        onClose={() => setShowInviteModal(false)}
-        title="Invite Member"
-      >
-        <div className="space-y-4">
-          <Input
-            label="Email Address"
-            type="email"
-            value={inviteEmail}
-            onChange={(e) => setInviteEmail(e.target.value)}
-            placeholder="colleague@example.com"
-          />
-
-          <div>
-            <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
-              Role
-            </label>
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as ProjectRole)}
-              className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
-            >
-              <option value="VIEWER">Viewer - Read-only access</option>
-              <option value="MEMBER">Member - Can create and update secrets</option>
-              <option value="ADMIN">Admin - Can manage secrets and members</option>
-              {currentUserRole === 'OWNER' && (
-                <option value="OWNER">Owner - Full control</option>
-              )}
-            </select>
-          </div>
-
-          <div className="flex justify-end space-x-3">
-            <Button variant="secondary" onClick={() => setShowInviteModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => inviteMutation.mutate()}
-              isLoading={inviteMutation.isPending}
-              disabled={!inviteEmail}
-            >
-              Send Invitation
-            </Button>
-          </div>
-
-          {inviteMutation.isError && (
-            <p className="text-body-sm" style={{ color: 'var(--status-danger)' }}>
-              Failed to send invitation. Please try again.
-            </p>
-          )}
-        </div>
-      </Modal>
+        onClose={() => {
+          setShowInviteModal(false);
+        }}
+        projectId={projectId!}
+        projectName={project?.name || ''}
+        currentUserRole={currentUserRole || 'VIEWER'}
+        onSuccess={() => {
+          invalidateProjectQueries(queryClient, projectId!, user?.id);
+        }}
+      />
 
       {/* Import Secrets Modal */}
       <Modal
@@ -1024,7 +1264,7 @@ export const ProjectDetailPage: React.FC = () => {
           setImportFile(null);
           setImportError(null);
         }}
-        title="Import Secrets"
+        title={t('modal.importSecrets')}
       >
         <div className="space-y-4">
           <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -1126,6 +1366,7 @@ export const ProjectDetailPage: React.FC = () => {
           </div>
         </div>
       </Modal>
+      </div>
     </div>
   );
 };

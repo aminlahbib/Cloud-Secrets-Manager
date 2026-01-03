@@ -207,8 +207,16 @@ public class ProjectService {
         // Delete all team-project associations
         teamProjectRepository.deleteByProjectId(projectId);
         
-        // Delete project (cascades to memberships, secrets, and invitations via ON DELETE CASCADE)
-        // Secrets, secret_versions, and project_invitations will be automatically deleted by database cascade
+        // Explicitly delete all secrets before deleting project (ensures deletion works even if cascade isn't configured)
+        // This handles both active and archived projects
+        Long secretCount = secretRepository.countByProjectId(projectId);
+        if (secretCount > 0) {
+            log.info("Deleting {} secret(s) for project: {} before project deletion", secretCount, projectId);
+            secretRepository.deleteByProjectId(projectId);
+        }
+        
+        // Delete project (cascades to memberships and invitations via ON DELETE CASCADE)
+        // Secrets are already deleted above
         projectRepository.delete(project);
         log.info("Permanently deleted project: {} by user: {}", projectId, userId);
     }

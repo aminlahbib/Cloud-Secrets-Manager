@@ -4,10 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Users,
   Building2,
-  Trash2,
   Folder,
   ArrowLeft,
-  Edit,
   Activity,
   Clock,
   Settings as SettingsIcon,
@@ -18,6 +16,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { updateTeamCache, updateTeamMemberCache } from '../utils/queryInvalidation';
 import { useDebounce } from '../utils/debounce';
 import { teamsService } from '../services/teams';
 import { auditService } from '../services/audit';
@@ -39,6 +38,7 @@ import { CreateTeamModal } from '../components/teams/CreateTeamModal';
 import { AddMemberModal } from '../components/teams/AddMemberModal';
 import { AddProjectModal } from '../components/teams/AddProjectModal';
 import { MembersTab } from '../components/shared/MembersTab';
+import { TeamSettingsTab } from '../components/teams/TeamSettingsTab';
 import type { Team, TeamMember, TeamRole, TeamProject, AuditLog, Project, ProjectRole } from '../types';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
@@ -244,8 +244,36 @@ export const TeamDetailPage: React.FC = () => {
   const removeMemberMutation = useMutation({
     mutationFn: ({ teamId, memberId }: { teamId: string; memberId: string }) =>
       teamsService.removeTeamMember(teamId, memberId),
+    onMutate: async ({ memberId }) => {
+      await queryClient.cancelQueries({ queryKey: ['teams', teamId, 'members'] });
+      const previous = queryClient.getQueryData(['teams', teamId, 'members']);
+      
+      // Optimistically remove member
+      updateTeamMemberCache(queryClient, teamId!, (members) =>
+        members.filter(m => m.userId !== memberId)
+      );
+      
+      // Update team member count
+      const team = queryClient.getQueryData<Team>(['teams', teamId]);
+      if (team) {
+        updateTeamCache(queryClient, teamId!, {
+          memberCount: Math.max(0, (team.memberCount || 1) - 1),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
+      }
+      showNotification({
+        type: 'error',
+        title: 'Failed to remove member',
+        message: 'An error occurred',
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
       queryClient.invalidateQueries({ queryKey: ['teams'] });
       showNotification({
@@ -254,35 +282,41 @@ export const TeamDetailPage: React.FC = () => {
         message: 'The member has been removed from the team',
       });
     },
-    onError: (error: any) => {
-      showNotification({
-        type: 'error',
-        title: 'Failed to remove member',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
-      });
-    },
   });
 
   // Update member role mutation
   const updateMemberRoleMutation = useMutation({
     mutationFn: ({ memberId, role }: { memberId: string; role: TeamRole }) =>
       teamsService.updateMemberRole(teamId!, memberId, { role }),
+    onMutate: async ({ memberId, role }) => {
+      await queryClient.cancelQueries({ queryKey: ['teams', teamId, 'members'] });
+      const previous = queryClient.getQueryData(['teams', teamId, 'members']);
+      
+      // Optimistically update role
+      updateTeamMemberCache(queryClient, teamId!, (members) =>
+        members.map(m => m.userId === memberId ? { ...m, role } : m)
+      );
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
+      }
+      setRoleChangeTarget(null);
+      showNotification({
+        type: 'error',
+        title: 'Failed to update role',
+        message: 'An error occurred',
+      });
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
       queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
       setRoleChangeTarget(null);
       showNotification({
         type: 'success',
         title: 'Role updated',
         message: 'The member role has been updated successfully',
-      });
-    },
-    onError: (error: any) => {
-      setRoleChangeTarget(null);
-      showNotification({
-        type: 'error',
-        title: 'Failed to update role',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
       });
     },
   });
@@ -310,6 +344,40 @@ export const TeamDetailPage: React.FC = () => {
     }
     return ['TEAM_ADMIN', 'TEAM_MEMBER'];
   }, [team?.currentUserRole]);
+
+  // Transfer ownership state
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState('');
+
+  // Get transferable members (all members except current user)
+  const transferableMembers = useMemo(() => {
+    if (!members || !user?.id) return [];
+    return members.filter(m => m.userId !== user.id);
+  }, [members, user?.id]);
+
+  // Transfer ownership mutation
+  const transferOwnershipMutation = useMutation({
+    mutationFn: () => teamsService.transferOwnership(teamId!, { newOwnerUserId: transferTarget }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setShowTransferModal(false);
+      setTransferTarget('');
+      showNotification({
+        type: 'success',
+        title: 'Ownership transferred',
+        message: 'Team ownership has been transferred successfully',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to transfer ownership',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
 
   // Delete team mutation
   const deleteTeamMutation = useMutation({
@@ -496,7 +564,7 @@ export const TeamDetailPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex-shrink-0 mb-6">
+      <div className="flex-shrink-0">
         <Tabs
           tabs={tabs}
           activeTab={activeTab}
@@ -509,11 +577,11 @@ export const TeamDetailPage: React.FC = () => {
       {/* Tab Content */}
       <div className="flex-1 min-h-0 overflow-auto">
         {activeTab === 'overview' && (
-          <div className="space-y-6 w-full pb-6">
+          <div className="tab-content-container space-y-6">
             {/* Team Description */}
             {team.description && (
               <div className="card p-6">
-                <h3 className="text-h3 font-semibold mb-3 text-theme-primary">About</h3>
+                <h3 className="text-h3 font-semibold mb-3 text-theme-primary">{t('teamDetail.about')}</h3>
                 <p className="text-body-sm text-theme-secondary whitespace-pre-wrap">{team.description}</p>
               </div>
             )}
@@ -557,7 +625,7 @@ export const TeamDetailPage: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-theme-secondary mb-1">
-                      Total Secrets
+                      {t('teamDetail.totalSecrets')}
                     </p>
                     <p className="text-3xl font-bold text-theme-primary">
                       {totalSecrets}
@@ -643,7 +711,7 @@ export const TeamDetailPage: React.FC = () => {
         )}
 
       {activeTab === 'projects' && (
-        <div className="space-y-6 pb-6">
+        <div className="tab-content-container space-y-6">
           <PageHeader
             title="Projects"
             description="Manage team projects"
@@ -765,8 +833,9 @@ export const TeamDetailPage: React.FC = () => {
       )}
 
         {activeTab === 'activity' && (
-          <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
+          <div className="tab-content-container">
+            <div className="card w-full">
+              <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-theme-primary flex items-center gap-2">
                 <Activity className="h-5 w-5" />
@@ -895,42 +964,39 @@ export const TeamDetailPage: React.FC = () => {
               })}
             </div>
           )}
-        </div>
-      )}
-
-        {activeTab === 'settings' && canManageTeam() && (
-          <div className="card w-full">
-          <div className="padding-card border-b border-theme-subtle pb-4 mb-4">
-            <h2 className="text-lg font-semibold text-theme-primary">Team Settings</h2>
-          </div>
-          <div className="padding-card space-y-6 pb-6">
-            <div>
-              <h3 className="text-sm font-medium text-theme-primary mb-2">Team Management</h3>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button variant="secondary" onClick={() => setShowEditModal(true)}>
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Team
-                </Button>
-                {canDeleteTeam() && (
-                  <Button variant="danger" onClick={() => setShowDeleteConfirm(true)}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Team
-                  </Button>
-                )}
-              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === 'settings' && canManageTeam() && team && (
+          <TeamSettingsTab
+            team={team}
+            members={members}
+            memberCount={team.memberCount}
+            projectCount={team.projectCount}
+            canManageTeam={canManageTeam()}
+            canDeleteTeam={canDeleteTeam()}
+            canTransferOwnership={team.currentUserRole === 'TEAM_OWNER' && transferableMembers.length > 0}
+            onAddMember={() => setShowAddMemberModal(true)}
+            onRoleChange={handleMemberRoleChange}
+            onRemoveMember={handleRemoveMember}
+            onTransferOwnership={() => setShowTransferModal(true)}
+            onDeleteTeam={() => setShowDeleteConfirm(true)}
+            roleChangeTarget={roleChangeTarget}
+            isUpdatingRole={updateMemberRoleMutation.isPending}
+          />
         )}
 
         {activeTab === 'settings' && !canManageTeam() && (
-          <div className="card w-full">
-            <div className="padding-card">
-              <EmptyState
-                icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
-                title="Settings not available"
-                description="You need admin or owner permissions to manage team settings"
-              />
+          <div className="tab-content-container">
+            <div className="card w-full">
+              <div className="padding-card">
+                <EmptyState
+                  icon={<SettingsIcon className="h-12 w-12 text-theme-tertiary" />}
+                  title="Settings not available"
+                  description="You need admin or owner permissions to manage team settings"
+                />
+              </div>
             </div>
           </div>
         )}
@@ -978,6 +1044,46 @@ export const TeamDetailPage: React.FC = () => {
             setShowEditModal(false);
           }}
         />
+      )}
+
+      {/* Transfer Ownership Modal */}
+      {team && (
+        <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title={t('modal.transferOwnership')}>
+          <div className="space-y-4">
+            <p style={{ color: 'var(--text-primary)' }}>
+              {t('teamDetail.settings.transferOwnershipDescription')}
+            </p>
+            <div>
+              <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                {t('teamDetail.settings.selectNewOwner')}
+              </label>
+              <select
+                value={transferTarget}
+                onChange={(e) => setTransferTarget(e.target.value)}
+                className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
+              >
+                <option value="">{t('teamDetail.settings.chooseMember')}</option>
+                {transferableMembers.map((member) => (
+                  <option key={member.id} value={member.userId}>
+                    {member.displayName || member.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button variant="secondary" onClick={() => setShowTransferModal(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={() => transferOwnershipMutation.mutate()}
+                disabled={!transferTarget}
+                isLoading={transferOwnershipMutation.isPending}
+              >
+                {t('teamDetail.settings.confirmTransfer')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Delete Confirmation Modal */}
