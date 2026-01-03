@@ -1064,7 +1064,7 @@ export const ProjectDetailPage: React.FC = () => {
         />
       )}
       {/* Archive Modal */}
-      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title="Danger Zone">
+      <Modal isOpen={showArchiveModal} onClose={() => setShowArchiveModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Archiving will hide <strong>{project?.name}</strong> from active lists. You can restore it at any time from
@@ -1072,17 +1072,17 @@ export const ProjectDetailPage: React.FC = () => {
           </p>
           <div className="flex justify-end space-x-3">
             <Button variant="secondary" onClick={() => setShowArchiveModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button variant="danger" onClick={() => archiveProjectMutation.mutate()} isLoading={archiveProjectMutation.isPending}>
-              Archive Project
+              {t('projectAdvanced.archiveProject')}
             </Button>
           </div>
         </div>
       </Modal>
 
       {/* Transfer Ownership Modal */}
-      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title="Transfer Ownership">
+      <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title={t('modal.transferOwnership')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Owners have full control over this project. Choose a member to promote before optionally demoting yourself.
@@ -1121,7 +1121,7 @@ export const ProjectDetailPage: React.FC = () => {
       <Modal
         isOpen={showBulkDeleteModal}
         onClose={() => setShowBulkDeleteModal(false)}
-        title="Delete Selected Secrets"
+        title={t('modal.deleteSelectedSecrets')}
       >
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
@@ -1143,7 +1143,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Delete Project Modal */}
-      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title="Danger Zone">
+      <Modal isOpen={showDeleteProjectModal} onClose={() => setShowDeleteProjectModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
           {project && project.secretCount && project.secretCount > 0 ? (
             <div className="rounded-lg border p-4" style={{ 
@@ -1165,7 +1165,7 @@ export const ProjectDetailPage: React.FC = () => {
           )}
           <div className="flex justify-end space-x-3">
             <Button variant="secondary" onClick={() => setShowDeleteProjectModal(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button 
               variant="danger" 
@@ -1182,7 +1182,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Restore Modal */}
-      <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title="Restore Project">
+      <Modal isOpen={showRestoreModal} onClose={() => setShowRestoreModal(false)} title={t('modal.restoreProject')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Restore <strong>{project?.name}</strong> to make it active again.
@@ -1199,7 +1199,7 @@ export const ProjectDetailPage: React.FC = () => {
       </Modal>
 
       {/* Leave Modal */}
-      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title="Danger Zone">
+      <Modal isOpen={showLeaveModal} onClose={() => setShowLeaveModal(false)} title={t('modal.dangerZone')}>
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
             Are you sure you want to leave <strong>{project?.name}</strong>? You will need a new invitation to regain
@@ -1220,7 +1220,7 @@ export const ProjectDetailPage: React.FC = () => {
       <Modal
         isOpen={!!showDeleteSecretModal}
         onClose={() => setShowDeleteSecretModal(null)}
-        title="Delete Secret"
+        title={t('modal.deleteSecret')}
       >
         <div className="space-y-4">
           <p style={{ color: 'var(--text-primary)' }}>
@@ -1264,7 +1264,7 @@ export const ProjectDetailPage: React.FC = () => {
           setImportFile(null);
           setImportError(null);
         }}
-        title="Import Secrets"
+        title={t('modal.importSecrets')}
       >
         <div className="space-y-4">
           <p className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>

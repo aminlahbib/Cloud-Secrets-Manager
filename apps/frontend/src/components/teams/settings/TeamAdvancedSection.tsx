@@ -1,35 +1,42 @@
 import React from 'react';
-import { Edit, Trash2 } from 'lucide-react';
+import { Trash2, UserCog } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { FormSection } from '../../ui/FormSection';
+import { useI18n } from '../../../contexts/I18nContext';
 
 interface TeamAdvancedSectionProps {
   canDeleteTeam: boolean;
-  onEditTeam: () => void;
+  canTransferOwnership: boolean;
+  onTransferOwnership: () => void;
   onDeleteTeam: () => void;
 }
 
 export const TeamAdvancedSection: React.FC<TeamAdvancedSectionProps> = ({
   canDeleteTeam,
-  onEditTeam,
+  canTransferOwnership,
+  onTransferOwnership,
   onDeleteTeam,
 }) => {
+  const { t } = useI18n();
+  
   return (
     <FormSection
       variant="card"
-      title="Team Management"
-      description="Edit team details or permanently delete the team. This action cannot be undone."
+      title={t('teamDetail.settings.advanced')}
+      description={t('teamDetail.settings.advancedDescription')}
       className="rounded-3xl"
     >
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button variant="secondary" onClick={onEditTeam}>
-          <Edit className="w-4 h-4 mr-2" />
-          Edit Team
-        </Button>
+        {canTransferOwnership && (
+          <Button variant="secondary" onClick={onTransferOwnership}>
+            <UserCog className="w-4 h-4 mr-2" />
+            {t('projectAdvanced.transferOwnership')}
+          </Button>
+        )}
         {canDeleteTeam && (
           <Button variant="danger" onClick={onDeleteTeam}>
             <Trash2 className="w-4 h-4 mr-2" />
-            Delete Team
+            {t('teamDetail.settings.deleteTeam')}
           </Button>
         )}
       </div>

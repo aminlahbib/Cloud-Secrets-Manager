@@ -67,17 +67,17 @@ export const MembersTab: React.FC<MembersTabProps> = React.memo(({
     if (type === 'project') {
       return [
         { value: 'all', label: t('members.filterAllRoles') },
-        { value: 'OWNER', label: 'Owner' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MEMBER', label: 'Member' },
-        { value: 'VIEWER', label: 'Viewer' },
+        { value: 'OWNER', label: t('members.roleOwner') },
+        { value: 'ADMIN', label: t('members.roleAdmin') },
+        { value: 'MEMBER', label: t('members.roleMember') },
+        { value: 'VIEWER', label: t('members.roleViewer') },
       ];
     } else {
       return [
         { value: 'all', label: t('members.filterAllRoles') },
-        { value: 'OWNER', label: 'Owner' },
-        { value: 'ADMIN', label: 'Admin' },
-        { value: 'MEMBER', label: 'Member' },
+        { value: 'OWNER', label: t('members.roleOwner') },
+        { value: 'ADMIN', label: t('members.roleAdmin') },
+        { value: 'MEMBER', label: t('members.roleMember') },
       ];
     }
   }, [type, t]);

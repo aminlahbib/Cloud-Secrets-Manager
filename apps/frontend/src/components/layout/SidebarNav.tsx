@@ -44,8 +44,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             to={item.href}
             onClick={onNavigate}
             className={`
-              flex items-center rounded-lg text-sm font-medium transition-all duration-200
-              ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}
+              flex items-center text-sm font-medium transition-all duration-200
+              ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5 rounded-lg'}
               ${isActive 
                 ? 'text-accent-primary' 
                 : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
@@ -54,10 +54,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
             `}
             style={isActive ? {
               backgroundColor: 'var(--accent-primary-glow)',
+              ...(isCollapsed ? { borderRadius: '0.375rem' } : {})
             } : {}}
             title={isCollapsed ? item.name : undefined}
           >
-            <Icon className={`${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'} flex-shrink-0`} />
+            <Icon className={`${isCollapsed ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0`} />
             {!isCollapsed && <span>{item.name}</span>}
           </Link>
         );
@@ -68,8 +69,8 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           to="/admin"
           onClick={onNavigate}
           className={`
-            flex items-center rounded-lg text-sm font-medium transition-all duration-200
-            ${isCollapsed ? 'justify-center p-3' : 'gap-3 px-3 py-2.5'}
+            flex items-center text-sm font-medium transition-all duration-200
+            ${isCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2.5 rounded-lg'}
             ${isActiveLink('/admin')
               ? 'text-accent-primary'
               : 'text-theme-secondary hover:text-theme-primary hover:bg-elevation-1'
@@ -78,10 +79,11 @@ export const SidebarNav: React.FC<SidebarNavProps> = ({ onNavigate, isPlatformAd
           `}
           style={isActiveLink('/admin') ? {
             backgroundColor: 'var(--accent-primary-glow)',
+            ...(isCollapsed ? { borderRadius: '0.375rem' } : {})
           } : {}}
           title={isCollapsed ? t('nav.admin') : undefined}
         >
-          <Shield className={`${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'} flex-shrink-0`} />
+          <Shield className={`${isCollapsed ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0`} />
           {!isCollapsed && <span>{t('nav.admin')}</span>}
         </Link>
       )}

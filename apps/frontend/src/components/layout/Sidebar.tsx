@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           onClick={onToggleCollapse}
           className="absolute -right-3 top-20 z-50 p-1.5 rounded-full bg-card border border-theme-subtle shadow-md hover:bg-elevation-2 transition-colors hidden md:flex items-center justify-center"
           style={{ color: 'var(--text-secondary)' }}
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={isCollapsed ? t('workflowSelector.expandSidebar') : t('workflowSelector.collapseSidebar')}
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -89,22 +89,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             setShowCreateSecretModal(true);
             onNavigate?.();
           }}
-          className={isCollapsed ? 'w-auto px-3 py-3' : 'w-full'}
+          className={isCollapsed ? 'w-auto px-2.5 py-2.5' : 'w-full'}
           variant="primary"
           title={isCollapsed ? t('nav.newSecret') : undefined}
         >
-          <Key className={isCollapsed ? 'h-6 w-6' : 'h-4 w-4'} />
+          <Key className={isCollapsed ? 'h-4 w-4' : 'h-4 w-4'} />
           {!isCollapsed && <span className="ml-2">{t('nav.newSecret')}</span>}
         </Button>
         <button
           onClick={onLogout}
           className={`
             flex items-center gap-2 px-3 py-2 text-sm text-theme-secondary hover:text-theme-primary transition-all duration-200
-            ${isCollapsed ? 'w-auto justify-center p-3 rounded-lg hover:bg-elevation-1' : 'w-full'}
+            ${isCollapsed ? 'w-auto justify-center p-2.5 rounded-lg hover:bg-elevation-1' : 'w-full'}
           `}
           title={isCollapsed ? t('nav.signOut') : undefined}
         >
-          <LogOut className={isCollapsed ? 'h-6 w-6' : 'h-4 w-4'} />
+          <LogOut className={isCollapsed ? 'h-4 w-4' : 'h-4 w-4'} />
           {!isCollapsed && <span>{t('nav.signOut')}</span>}
         </button>
       </div>

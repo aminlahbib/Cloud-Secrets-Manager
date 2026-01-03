@@ -15,10 +15,11 @@ interface TeamSettingsTabProps {
   projectCount?: number;
   canManageTeam: boolean;
   canDeleteTeam: boolean;
+  canTransferOwnership?: boolean;
   onAddMember?: () => void;
   onRoleChange?: (memberId: string, newRole: TeamRole) => void;
   onRemoveMember?: (memberId: string) => void;
-  onEditTeam?: () => void;
+  onTransferOwnership?: () => void;
   onDeleteTeam?: () => void;
   roleChangeTarget?: string | null;
   isUpdatingRole?: boolean;
@@ -31,10 +32,11 @@ export const TeamSettingsTab: React.FC<TeamSettingsTabProps> = ({
   projectCount,
   canManageTeam,
   canDeleteTeam,
+  canTransferOwnership,
   onAddMember,
   onRoleChange,
   onRemoveMember,
-  onEditTeam,
+  onTransferOwnership,
   onDeleteTeam,
   roleChangeTarget,
   isUpdatingRole,
@@ -98,7 +100,8 @@ export const TeamSettingsTab: React.FC<TeamSettingsTabProps> = ({
         return (
           <TeamAdvancedSection
             canDeleteTeam={canDeleteTeam}
-            onEditTeam={onEditTeam || (() => {})}
+            canTransferOwnership={canTransferOwnership || false}
+            onTransferOwnership={onTransferOwnership || (() => {})}
             onDeleteTeam={onDeleteTeam || (() => {})}
           />
         );

@@ -345,6 +345,40 @@ export const TeamDetailPage: React.FC = () => {
     return ['TEAM_ADMIN', 'TEAM_MEMBER'];
   }, [team?.currentUserRole]);
 
+  // Transfer ownership state
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState('');
+
+  // Get transferable members (all members except current user)
+  const transferableMembers = useMemo(() => {
+    if (!members || !user?.id) return [];
+    return members.filter(m => m.userId !== user.id);
+  }, [members, user?.id]);
+
+  // Transfer ownership mutation
+  const transferOwnershipMutation = useMutation({
+    mutationFn: () => teamsService.transferOwnership(teamId!, { newOwnerUserId: transferTarget }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['teams', teamId, 'members'] });
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+      setShowTransferModal(false);
+      setTransferTarget('');
+      showNotification({
+        type: 'success',
+        title: 'Ownership transferred',
+        message: 'Team ownership has been transferred successfully',
+      });
+    },
+    onError: (error: any) => {
+      showNotification({
+        type: 'error',
+        title: 'Failed to transfer ownership',
+        message: error?.response?.data?.message || error?.message || 'An error occurred',
+      });
+    },
+  });
+
   // Delete team mutation
   const deleteTeamMutation = useMutation({
     mutationFn: (id: string) => teamsService.deleteTeam(id),
@@ -942,10 +976,11 @@ export const TeamDetailPage: React.FC = () => {
             projectCount={team.projectCount}
             canManageTeam={canManageTeam()}
             canDeleteTeam={canDeleteTeam()}
+            canTransferOwnership={team.currentUserRole === 'TEAM_OWNER' && transferableMembers.length > 0}
             onAddMember={() => setShowAddMemberModal(true)}
             onRoleChange={handleMemberRoleChange}
             onRemoveMember={handleRemoveMember}
-            onEditTeam={() => setShowEditModal(true)}
+            onTransferOwnership={() => setShowTransferModal(true)}
             onDeleteTeam={() => setShowDeleteConfirm(true)}
             roleChangeTarget={roleChangeTarget}
             isUpdatingRole={updateMemberRoleMutation.isPending}
@@ -1009,6 +1044,46 @@ export const TeamDetailPage: React.FC = () => {
             setShowEditModal(false);
           }}
         />
+      )}
+
+      {/* Transfer Ownership Modal */}
+      {team && (
+        <Modal isOpen={showTransferModal} onClose={() => setShowTransferModal(false)} title={t('modal.transferOwnership')}>
+          <div className="space-y-4">
+            <p style={{ color: 'var(--text-primary)' }}>
+              {t('teamDetail.settings.transferOwnershipDescription')}
+            </p>
+            <div>
+              <label className="block text-body-sm font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                {t('teamDetail.settings.selectNewOwner')}
+              </label>
+              <select
+                value={transferTarget}
+                onChange={(e) => setTransferTarget(e.target.value)}
+                className="input-theme w-full px-4 py-2 rounded-lg focus:ring-2"
+              >
+                <option value="">{t('teamDetail.settings.chooseMember')}</option>
+                {transferableMembers.map((member) => (
+                  <option key={member.id} value={member.userId}>
+                    {member.displayName || member.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end space-x-3">
+              <Button variant="secondary" onClick={() => setShowTransferModal(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={() => transferOwnershipMutation.mutate()}
+                disabled={!transferTarget}
+                isLoading={transferOwnershipMutation.isPending}
+              >
+                {t('teamDetail.settings.confirmTransfer')}
+              </Button>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* Delete Confirmation Modal */}

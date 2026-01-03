@@ -4,6 +4,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
+import { useI18n } from '../../contexts/I18nContext';
 import { membersService } from '../../services/members';
 import { signupService, type EmailCheckResponse } from '../../services/signup';
 import { CheckCircle, User, AlertCircle } from 'lucide-react';
@@ -29,6 +30,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   onSuccess,
 }) => {
   const { showNotification } = useNotifications();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('check');
   const [email, setEmail] = useState('');
@@ -152,19 +154,19 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Invite Member" size="md">
+    <Modal isOpen={isOpen} onClose={handleClose} title={t('inviteMember.title')} size="md">
       {step === 'check' ? (
         <div className="space-y-4">
           <p className="text-body-sm text-theme-secondary">
-            Enter the email address to check if the user is registered.
+            {t('inviteMember.checkEmailDescription')}
           </p>
 
           <Input
-            label="Email Address"
+            label={t('inviteMember.emailAddress')}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="colleague@example.com"
+            placeholder={t('inviteMember.emailPlaceholder')}
             disabled={isChecking}
             autoFocus
             onKeyDown={(e) => {
@@ -176,10 +178,10 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-theme-subtle">
             <Button variant="secondary" onClick={handleClose} disabled={isChecking}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleCheckEmail} isLoading={isChecking} disabled={!email.trim()}>
-              Check Email
+              {t('inviteMember.checkEmail')}
             </Button>
           </div>
         </div>
@@ -201,18 +203,20 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
               )}
               <div className="flex-1">
                 <p className="text-sm font-medium text-theme-primary">
-                  {emailCheckResult?.exists ? 'Registered User' : 'New User'}
+                  {emailCheckResult?.exists ? t('inviteMember.registeredUser') : t('inviteMember.newUser')}
                 </p>
                 <p className="text-xs text-theme-secondary mt-1">
                   {emailCheckResult?.exists
-                    ? 'This user will receive both an in-app notification and an email invitation.'
-                    : 'This user will receive an email invitation to join the project.'}
+                    ? t('inviteMember.registeredUserDescription')
+                    : t('inviteMember.newUserDescription')}
                 </p>
                 {emailCheckResult?.hasPendingInvitations && (
                   <div className="mt-2 p-2 bg-elevation-1 rounded text-xs text-theme-secondary">
                     <AlertCircle className="h-3 w-3 inline mr-1" />
-                    This user has {emailCheckResult.invitations.length} pending invitation
-                    {emailCheckResult.invitations.length > 1 ? 's' : ''} from other projects.
+                    {t('inviteMember.pendingInvitations', { 
+                      count: emailCheckResult.invitations.length, 
+                      plural: emailCheckResult.invitations.length > 1 ? 's' : '' 
+                    })}
                   </div>
                 )}
               </div>
@@ -221,7 +225,7 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
           {/* Role Selection */}
           <div>
-            <label className="block text-body-sm font-medium mb-2 text-theme-primary">Role</label>
+            <label className="block text-body-sm font-medium mb-2 text-theme-primary">{t('inviteMember.selectRole')}</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as ProjectRole)}
@@ -230,10 +234,10 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
             >
               {availableRoles.map((r) => (
                 <option key={r} value={r}>
-                  {r === 'VIEWER' && 'Viewer - Read-only access'}
-                  {r === 'MEMBER' && 'Member - Can create and update secrets'}
-                  {r === 'ADMIN' && 'Admin - Can manage secrets and members'}
-                  {r === 'OWNER' && 'Owner - Full control'}
+                  {r === 'VIEWER' && t('roles.roleDescription.viewer')}
+                  {r === 'MEMBER' && t('roles.roleDescription.member')}
+                  {r === 'ADMIN' && t('roles.roleDescription.admin')}
+                  {r === 'OWNER' && t('roles.roleDescription.owner')}
                 </option>
               ))}
             </select>
@@ -249,10 +253,10 @@ export const InviteMemberModal: React.FC<InviteMemberModalProps> = ({
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-theme-subtle">
             <Button variant="secondary" onClick={handleBack} disabled={inviteMutation.isPending}>
-              Back
+              {t('common.back')}
             </Button>
             <Button onClick={handleSendInvitation} isLoading={inviteMutation.isPending} disabled={!email.trim()}>
-              Send Invitation
+              {t('inviteMember.sendInvitation')}
             </Button>
           </div>
         </div>

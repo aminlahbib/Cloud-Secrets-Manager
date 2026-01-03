@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { FormSection } from '../../ui/FormSection';
 import { Badge } from '../../ui/Badge';
+import { useI18n } from '../../../contexts/I18nContext';
 import type { ProjectMember } from '../../../types';
 
 interface ProjectAdvancedSectionProps {
@@ -38,17 +39,19 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
   isLeaving,
   secretCount = 0,
 }) => {
+  const { t } = useI18n();
+  
   if (canManageProject) {
     return (
       <FormSection
         variant="default"
-        title="Project Lifecycle"
-        description="Archive projects you no longer need but may want to restore later. Permanently deleting removes all secrets and activity forever."
+        title={t('projectAdvanced.projectLifecycle')}
+        description={t('projectAdvanced.projectLifecycleDescription')}
       >
         {transferableMembers.length > 0 && (
           <div className="flex flex-col gap-3 md:flex-row">
             <Button variant="secondary" className="flex-1" onClick={onTransferOwnership}>
-              Transfer Ownership
+              {t('projectAdvanced.transferOwnership')}
             </Button>
           </div>
         )}
@@ -61,20 +64,20 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
                 onClick={onArchive}
                 isLoading={isArchiving}
               >
-                Archive Project
+                {t('projectAdvanced.archiveProject')}
               </Button>
               <Button 
                 variant="danger" 
                 className="flex-1 flex items-center justify-center gap-2" 
                 onClick={onDelete}
-                title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
+                title={secretCount > 0 ? t('projectAdvanced.secretCountWarning', { count: secretCount, plural: secretCount !== 1 ? 's' : '' }) : undefined}
               >
-                <span>Delete Project</span>
+                <span>{t('projectAdvanced.deleteProject')}</span>
                 {secretCount > 0 && (
                   <Badge 
                     variant="warning" 
                     className="flex items-center gap-1"
-                    title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
+                    title={t('projectAdvanced.secretsWillBeDeleted', { count: secretCount, plural: secretCount !== 1 ? 's' : '' })}
                   >
                     <AlertTriangle className="h-3 w-3" />
                     {secretCount}
@@ -89,20 +92,20 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
                 onClick={onRestore}
                 isLoading={isRestoring}
               >
-                Restore Project
+                {t('projectAdvanced.restoreProject')}
               </Button>
               <Button 
                 variant="danger" 
                 className="flex-1 flex items-center justify-center gap-2" 
                 onClick={onDelete}
-                title={secretCount > 0 ? `This project contains ${secretCount} secret${secretCount !== 1 ? 's' : ''}. All secrets will be deleted.` : undefined}
+                title={secretCount > 0 ? t('projectAdvanced.secretCountWarning', { count: secretCount, plural: secretCount !== 1 ? 's' : '' }) : undefined}
               >
-                <span>Delete Permanently</span>
+                <span>{t('projectAdvanced.deletePermanently')}</span>
                 {secretCount > 0 && (
                   <Badge 
                     variant="warning" 
                     className="flex items-center gap-1"
-                    title={`${secretCount} secret${secretCount !== 1 ? 's' : ''} will be deleted`}
+                    title={t('projectAdvanced.secretsWillBeDeleted', { count: secretCount, plural: secretCount !== 1 ? 's' : '' })}
                   >
                     <AlertTriangle className="h-3 w-3" />
                     {secretCount}
@@ -119,12 +122,12 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
   return (
     <FormSection
       variant="default"
-      title="Leave Project"
-      description="Remove your access to this project. You will need to be re-invited to regain access."
+      title={t('projectAdvanced.leaveProject')}
+      description={t('projectAdvanced.leaveProjectDescription')}
     >
       {isSoleOwner && (
         <p className="text-caption mb-4 text-status-danger">
-          Promote another member to Owner before leaving. Projects require at least one active owner.
+          {t('projectAdvanced.soleOwnerWarning')}
         </p>
       )}
       {canLeaveProject && (
@@ -133,7 +136,7 @@ export const ProjectAdvancedSection: React.FC<ProjectAdvancedSectionProps> = ({
           onClick={onLeave}
           isLoading={isLeaving}
         >
-          Leave Project
+          {t('projectAdvanced.leaveProject')}
         </Button>
       )}
     </FormSection>

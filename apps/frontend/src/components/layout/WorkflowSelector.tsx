@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, ChevronDown, Settings } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { useI18n } from '../../contexts/I18nContext';
 import type { Workflow } from '../../types';
 
 interface WorkflowSelectorProps {
@@ -18,6 +19,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
   isCollapsed = false,
 }) => {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [isOpen, setIsOpen] = useState(false);
   const selectorRef = useRef<HTMLDivElement>(null);
 
@@ -44,15 +46,16 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
       <div ref={selectorRef} className="relative">
         <button
           onClick={() => setIsOpen((prev) => !prev)}
-          className="w-full flex items-center justify-center p-3 rounded-lg transition-all duration-200 hover:bg-elevation-1"
+          className="w-full flex items-center justify-center p-2.5 transition-all duration-200 hover:bg-elevation-1"
           style={{
             backgroundColor: isOpen ? 'var(--accent-primary-glow)' : 'transparent',
             border: isOpen ? '1px solid var(--accent-primary)' : '1px solid transparent',
+            borderRadius: '0.375rem',
           }}
-          title={selectedWorkflow?.name || 'Select workflow'}
+          title={selectedWorkflow?.name || t('workflowSelector.selectWorkflow')}
         >
           <div 
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-semibold text-white shadow-sm"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold text-white shadow-sm"
             style={{ backgroundColor: 'var(--accent-primary)' }}
           >
             {selectedWorkflow?.name?.substring(0, 2).toUpperCase() || 'MW'}
@@ -87,7 +90,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{workflow.name}</p>
                       <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
-                        {(workflow.projects?.length || 0)} Projects
+                        {(workflow.projects?.length || 0)} {t('workflowSelector.projects')}
                       </p>
                     </div>
                   </button>
@@ -103,14 +106,14 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
   return (
     <div ref={selectorRef}>
       <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wide px-1 mb-3" style={{ color: 'var(--text-tertiary)' }}>
-        <span>Workspace</span>
+        <span>{t('workflowSelector.workspace')}</span>
         <button
           onClick={() => navigate('/workflows/new')}
           className="text-xs font-medium flex items-center gap-1 transition-all duration-150 hover:opacity-80"
           style={{ color: 'var(--accent-primary)' }}
         >
           <Plus className="h-3 w-3" />
-          New
+          {t('workflowSelector.new')}
         </button>
       </div>
 
@@ -136,7 +139,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
                   {selectedWorkflow?.name || 'Select workflow'}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  {(selectedWorkflow?.projects?.length || 0)} Projects
+                  {(selectedWorkflow?.projects?.length || 0)} {t('workflowSelector.projects')}
                 </p>
               </div>
             </div>
@@ -147,7 +150,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
                   navigate('/workflows/new');
                 }}
                 className="p-1 rounded hover:bg-elevation-2 transition-colors"
-                title="Settings"
+                title={t('workflowSelector.settings')}
               >
                 <Settings className="h-4 w-4 text-theme-tertiary" />
               </button>
@@ -190,7 +193,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate" style={{ color: 'var(--text-primary)' }}>{workflow.name}</p>
                         <p className="text-xs truncate" style={{ color: 'var(--text-tertiary)' }}>
-                          {(workflow.projects?.length || 0)} Projects
+                          {(workflow.projects?.length || 0)} {t('workflowSelector.projects')}
                         </p>
                       </div>
                       {isSelected && (
@@ -215,7 +218,7 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
                 }}
               >
                 <Plus className="h-4 w-4" />
-                Create Workflow
+                {t('workflowSelector.createWorkflow')}
               </button>
             </div>
           )}
@@ -225,10 +228,10 @@ export const WorkflowSelector: React.FC<WorkflowSelectorProps> = ({
           className="rounded-2xl border border-dashed p-6 text-center"
           style={{ borderColor: 'var(--border-subtle)' }}
         >
-          <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>No workflows yet</p>
+          <p className="text-sm mb-3" style={{ color: 'var(--text-tertiary)' }}>{t('workflowSelector.noWorkflows')}</p>
           <Button onClick={() => navigate('/workflows/new')} size="sm">
             <Plus className="h-4 w-4 mr-2" />
-            Create Workflow
+            {t('workflowSelector.createWorkflow')}
           </Button>
         </div>
       )}

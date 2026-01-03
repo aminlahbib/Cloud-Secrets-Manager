@@ -32,6 +32,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
+import { CollapsibleSection } from '../components/ui/CollapsibleSection';
 import { TwoFactorSetupModal } from '../components/twofactor/TwoFactorSetupModal';
 import { TwoFactorDisableModal } from '../components/twofactor/TwoFactorDisableModal';
 import { RecoveryCodesModal } from '../components/twofactor/RecoveryCodesModal';
@@ -501,7 +502,7 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'notifications' && (
-            <div className="space-y-6">
+            <div className="space-y-4 max-w-4xl">
               <div>
                 <h2 className="text-xl font-semibold mb-2 text-theme-primary">Notification Preferences</h2>
                 <p className="text-body-sm text-theme-secondary">Manage how and when you receive notifications</p>
@@ -514,9 +515,9 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </Card>
               ) : (
-              <div className="space-y-6 max-w-3xl">
+              <div className="space-y-4">
                 {/* Summary Card */}
-                <Card className="p-6">
+                <Card className="p-4">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
                       <Bell className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
@@ -553,59 +554,55 @@ export const SettingsPage: React.FC = () => {
                 </Card>
 
                 {/* Global Email Toggle */}
-                <Card className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
-                        <Mail className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
-                      </div>
+                <CollapsibleSection
+                  title="Email Notifications (Global)"
+                  description="Master toggle for all email notifications"
+                  icon={<Mail className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />}
+                  defaultOpen={true}
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-theme-primary mb-1">Email Notifications (Global)</h3>
                         <p className="text-body-sm text-theme-secondary mb-2">
-                          Master toggle for all email notifications. When disabled, no emails will be sent regardless of individual settings.
+                          When disabled, no emails will be sent regardless of individual settings.
                         </p>
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2">
                           <Info className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
                           <span className="text-xs text-theme-tertiary">This affects all notification types below</span>
                         </div>
                       </div>
+                      <label className="relative inline-flex items-center cursor-pointer ml-4">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer" 
+                          checked={emailNotifications}
+                          onChange={(e) => setEmailNotifications(e.target.checked)}
+                        />
+                        <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                      </label>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer ml-4">
-                      <input 
-                        type="checkbox" 
-                        className="sr-only peer" 
-                        checked={emailNotifications}
-                        onChange={(e) => setEmailNotifications(e.target.checked)}
-                      />
-                      <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                    </label>
                   </div>
-                </Card>
+                </CollapsibleSection>
 
                 {/* Notification Type Cards */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {/* Secret Expiration Alerts */}
-                  <Card className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-warning-bg)' }}>
-                        <Key className="h-5 w-5" style={{ color: 'var(--status-warning)' }} />
+                  <CollapsibleSection
+                    title="Secret Expiration Alerts"
+                    description="Get notified before secrets expire to ensure timely rotation"
+                    icon={
+                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-warning-bg)' }}>
+                        <Key className="h-4 w-4" style={{ color: 'var(--status-warning)' }} />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-theme-primary">Secret Expiration Alerts</h3>
-                          <Badge variant={secretExpirationAlerts ? 'success' : 'default'}>
-                            {secretExpirationAlerts ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </div>
-                        <p className="text-body-sm text-theme-secondary mb-1">
-                          Get notified before secrets expire to ensure timely rotation
-                        </p>
-                        <p className="text-xs text-theme-tertiary">
-                          Example: You'll receive a notification 7 days before a secret expires
-                        </p>
+                    }
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant={secretExpirationAlerts ? 'success' : 'default'}>
+                          {secretExpirationAlerts ? 'Enabled' : 'Disabled'}
+                        </Badge>
                       </div>
-                    </div>
-                    <div className="space-y-3 pl-12">
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
@@ -674,30 +671,25 @@ export const SettingsPage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                  </Card>
+                  </CollapsibleSection>
 
                   {/* Project Invitations */}
-                  <Card className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-info-bg)' }}>
-                        <UserPlus className="h-5 w-5" style={{ color: 'var(--status-info)' }} />
+                  <CollapsibleSection
+                    title="Project Invitations"
+                    description="Get notified when you're invited to join new projects"
+                    icon={
+                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-info-bg)' }}>
+                        <UserPlus className="h-4 w-4" style={{ color: 'var(--status-info)' }} />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-theme-primary">Project Invitations</h3>
-                          <Badge variant={projectInvitations ? 'success' : 'default'}>
-                            {projectInvitations ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </div>
-                        <p className="text-body-sm text-theme-secondary mb-1">
-                          Get notified when you're invited to join new projects
-                        </p>
-                        <p className="text-xs text-theme-tertiary">
-                          Example: Receive a notification when a team member invites you to collaborate
-                        </p>
+                    }
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant={projectInvitations ? 'success' : 'default'}>
+                          {projectInvitations ? 'Enabled' : 'Disabled'}
+                        </Badge>
                       </div>
-                    </div>
-                    <div className="space-y-3 pl-12">
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
@@ -766,30 +758,25 @@ export const SettingsPage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                  </Card>
+                  </CollapsibleSection>
 
                   {/* Security Alerts */}
-                  <Card className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-danger-bg)' }}>
-                        <AlertTriangle className="h-5 w-5" style={{ color: 'var(--status-danger)' }} />
+                  <CollapsibleSection
+                    title="Security Alerts"
+                    description="Critical security notifications that require immediate attention"
+                    icon={
+                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-danger-bg)' }}>
+                        <AlertTriangle className="h-4 w-4" style={{ color: 'var(--status-danger)' }} />
                       </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-theme-primary">Security Alerts</h3>
-                          <Badge variant={securityAlerts ? 'success' : 'default'}>
-                            {securityAlerts ? 'Enabled' : 'Disabled'}
-                          </Badge>
-                        </div>
-                        <p className="text-body-sm text-theme-secondary mb-1">
-                          Critical security notifications that require immediate attention
-                        </p>
-                        <p className="text-xs text-theme-tertiary">
-                          Example: Unusual access patterns, failed authentication attempts, or security policy violations
-                        </p>
+                    }
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <Badge variant={securityAlerts ? 'success' : 'default'}>
+                          {securityAlerts ? 'Enabled' : 'Disabled'}
+                        </Badge>
                       </div>
-                    </div>
-                    <div className="space-y-3 pl-12">
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
@@ -858,25 +845,20 @@ export const SettingsPage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                  </Card>
+                  </CollapsibleSection>
 
                   {/* Role Changes */}
-                  <Card className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-info-bg)' }}>
-                        <User className="h-5 w-5" style={{ color: 'var(--status-info)' }} />
+                  <CollapsibleSection
+                    title="Role Changes"
+                    description="Get notified when your role changes in projects or teams"
+                    icon={
+                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-info-bg)' }}>
+                        <User className="h-4 w-4" style={{ color: 'var(--status-info)' }} />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-theme-primary mb-2">Role Changes</h3>
-                        <p className="text-body-sm text-theme-secondary mb-1">
-                          Get notified when your role changes in projects or teams
-                        </p>
-                        <p className="text-xs text-theme-tertiary">
-                          Example: You'll be notified when promoted to Admin or when your permissions change
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3 pl-12">
+                    }
+                    defaultOpen={false}
+                  >
+                    <div className="space-y-3">
                       <div className="flex items-center justify-between py-2">
                         <div>
                           <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
@@ -919,11 +901,11 @@ export const SettingsPage: React.FC = () => {
                         </Button>
                       </div>
                     </div>
-                  </Card>
+                  </CollapsibleSection>
                 </div>
 
                 {/* Action Buttons */}
-                <Card className="p-6">
+                <Card className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <h3 className="font-semibold text-theme-primary mb-1">Save Changes</h3>
@@ -982,24 +964,16 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'preferences' && (
-            <div className="space-y-6">
+            <div className="space-y-4 max-w-4xl">
               {/* Theme Selection - Enhanced */}
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
-                      <Palette className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-semibold text-theme-primary">Theme</h2>
-                      <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                        Choose your preferred color scheme and mode
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant="info">{themeInfo.name}</Badge>
-                  </div>
+              <CollapsibleSection
+                title="Theme"
+                description="Choose your preferred color scheme and mode"
+                icon={<Palette className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />}
+                defaultOpen={true}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <Badge variant="info">{themeInfo.name}</Badge>
                 </div>
                 
                 {/* Compact theme grid */}
@@ -1060,22 +1034,15 @@ export const SettingsPage: React.FC = () => {
                     );
                   })}
                 </div>
-              </Card>
+              </CollapsibleSection>
 
               {/* Display & View Settings */}
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
-                    <LayoutGrid className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-theme-primary">Display & View</h2>
-                    <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                      Customize how content is displayed
-                    </p>
-                  </div>
-                </div>
-                
+              <CollapsibleSection
+                title="Display & View"
+                description="Customize how content is displayed"
+                icon={<LayoutGrid className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />}
+                defaultOpen={false}
+              >
                 {isLoadingPreferences ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
@@ -1136,22 +1103,15 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
                 )}
-              </Card>
+              </CollapsibleSection>
 
               {/* Regional Settings */}
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
-                    <Globe className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-theme-primary">Regional Settings</h2>
-                    <p className="text-body-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                      Configure timezone and locale preferences
-                    </p>
-                  </div>
-                </div>
-                
+              <CollapsibleSection
+                title="Regional Settings"
+                description="Configure timezone and locale preferences"
+                icon={<Globe className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />}
+                defaultOpen={false}
+              >
                 {isLoadingPreferences ? (
                   <div className="flex justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
@@ -1196,10 +1156,10 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
                 )}
-              </Card>
+              </CollapsibleSection>
 
               {/* Save Button */}
-              <Card className="p-6">
+              <Card className="p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="font-semibold text-theme-primary mb-1">Save Changes</h3>

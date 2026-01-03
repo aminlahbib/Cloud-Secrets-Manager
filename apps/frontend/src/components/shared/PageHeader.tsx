@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Search, LayoutGrid, List, Layers, Building2 } from 'lucide-react';
 import { FilterPanel, FilterConfig } from '../ui/FilterPanel';
+import { useI18n } from '../../contexts/I18nContext';
 
 interface PageHeaderProps {
   title: string;
@@ -47,6 +48,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   showArchivedToggle = false,
   additionalActions,
 }) => {
+  const { t } = useI18n();
+  
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -179,7 +182,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {showGroupBy && onGroupByChange && (
             <div className="flex items-center gap-3">
               <span className="text-body-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                Group by:
+                {t('pageHeader.groupBy')}
               </span>
               <div className="flex items-center gap-1 p-1 border rounded-lg" style={{ borderColor: 'var(--border-subtle)' }}>
                 <button
@@ -201,7 +204,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   }}
                 >
                   <Layers className="h-4 w-4 inline mr-1.5" />
-                  None
+                  {t('pageHeader.groupByNone')}
                 </button>
                 <button
                   onClick={() => onGroupByChange('workflow')}
@@ -222,7 +225,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   }}
                 >
                   <LayoutGrid className="h-4 w-4 inline mr-1.5" />
-                  Workflow
+                  {t('pageHeader.groupByWorkflow')}
                 </button>
                 <button
                   onClick={() => onGroupByChange('team')}
@@ -243,7 +246,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   }}
                 >
                   <Building2 className="h-4 w-4 inline mr-1.5" />
-                  Team
+                  {t('pageHeader.groupByTeam')}
                 </button>
               </div>
             </div>
@@ -252,7 +255,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             <div className="flex items-center gap-3">
               <label className="flex items-center gap-2 cursor-pointer">
                 <span className="text-body-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Show archived
+                  {t('pageHeader.showArchived')}
                 </span>
                 <div
                   className="relative inline-flex items-center w-11 h-6 rounded-full transition-colors cursor-pointer"
