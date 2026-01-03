@@ -395,9 +395,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(208, 202, 186, 0.02) 0%, rgba(203, 204, 199, 0.01) 50%, rgba(208, 202, 186, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(208, 202, 186, 0.08) 0%, rgba(203, 204, 199, 0.06) 50%, rgba(208, 202, 186, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(208, 202, 186, 0.15) 0%, rgba(203, 204, 199, 0.12) 50%, rgba(208, 202, 186, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -541,9 +541,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(5, 150, 105, 0.02) 0%, rgba(16, 185, 129, 0.01) 50%, rgba(34, 211, 153, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(5, 150, 105, 0.08) 0%, rgba(16, 185, 129, 0.06) 50%, rgba(34, 211, 153, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(5, 150, 105, 0.15) 0%, rgba(16, 185, 129, 0.12) 50%, rgba(34, 211, 153, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -683,9 +683,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(16, 185, 129, 0.02) 0%, rgba(52, 211, 153, 0.01) 50%, rgba(110, 231, 183, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(52, 211, 153, 0.06) 50%, rgba(110, 231, 183, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(52, 211, 153, 0.12) 50%, rgba(110, 231, 183, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -971,9 +971,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.02) 0%, rgba(17, 24, 39, 0.01) 50%, rgba(31, 41, 55, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(31, 41, 55, 0.08) 0%, rgba(17, 24, 39, 0.06) 50%, rgba(31, 41, 55, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(31, 41, 55, 0.15) 0%, rgba(17, 24, 39, 0.12) 50%, rgba(31, 41, 55, 0.14) 100%);
     
     /* Buttons - Accent appears mainly on primary buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -1259,9 +1259,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(96, 165, 250, 0.02) 0%, rgba(59, 130, 246, 0.01) 50%, rgba(147, 197, 253, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(96, 165, 250, 0.08) 0%, rgba(59, 130, 246, 0.06) 50%, rgba(147, 197, 253, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(96, 165, 250, 0.15) 0%, rgba(59, 130, 246, 0.12) 50%, rgba(147, 197, 253, 0.14) 100%);
     
     /* Buttons */
     --btn-primary-bg: var(--accent-primary);
@@ -1549,9 +1549,9 @@
     --table-body-bg: var(--elevation-0);
     --table-divider: var(--border-subtle);
     --table-row-hover: var(--elevation-1);
-    --table-row-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.02) 0%, rgba(208, 202, 186, 0.01) 50%, rgba(203, 204, 199, 0.015) 100%);
-    --table-row-gradient-hover: linear-gradient(135deg, rgba(184, 171, 144, 0.08) 0%, rgba(208, 202, 186, 0.06) 50%, rgba(203, 204, 199, 0.07) 100%);
-    --checkbox-gradient: linear-gradient(135deg, rgba(184, 171, 144, 0.15) 0%, rgba(208, 202, 186, 0.12) 50%, rgba(203, 204, 199, 0.14) 100%);
+    --table-row-gradient: linear-gradient(135deg, rgba(124, 58, 237, 0.02) 0%, rgba(139, 92, 246, 0.01) 50%, rgba(167, 139, 250, 0.015) 100%);
+    --table-row-gradient-hover: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(139, 92, 246, 0.06) 50%, rgba(167, 139, 250, 0.07) 100%);
+    --checkbox-gradient: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(139, 92, 246, 0.12) 50%, rgba(167, 139, 250, 0.14) 100%);
     
     /* Buttons - Plum buttons */
     --btn-primary-bg: var(--accent-primary);
