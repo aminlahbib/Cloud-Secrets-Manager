@@ -11,6 +11,7 @@ import { Spinner } from '../components/ui/Spinner';
 import { Modal } from '../components/ui/Modal';
 import { queryClient } from '../main';
 import { useI18n } from '../contexts/I18nContext';
+import { updateSecretCache, updateProjectCache } from '../utils/queryInvalidation';
 import type { Secret, SecretVersion, SecretVersionDetail, Project } from '../types';
 
 export const SecretDetailPage: React.FC = () => {
@@ -70,9 +71,31 @@ export const SecretDetailPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: () => secretsService.deleteProjectSecret(projectId, secretKey),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      const previous = queryClient.getQueryData(['project-secrets', projectId]);
+      
+      // Optimistically remove secret
+      updateSecretCache(queryClient, projectId, (secrets) =>
+        secrets.filter(s => s.secretKey !== secretKey)
+      );
+      
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId, {
+          secretCount: Math.max(0, (project.secretCount || 1) - 1),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-secrets', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
@@ -83,12 +106,32 @@ export const SecretDetailPage: React.FC = () => {
 
   const rotateMutation = useMutation({
     mutationFn: () => secretsService.rotateProjectSecret(projectId, secretKey),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['project-secret', projectId, secretKey] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['project-secret', projectId, secretKey] });
+      const previous = queryClient.getQueryData(['project-secret', projectId, secretKey]);
+      
+      // Optimistically update version
+      if (secret) {
+        queryClient.setQueryData(['project-secret', projectId, secretKey], {
+          ...secret,
+          version: (secret.version || 1) + 1,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-secret', projectId, secretKey], context.previous);
+      }
+    },
+    onSuccess: (data) => {
+      // Update with server response
+      queryClient.setQueryData(['project-secret', projectId, secretKey], data);
       // Refetch versions immediately to show latest version
       queryClient.refetchQueries({ queryKey: ['project-secret-versions', projectId, secretKey] });
       queryClient.invalidateQueries({ queryKey: ['project-secrets', projectId] });
-      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
