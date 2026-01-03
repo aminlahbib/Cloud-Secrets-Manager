@@ -516,6 +516,33 @@ export const ProjectDetailPage: React.FC = () => {
         await workflowsService.addProjectToWorkflow(toWorkflowId, projectId!);
       }
     },
+    onMutate: async ({ toWorkflowId }) => {
+      await queryClient.cancelQueries({ queryKey: ['project', projectId] });
+      const previous = queryClient.getQueryData(['project', projectId]);
+      
+      // Optimistically update workflow (we'll need to fetch workflow name)
+      if (toWorkflowId && workflows) {
+        const targetWorkflow = workflows.find(w => w.id === toWorkflowId);
+        if (targetWorkflow) {
+          updateProjectCache(queryClient, projectId!, {
+            workflowId: toWorkflowId,
+            workflowName: targetWorkflow.name,
+          });
+        }
+      } else {
+        updateProjectCache(queryClient, projectId!, {
+          workflowId: null,
+          workflowName: undefined,
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
     },
