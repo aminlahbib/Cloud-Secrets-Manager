@@ -213,7 +213,8 @@ public class TeamService {
 
     /**
      * Add a member to a team by email
-     * User must exist in the system
+     * Checks if user exists - if not, provides helpful error message
+     * Similar to MemberService.inviteMember pattern
      */
     public TeamMemberResponse addTeamMember(UUID teamId, TeamMemberRequest request, UUID userId) {
         // Verify team exists
@@ -229,9 +230,19 @@ public class TeamService {
             throw new SecurityException("Access denied: Only team owners and admins can add members");
         }
 
-        // Find user by email
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + request.getEmail()));
+        // Check if user exists (similar to MemberService.inviteMember pattern)
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        
+        if (existingUser.isEmpty()) {
+            // User doesn't exist - provide helpful error message
+            throw new IllegalArgumentException(
+                "User not found with email: " + request.getEmail() + 
+                ". The user must be registered in the system before they can be added to a team. " +
+                "Please ask them to sign up first, or verify the email address is correct."
+            );
+        }
+
+        User user = existingUser.get();
 
         // Check if user is already a member
         if (membershipRepository.existsByTeamIdAndUserId(teamId, user.getId())) {
