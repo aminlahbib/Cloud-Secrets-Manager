@@ -42,7 +42,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = React.memo(({
   onImportSecrets,
   onAddSecret,
   onInviteMember,
-  onTabChange,
+  onTabChange: _onTabChange,
   secretsCount,
 }) => {
   const navigate = useNavigate();

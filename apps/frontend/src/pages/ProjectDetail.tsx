@@ -325,11 +325,13 @@ export const ProjectDetailPage: React.FC = () => {
       const previous = queryClient.getQueryData(['project-secrets', projectId]);
       
       // Optimistically add all secrets
-      const optimisticSecrets: Secret[] = secretsToImport.map(secret => ({
+      const optimisticSecrets: Secret[] = secretsToImport.map((secret, index) => ({
+        id: `temp-${Date.now()}-${index}`,
         secretKey: secret.key,
         description: secret.description,
         expiresAt: secret.expiresAt?.toISOString(),
         version: 1,
+        createdBy: user?.id || '', // Will be replaced by server response
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         expired: false,
