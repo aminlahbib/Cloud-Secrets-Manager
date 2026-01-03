@@ -274,6 +274,30 @@ export const ProjectDetailPage: React.FC = () => {
     mutationFn: async (keys: string[]) => {
       await Promise.all(keys.map((key) => secretsService.deleteProjectSecret(projectId!, key)));
     },
+    onMutate: async (keys: string[]) => {
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      const previous = queryClient.getQueryData(['project-secrets', projectId]);
+      
+      // Optimistically remove all selected secrets
+      updateSecretCache(queryClient, projectId!, (secrets) =>
+        secrets.filter(s => !keys.includes(s.secretKey))
+      );
+      
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: Math.max(0, (project.secretCount || keys.length) - keys.length),
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _keys, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-secrets', projectId], context.previous);
+      }
+    },
     onSuccess: () => {
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setSelectedSecrets(new Set());
@@ -296,12 +320,63 @@ export const ProjectDetailPage: React.FC = () => {
       );
       return results;
     },
-    onSuccess: (results) => {
+    onMutate: async (secretsToImport) => {
+      await queryClient.cancelQueries({ queryKey: ['project-secrets', projectId] });
+      const previous = queryClient.getQueryData(['project-secrets', projectId]);
+      
+      // Optimistically add all secrets
+      const optimisticSecrets: Secret[] = secretsToImport.map(secret => ({
+        secretKey: secret.key,
+        description: secret.description,
+        expiresAt: secret.expiresAt?.toISOString(),
+        version: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        expired: false,
+      }));
+      
+      updateSecretCache(queryClient, projectId!, (secrets) => [...secrets, ...optimisticSecrets]);
+      
+      // Update project secret count
+      const project = queryClient.getQueryData<Project>(['project', projectId]);
+      if (project) {
+        updateProjectCache(queryClient, projectId!, {
+          secretCount: (project.secretCount || 0) + secretsToImport.length,
+        });
+      }
+      
+      return { previous };
+    },
+    onError: (_err, _secrets, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['project-secrets', projectId], context.previous);
+      }
+      showNotification({
+        type: 'error',
+        title: 'Import failed',
+        message: 'Failed to import secrets',
+      });
+    },
+    onSuccess: (results, secretsToImport) => {
+      // Update with server responses
+      const successful = results
+        .filter((r): r is PromiseFulfilledResult<Secret> => r.status === 'fulfilled')
+        .map(r => r.value);
+      
+      if (successful.length > 0) {
+        updateSecretCache(queryClient, projectId!, (secrets) => {
+          // Replace optimistic secrets with server responses
+          const optimisticKeys = new Set(secretsToImport.map(s => s.key));
+          const withoutOptimistic = secrets.filter(s => !optimisticKeys.has(s.secretKey));
+          return [...withoutOptimistic, ...successful];
+        });
+      }
+      
       invalidateProjectQueries(queryClient, projectId!, user?.id);
       setShowImportModal(false);
       setImportFile(null);
       setImportError(null);
-      const successCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'fulfilled').length;
+      const successCount = successful.length;
       const errorCount = results.filter((r: PromiseSettledResult<any>) => r.status === 'rejected').length;
       if (errorCount > 0) {
         showNotification({
@@ -316,13 +391,6 @@ export const ProjectDetailPage: React.FC = () => {
           message: `Successfully imported ${successCount} secret${successCount !== 1 ? 's' : ''}`,
         });
       }
-    },
-    onError: (error) => {
-      showNotification({
-        type: 'error',
-        title: 'Import failed',
-        message: error instanceof Error ? error.message : 'Failed to import secrets',
-      });
     },
   });
 
