@@ -20,12 +20,45 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /(.*)
+          # Notification routes (most specific /api/notifications/* first)
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: {{ .Values.notificationService.port }}
+          # Audit API routes
+          - path: /api/audit
+            pathType: Prefix
+            backend:
+              service:
+                name: audit-service
+                port:
+                  number: {{ .Values.auditService.port }}
+          # Actuator/health endpoints
+          - path: /actuator
             pathType: Prefix
             backend:
               service:
                 name: secret-service
                 port:
                   number: {{ .Values.secretService.port }}
+          # API routes - Secret Service (catch-all for /api/*)
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: secret-service
+                port:
+                  number: {{ .Values.secretService.port }}
+          # Frontend - catch all
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
 {{- end }}
 

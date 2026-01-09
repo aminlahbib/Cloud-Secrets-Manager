@@ -43,4 +43,7 @@ resource "google_service_account_iam_member" "workload_identity" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${each.value.gcp_service_account}"
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[${each.value.namespace}/${each.value.k8s_service_account}]"
+
+  # Ensure service accounts are created before workload identity bindings
+  depends_on = [google_service_account.service_accounts]
 }

@@ -3,7 +3,10 @@ import { tokenStorage } from '@/utils/tokenStorage';
 import type { ApiError } from '@/types';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  // In production/K8s, API calls go through Ingress which routes /api/* to backend services
+  // Service endpoints already include /api prefix (e.g., /api/auth/login)
+  // So baseURL should be empty to avoid double /api prefix
+  baseURL: import.meta.env.VITE_API_BASE_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -47,7 +50,7 @@ api.interceptors.response.use(
         }
 
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/refresh`,
+          '/api/v1/auth/refresh',
           { refreshToken }
         );
 
