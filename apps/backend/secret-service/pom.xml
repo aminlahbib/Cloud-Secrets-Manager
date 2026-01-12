@@ -71,6 +71,13 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        
+        <!-- Cloud SQL PostgreSQL Socket Factory (for Cloud Run) -->
+        <dependency>
+            <groupId>com.google.cloud.sql</groupId>
+            <artifactId>postgres-socket-factory</artifactId>
+            <version>1.15.0</version>
+        </dependency>
 
         <!-- Redis (for token blacklisting) -->
         <dependency>
