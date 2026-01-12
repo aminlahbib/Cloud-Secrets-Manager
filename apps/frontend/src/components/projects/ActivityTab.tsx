@@ -334,7 +334,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   </Button>
                 </div>
               </Card>
-            ) : !analyticsStats ? (
+            ) : !analyticsStats || analyticsStats.totalActions === 0 ? (
               <Card className="p-6">
                 <EmptyState
                   icon={<Activity className="h-16 w-16 text-theme-tertiary" />}
