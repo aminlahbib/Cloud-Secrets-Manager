@@ -61,7 +61,6 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
     }
 
     if (retryCount >= maxRetries) {
-      console.error(`SSE connection failed after ${maxRetries} retries. Giving up.`);
       updateStatus('error');
       return;
     }
@@ -71,16 +70,13 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
       const url = notificationsService.getStreamUrl();
       
       if (!url) {
-        console.error('Notification service URL is not configured');
         updateStatus('error');
         return;
       }
 
-      console.log(`Connecting to SSE stream: ${url.replace(/token=[^&]*/, 'token=***')}`);
       const eventSource = new EventSource(url);
 
       eventSource.onopen = () => {
-        console.log('SSE connection established');
         setRetryCount(0);
         updateStatus('connected');
       };
@@ -89,7 +85,6 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
         try {
           const data = JSON.parse(event.data);
           if (data.status === 'connected') {
-            console.log('SSE connection confirmed');
             return; // Ignore connection confirmation
           }
         } catch (e) {
@@ -100,7 +95,6 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
       eventSource.addEventListener('notification', (event: MessageEvent) => {
         try {
           const notification: NotificationDto = JSON.parse(event.data);
-          console.debug('Received notification via SSE:', notification.type);
           onNotificationRef.current?.(notification);
         } catch (error) {
           console.error('Failed to parse notification from SSE:', error);
@@ -112,7 +106,6 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
         
         // EventSource readyState: 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
         if (readyState === EventSource.CLOSED) {
-          console.warn('SSE connection closed. Will attempt to reconnect...');
           updateStatus('disconnected');
           
           // Increment retry count and schedule retry
@@ -121,10 +114,8 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
             connect();
           }, retryDelay);
         } else if (readyState === EventSource.CONNECTING) {
-          console.warn('SSE connection error (connecting). Retrying...');
           updateStatus('connecting');
         } else {
-          console.error('SSE connection error:', error);
           updateStatus('error');
         }
         
@@ -133,7 +124,6 @@ export const useNotificationStream = (options: UseNotificationStreamOptions = {}
 
       eventSourceRef.current = eventSource;
     } catch (error) {
-      console.error('Failed to create SSE connection:', error);
       updateStatus('error');
       onErrorRef.current?.(error as Event);
     }

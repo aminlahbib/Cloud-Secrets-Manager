@@ -54,7 +54,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Only clear cache when user actually changes (not during initial loading)
     if (previousUserId !== null && currentUserId !== previousUserId) {
-      console.log('User changed from', previousUserId, 'to', currentUserId, '- clearing user-specific queries (preserving audit logs)');
       clearUserSpecificQueries(queryClient);
     }
 
@@ -293,7 +292,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set storage mode based on user preference BEFORE login
     // This ensures tokens are stored in the correct location
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
-    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
 
     if (isFirebaseEnabled) {
       // Firebase email/password login
@@ -403,7 +401,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Set storage mode based on user preference BEFORE login
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
-    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
 
     // If we already have an intermediate token and 2FA code, this is the second step
     // of the 2FA flow. Do NOT re-open the Google popup; just verify 2FA.
@@ -477,7 +474,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (request: SignupRequest, keepSignedIn: boolean = false): Promise<SignupResponse> => {
     // Set storage mode based on user preference BEFORE signup
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
-    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
 
     try {
       const response = await signupService.signupWithEmail(request);
@@ -514,7 +510,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Set storage mode based on user preference BEFORE signup
     tokenStorage.setStorageMode(keepSignedIn ? 'persistent' : 'session', keepSignedIn);
-    console.log('Storage mode set to:', keepSignedIn ? 'persistent' : 'session');
 
     try {
       // Get Firebase ID token

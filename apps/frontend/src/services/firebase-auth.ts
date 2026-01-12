@@ -38,7 +38,6 @@ export const firebaseAuthService = {
     try {
       const persistence = persistent ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
-      console.log('Firebase persistence set to:', persistent ? 'localStorage (persistent)' : 'sessionStorage (session)');
     } catch (error) {
       console.error('Failed to set auth persistence:', error);
     }

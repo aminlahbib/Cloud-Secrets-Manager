@@ -27,6 +27,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/run)
 [![GCP](https://img.shields.io/badge/GCP-Ready-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -272,9 +273,24 @@ npm install
 npm run dev
 ```
 
-Don't forget to add your API keys to the configuration:
-- in the root .env of your Project
-- in the "env" section of your mcp config for taskmaster-ai
+Don't forget to add your API keys to the configuration in the root `.env` file.
+
+### Option 3: Google Cloud Run (Production)
+
+For production deployment on Google Cloud Run:
+
+```bash
+# Deploy all services to Cloud Run
+./infrastructure/scripts/deploy-cloudrun.sh
+```
+
+This script will:
+- Build and push Docker images to Artifact Registry
+- Deploy all microservices to Cloud Run
+- Configure Cloud SQL connections
+- Set up secrets from Google Secret Manager
+
+See [`docs/DEPLOYMENT_OPERATIONS_GUIDE.md`](docs/DEPLOYMENT_OPERATIONS_GUIDE.md) for detailed instructions.
 
 ### Verify Installation
 
@@ -317,7 +333,8 @@ curl http://localhost:8082/actuator/health  # Notification Service
 - **TanStack Query** - Server state management
 
 ### Infrastructure
-- **Kubernetes** - Container orchestration
+- **Google Cloud Run** - Serverless container deployment
+- **Kubernetes (GKE)** - Container orchestration
 - **Docker** - Containerization
 - **Terraform** - Infrastructure as Code
 - **Helm** - Kubernetes package management
@@ -337,6 +354,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
  
 
 <div align="center">
-**A lot of Coffee was consumed in developement**
-*Last Updated: December 2025*
+
+*Last Updated: January 2026*
 </div>
