@@ -16,14 +16,30 @@ CLOUD_SQL_CONNECTION="${PROJECT_ID}:${REGION}:${CLOUD_SQL_INSTANCE}"
 IMAGE_REGISTRY="europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images"
 IMAGE_TAG="cloudrun"
 
-# Firebase configuration (update these values)
-FIREBASE_API_KEY="AIzaSyA3Le53moXfFQaPOJL-bOvyxcMg8K_e0vo"
-FIREBASE_AUTH_DOMAIN="cloud-secrets-manager.firebaseapp.com"
-FIREBASE_PROJECT_ID="cloud-secrets-manager"
-FIREBASE_STORAGE_BUCKET="cloud-secrets-manager.firebasestorage.app"
-FIREBASE_MESSAGING_SENDER_ID="1040913502384"
-FIREBASE_APP_ID="1:1040913502384:web:2fac7aba1b81a8b4d26b75"
-AUDIT_API_KEY="GsAQAU1fauf8mA9Leu64HywslXwQMmkB"
+# Firebase configuration - loaded from Secret Manager
+# These secrets must exist in GCP Secret Manager before running this script
+# Create them with: gcloud secrets create <secret-name> --data-file=- <<< "value"
+load_secrets() {
+  log_info "Loading secrets from Secret Manager..."
+  
+  FIREBASE_API_KEY=$(gcloud secrets versions access latest --secret=csm-firebase-api-key --project=${PROJECT_ID} 2>/dev/null) || \
+    log_error "Missing secret: csm-firebase-api-key. Create it with: gcloud secrets create csm-firebase-api-key --data-file=- <<< 'your-api-key'"
+  
+  FIREBASE_AUTH_DOMAIN="${PROJECT_ID}.firebaseapp.com"
+  FIREBASE_PROJECT_ID="${PROJECT_ID}"
+  FIREBASE_STORAGE_BUCKET="${PROJECT_ID}.firebasestorage.app"
+  
+  FIREBASE_MESSAGING_SENDER_ID=$(gcloud secrets versions access latest --secret=csm-firebase-messaging-sender-id --project=${PROJECT_ID} 2>/dev/null) || \
+    log_error "Missing secret: csm-firebase-messaging-sender-id"
+  
+  FIREBASE_APP_ID=$(gcloud secrets versions access latest --secret=csm-firebase-app-id --project=${PROJECT_ID} 2>/dev/null) || \
+    log_error "Missing secret: csm-firebase-app-id"
+  
+  AUDIT_API_KEY=$(gcloud secrets versions access latest --secret=csm-audit-api-key --project=${PROJECT_ID} 2>/dev/null) || \
+    log_error "Missing secret: csm-audit-api-key"
+  
+  log_info "Secrets loaded successfully"
+}
 
 # Parse arguments
 SKIP_BUILD=false
@@ -300,6 +316,9 @@ main() {
   
   # Authenticate with GCP
   gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
+  
+  # Load secrets from Secret Manager (required for frontend build)
+  load_secrets
   
   build_images
   push_backend_images

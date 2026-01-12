@@ -79,13 +79,15 @@ substitutions:
   _TAG: 'dev'
   _VITE_API_BASE_URL: ''
   _VITE_NOTIFICATION_SERVICE_URL: ''
-  _VITE_FIREBASE_API_KEY: 'AIzaSyA3Le53moXfFQaPOJL-bOvyxcMg8K_e0vo'
-  _VITE_FIREBASE_AUTH_DOMAIN: 'cloud-secrets-manager.firebaseapp.com'
-  _VITE_FIREBASE_PROJECT_ID: 'cloud-secrets-manager'
-  _VITE_FIREBASE_STORAGE_BUCKET: 'cloud-secrets-manager.firebasestorage.app'
-  _VITE_FIREBASE_MESSAGING_SENDER_ID: '1040913502384'
-  _VITE_FIREBASE_APP_ID: '1:1040913502384:web:2fac7aba1b81a8b4d26b75'
-  _VITE_AUDIT_API_KEY: 'GsAQAU1fauf8mA9Leu64HywslXwQMmkB'
+  # Firebase config - override via --substitutions or use Secret Manager
+  # Example: gcloud builds submit --substitutions=_VITE_FIREBASE_API_KEY=$(gcloud secrets versions access latest --secret=csm-firebase-api-key)
+  _VITE_FIREBASE_API_KEY: ''       # Required: Set via --substitutions
+  _VITE_FIREBASE_AUTH_DOMAIN: '${PROJECT_ID}.firebaseapp.com'
+  _VITE_FIREBASE_PROJECT_ID: '${PROJECT_ID}'
+  _VITE_FIREBASE_STORAGE_BUCKET: '${PROJECT_ID}.firebasestorage.app'
+  _VITE_FIREBASE_MESSAGING_SENDER_ID: ''  # Required: Set via --substitutions
+  _VITE_FIREBASE_APP_ID: ''        # Required: Set via --substitutions
+  _VITE_AUDIT_API_KEY: ''          # Required: Set via --substitutions
 
 images:
   - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/secret-service:${_TAG}'
