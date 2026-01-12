@@ -1,4 +1,4 @@
-package com.secrets.notification.config;
+package com.audit.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,33 +15,52 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow frontend origins - use setAllowedOriginPatterns for wildcard support
+        // Allow frontend origins - use setAllowedOriginPatterns when allowCredentials is true
         configuration.setAllowedOriginPatterns(Arrays.asList(
             "http://localhost:5173",  // Vite default port
             "http://localhost:5174",  // Alternative Vite port
             "http://localhost:3000",  // Common React port
-            "http://localhost:5500",  // Live Server port
-            "http://127.0.0.1:*",     // Any localhost port
+            "http://127.0.0.1:3000",  // Alternative localhost format
+            "http://127.0.0.1:5173",  // Alternative localhost format
             "http://secrets.local",   // GKE Ingress local
             "https://secrets.local",  // GKE Ingress local with TLS
             "https://*.run.app"       // Cloud Run domains
         ));
         
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        // Allow common HTTP methods
+        configuration.setAllowedMethods(Arrays.asList(
+            "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
+        ));
+        
+        // Allow common headers
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", 
-            "Content-Type", 
-            "Cache-Control", 
+            "Authorization",
+            "Content-Type",
             "X-Requested-With",
             "Accept",
-            "Origin"
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+            "X-Service-API-Key"  // For audit service authentication
         ));
-        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        
+        // Expose headers that the frontend might need
+        configuration.setExposedHeaders(Arrays.asList(
+            "X-RateLimit-Limit",
+            "X-RateLimit-Remaining",
+            "X-RateLimit-Reset",
+            "Authorization"
+        ));
+        
+        // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
+        
+        // Cache preflight requests for 1 hour
         configuration.setMaxAge(3600L);
-
+        
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+        
         return source;
     }
 }

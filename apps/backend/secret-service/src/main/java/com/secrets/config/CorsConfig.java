@@ -21,7 +21,10 @@ public class CorsConfig {
             "http://localhost:5174",  // Alternative Vite port
             "http://localhost:3000",  // Common React port
             "http://127.0.0.1:3000",  // Alternative localhost format
-            "http://127.0.0.1:5173"   // Alternative localhost format
+            "http://127.0.0.1:5173",  // Alternative localhost format
+            "http://secrets.local",   // GKE Ingress local
+            "https://secrets.local",  // GKE Ingress local with TLS
+            "https://*.run.app"       // Cloud Run domains
         ));
         
         // Allow common HTTP methods
@@ -37,7 +40,8 @@ public class CorsConfig {
             "Accept",
             "Origin",
             "Access-Control-Request-Method",
-            "Access-Control-Request-Headers"
+            "Access-Control-Request-Headers",
+            "X-Service-API-Key"  // For audit service authentication
         ));
         
         // Expose headers that the frontend might need
