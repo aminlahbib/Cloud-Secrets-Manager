@@ -1,0 +1,78 @@
+# Cloud Run Service Configuration - Notification Service
+# Deploy with: gcloud run services replace notification-service.yaml --region=europe-west10
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: notification-service
+  labels:
+    app: notification-service
+    component: backend
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/launch-stage: GA
+spec:
+  template:
+    metadata:
+      annotations:
+        # Cloud SQL connection
+        run.googleapis.com/cloudsql-instances: cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18
+        # Scaling configuration - keep 1 instance for SSE connections
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "3"
+        # CPU allocation - always on for SSE
+        run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/startup-cpu-boost: "true"
+    spec:
+      containerConcurrency: 100
+      # Extended timeout for SSE connections (max 60 min on Cloud Run)
+      timeoutSeconds: 3600
+      serviceAccountName: notification-service-dev@cloud-secrets-manager.iam.gserviceaccount.com
+      containers:
+        - image: europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service:dev
+          ports:
+            - containerPort: 8082
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod,cloudrun
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql:///secrets?cloudSqlInstance=cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18&socketFactory=com.google.cloud.sql.postgres.SocketFactory
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: secrets-manager-db-dev-secrets-user
+                  key: latest
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secrets-manager-db-dev-secrets-password
+                  key: latest
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: csm-jwt-secret
+                  key: latest
+            - name: GCP_PROJECT_ID
+              value: cloud-secrets-manager
+            - name: PUBSUB_SUBSCRIPTION
+              value: notifications-events-sub
+            - name: EMAIL_ENABLED
+              value: "false"
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+          startupProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8082
+            periodSeconds: 15
