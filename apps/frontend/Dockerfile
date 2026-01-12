@@ -25,8 +25,11 @@ COPY src ./src
 COPY public ./public
 
 # Build arguments for environment variables
-# VITE_API_BASE_URL should be empty - service endpoints already include /api prefix
+# For GKE/Ingress: leave URLs empty (uses relative paths through Ingress)
+# For Cloud Run: set each service's full URL (e.g., https://secret-service-xxx.run.app)
 ARG VITE_API_BASE_URL=
+ARG VITE_SECRET_SERVICE_URL=
+ARG VITE_AUDIT_SERVICE_URL=
 ARG VITE_NOTIFICATION_SERVICE_URL=
 ARG VITE_FIREBASE_API_KEY
 ARG VITE_FIREBASE_AUTH_DOMAIN
@@ -38,6 +41,8 @@ ARG VITE_AUDIT_API_KEY
 
 # Set environment variables for Vite build
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_SECRET_SERVICE_URL=$VITE_SECRET_SERVICE_URL
+ENV VITE_AUDIT_SERVICE_URL=$VITE_AUDIT_SERVICE_URL
 ENV VITE_NOTIFICATION_SERVICE_URL=$VITE_NOTIFICATION_SERVICE_URL
 ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
 ENV VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN
