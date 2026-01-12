@@ -69,7 +69,8 @@ management:
 
 audit:
   service:
-    api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
+    # SECURITY: No default - must be set via AUDIT_SERVICE_API_KEY env var
+    api-key: ${AUDIT_SERVICE_API_KEY:}
   cache:
     project-logs:
       ttl: PT5M  # 5 minutes

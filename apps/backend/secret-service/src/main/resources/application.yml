@@ -70,12 +70,14 @@ management:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:mySuperStrongSecretKeyForJWTTokenGeneration123456}
+    # SECURITY: No default - must be set via JWT_SECRET env var (min 32 chars)
+    secret: ${JWT_SECRET:}
     expiration-ms: 900000  # 15 minutes
     refresh-expiration-ms: 604800000  # 7 days
 
 encryption:
-  key: ${ENCRYPTION_KEY:MySecure32ByteKeyForAES256Enc!@#}
+  # SECURITY: No default - must be set via ENCRYPTION_KEY env var (exactly 32 chars for AES-256)
+  key: ${ENCRYPTION_KEY:}
   algorithm: AES
   transformation: AES/GCM/NoPadding
 
@@ -98,7 +100,8 @@ audit:
   service:
     url: ${AUDIT_SERVICE_URL:http://localhost:8081}
     timeout: 5000
-    api-key: ${AUDIT_SERVICE_API_KEY:change-me-in-production}
+    # SECURITY: No default - must be set via AUDIT_SERVICE_API_KEY env var
+    api-key: ${AUDIT_SERVICE_API_KEY:}
 
 notifications:
   service:
