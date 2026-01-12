@@ -113,6 +113,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: secret_pw
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_PROFILES_ACTIVE: dev
+      AUDIT_SERVICE_API_KEY: ${AUDIT_SERVICE_API_KEY:-dev-audit-api-key}
       # JVM memory settings
       JAVA_OPTS: >-
         -Xms256m
