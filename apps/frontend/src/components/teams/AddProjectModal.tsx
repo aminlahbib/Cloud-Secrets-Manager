@@ -11,6 +11,7 @@ import { useWorkflows } from '../../hooks/useWorkflows';
 import { useCreateProject } from '../../hooks/useProjects';
 import { teamsService } from '../../services/teams';
 import { projectsService } from '../../services/projects';
+import { getErrorMessage, isPermissionError } from '../../utils/errorHandling';
 import { Folder, Search, Plus, LayoutGrid, FileText } from 'lucide-react';
 import type { Project } from '../../types';
 
@@ -101,10 +102,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       onSuccess();
       onClose();
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error, 'Failed to add project to team');
       showNotification({
         type: 'error',
-        title: 'Failed to add project',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to add project',
+        message: errorMessage,
       });
     } finally {
       setIsAdding(false);
@@ -180,10 +182,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       onSuccess();
       onClose();
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error, 'Failed to create project');
       showNotification({
         type: 'error',
-        title: 'Failed to create project',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to create project',
+        message: errorMessage,
       });
     } finally {
       setIsAdding(false);

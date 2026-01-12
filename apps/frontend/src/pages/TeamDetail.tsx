@@ -18,6 +18,7 @@ import { useI18n } from '../contexts/I18nContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { updateTeamCache, updateTeamMemberCache } from '../utils/queryInvalidation';
 import { useDebounce } from '../utils/debounce';
+import { getErrorMessage, isPermissionError } from '../utils/errorHandling';
 import { teamsService } from '../services/teams';
 import { auditService } from '../services/audit';
 import { projectsService } from '../services/projects';
@@ -263,14 +264,15 @@ export const TeamDetailPage: React.FC = () => {
       
       return { previous };
     },
-    onError: (_err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
       }
+      const errorMessage = getErrorMessage(err, 'Failed to remove member from team');
       showNotification({
         type: 'error',
-        title: 'Failed to remove member',
-        message: 'An error occurred',
+        title: isPermissionError(err) ? 'Permission Denied' : 'Failed to remove member',
+        message: errorMessage,
       });
     },
     onSuccess: () => {
@@ -299,15 +301,16 @@ export const TeamDetailPage: React.FC = () => {
       
       return { previous };
     },
-    onError: (_err, _variables, context) => {
+    onError: (err, _variables, context) => {
       if (context?.previous) {
         queryClient.setQueryData(['teams', teamId, 'members'], context.previous);
       }
       setRoleChangeTarget(null);
+      const errorMessage = getErrorMessage(err, 'Failed to update member role');
       showNotification({
         type: 'error',
-        title: 'Failed to update role',
-        message: 'An error occurred',
+        title: isPermissionError(err) ? 'Permission Denied' : 'Failed to update role',
+        message: errorMessage,
       });
     },
     onSuccess: () => {
@@ -371,10 +374,11 @@ export const TeamDetailPage: React.FC = () => {
       });
     },
     onError: (error: any) => {
+      const errorMessage = getErrorMessage(error, 'Failed to transfer team ownership');
       showNotification({
         type: 'error',
-        title: 'Failed to transfer ownership',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to transfer ownership',
+        message: errorMessage,
       });
     },
   });
@@ -392,10 +396,11 @@ export const TeamDetailPage: React.FC = () => {
       navigate('/teams');
     },
     onError: (error: any) => {
+      const errorMessage = getErrorMessage(error, 'Failed to delete team');
       showNotification({
         type: 'error',
-        title: 'Failed to delete team',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to delete team',
+        message: errorMessage,
       });
     },
   });
@@ -850,15 +855,7 @@ export const TeamDetailPage: React.FC = () => {
               </Link>
             </div>
           </div>
-          {!canManageTeam() ? (
-            <div className="padding-card">
-              <EmptyState
-                icon={<Activity className="h-12 w-12 text-theme-tertiary" />}
-                title="Activity not available"
-                description="You need admin or owner permissions to view team activity"
-              />
-            </div>
-          ) : isActivityLoading ? (
+          {isActivityLoading ? (
             <div className="padding-card flex justify-center">
               <Spinner size="md" />
             </div>
