@@ -122,7 +122,7 @@ deploy_backend_services() {
 
   log_info "Deploying backend services to Cloud Run..."
   
-  # Deploy Secret Service
+  # Deploy Secret Service (min-instances=1 to avoid cold starts on critical path)
   log_info "Deploying secret-service..."
   gcloud run deploy secret-service \
     --image=${IMAGE_REGISTRY}/secret-service:${IMAGE_TAG} \
@@ -135,6 +135,7 @@ deploy_backend_services() {
     --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql:///secrets?cloudSqlInstance=${CLOUD_SQL_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
     --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID}" \
     --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+    --set-env-vars="JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError" \
     --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-dev-secrets-user:latest" \
     --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-dev-secrets-password:latest" \
     --set-secrets="JWT_SECRET=csm-jwt-secret:latest" \
@@ -142,13 +143,13 @@ deploy_backend_services() {
     --set-secrets="/secrets/firebase/firebase-admin-key.json=csm-firebase-admin-key:latest" \
     --memory=512Mi \
     --cpu=1 \
-    --min-instances=0 \
+    --min-instances=1 \
     --max-instances=3 \
     --timeout=300 \
     --concurrency=80 \
     --project=${PROJECT_ID}
 
-  # Deploy Audit Service
+  # Deploy Audit Service (min-instances=0 OK - async operations tolerate cold starts)
   log_info "Deploying audit-service..."
   gcloud run deploy audit-service \
     --image=${IMAGE_REGISTRY}/audit-service:${IMAGE_TAG} \
@@ -160,6 +161,7 @@ deploy_backend_services() {
     --set-env-vars="SPRING_PROFILES_ACTIVE=prod,cloudrun" \
     --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql:///audit?cloudSqlInstance=${CLOUD_SQL_CONNECTION}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
     --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+    --set-env-vars="JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError" \
     --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-dev-audit-user:latest" \
     --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-dev-audit-password:latest" \
     --set-secrets="AUDIT_SERVICE_API_KEY=csm-audit-api-key:latest" \
@@ -172,7 +174,7 @@ deploy_backend_services() {
     --port=8081 \
     --project=${PROJECT_ID}
 
-  # Deploy Notification Service
+  # Deploy Notification Service (min-instances=1 for SSE connections)
   log_info "Deploying notification-service..."
   gcloud run deploy notification-service \
     --image=${IMAGE_REGISTRY}/notification-service:${IMAGE_TAG} \
@@ -187,6 +189,7 @@ deploy_backend_services() {
     --set-env-vars="PUBSUB_SUBSCRIPTION=notifications-events-sub" \
     --set-env-vars="EMAIL_ENABLED=false" \
     --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+    --set-env-vars="JAVA_TOOL_OPTIONS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+ExitOnOutOfMemoryError" \
     --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-dev-secrets-user:latest" \
     --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-dev-secrets-password:latest" \
     --set-secrets="JWT_SECRET=csm-jwt-secret:latest" \
