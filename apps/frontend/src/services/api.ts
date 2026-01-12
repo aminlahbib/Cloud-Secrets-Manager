@@ -12,12 +12,21 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and service API keys
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Add X-Service-API-Key header for audit service requests
+  if (config.url?.includes('/api/audit')) {
+    const auditApiKey = import.meta.env.VITE_AUDIT_API_KEY;
+    if (auditApiKey) {
+      config.headers['X-Service-API-Key'] = auditApiKey;
+    }
+  }
+  
   return config;
 });
 
@@ -50,7 +59,7 @@ api.interceptors.response.use(
         }
 
         const { data } = await axios.post(
-          '/api/v1/auth/refresh',
+          '/api/auth/refresh',
           { refreshToken }
         );
 

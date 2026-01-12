@@ -25,10 +25,10 @@ auditService:
   port: 8081
   resources:
     requests:
-      memory: "128Mi"
+      memory: "384Mi"
       cpu: "100m"
     limits:
-      memory: "256Mi"
+      memory: "512Mi"
       cpu: "250m"
 
 notificationService:
@@ -36,10 +36,10 @@ notificationService:
   port: 8082
   resources:
     requests:
-      memory: "128Mi"
+      memory: "384Mi"
       cpu: "100m"
     limits:
-      memory: "256Mi"
+      memory: "512Mi"
       cpu: "250m"
 
 frontend:

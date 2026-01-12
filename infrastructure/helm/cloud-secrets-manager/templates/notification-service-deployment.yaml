@@ -94,10 +94,10 @@ spec:
             httpGet:
               path: /actuator/health/readiness
               port: {{ .Values.notificationService.port }}
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 30  # Allow up to 5 minutes for startup
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 40  # Allow up to 10 minutes for startup
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
