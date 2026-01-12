@@ -13,7 +13,7 @@
   </tr>
 </table>
 
-**Enterprise-Grade Secrets Management Platform**
+**Enterprise-Grade Secrets Management Platform v3**
 
 [![Website](https://img.shields.io/badge/Website-Cloud%20Secrets%20Manager-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager)
 [![Documentation](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki)
