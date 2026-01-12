@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import type { ApiError } from '../types';
 
 /**
@@ -6,7 +6,7 @@ import type { ApiError } from '../types';
  * Handles permission errors (403) and other common error codes
  */
 export const getErrorMessage = (error: unknown, defaultMessage?: string): string => {
-  if (AxiosError.isAxiosError(error)) {
+  if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     const apiError = error.response?.data as ApiError;
 
@@ -84,7 +84,7 @@ export const getErrorMessage = (error: unknown, defaultMessage?: string): string
  * Check if an error is a permission error (403)
  */
 export const isPermissionError = (error: unknown): boolean => {
-  if (AxiosError.isAxiosError(error)) {
+  if (axios.isAxiosError(error)) {
     return error.response?.status === 403;
   }
   return false;
