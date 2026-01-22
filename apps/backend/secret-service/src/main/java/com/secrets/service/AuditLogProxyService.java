@@ -83,6 +83,19 @@ public class AuditLogProxyService {
             .map(Optional::get)
             .collect(Collectors.toMap(User::getId, user -> user));
         
+        // Log enrichment stats for debugging
+        if (!userIds.isEmpty()) {
+            log.debug("Enriching {} audit logs with user data. Found {}/{} users in database.", 
+                auditLogs.size(), userMap.size(), userIds.size());
+            if (userMap.size() < userIds.size()) {
+                Set<UUID> missingUserIds = userIds.stream()
+                    .filter(id -> !userMap.containsKey(id))
+                    .collect(Collectors.toSet());
+                log.warn("{} user(s) not found in database for enrichment: {}. These logs will show 'Unknown' or UUIDs.", 
+                    missingUserIds.size(), missingUserIds);
+            }
+        }
+        
         // Collect unique project IDs
         Set<UUID> projectIds = auditLogs.stream()
             .map(AuditLogDto::getProjectId)
@@ -138,33 +151,60 @@ public class AuditLogProxyService {
                     log.setUserEmail(user.getEmail());
                     log.setUserDisplayName(user.getDisplayName());
                     
-                    // Personalize description: replace current user's name/email with "you"
-                    if (currentUserId != null && log.getUserId().equals(currentUserId) && log.getDescription() != null) {
-                        String description = log.getDescription();
-                        // Replace user's display name with "you" (at the start of description)
-                        if (user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
-                            String displayName = user.getDisplayName();
-                            // Check if description starts with the display name
-                            if (description.startsWith(displayName + " ")) {
-                                description = "you" + description.substring(displayName.length());
-                            } else {
-                                // Fallback: use regex for word boundary matching
-                                description = description.replaceFirst("\\b" + java.util.regex.Pattern.quote(displayName) + "\\b", "you");
-                            }
-                        }
-                        // Replace user's email with "you" (if display name wasn't found or used)
-                        if (user.getEmail() != null && !user.getEmail().isEmpty() && !description.startsWith("you ")) {
-                            String email = user.getEmail();
-                            // Check if description starts with the email
-                            if (description.startsWith(email + " ")) {
-                                description = "you" + description.substring(email.length());
-                            } else {
-                                // Fallback: use regex for word boundary matching
-                                description = description.replaceFirst("\\b" + java.util.regex.Pattern.quote(email) + "\\b", "you");
-                            }
-                        }
-                        log.setDescription(description);
+                    // Regenerate description with user email/displayName instead of UUID
+                    // This is more reliable than string replacement
+                    String userName = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
+                            ? user.getDisplayName()
+                            : user.getEmail();
+                    
+                    // Personalize for current user
+                    if (currentUserId != null && log.getUserId().equals(currentUserId)) {
+                        userName = "you";
                     }
+                    
+                    // Regenerate description using same logic as DescriptionFormatter
+                    String regeneratedDescription = regenerateDescription(
+                            userName,
+                            log.getAction(),
+                            log.getResourceType(),
+                            log.getResourceName(),
+                            log.getProjectId(),
+                            log.getMetadata(),
+                            projectMap,
+                            projectTeamMap
+                    );
+                    
+                    if (regeneratedDescription != null && !regeneratedDescription.isEmpty()) {
+                        log.setDescription(regeneratedDescription);
+                    } else {
+                        // Fallback to string replacement if regeneration fails
+                        String description = log.getDescription();
+                        if (description != null) {
+                            String userIdStr = log.getUserId().toString();
+                            if (description.contains(userIdStr)) {
+                                description = description.replace(userIdStr, userName);
+                                log.setDescription(description);
+                            } else if (description.contains("Unknown user")) {
+                                description = description.replace("Unknown user", userName);
+                                log.setDescription(description);
+                            }
+                        }
+                    }
+                } else {
+                    // User not found - log warning and try to replace user ID in description
+                    LoggerFactory.getLogger(AuditLogProxyService.class).warn("User not found for audit log enrichment: userId={}, logId={}", 
+                        log.getUserId(), log.getId());
+                    if (log.getDescription() != null && log.getUserId() != null) {
+                        String description = log.getDescription();
+                        String userIdStr = log.getUserId().toString();
+                        if (description.contains(userIdStr)) {
+                            description = description.replace(userIdStr, "Unknown user");
+                            log.setDescription(description);
+                        }
+                    }
+                    // Still set userEmail to null explicitly (frontend will show "Unknown")
+                    log.setUserEmail(null);
+                    log.setUserDisplayName(null);
                 }
             }
             
@@ -192,6 +232,143 @@ public class AuditLogProxyService {
                 }
             }
         });
+    }
+
+    /**
+     * Regenerate description using same logic as DescriptionFormatter
+     * This ensures descriptions are properly formatted with user emails instead of UUIDs
+     */
+    private String regenerateDescription(String userName, String action, String resourceType,
+                                       String resourceName, UUID projectId, Map<String, Object> metadata,
+                                       Map<UUID, Project> projectMap, Map<UUID, String> projectTeamMap) {
+        if (userName == null || userName.isEmpty()) {
+            userName = "Unknown user";
+        }
+
+        // Extract team name from metadata or project-team mapping
+        String teamName = null;
+        if (metadata != null && metadata.containsKey("teamName")) {
+            teamName = metadata.get("teamName").toString();
+        } else if (projectId != null) {
+            teamName = projectTeamMap.get(projectId);
+        }
+
+        // Extract project name from metadata or project map
+        String projectName = null;
+        if (metadata != null && metadata.containsKey("projectName")) {
+            projectName = metadata.get("projectName").toString();
+        } else if (projectId != null) {
+            Project project = projectMap.get(projectId);
+            if (project != null) {
+                projectName = project.getName();
+            }
+        }
+
+        // Format action verb (same logic as DescriptionFormatter)
+        String actionVerb = formatActionVerb(action);
+
+        // Format resource type
+        String resourceTypeFormatted = formatResourceType(resourceType);
+
+        // Build description
+        StringBuilder description = new StringBuilder();
+        description.append(userName);
+        description.append(" ").append(actionVerb);
+
+        if (resourceName != null && !resourceName.isEmpty()) {
+            description.append(" ").append(resourceTypeFormatted).append(" ").append(resourceName);
+        } else if (resourceType != null) {
+            description.append(" ").append(resourceTypeFormatted);
+        }
+
+        if (projectName != null && !projectName.isEmpty()) {
+            description.append(" in project ").append(projectName);
+        } else {
+            description.append(" in project");
+        }
+
+        if (teamName != null && !teamName.isEmpty()) {
+            description.append(" (team: ").append(teamName).append(")");
+        }
+
+        return description.toString();
+    }
+
+    /**
+     * Format action string to a human-readable verb (same logic as DescriptionFormatter)
+     */
+    private String formatActionVerb(String action) {
+        if (action == null) {
+            return "performed action on";
+        }
+
+        action = action.toUpperCase();
+
+        if (action.contains("READ") || action.contains("VIEW")) {
+            return "read";
+        } else if (action.contains("CREATE")) {
+            return "created";
+        } else if (action.contains("UPDATE") || action.contains("EDIT")) {
+            return "updated";
+        } else if (action.contains("DELETE") || action.contains("REMOVE")) {
+            return "deleted";
+        } else if (action.contains("ROTATE")) {
+            return "rotated";
+        } else if (action.contains("MOVE")) {
+            return "moved";
+        } else if (action.contains("COPY")) {
+            return "copied";
+        } else if (action.contains("ROLLBACK")) {
+            return "rolled back";
+        } else if (action.contains("ENABLE")) {
+            return "enabled";
+        } else if (action.contains("DISABLE")) {
+            return "disabled";
+        } else if (action.contains("VERIFY") || action.contains("VERIFIED")) {
+            return "verified";
+        } else if (action.contains("LOGIN") || action.contains("LOG_IN")) {
+            return "logged in";
+        } else if (action.contains("LOGOUT") || action.contains("LOG_OUT")) {
+            return "logged out";
+        } else if (action.contains("GRANT") || action.contains("ASSIGN")) {
+            return "granted access to";
+        } else if (action.contains("REVOKE") || action.contains("REMOVE_ACCESS")) {
+            return "revoked access from";
+        } else if (action.contains("JOIN")) {
+            return "joined";
+        } else if (action.contains("LEAVE")) {
+            return "left";
+        } else {
+            return action.toLowerCase().replace("_", " ");
+        }
+    }
+
+    /**
+     * Format resource type to a human-readable form (same logic as DescriptionFormatter)
+     */
+    private String formatResourceType(String resourceType) {
+        if (resourceType == null) {
+            return "resource";
+        }
+
+        resourceType = resourceType.toLowerCase();
+
+        switch (resourceType) {
+            case "secret":
+                return "secret";
+            case "project":
+                return "project";
+            case "team":
+                return "team";
+            case "user":
+                return "user";
+            case "workflow":
+                return "workflow";
+            case "notification":
+                return "notification";
+            default:
+                return resourceType;
+        }
     }
 
     public AuditLogPageResponse fetchAuditLogs(
@@ -379,6 +556,37 @@ public class AuditLogProxyService {
                         }
                     }
                 });
+            }
+            
+            // Enrich actionsByUser map: convert user IDs to emails
+            if (response != null && response.getActionsByUser() != null && !response.getActionsByUser().isEmpty()) {
+                Map<String, Long> enrichedActionsByUser = new HashMap<>();
+                response.getActionsByUser().forEach((userId, count) -> {
+                    try {
+                        UUID userUuid = UUID.fromString(userId);
+                        Optional<User> userOpt = userService.findById(userUuid);
+                        if (userOpt.isPresent()) {
+                            User user = userOpt.get();
+                            // Use email as key instead of user ID
+                            String email = user.getEmail();
+                            if (email != null && !email.isEmpty()) {
+                                // If multiple user IDs map to same email (shouldn't happen), sum counts
+                                enrichedActionsByUser.merge(email, count, (a, b) -> a + b);
+                            } else {
+                                // Fallback to user ID if email is missing
+                                enrichedActionsByUser.put(userId, count);
+                            }
+                        } else {
+                            // User not found, keep the original user ID
+                            enrichedActionsByUser.put(userId, count);
+                        }
+                    } catch (IllegalArgumentException e) {
+                        // Invalid UUID format, keep as-is
+                        log.warn("Invalid user ID format in actionsByUser: {}", userId);
+                        enrichedActionsByUser.put(userId, count);
+                    }
+                });
+                response.setActionsByUser(enrichedActionsByUser);
             }
             
             return response;

@@ -52,7 +52,10 @@ public class AuditLogDto {
     private String description;
     
     // Enriched user data (added by proxy service)
+    @JsonProperty("userEmail")
     private String userEmail;
+    
+    @JsonProperty("userDisplayName")
     private String userDisplayName;
 
     // Getters and Setters

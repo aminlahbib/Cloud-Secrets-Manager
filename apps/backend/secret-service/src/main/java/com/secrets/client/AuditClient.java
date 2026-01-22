@@ -1,5 +1,7 @@
 package com.secrets.client;
 
+import com.secrets.entity.User;
+import com.secrets.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +13,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -19,12 +22,14 @@ public class AuditClient {
     private static final Logger log = LoggerFactory.getLogger(AuditClient.class);
 
     private final WebClient.Builder webClientBuilder;
+    private final UserService userService;
 
     @Value("${audit.service.url}")
     private String auditServiceUrl;
 
-    public AuditClient(WebClient.Builder webClientBuilder) {
+    public AuditClient(WebClient.Builder webClientBuilder, UserService userService) {
         this.webClientBuilder = webClientBuilder;
+        this.userService = userService;
     }
 
     /**
@@ -45,6 +50,29 @@ public class AuditClient {
     public void logEvent(UUID projectId, UUID userId, String action, String resourceType,
             String resourceId, String resourceName, Map<String, Object> metadata) {
         try {
+            // Fetch user info to include in metadata for proper description generation
+            Optional<User> userOpt = userService.findById(userId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                // Ensure metadata map exists
+                if (metadata == null) {
+                    metadata = new HashMap<>();
+                }
+                // Add userEmail and userName to metadata if not already present
+                if (!metadata.containsKey("userEmail")) {
+                    metadata.put("userEmail", user.getEmail());
+                }
+                if (!metadata.containsKey("userName")) {
+                    // Prefer displayName, fallback to email
+                    String userName = user.getDisplayName() != null && !user.getDisplayName().isEmpty()
+                            ? user.getDisplayName()
+                            : user.getEmail();
+                    metadata.put("userName", userName);
+                }
+            } else {
+                log.debug("User not found for audit log: userId={}, action={}. Description may contain UUID. This is expected if user was deleted.", userId, action);
+            }
+
             WebClient webClient = webClientBuilder
                     .baseUrl(auditServiceUrl)
                     .build();
