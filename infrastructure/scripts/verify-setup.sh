@@ -194,6 +194,96 @@ check_gcp_cli() {
 }
 
 # =============================================================================
+# Check Cloud Run Resources (if deployed)
+# =============================================================================
+check_cloudrun_resources() {
+  log_step "Checking Cloud Run resource configuration..."
+  
+  REGION="${GCP_REGION:-europe-west10}"
+  SERVICES=("secret-service" "audit-service" "notification-service" "frontend")
+  
+  DEPLOYED=0
+  OPTIMIZED=0
+  
+  for service in "${SERVICES[@]}"; do
+    if gcloud run services describe "${service}" --region=${REGION} --project=${PROJECT_ID} &>/dev/null; then
+      DEPLOYED=$((DEPLOYED + 1))
+      
+      MEMORY=$(gcloud run services describe "${service}" \
+        --region=${REGION} --project=${PROJECT_ID} \
+        --format='value(spec.template.spec.containers[0].resources.limits.memory)' 2>/dev/null || echo "")
+      MIN_INSTANCES=$(gcloud run services describe "${service}" \
+        --region=${REGION} --project=${PROJECT_ID} \
+        --format='value(spec.template.metadata.annotations.autoscaling\.knative\.dev/minScale)' 2>/dev/null || echo "0")
+      
+      # Check if optimized
+      case "${service}" in
+        "secret-service")
+          if [ "${MEMORY}" = "512Mi" ] && [ "${MIN_INSTANCES}" = "1" ]; then
+            log_info "${service}: ${MEMORY}, min=${MIN_INSTANCES} (optimized)"
+            OPTIMIZED=$((OPTIMIZED + 1))
+          else
+            log_warn "${service}: ${MEMORY}, min=${MIN_INSTANCES} (not optimized)"
+          fi
+          ;;
+        "audit-service"|"notification-service")
+          if [ "${MEMORY}" = "512Mi" ] && [ "${MIN_INSTANCES}" = "0" ]; then
+            log_info "${service}: ${MEMORY}, min=${MIN_INSTANCES} (optimized)"
+            OPTIMIZED=$((OPTIMIZED + 1))
+          else
+            log_warn "${service}: ${MEMORY}, min=${MIN_INSTANCES} (not optimized)"
+          fi
+          ;;
+        "frontend")
+          if [ "${MEMORY}" = "256Mi" ] && [ "${MIN_INSTANCES}" = "0" ]; then
+            log_info "${service}: ${MEMORY}, min=${MIN_INSTANCES} (optimized)"
+            OPTIMIZED=$((OPTIMIZED + 1))
+          else
+            log_warn "${service}: ${MEMORY}, min=${MIN_INSTANCES} (not optimized)"
+          fi
+          ;;
+      esac
+    fi
+  done
+  
+  if [ "${DEPLOYED}" -eq 0 ]; then
+    log_warn "No Cloud Run services deployed yet"
+  elif [ "${OPTIMIZED}" -eq "${DEPLOYED}" ]; then
+    log_info "All deployed services are optimized"
+  else
+    log_warn "${OPTIMIZED}/${DEPLOYED} services are optimized"
+  fi
+}
+
+# =============================================================================
+# Estimate Costs
+# =============================================================================
+estimate_costs() {
+  log_step "Estimating monthly costs..."
+  
+  REGION="${GCP_REGION:-europe-west10}"
+  
+  # Check if services are deployed
+  if gcloud run services describe secret-service --region=${REGION} --project=${PROJECT_ID} &>/dev/null; then
+    log_info "Cloud Run services deployed"
+    log_info "  Estimated: \$5-15/month (with optimized resources)"
+  else
+    log_info "Cloud Run services not deployed yet"
+  fi
+  
+  # Check Cloud SQL
+  if gcloud sql instances describe secrets-manager-db-dev-3631da18 --project=${PROJECT_ID} &>/dev/null 2>&1; then
+    log_info "Cloud SQL instance exists"
+    log_info "  Estimated: \$30/month"
+  else
+    log_warn "Cloud SQL instance not found"
+  fi
+  
+  log_info "Total estimated: ~\$15-25/month (optimized) or ~\$40-60/month (if Cloud SQL running)"
+  log_info "Use ./infrastructure/scripts/shutdown.sh to reduce costs to ~\$10-15/month"
+}
+
+# =============================================================================
 # Main
 # =============================================================================
 main() {
@@ -218,6 +308,10 @@ main() {
     check_gcp_secrets
     echo ""
     check_permissions
+    echo ""
+    check_cloudrun_resources
+    echo ""
+    estimate_costs
   else
     log_warn "Skipping GCP checks due to previous errors"
   fi

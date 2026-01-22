@@ -28,7 +28,9 @@ steps:
       - 'VITE_AUDIT_API_KEY=${_VITE_AUDIT_API_KEY}'
       - '-t'
       - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:${_TAG}'
-      - '.'
+      - '-f'
+      - 'apps/frontend/Dockerfile'
+      - 'apps/frontend'
 
 images:
   - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:${_TAG}'

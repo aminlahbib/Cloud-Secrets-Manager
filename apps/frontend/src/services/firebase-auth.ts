@@ -12,21 +12,8 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 
-// Suppress COOP warnings globally (harmless browser security warnings from Firebase)
-const suppressCOOPWarnings = () => {
-  const originalWarn = console.warn;
-  console.warn = (...args: any[]) => {
-    const message = args.join(' ');
-    // Suppress COOP-related warnings from Firebase/Google OAuth
-    if (message.includes('Cross-Origin-Opener-Policy') || 
-        message.includes('window.closed') || 
-        message.includes('window.close')) {
-      return; // Suppress these warnings
-    }
-    originalWarn.apply(console, args);
-  };
-  return () => { console.warn = originalWarn; };
-};
+// Note: COOP warnings from Firebase are handled via nginx.conf (Cross-Origin-Opener-Policy header)
+// These warnings are harmless and don't affect functionality
 
 export const firebaseAuthService = {
   /**
@@ -52,18 +39,11 @@ export const firebaseAuthService = {
     try {
       await this.initPersistence(persistent);
       
-      // Suppress COOP warnings during sign-in
-      const restoreWarn = suppressCOOPWarnings();
+      // COOP warnings are handled via nginx.conf (Cross-Origin-Opener-Policy header)
       
-      try {
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
-        restoreWarn();
       return idToken;
-      } catch (popupError) {
-        restoreWarn();
-        throw popupError;
-      }
     } catch (error: any) {
       console.error('Google sign-in error:', error);
       

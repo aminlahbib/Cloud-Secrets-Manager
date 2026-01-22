@@ -173,7 +173,7 @@ graph LR
 - **📦 Microservices** - Decoupled services for independent scaling and deployment
 - **⚡ Event-Driven** - Asynchronous Pub/Sub messaging for loose coupling
 - **📊 Observability First** - Built-in metrics, logging, and tracing
-- **☁️ Cloud-Native** - Designed for Kubernetes and GCP from day one
+- **☁️ Cloud-Native** - Optimized for Cloud Run with optional GKE support
 
 ### Data Flow Example: Creating a Secret
 
@@ -275,22 +275,44 @@ npm run dev
 
 Don't forget to add your API keys to the configuration in the root `.env` file.
 
-### Option 3: Google Cloud Run (Production)
+### Option 3: Google Cloud Run (Production - Recommended)
 
-For production deployment on Google Cloud Run:
+**Recommended for production deployment** - Simple, cost-effective, and auto-scaling:
 
 ```bash
-# Deploy all services to Cloud Run
-./infrastructure/scripts/deploy-cloudrun.sh
+# Deploy all services to Cloud Run (uses Cloud Build, no local Docker required)
+./infrastructure/scripts/deploy-cloudrun-cloudbuild.sh
 ```
 
 This script will:
-- Build and push Docker images to Artifact Registry
-- Deploy all microservices to Cloud Run
+- Build Docker images using Cloud Build (no local Docker needed)
+- Deploy all microservices to Cloud Run with optimized resources
 - Configure Cloud SQL connections
 - Set up secrets from Google Secret Manager
+- Deploy frontend with correct backend URLs
+
+**Resource Configuration:**
+- Secret Service: 512Mi memory, min-instances=1 (critical path)
+- Audit Service: 512Mi memory, min-instances=0 (scales to zero)
+- Notification Service: 512Mi memory, min-instances=0 (scales to zero)
+- Frontend: 256Mi memory, min-instances=0 (scales to zero)
+
+**Estimated Cost:** ~$15-25/month (with optimized resources)
 
 See [`docs/DEPLOYMENT_OPERATIONS_GUIDE.md`](docs/DEPLOYMENT_OPERATIONS_GUIDE.md) for detailed instructions.
+
+### Option 4: Google Kubernetes Engine (GKE) - Advanced
+
+For advanced deployments requiring custom monitoring (Prometheus/Grafana), service mesh, or multi-region:
+
+```bash
+# Deploy to GKE (requires Terraform and Helm)
+./infrastructure/scripts/deploy-gke.sh
+```
+
+**Note:** GKE deployment is optional and requires Kubernetes expertise. Most users should use Cloud Run (Option 3).
+
+See [`infrastructure/kubernetes/README.md`](infrastructure/kubernetes/README.md) and [`infrastructure/helm/README.md`](infrastructure/helm/README.md) for GKE deployment details.
 
 ### Verify Installation
 

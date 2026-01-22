@@ -1,5 +1,10 @@
 # Helm Charts
 
+> **Note: Advanced Deployment Option**  
+> This directory contains Helm charts for deploying Cloud Secrets Manager to **GKE (Kubernetes)**.  
+> **For most users, Cloud Run deployment is recommended** (see `infrastructure/scripts/deploy-cloudrun-cloudbuild.sh`).  
+> Use GKE only if you need advanced features like custom monitoring (Prometheus/Grafana), service mesh, or multi-region deployments.
+
 This directory contains Helm charts for deploying Cloud Secrets Manager to Kubernetes.
 
 ## Structure

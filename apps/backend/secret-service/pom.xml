@@ -262,8 +262,8 @@
                 </configuration>
             </plugin>
             
-            <!-- JaCoCo for test coverage: Temporarily disabled due to Java 21 compatibility issues -->
-            <!-- TODO: Re-enable when JaCoCo supports Java 21 or use alternative coverage tool -->
+            <!-- JaCoCo for test coverage: Disabled due to Java 21 compatibility issues -->
+            <!-- Note: Use alternative coverage tools like JaCoCo 0.8.11+ or Cobertura for Java 21 -->
             
             <!-- Surefire for running tests -->
             <plugin>

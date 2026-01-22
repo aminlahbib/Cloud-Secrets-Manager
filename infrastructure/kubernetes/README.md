@@ -1,5 +1,10 @@
 # Kubernetes Manifests
 
+> **Note: Advanced Deployment Option**  
+> This directory contains Kubernetes manifests for deploying to **GKE (Kubernetes)**.  
+> **For most users, Cloud Run deployment is recommended** (see `infrastructure/scripts/deploy-cloudrun-cloudbuild.sh`).  
+> Use GKE only if you need advanced features like custom monitoring (Prometheus/Grafana), service mesh, or multi-region deployments.
+
 This directory contains Kubernetes deployment manifests scoped to the `cloud-secrets-manager` namespace.
 
 ## Architecture
@@ -15,7 +20,6 @@ This directory contains Kubernetes deployment manifests scoped to the `cloud-sec
   - `audit-service-deployment.yaml` - Audit Service with Cloud SQL Proxy
   - `external-secrets.yaml` - External Secrets Operator resources (syncs from GCP Secret Manager)
   - `ingress.yaml` - Ingress configuration
-  - `k8s-secrets.yaml` - **DEPRECATED** (kept for reference, use ESO instead)
 
 ## Prerequisites
 
