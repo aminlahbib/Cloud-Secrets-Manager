@@ -343,7 +343,7 @@ export const TeamDetailPage: React.FC = () => {
   // Get available roles based on current user role
   const availableRoles: TeamRole[] = useMemo(() => {
     if (team?.currentUserRole === 'TEAM_OWNER') {
-      return ['TEAM_OWNER', 'TEAM_ADMIN', 'TEAM_MEMBER'];
+      return ['TEAM_ADMIN', 'TEAM_MEMBER'];
     }
     return ['TEAM_ADMIN', 'TEAM_MEMBER'];
   }, [team?.currentUserRole]);

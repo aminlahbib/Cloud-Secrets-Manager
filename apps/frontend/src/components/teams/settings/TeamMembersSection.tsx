@@ -93,10 +93,7 @@ export const TeamMembersSection: React.FC<TeamMembersSectionProps> = ({
                         >
                           <option value="TEAM_MEMBER">{t('teamDetail.settings.role.member')}</option>
                           {team.currentUserRole === 'TEAM_OWNER' && (
-                            <>
-                              <option value="TEAM_ADMIN">{t('teamDetail.settings.role.admin')}</option>
-                              <option value="TEAM_OWNER">{t('teamDetail.settings.role.owner')}</option>
-                            </>
+                            <option value="TEAM_ADMIN">{t('teamDetail.settings.role.admin')}</option>
                           )}
                         </select>
                       ) : (

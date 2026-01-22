@@ -1,5 +1,6 @@
 package com.secrets.controller;
 
+import com.secrets.dto.member.TransferOwnershipRequest;
 import com.secrets.dto.team.*;
 import com.secrets.service.TeamService;
 import com.secrets.service.UserService;
@@ -137,6 +138,17 @@ public class TeamController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         List<TeamMemberResponse> members = teamService.bulkInviteMembers(id, request, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(members);
+    }
+
+    @PostMapping("/{id}/transfer-ownership")
+    @Operation(summary = "Transfer ownership", description = "Transfer team ownership to another member (TEAM_OWNER only)")
+    public ResponseEntity<Void> transferOwnership(
+            @PathVariable UUID id,
+            @Valid @RequestBody TransferOwnershipRequest request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        UUID userId = userService.getCurrentUserId(userDetails.getUsername());
+        teamService.transferOwnership(id, request.getNewOwnerUserId(), userId);
+        return ResponseEntity.ok().build();
     }
 
     // =========================================================================

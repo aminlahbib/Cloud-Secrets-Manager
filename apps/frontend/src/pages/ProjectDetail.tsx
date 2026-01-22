@@ -697,7 +697,7 @@ export const ProjectDetailPage: React.FC = () => {
     );
   }, [updateMemberRoleMutation, members]);
   const availableRoleOptions: ProjectRole[] =
-    currentUserRole === 'OWNER' ? ['OWNER', 'ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
+    currentUserRole === 'OWNER' ? ['ADMIN', 'MEMBER', 'VIEWER'] : ['ADMIN', 'MEMBER', 'VIEWER'];
 
   const isArchived = project?.isArchived || Boolean(project?.deletedAt);
   const metaPairs = useMemo(() => {

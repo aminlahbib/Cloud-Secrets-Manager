@@ -146,6 +146,10 @@ public class AuditLogProxyService {
         auditLogs.forEach(log -> {
             // Enrich user data
             if (log.getUserId() != null) {
+                // Check metadata first for email (in case user was deleted)
+                Map<String, Object> metadata = log.getMetadata();
+                String metadataEmail = extractEmailFromMetadata(metadata);
+                
                 User user = userMap.get(log.getUserId());
                 if (user != null) {
                     log.setUserEmail(user.getEmail());
@@ -169,7 +173,7 @@ public class AuditLogProxyService {
                             log.getResourceType(),
                             log.getResourceName(),
                             log.getProjectId(),
-                            log.getMetadata(),
+                            metadata,
                             projectMap,
                             projectTeamMap
                     );
@@ -191,20 +195,57 @@ public class AuditLogProxyService {
                         }
                     }
                 } else {
-                    // User not found - log warning and try to replace user ID in description
-                    LoggerFactory.getLogger(AuditLogProxyService.class).warn("User not found for audit log enrichment: userId={}, logId={}", 
-                        log.getUserId(), log.getId());
-                    if (log.getDescription() != null && log.getUserId() != null) {
-                        String description = log.getDescription();
-                        String userIdStr = log.getUserId().toString();
-                        if (description.contains(userIdStr)) {
-                            description = description.replace(userIdStr, "Unknown user");
-                            log.setDescription(description);
+                    // User not found - try to use email from metadata
+                    if (metadataEmail != null && !metadataEmail.isEmpty()) {
+                        log.setUserEmail(metadataEmail);
+                        log.setUserDisplayName(metadataEmail); // Use email as displayName
+                        AuditLogProxyService.log.debug("Using email from metadata for deleted user: userId={}, email={}", 
+                            log.getUserId(), metadataEmail);
+                        
+                        // Regenerate description with metadata email
+                        String regeneratedDescription = regenerateDescription(
+                                metadataEmail,
+                                log.getAction(),
+                                log.getResourceType(),
+                                log.getResourceName(),
+                                log.getProjectId(),
+                                metadata,
+                                projectMap,
+                                projectTeamMap
+                        );
+                        
+                        if (regeneratedDescription != null && !regeneratedDescription.isEmpty()) {
+                            log.setDescription(regeneratedDescription);
+                        } else {
+                            // Fallback to string replacement
+                            String description = log.getDescription();
+                            if (description != null) {
+                                String userIdStr = log.getUserId().toString();
+                                if (description.contains(userIdStr)) {
+                                    description = description.replace(userIdStr, metadataEmail);
+                                    log.setDescription(description);
+                                } else if (description.contains("Unknown user")) {
+                                    description = description.replace("Unknown user", metadataEmail);
+                                    log.setDescription(description);
+                                }
+                            }
                         }
+                    } else {
+                        // No metadata email either - log warning and set to null
+                        AuditLogProxyService.log.warn("User not found for audit log enrichment and no metadata email: userId={}, logId={}", 
+                            log.getUserId(), log.getId());
+                        if (log.getDescription() != null && log.getUserId() != null) {
+                            String description = log.getDescription();
+                            String userIdStr = log.getUserId().toString();
+                            if (description.contains(userIdStr)) {
+                                description = description.replace(userIdStr, "Unknown user");
+                                log.setDescription(description);
+                            }
+                        }
+                        // Set userEmail to null explicitly (frontend will show "Unknown")
+                        log.setUserEmail(null);
+                        log.setUserDisplayName(null);
                     }
-                    // Still set userEmail to null explicitly (frontend will show "Unknown")
-                    log.setUserEmail(null);
-                    log.setUserDisplayName(null);
                 }
             }
             
@@ -232,6 +273,98 @@ public class AuditLogProxyService {
                 }
             }
         });
+    }
+
+    /**
+     * Extract email from metadata if present
+     * @param metadata Metadata map that may contain userEmail
+     * @return Email string if found, null otherwise
+     */
+    private String extractEmailFromMetadata(Map<String, Object> metadata) {
+        if (metadata == null) {
+            return null;
+        }
+        Object userEmailObj = metadata.get("userEmail");
+        if (userEmailObj != null) {
+            return userEmailObj.toString();
+        }
+        return null;
+    }
+
+    /**
+     * Get email from audit logs metadata for a user
+     * Queries the audit service for recent logs by user_id and extracts email from metadata
+     * @param userId User ID to look up
+     * @param projectId Project ID (optional, can be null)
+     * @param startDate Start date for query (optional)
+     * @param endDate End date for query (optional)
+     * @return Email string if found in metadata, null otherwise
+     */
+    private String getEmailFromAuditLogsMetadata(UUID userId, String projectId, String startDate, String endDate) {
+        if (userId == null) {
+            log.debug("getEmailFromAuditLogsMetadata called with null userId");
+            return null;
+        }
+        
+        try {
+            WebClient client = webClientBuilder
+                    .baseUrl(auditServiceUrl)
+                    .build();
+
+            // Query audit service for recent logs by this specific user
+            // Use /api/audit/user/{userId} endpoint and filter by project in memory if needed
+            AuditLogPageResponse auditResponse = client.get()
+                    .uri(uriBuilder -> {
+                        var builder = uriBuilder.path("/api/audit/user/" + userId.toString())
+                                .queryParam("page", 0)
+                                .queryParam("size", 20); // Get more logs to find one with project match
+                        
+                        return builder.build();
+                    })
+                    .header("X-Service-API-Key", serviceApiKey)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(AuditLogPageResponse.class)
+                    .timeout(Duration.ofSeconds(3))
+                    .block();
+
+            if (auditResponse != null && auditResponse.getContent() != null && !auditResponse.getContent().isEmpty()) {
+                log.debug("Found {} audit logs for userId={}", 
+                    auditResponse.getContent().size(), userId);
+                // Filter by project if projectId is specified, otherwise use any log
+                UUID projectUuid = null;
+                if (projectId != null && !projectId.isEmpty()) {
+                    try {
+                        projectUuid = UUID.fromString(projectId);
+                    } catch (IllegalArgumentException e) {
+                        log.debug("Invalid projectId format: {}, will not filter by project", projectId);
+                    }
+                }
+                for (AuditLogDto auditLog : auditResponse.getContent()) {
+                    // If projectId is specified, only check logs for that project
+                    if (projectUuid != null && auditLog.getProjectId() != null && !auditLog.getProjectId().equals(projectUuid)) {
+                        continue;
+                    }
+                    String email = extractEmailFromMetadata(auditLog.getMetadata());
+                    if (email != null && !email.isEmpty()) {
+                        log.debug("Found email in audit log metadata: userId={}, email={}, logId={}, projectId={}", 
+                            userId, email, auditLog.getId(), auditLog.getProjectId());
+                        return email;
+                    } else {
+                        log.debug("Audit log {} for userId={} has no email in metadata. Metadata keys: {}", 
+                            auditLog.getId(), userId, 
+                            auditLog.getMetadata() != null ? auditLog.getMetadata().keySet() : "null");
+                    }
+                }
+                log.warn("Found {} audit logs for userId={} but none had email in metadata (or matched projectId={})", 
+                    auditResponse.getContent().size(), userId, projectId);
+            } else {
+                log.debug("No audit logs found for userId={} (response was null or empty)", userId);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to query audit logs for email extraction: userId={}, error={}", userId, e.getMessage(), e);
+        }
+        return null;
     }
 
     /**
@@ -543,19 +676,89 @@ public class AuditLogProxyService {
             
             // Enrich topUsers with email/displayName
             if (response != null && response.getTopUsers() != null) {
+                log.debug("Enriching {} topUsers for analytics", response.getTopUsers().size());
+                final int[] enrichedCount = {0};
+                final int[] notFoundCount = {0};
+                final int[] metadataFallbackCount = {0};
+                
                 response.getTopUsers().forEach(topUser -> {
                     if (topUser.getUserId() != null) {
                         try {
                             UUID userId = UUID.fromString(topUser.getUserId());
-                            userService.findById(userId).ifPresent(user -> {
-                                topUser.setEmail(user.getEmail());
-                                topUser.setDisplayName(user.getDisplayName());
-                            });
+                            log.debug("Enriching topUser: userId={}, current email={}, current displayName={}", 
+                                userId, topUser.getEmail(), topUser.getDisplayName());
+                            Optional<User> userOpt = userService.findById(userId);
+                            if (userOpt.isPresent()) {
+                                User user = userOpt.get();
+                                String userEmail = user.getEmail();
+                                String userDisplayName = user.getDisplayName();
+                                
+                                // Validate email is not null/empty - if it is, try metadata fallback
+                                if (userEmail == null || userEmail.isEmpty()) {
+                                    log.warn("User {} found but has null/empty email, trying metadata fallback", userId);
+                                    String metadataEmail = getEmailFromAuditLogsMetadata(userId, projectId, startDate, endDate);
+                                    if (metadataEmail != null && !metadataEmail.isEmpty()) {
+                                        topUser.setEmail(metadataEmail);
+                                        topUser.setDisplayName(userDisplayName != null && !userDisplayName.isEmpty() 
+                                            ? userDisplayName 
+                                            : metadataEmail);
+                                        metadataFallbackCount[0]++;
+                                        log.debug("Using email from audit logs metadata for topUser (user had no email): userId={}, email={}", 
+                                            userId, metadataEmail);
+                                    } else {
+                                        // No email anywhere - use displayName or fallback
+                                        if (userDisplayName != null && !userDisplayName.isEmpty()) {
+                                            topUser.setDisplayName(userDisplayName);
+                                        } else {
+                                            topUser.setDisplayName("User " + userId.toString().substring(0, 8));
+                                        }
+                                        topUser.setEmail(null);
+                                        notFoundCount[0]++;
+                                        log.warn("User {} found but has no email and no metadata email", userId);
+                                    }
+                                } else {
+                                    // User has valid email - use it
+                                    topUser.setEmail(userEmail);
+                                    
+                                    // Set displayName: prefer displayName, fallback to email
+                                    if (userDisplayName != null && !userDisplayName.isEmpty()) {
+                                        topUser.setDisplayName(userDisplayName);
+                                    } else {
+                                        topUser.setDisplayName(userEmail);
+                                    }
+                                    
+                                    enrichedCount[0]++;
+                                    log.debug("Enriched topUser: userId={}, email={}, displayName={}", 
+                                        userId, topUser.getEmail(), topUser.getDisplayName());
+                                }
+                            } else {
+                                // User not found in database - try to get email from audit logs metadata
+                                log.debug("User not found in database for analytics topUser: userId={}, trying metadata fallback", userId);
+                                String metadataEmail = getEmailFromAuditLogsMetadata(userId, projectId, startDate, endDate);
+                                if (metadataEmail != null && !metadataEmail.isEmpty()) {
+                                    topUser.setEmail(metadataEmail);
+                                    topUser.setDisplayName(metadataEmail); // Use email as displayName
+                                    metadataFallbackCount[0]++;
+                                    log.info("Using email from audit logs metadata for topUser (user not in DB): userId={}, email={}", 
+                                        userId, metadataEmail);
+                                } else {
+                                    notFoundCount[0]++;
+                                    // Set a fallback displayName even if user not found and no metadata
+                                    topUser.setDisplayName("Unknown User");
+                                    topUser.setEmail(null); // Explicitly set to null
+                                    log.warn("User not found for analytics topUser and no metadata email: userId={}. This may indicate a data sync issue.", topUser.getUserId());
+                                }
+                            }
                         } catch (IllegalArgumentException e) {
                             log.warn("Invalid user ID in analytics: {}", topUser.getUserId());
                         }
+                    } else {
+                        log.warn("topUser has null userId");
                     }
                 });
+                
+                log.debug("Analytics topUsers enrichment complete: {} enriched, {} from metadata, {} not found", 
+                    enrichedCount[0], metadataFallbackCount[0], notFoundCount[0]);
             }
             
             // Enrich actionsByUser map: convert user IDs to emails
@@ -565,19 +768,26 @@ public class AuditLogProxyService {
                     try {
                         UUID userUuid = UUID.fromString(userId);
                         Optional<User> userOpt = userService.findById(userUuid);
+                        String email = null;
+                        
                         if (userOpt.isPresent()) {
                             User user = userOpt.get();
-                            // Use email as key instead of user ID
-                            String email = user.getEmail();
-                            if (email != null && !email.isEmpty()) {
-                                // If multiple user IDs map to same email (shouldn't happen), sum counts
-                                enrichedActionsByUser.merge(email, count, (a, b) -> a + b);
-                            } else {
-                                // Fallback to user ID if email is missing
-                                enrichedActionsByUser.put(userId, count);
-                            }
+                            email = user.getEmail();
                         } else {
-                            // User not found, keep the original user ID
+                            // User not found - try to get email from audit logs metadata
+                            email = getEmailFromAuditLogsMetadata(userUuid, projectId, startDate, endDate);
+                            if (email != null) {
+                                log.debug("Using email from audit logs metadata for actionsByUser: userId={}, email={}", 
+                                    userId, email);
+                            }
+                        }
+                        
+                        if (email != null && !email.isEmpty()) {
+                            // Use email as key instead of user ID
+                            // If multiple user IDs map to same email (shouldn't happen), sum counts
+                            enrichedActionsByUser.merge(email, count, (a, b) -> a + b);
+                        } else {
+                            // Fallback to user ID if email is missing
                             enrichedActionsByUser.put(userId, count);
                         }
                     } catch (IllegalArgumentException e) {
