@@ -64,17 +64,45 @@ spec:
                 secretKeyRef:
                   name: cloud-secrets-config
                   key: JWT_SECRET
-            - name: EMAIL_ENABLED
-              value: "false"
             - name: SPRING_PROFILES_ACTIVE
               value: {{ if .Values.cloudSql.enabled }}prod{{ else }}dev{{ end }}
+            # Email configuration
+            - name: EMAIL_ENABLED
+              value: {{ .Values.email.enabled | quote }}
+            {{- if .Values.email.enabled }}
+            - name: SENDGRID_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sendgrid-secret
+                  key: SENDGRID_API_KEY
+            - name: EMAIL_FROM_ADDRESS
+              value: {{ .Values.email.fromAddress | quote }}
+            - name: EMAIL_FROM_NAME
+              value: {{ .Values.email.fromName | quote }}
+            {{- end }}
+            - name: APP_BASE_URL
+              value: {{ .Values.app.baseUrl | quote }}
+            # Pub/Sub configuration
+            {{- if .Values.pubsub.enabled }}
+            - name: GCP_PROJECT_ID
+              value: {{ .Values.googleIdentity.projectId | quote }}
+            {{- end }}
           ports:
             - containerPort: {{ .Values.notificationService.port }}
+          # Spring Boot apps take time to initialize JPA/Hibernate
+          startupProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: {{ .Values.notificationService.port }}
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 40  # Allow up to 10 minutes for startup
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: {{ .Values.notificationService.port }}
-            initialDelaySeconds: 120
+            initialDelaySeconds: 0
             periodSeconds: 15
             timeoutSeconds: 5
             failureThreshold: 3
@@ -82,10 +110,10 @@ spec:
             httpGet:
               path: /actuator/health/readiness
               port: {{ .Values.notificationService.port }}
-            initialDelaySeconds: 90
+            initialDelaySeconds: 0
             periodSeconds: 10
             timeoutSeconds: 5
-            failureThreshold: 5
+            failureThreshold: 3
           resources:
             {{- toYaml .Values.notificationService.resources | nindent 12 }}
         {{- if .Values.cloudSql.enabled }}

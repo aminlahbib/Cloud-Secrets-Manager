@@ -1,10 +1,14 @@
 # Production Environment Values
 # Use with: helm install cloud-secrets-manager ./infrastructure/helm/cloud-secrets-manager -f values-production.yaml
 
+# Environment
+environment: production
+
 image:
   repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
   repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
   repositoryNotificationService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service"
+  repositoryFrontend: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/frontend"
   tag: "production"  # Use production tag
   pullPolicy: IfNotPresent  # Use IfNotPresent for stability
 
@@ -81,9 +85,11 @@ postgres:
     db: audit
 
 # Cloud SQL Configuration (production instance)
+# IMPORTANT: connectionName must be set during deployment using:
+#   --set cloudSql.connectionName="$(terraform output -raw db_connection_name)"
 cloudSql:
   enabled: true
-  connectionName: "cloud-secrets-manager:europe-west10:secrets-manager-db-prod-XXXXX"  # Update with production instance
+  connectionName: ""  # Required: Set via --set cloudSql.connectionName=<project:region:instance>
   image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
   resources:
     requests:
@@ -124,6 +130,33 @@ ingress:
       more_set_headers "X-Content-Type-Options: nosniff";
       more_set_headers "X-XSS-Protection: 1; mode=block";
       more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+
+# Email Configuration (SendGrid) - Enabled in production
+email:
+  enabled: true
+  fromAddress: "noreply@yourdomain.com"  # Update with your domain
+  fromName: "Cloud Secrets Manager"
+
+# Pub/Sub Configuration
+pubsub:
+  enabled: true
+  topicName: "notifications-events"
+  subscriptionName: "notifications-events-sub"
+
+# Application Configuration
+app:
+  baseUrl: "https://secrets.yourdomain.com"  # Update with your domain
+
+# Frontend
+frontend:
+  replicaCount: 3
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
 
 monitoring:
   enabled: true

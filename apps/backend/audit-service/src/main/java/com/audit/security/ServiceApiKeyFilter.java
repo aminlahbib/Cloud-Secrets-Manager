@@ -31,6 +31,22 @@ public class ServiceApiKeyFilter extends OncePerRequestFilter {
     @Value("${audit.service.api-key:}")
     private String expectedApiKey;
 
+    /**
+     * Add CORS headers to response
+     */
+    private void addCorsHeaders(HttpServletRequest request, HttpServletResponse response) {
+        String origin = request.getHeader("Origin");
+        if (origin != null && (origin.startsWith("http://localhost") || origin.startsWith("http://127.0.0.1") || 
+            origin.contains(".run.app") || origin.contains("secrets.local"))) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
+            response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With, Accept, Origin, Access-Control-Request-Method, Access-Control-Request-Headers, X-Service-API-Key");
+            response.setHeader("Access-Control-Expose-Headers", "X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Authorization");
+            response.setHeader("Access-Control-Max-Age", "3600");
+        }
+    }
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -38,6 +54,13 @@ public class ServiceApiKeyFilter extends OncePerRequestFilter {
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         
         String requestPath = request.getRequestURI();
+        
+        // Handle OPTIONS preflight requests - allow them through with CORS headers
+        if (request.getMethod().equals("OPTIONS")) {
+            addCorsHeaders(request, response);
+            response.setStatus(HttpStatus.OK.value());
+            return;
+        }
         
         // Skip validation for POST /api/audit/log (internal logging endpoint)
         // and health check endpoints
@@ -57,6 +80,7 @@ public class ServiceApiKeyFilter extends OncePerRequestFilter {
             
             if (apiKey == null || apiKey.isBlank()) {
                 log.warn("Missing API key for request: {} {}", request.getMethod(), requestPath);
+                addCorsHeaders(request, response);
                 response.setStatus(HttpStatus.UNAUTHORIZED.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Missing service API key\"}");
@@ -65,6 +89,7 @@ public class ServiceApiKeyFilter extends OncePerRequestFilter {
             
             if (expectedApiKey.isBlank()) {
                 log.error("Service API key not configured. Set audit.service.api-key property.");
+                addCorsHeaders(request, response);
                 response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Service not properly configured\"}");
@@ -73,6 +98,7 @@ public class ServiceApiKeyFilter extends OncePerRequestFilter {
             
             if (!apiKey.equals(expectedApiKey)) {
                 log.warn("Invalid API key for request: {} {}", request.getMethod(), requestPath);
+                addCorsHeaders(request, response);
                 response.setStatus(HttpStatus.FORBIDDEN.value());
                 response.setContentType("application/json");
                 response.getWriter().write("{\"error\":\"Invalid service API key\"}");

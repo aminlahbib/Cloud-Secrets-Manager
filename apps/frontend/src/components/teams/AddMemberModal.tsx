@@ -5,6 +5,7 @@ import { Input } from '../ui/Input';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { teamsService } from '../../services/teams';
 import { signupService, type EmailCheckResponse } from '../../services/signup';
+import { getErrorMessage, isPermissionError } from '../../utils/errorHandling';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import type { TeamMemberRequest, TeamRole } from '../../types';
 
@@ -62,10 +63,11 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
         setStep('confirm');
       }
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error, 'Failed to check email');
       showNotification({
         type: 'error',
-        title: 'Failed to check email',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to check email',
+        message: errorMessage,
       });
     } finally {
       setIsChecking(false);
@@ -88,10 +90,11 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
       handleClose();
       onSuccess();
     } catch (error: any) {
+      const errorMessage = getErrorMessage(error, 'Failed to add member to team');
       showNotification({
         type: 'error',
-        title: 'Failed to add member',
-        message: error?.response?.data?.message || error?.message || 'An error occurred',
+        title: isPermissionError(error) ? 'Permission Denied' : 'Failed to add member',
+        message: errorMessage,
       });
     } finally {
       setIsAdding(false);

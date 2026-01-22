@@ -54,9 +54,6 @@ class TokenStorage {
             }
             if (savedMode === 'session' || savedMode === 'persistent') {
                 this.storageMode = savedMode;
-                console.log('Loaded storage mode:', savedMode, savedMode === 'persistent' ? '(from localStorage)' : '(from sessionStorage)');
-            } else {
-                console.log('No saved storage mode found, defaulting to session');
             }
         } catch (e) {
             console.error('Failed to load storage mode', e);
@@ -109,18 +106,15 @@ class TokenStorage {
                 localStorage.setItem(STORAGE_MODE_KEY, mode);
                 // Also store in sessionStorage for current session
                 sessionStorage.setItem(STORAGE_MODE_KEY, mode);
-                console.log('Storage mode set to PERSISTENT (stored in localStorage and sessionStorage)');
             } else {
                 // Store in sessionStorage for current session only
                 sessionStorage.setItem(STORAGE_MODE_KEY, mode);
                 // Remove from localStorage if it was there
                 localStorage.removeItem(STORAGE_MODE_KEY);
-                console.log('Storage mode set to SESSION (stored in sessionStorage only)');
             }
             
             // Migrate existing tokens to the correct storage location
             if (oldMode !== mode) {
-                console.log(`Migrating tokens from ${oldMode} to ${mode}`);
                 this.migrateTokens(oldMode, mode);
             }
             
@@ -233,13 +227,11 @@ class TokenStorage {
                 localStorage.setItem(REFRESH_TOKEN_KEY, obfuscated);
                 // Remove from sessionStorage if it exists there
                 sessionStorage.removeItem(REFRESH_TOKEN_KEY);
-                console.log('Refresh token stored in localStorage (persistent mode)');
             } else {
                 // Store in sessionStorage (session-only, cleared when browser closes)
                 sessionStorage.setItem(REFRESH_TOKEN_KEY, obfuscated);
                 // Remove from localStorage if it exists there
                 localStorage.removeItem(REFRESH_TOKEN_KEY);
-                console.log('Refresh token stored in sessionStorage (session mode)');
             }
         } catch (e) {
             console.error('Failed to store refresh token', e);
@@ -252,14 +244,11 @@ class TokenStorage {
             
             if (this.storageMode === 'persistent') {
                 stored = localStorage.getItem(REFRESH_TOKEN_KEY);
-                console.log('Getting refresh token from localStorage (persistent mode)');
             } else {
                 stored = sessionStorage.getItem(REFRESH_TOKEN_KEY);
-                console.log('Getting refresh token from sessionStorage (session mode)');
             }
 
             if (!stored) {
-                console.log('No refresh token found in', this.storageMode === 'persistent' ? 'localStorage' : 'sessionStorage');
                 return null;
             }
             return deobfuscate(stored);

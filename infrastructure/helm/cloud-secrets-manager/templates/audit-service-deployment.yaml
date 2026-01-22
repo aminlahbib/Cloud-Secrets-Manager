@@ -63,6 +63,12 @@ spec:
               value: prod
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
               value: update
+            # Audit service API key for frontend authentication
+            - name: AUDIT_SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: audit-api-key
+                  key: AUDIT_API_KEY
           ports:
             - containerPort: {{ .Values.auditService.port }}
           livenessProbe:

@@ -200,11 +200,17 @@ export const ProjectDetailPage: React.FC = () => {
   // Fetch analytics using server-side aggregation
   const shouldPollAnalytics = activeTab === 'activity' && activityView === 'analytics' && isTabVisible;
   const { data: analyticsData, isLoading: isAnalyticsLoading, error: analyticsError } = useQuery({
-    queryKey: ['project-activity-analytics', projectId, dateRange],
-    queryFn: () => {
-      return auditService.getProjectAnalytics(projectId!, dateRangeParams.startDate, dateRangeParams.endDate);
+    queryKey: ['project-activity-analytics', projectId, dateRangeParams.startDate, dateRangeParams.endDate],
+    queryFn: async () => {
+      try {
+        const result = await auditService.getProjectAnalytics(projectId!, dateRangeParams.startDate, dateRangeParams.endDate);
+        return result;
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        throw error;
+      }
     },
-    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics',
+    enabled: !!projectId && activeTab === 'activity' && activityView === 'analytics' && !!dateRangeParams.startDate && !!dateRangeParams.endDate,
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
     gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
@@ -213,20 +219,23 @@ export const ProjectDetailPage: React.FC = () => {
 
   // Transform server-side analytics to match frontend format
   const analyticsStats = useMemo(() => {
-    if (!analyticsData) return null;
+    if (!analyticsData) {
+      return null;
+    }
     try {
       // Server returns data in the same format as calculateActivityStats
-      // Just need to ensure topUsers has the right structure
-      return {
-        totalActions: analyticsData.totalActions || 0,
-        actionsByType: analyticsData.actionsByType || {},
-        actionsByUser: analyticsData.actionsByUser || {},
-        actionsByDay: analyticsData.actionsByDay || {},
-        topActions: analyticsData.topActions || [],
-        topUsers: analyticsData.topUsers || [],
+      // Ensure all fields are properly structured
+      const stats = {
+        totalActions: analyticsData.totalActions ?? 0,
+        actionsByType: analyticsData.actionsByType && typeof analyticsData.actionsByType === 'object' ? analyticsData.actionsByType : {},
+        actionsByUser: analyticsData.actionsByUser && typeof analyticsData.actionsByUser === 'object' ? analyticsData.actionsByUser : {},
+        actionsByDay: analyticsData.actionsByDay && typeof analyticsData.actionsByDay === 'object' ? analyticsData.actionsByDay : {},
+        topActions: Array.isArray(analyticsData.topActions) ? analyticsData.topActions : [],
+        topUsers: Array.isArray(analyticsData.topUsers) ? analyticsData.topUsers : [],
       };
+      return stats;
     } catch (error) {
-      console.error('Error processing analytics stats:', error);
+      console.error('Error processing analytics stats:', error, analyticsData);
       return null;
     }
   }, [analyticsData]);

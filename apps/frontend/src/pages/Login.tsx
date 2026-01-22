@@ -41,8 +41,6 @@ export const LoginPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
 
-    console.log('Login submitted with keepSignedIn:', keepSignedIn);
-
     try {
       const result = await login(data, keepSignedIn);
       if (result && 'requiresTwoFactor' in result && result.requiresTwoFactor) {
@@ -154,8 +152,6 @@ export const LoginPage: React.FC = () => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     setError(null);
-
-    console.log('Google login submitted with keepSignedIn:', keepSignedIn);
 
     try {
       const result = await loginWithGoogle(keepSignedIn);

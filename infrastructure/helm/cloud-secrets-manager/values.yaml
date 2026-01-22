@@ -1,7 +1,11 @@
+# Environment (dev, staging, production)
+environment: dev
+
 image:
   repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
   repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
   repositoryNotificationService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service"
+  repositoryFrontend: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/frontend"
   tag: "latest"
   pullPolicy: IfNotPresent
 
@@ -21,10 +25,10 @@ auditService:
   port: 8081
   resources:
     requests:
-      memory: "128Mi"
+      memory: "384Mi"
       cpu: "100m"
     limits:
-      memory: "256Mi"
+      memory: "512Mi"
       cpu: "250m"
 
 notificationService:
@@ -32,11 +36,21 @@ notificationService:
   port: 8082
   resources:
     requests:
-      memory: "128Mi"
+      memory: "384Mi"
       cpu: "100m"
     limits:
-      memory: "256Mi"
+      memory: "512Mi"
       cpu: "250m"
+
+frontend:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "64Mi"
+      cpu: "50m"
+    limits:
+      memory: "128Mi"
+      cpu: "100m"
 
 serviceAccount:
   create: true
@@ -80,9 +94,12 @@ postgres:
     storage: 10Gi
 
 # Cloud SQL Configuration
+# IMPORTANT: connectionName must be set during deployment using:
+#   --set cloudSql.connectionName="$(terraform output -raw db_connection_name)"
+# Or get it from: gcloud sql instances describe <instance-name> --format='value(connectionName)'
 cloudSql:
   enabled: true
-  connectionName: "cloud-secrets-manager:europe-west10:secrets-manager-db-dev-3631da18"
+  connectionName: ""  # Required: Set via --set cloudSql.connectionName=<project:region:instance>
   image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
   resources:
     requests:
@@ -108,15 +125,31 @@ ingress:
     # For Let's Encrypt with cert-manager, use:
     # cert-manager.io/cluster-issuer: "letsencrypt-prod"
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    # No rewrite-target needed - backend services expect /api/* paths
     # Rate limiting (requests per minute per IP)
     nginx.ingress.kubernetes.io/limit-rps: "100"
     nginx.ingress.kubernetes.io/limit-connections: "10"
     # DDoS protection
     nginx.ingress.kubernetes.io/limit-whitelist: ""  # Add trusted IPs if needed
-    # Security headers
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Security headers (disabled SSL redirect for dev - enable in production)
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+
+# Email Configuration (SendGrid)
+email:
+  enabled: false  # Set to true when SendGrid is configured
+  fromAddress: "noreply@cloudsecrets.com"
+  fromName: "Cloud Secrets Manager"
+
+# Pub/Sub Configuration
+pubsub:
+  enabled: true  # Uses GCP Pub/Sub for event messaging
+  topicName: "notifications-events"
+  subscriptionName: "notifications-events-sub"
+
+# Application Configuration
+app:
+  baseUrl: "https://secrets.local"  # Update with your domain
 
 monitoring:
   enabled: true

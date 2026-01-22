@@ -1,0 +1,37 @@
+# Cloud Build ignore file
+# This ensures all necessary source files are included
+
+# Include all source files
+!**/tsconfig*.json
+!**/package*.json
+!**/*.ts
+!**/*.tsx
+!**/*.java
+!**/pom.xml
+
+# Exclude build artifacts
+**/node_modules/
+**/dist/
+**/build/
+**/target/
+**/.gradle/
+**/__pycache__/
+**/*.pyc
+
+# Exclude development files
+**/.git/
+**/.vscode/
+**/.idea/
+**/*.swp
+**/*.swo
+**/.env
+**/.env.local
+**/.env.*.local
+
+# Exclude test and coverage
+**/coverage/
+**/*.log
+
+# Exclude OS files
+**/.DS_Store
+**/Thumbs.db

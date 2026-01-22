@@ -76,7 +76,9 @@ public class NotificationHandler {
 
             User user = userRepository.findById(userId).orElse(null);
             if (user == null) {
-                log.debug("User {} not found when handling notification {}, skipping", userId, event.getType());
+                log.warn("User {} not found when handling notification {}. " +
+                        "This may indicate a database sync issue or the user was deleted. Skipping notification.",
+                        userId, event.getType());
                 continue;
             }
 

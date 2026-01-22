@@ -2,8 +2,37 @@
 
 This directory contains monitoring and observability configurations for production deployment.
 
-## Quick Start
+## Deployment Options
 
+### Cloud Run (Primary - Recommended)
+
+**Location:** `cloudrun/`
+
+Cloud Run uses Google Cloud's native monitoring (Cloud Monitoring + Cloud Logging). No additional setup required - metrics are automatically collected.
+
+**Quick Start:**
+```bash
+# Deploy dashboard
+cd cloudrun
+gcloud monitoring dashboards create \
+  --config-from-file=cloud-monitoring-dashboard.json \
+  --project=cloud-secrets-manager
+
+# Deploy alerts
+gcloud alpha monitoring policies create \
+  --policy-from-file=alert-policy.yaml \
+  --project=cloud-secrets-manager
+```
+
+**See:** [cloudrun/README.md](./cloudrun/README.md) and [docs/MONITORING_CLOUDRUN.md](../../docs/MONITORING_CLOUDRUN.md)
+
+### GKE (Advanced - Optional)
+
+**Location:** Root directory and subdirectories
+
+For GKE deployments, use Prometheus + Grafana + Loki for advanced monitoring.
+
+**Quick Start:**
 ```bash
 # Deploy the full monitoring stack
 ./deploy-monitoring.sh
@@ -15,34 +44,36 @@ See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for detailed instructions.
 
 ```
 monitoring/
-├── DEPLOYMENT_GUIDE.md     # Step-by-step deployment guide
-├── deploy-monitoring.sh    # Automated deployment script
-├── alerts/                 # Prometheus alerting rules
+├── cloudrun/               # Cloud Run monitoring (Primary)
+│   ├── README.md
+│   ├── cloud-monitoring-dashboard.json
+│   └── alert-policy.yaml
+├── DEPLOYMENT_GUIDE.md     # GKE monitoring guide
+├── deploy-monitoring.sh    # GKE monitoring deployment
+├── alerts/                 # Prometheus alerting rules (GKE)
 │   └── prometheus-rules.yaml
-├── grafana/                # Grafana configuration
+├── grafana/                # Grafana configuration (GKE)
 │   └── dashboard-configmap.yaml
-├── servicemonitors/        # Prometheus ServiceMonitors
+├── servicemonitors/        # Prometheus ServiceMonitors (GKE)
 │   ├── audit-service-monitor.yaml
 │   └── secret-service-monitor.yaml
-└── tracing/                # Distributed tracing (Tempo)
+└── tracing/                # Distributed tracing (GKE)
     └── tempo-deployment.yaml
 ```
 
 ## Components
 
-### Prometheus + Grafana (kube-prometheus-stack)
-- Metrics collection and visualization
-- Alerting rules for SLOs
-- ServiceMonitors for auto-discovery
+### Cloud Run Monitoring (Primary)
+- **Cloud Monitoring:** Native GCP monitoring with automatic metrics
+- **Cloud Logging:** Centralized log aggregation
+- **Dashboards:** Pre-configured dashboards for all services
+- **Alerts:** Error rate, latency, memory, availability
 
-### Loki + Promtail (loki-stack)
-- Log aggregation
-- LogQL queries
-- 30-day retention
-
-### Tempo (Optional)
-- Distributed tracing
-- Request flow visualization
+### GKE Monitoring (Advanced/Optional)
+- **Prometheus + Grafana:** Metrics collection and visualization
+- **Loki + Promtail:** Log aggregation with LogQL
+- **Tempo:** Distributed tracing (optional)
+- **ServiceMonitors:** Auto-discovery of services
 
 ## Access
 

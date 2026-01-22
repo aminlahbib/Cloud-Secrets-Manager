@@ -10,6 +10,14 @@ import org.hibernate.type.SqlTypes;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * User entity for notification-service.
+ * 
+ * This is a read-only view of the users table shared with secret-service.
+ * Only includes fields needed for notification processing: id, email, and notificationPreferences.
+ * 
+ * Both services share the same PostgreSQL database, so user data is automatically synchronized.
+ */
 @Entity
 @Table(name = "users")
 public class User {

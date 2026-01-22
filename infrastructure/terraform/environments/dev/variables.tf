@@ -26,3 +26,9 @@ variable "budget_amount" {
   type        = number
   default     = 50
 }
+
+variable "skip_k8s_resources" {
+  description = "Skip Kubernetes resources on initial apply (set to false after GKE is created)"
+  type        = bool
+  default     = false
+}

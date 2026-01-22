@@ -3,6 +3,7 @@ package com.secrets.security;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -10,10 +11,13 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Token Blacklist Service using Redis
+ * Token Blacklist Service using Redis (Optional)
  * 
  * Manages revoked JWT tokens to prevent their use after logout or compromise.
  * Tokens are stored in Redis with TTL matching their expiration time.
+ * 
+ * This service is only active if Redis is available. If Redis is not configured,
+ * token blacklisting is disabled (tokens will still expire naturally based on JWT expiration).
  * 
  * Key Schema:
  * - blacklist:token:{jti} -> {userId}
@@ -22,6 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author Cloud Secrets Manager Team
  */
 @Service
+@ConditionalOnBean(RedisTemplate.class)
 public class TokenBlacklistService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBlacklistService.class);
@@ -29,7 +34,7 @@ public class TokenBlacklistService {
     private static final String BLACKLIST_TOKEN_PREFIX = "blacklist:token:";
     private static final String BLACKLIST_USER_PREFIX = "blacklist:user:";
     
-    @Autowired
+    @Autowired(required = false)
     private RedisTemplate<String, String> redisTemplate;
     
     /**
@@ -40,6 +45,11 @@ public class TokenBlacklistService {
      * @param expiresInSeconds Time until token naturally expires
      */
     public void blacklistToken(String jti, String userId, long expiresInSeconds) {
+        if (redisTemplate == null) {
+            log.debug("Redis not available, token blacklisting disabled. Token will expire naturally.");
+            return;
+        }
+        
         if (jti == null || jti.isEmpty()) {
             log.warn("Attempted to blacklist token with null/empty JTI");
             return;
@@ -60,7 +70,8 @@ public class TokenBlacklistService {
                      jti, userId, expiresInSeconds);
         } catch (Exception e) {
             log.error("Failed to blacklist token - JTI: {}, User: {}", jti, userId, e);
-            throw new RuntimeException("Failed to blacklist token", e);
+            // Don't throw - allow request to continue even if blacklisting fails
+            log.warn("Token blacklisting failed, but request will continue. Token will expire naturally.");
         }
     }
     
@@ -71,6 +82,11 @@ public class TokenBlacklistService {
      * @return true if token is blacklisted, false otherwise
      */
     public boolean isBlacklisted(String jti) {
+        if (redisTemplate == null) {
+            // Redis not available - blacklisting disabled, tokens valid until expiration
+            return false;
+        }
+        
         if (jti == null || jti.isEmpty()) {
             return false;
         }
@@ -87,8 +103,9 @@ public class TokenBlacklistService {
             return false;
         } catch (Exception e) {
             log.error("Failed to check token blacklist status - JTI: {}", jti, e);
-            // Fail secure: if we can't check, treat as blacklisted
-            return true;
+            // Fail open: if we can't check Redis, allow the token (it will expire naturally)
+            log.warn("Redis check failed, allowing token. It will expire naturally based on JWT expiration.");
+            return false;
         }
     }
     
@@ -100,6 +117,11 @@ public class TokenBlacklistService {
      * @param maxTokenLifetimeSeconds Maximum token lifetime for TTL
      */
     public void blacklistAllUserTokens(String userId, long maxTokenLifetimeSeconds) {
+        if (redisTemplate == null) {
+            log.debug("Redis not available, token blacklisting disabled.");
+            return;
+        }
+        
         if (userId == null || userId.isEmpty()) {
             log.warn("Attempted to blacklist tokens for null/empty userId");
             return;
@@ -129,7 +151,8 @@ public class TokenBlacklistService {
             log.info("All tokens blacklisted for user: {}", userId);
         } catch (Exception e) {
             log.error("Failed to blacklist all tokens for user: {}", userId, e);
-            throw new RuntimeException("Failed to blacklist user tokens", e);
+            // Don't throw - allow operation to continue
+            log.warn("Token blacklisting failed, but operation will continue.");
         }
     }
     
@@ -140,6 +163,10 @@ public class TokenBlacklistService {
      * @return true if all user tokens are blacklisted
      */
     public boolean isUserBlacklisted(String userId) {
+        if (redisTemplate == null) {
+            return false;
+        }
+        
         if (userId == null || userId.isEmpty()) {
             return false;
         }
@@ -150,8 +177,8 @@ public class TokenBlacklistService {
             return Boolean.TRUE.equals(exists);
         } catch (Exception e) {
             log.error("Failed to check user blacklist status - User: {}", userId, e);
-            // Fail secure
-            return true;
+            // Fail open - allow user if Redis check fails
+            return false;
         }
     }
     
@@ -161,6 +188,10 @@ public class TokenBlacklistService {
      * @param jti JWT ID
      */
     public void removeFromBlacklist(String jti) {
+        if (redisTemplate == null) {
+            return;
+        }
+        
         if (jti == null || jti.isEmpty()) {
             return;
         }
@@ -190,6 +221,10 @@ public class TokenBlacklistService {
      * @return BlacklistStats object with current statistics
      */
     public BlacklistStats getStatistics() {
+        if (redisTemplate == null) {
+            return new BlacklistStats(0, 0);
+        }
+        
         try {
             Set<String> tokenKeys = redisTemplate.keys(BLACKLIST_TOKEN_PREFIX + "*");
             Set<String> userKeys = redisTemplate.keys(BLACKLIST_USER_PREFIX + "*");

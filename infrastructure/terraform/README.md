@@ -1,5 +1,10 @@
 # Terraform Infrastructure
 
+> **Note: Advanced Deployment Option**  
+> This directory contains Terraform configurations for **GKE (Kubernetes) infrastructure**.  
+> **For most users, Cloud Run deployment is recommended** (see `infrastructure/scripts/deploy-cloudrun-cloudbuild.sh`).  
+> Use Terraform/GKE only if you need advanced features like custom monitoring, service mesh, or full cluster control.
+
 This directory contains Terraform configurations for managing the Cloud Secrets Manager infrastructure on Google Cloud Platform.
 
 ## Directory Structure
