@@ -5,7 +5,7 @@ export interface ActivityStats {
   actionsByType: Record<string, number>;
   actionsByUser: Record<string, number>;
   actionsByDay: Record<string, number>;
-  topUsers: Array<{ userId: string; email?: string; count: number }>;
+  topUsers: Array<{ userId: string; email?: string; displayName?: string; count: number }>;
   topActions: Array<{ action: string; count: number }>;
 }
 

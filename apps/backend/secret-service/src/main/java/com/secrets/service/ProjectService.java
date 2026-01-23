@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,7 @@ public class ProjectService {
     private final TeamProjectRepository teamProjectRepository;
     private final TeamRepository teamRepository;
     private final TeamMembershipRepository teamMembershipRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public ProjectService(ProjectRepository projectRepository,
                          ProjectMembershipRepository membershipRepository,
@@ -50,7 +52,8 @@ public class ProjectService {
                          ProjectPermissionService permissionService,
                          TeamProjectRepository teamProjectRepository,
                          TeamRepository teamRepository,
-                         TeamMembershipRepository teamMembershipRepository) {
+                         TeamMembershipRepository teamMembershipRepository,
+                         JdbcTemplate jdbcTemplate) {
         this.projectRepository = projectRepository;
         this.membershipRepository = membershipRepository;
         this.workflowProjectRepository = workflowProjectRepository;
@@ -60,6 +63,7 @@ public class ProjectService {
         this.teamProjectRepository = teamProjectRepository;
         this.teamRepository = teamRepository;
         this.teamMembershipRepository = teamMembershipRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     /**
@@ -215,8 +219,23 @@ public class ProjectService {
             secretRepository.deleteByProjectId(projectId);
         }
         
+        // Set project_id to NULL in audit_logs to avoid foreign key constraint violation
+        // Audit logs are in a separate service but share the same database
+        try {
+            int auditLogsUpdated = jdbcTemplate.update(
+                "UPDATE audit_logs SET project_id = NULL WHERE project_id = ?",
+                projectId
+            );
+            if (auditLogsUpdated > 0) {
+                log.info("Set project_id to NULL for {} audit log(s) before deleting project: {}", auditLogsUpdated, projectId);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to update audit logs for project {}: {}. Continuing with project deletion.", projectId, e.getMessage());
+            // Continue with deletion - if audit_logs table doesn't exist or has issues, we'll handle the error
+        }
+        
         // Delete project (cascades to memberships and invitations via ON DELETE CASCADE)
-        // Secrets are already deleted above
+        // Secrets are already deleted above, audit_logs.project_id is set to NULL
         projectRepository.delete(project);
         log.info("Permanently deleted project: {} by user: {}", projectId, userId);
     }

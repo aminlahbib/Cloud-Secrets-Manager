@@ -189,7 +189,11 @@ resource "google_pubsub_subscription" "notifications_events_sub" {
 }
 
 # External Secrets Operator
+# Note: This requires the GKE cluster to be running. 
+# On initial apply with no cluster, set skip_k8s_resources=true
 resource "helm_release" "external_secrets" {
+  count = var.skip_k8s_resources ? 0 : 1
+
   name             = "external-secrets"
   repository       = "https://charts.external-secrets.io"
   chart            = "external-secrets"
@@ -219,7 +223,10 @@ resource "helm_release" "external_secrets" {
 }
 
 # ClusterSecretStore
+# Note: This requires External Secrets Operator to be installed first
 resource "kubernetes_manifest" "cluster_secret_store" {
+  count = var.skip_k8s_resources ? 0 : 1
+
   manifest = {
     apiVersion = "external-secrets.io/v1beta1"
     kind       = "ClusterSecretStore"

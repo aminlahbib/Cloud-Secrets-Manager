@@ -117,6 +117,13 @@ const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'da
     action.includes('READ') ? 'info' : 'default');
 };
 
+// Helper function to detect UUID patterns in descriptions
+const isUUIDInDescription = (description: string): boolean => {
+  // UUID pattern: 8-4-4-4-12 hex digits
+  const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+  return uuidPattern.test(description);
+};
+
 // Memoized activity log item component
 const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
   const { t } = useI18n();
@@ -148,7 +155,7 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          {log.description ? (
+          {log.description && !isUUIDInDescription(log.description) ? (
             <p className="text-body-sm font-medium text-theme-primary">
               {log.description}
             </p>
@@ -334,7 +341,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = React.memo(({
                   </Button>
                 </div>
               </Card>
-            ) : !analyticsStats ? (
+            ) : !analyticsStats || analyticsStats.totalActions === 0 ? (
               <Card className="p-6">
                 <EmptyState
                   icon={<Activity className="h-16 w-16 text-theme-tertiary" />}

@@ -34,7 +34,7 @@ public class TokenRevocationController {
 
     private static final Logger log = LoggerFactory.getLogger(TokenRevocationController.class);
     
-    @Autowired
+    @Autowired(required = false)
     private TokenBlacklistService tokenBlacklistService;
     
     // Default token lifetime for TTL (24 hours)
@@ -61,6 +61,15 @@ public class TokenRevocationController {
         }
         
         String userId = userDetails.getUsername();
+        
+        if (tokenBlacklistService == null) {
+            log.warn("Token blacklisting not available (Redis not configured). Token will expire naturally.");
+            return ResponseEntity.ok(Map.of(
+                "message", "Token revocation requested. Token will expire naturally (blacklisting not available).",
+                "jti", jti,
+                "note", "Redis not configured - token will expire based on JWT expiration"
+            ));
+        }
         
         try {
             tokenBlacklistService.blacklistToken(jti, userId, DEFAULT_TOKEN_TTL_SECONDS);
@@ -95,6 +104,14 @@ public class TokenRevocationController {
         
         String userId = userDetails.getUsername();
         
+        if (tokenBlacklistService == null) {
+            log.warn("Token blacklisting not available (Redis not configured).");
+            return ResponseEntity.ok(Map.of(
+                "message", "Token revocation requested. Token will expire naturally.",
+                "jti", jti
+            ));
+        }
+        
         try {
             tokenBlacklistService.blacklistToken(jti, userId, DEFAULT_TOKEN_TTL_SECONDS);
             
@@ -125,6 +142,14 @@ public class TokenRevocationController {
             @AuthenticationPrincipal UserDetails userDetails) {
         
         String userId = userDetails.getUsername();
+        
+        if (tokenBlacklistService == null) {
+            log.warn("Token blacklisting not available (Redis not configured).");
+            return ResponseEntity.ok(Map.of(
+                "message", "Token revocation requested. Tokens will expire naturally.",
+                "userId", userId
+            ));
+        }
         
         try {
             tokenBlacklistService.blacklistAllUserTokens(userId, DEFAULT_TOKEN_TTL_SECONDS);
@@ -160,6 +185,15 @@ public class TokenRevocationController {
         
         String adminId = userDetails.getUsername();
         
+        if (tokenBlacklistService == null) {
+            log.warn("Token blacklisting not available (Redis not configured).");
+            return ResponseEntity.ok(Map.of(
+                "message", "Token revocation requested. Tokens will expire naturally.",
+                "userId", userId,
+                "revokedBy", adminId
+            ));
+        }
+        
         try {
             tokenBlacklistService.blacklistAllUserTokens(userId, DEFAULT_TOKEN_TTL_SECONDS);
             
@@ -188,6 +222,10 @@ public class TokenRevocationController {
     @Operation(summary = "Get token blacklist statistics",
                description = "Admin endpoint to view blacklist statistics")
     public ResponseEntity<TokenBlacklistService.BlacklistStats> getBlacklistStats() {
+        if (tokenBlacklistService == null) {
+            return ResponseEntity.ok(new TokenBlacklistService.BlacklistStats(0, 0));
+        }
+        
         try {
             TokenBlacklistService.BlacklistStats stats = tokenBlacklistService.getStatistics();
             return ResponseEntity.ok(stats);

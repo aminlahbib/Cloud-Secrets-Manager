@@ -24,7 +24,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -37,17 +36,20 @@ public class NotificationController {
     private final ObjectMapper objectMapper;
     private final NotificationSseService sseService;
     private final com.secrets.notification.service.NotificationAnalyticsService analyticsService;
+    private final com.secrets.notification.service.NotificationPreferenceService preferenceService;
 
     public NotificationController(NotificationRepository notificationRepository,
                                   UserRepository userRepository,
                                   ObjectMapper objectMapper,
                                   NotificationSseService sseService,
-                                  com.secrets.notification.service.NotificationAnalyticsService analyticsService) {
+                                  com.secrets.notification.service.NotificationAnalyticsService analyticsService,
+                                  com.secrets.notification.service.NotificationPreferenceService preferenceService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
         this.sseService = sseService;
         this.analyticsService = analyticsService;
+        this.preferenceService = preferenceService;
     }
 
     @GetMapping
@@ -126,10 +128,42 @@ public class NotificationController {
     }
 
     @PostMapping("/test")
-    public ResponseEntity<NotificationDto> sendTestNotification(
+    public ResponseEntity<?> sendTestNotification(
             Authentication authentication,
             @RequestParam(value = "type", defaultValue = "SECRET_EXPIRING_SOON") String notificationType) {
         UUID userId = resolveCurrentUserId(authentication);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("User not found for id " + userId));
+
+        // Parse notification type
+        com.secrets.dto.notification.NotificationType type;
+        try {
+            type = com.secrets.dto.notification.NotificationType.valueOf(notificationType);
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid notification type '{}' for test notification by user {}", notificationType, userId);
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Invalid notification type: " + notificationType));
+        }
+
+        // Check if notification type is enabled for user
+        if (!preferenceService.isNotificationEnabled(user, type)) {
+            String preferenceKey = preferenceService.getEnabledPreferenceKey(type);
+            log.info("Test notification {} blocked by preferences for user {}. Preference '{}' is disabled.",
+                    type, userId, preferenceKey);
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(
+                    java.util.Map.of(
+                            "error", "Notification type is disabled by your preferences",
+                            "type", notificationType,
+                            "preferenceKey", preferenceKey,
+                            "message", "Please enable this notification type in your settings to receive test notifications."));
+        }
+
+        // Check if in-app notifications are enabled
+        boolean inAppEnabled = preferenceService.isInAppEnabled(user, type);
+        if (!inAppEnabled) {
+            log.info("Test notification {} in-app disabled for user {}, but type is enabled. Sending anyway for testing.",
+                    type, userId);
+        }
 
         Notification notification = new Notification();
         notification.setId(UUID.randomUUID());
@@ -141,15 +175,18 @@ public class NotificationController {
 
         notificationRepository.save(notification);
 
-        // Send via SSE
-        try {
-            NotificationDto dto = toDto(notification);
-            sseService.sendNotification(userId, dto);
-        } catch (Exception ex) {
-            log.warn("Failed to send test notification via SSE: {}", ex.getMessage());
+        // Send via SSE if in-app is enabled
+        if (inAppEnabled) {
+            try {
+                NotificationDto dto = toDto(notification);
+                sseService.sendNotification(userId, dto);
+            } catch (Exception ex) {
+                log.warn("Failed to send test notification via SSE: {}", ex.getMessage());
+            }
         }
 
-        log.info("Test notification sent to user {}", userId);
+        log.info("Test notification {} sent to user {}. inApp={}, email={}",
+                type, userId, inAppEnabled, preferenceService.isEmailEnabled(user, type));
         return ResponseEntity.ok(toDto(notification));
     }
 

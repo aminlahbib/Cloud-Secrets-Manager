@@ -6,6 +6,7 @@ import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import com.secrets.notification.entity.EmailDelivery;
 import com.secrets.notification.repository.EmailDeliveryRepository;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +52,32 @@ public class EmailService {
         this.templateService = templateService;
         this.retryService = retryService;
         this.emailDeliveryRepository = emailDeliveryRepository;
+    }
+
+    /**
+     * Validate email service configuration on startup.
+     * Logs warnings/errors if configuration is invalid.
+     */
+    @PostConstruct
+    public void validateConfiguration() {
+        if (!emailEnabled) {
+            log.warn("Email notifications are DISABLED. Set EMAIL_ENABLED=true to enable email sending.");
+            return;
+        }
+
+        if (sendGridApiKey == null || sendGridApiKey.isBlank()) {
+            log.error("Email notifications are ENABLED but SENDGRID_API_KEY is not configured. " +
+                    "Email sending will fail. Set SENDGRID_API_KEY environment variable.");
+            return;
+        }
+
+        // Basic validation of SendGrid API key format
+        if (!sendGridApiKey.startsWith("SG.") || sendGridApiKey.length() < 20) {
+            log.warn("SENDGRID_API_KEY does not appear to be valid. SendGrid API keys typically start with 'SG.' " +
+                    "and are at least 20 characters long. Email sending may fail.");
+        } else {
+            log.info("Email service configured: provider=SendGrid, from={} <{}>", fromName, fromAddress);
+        }
     }
 
     public void sendInvitationEmail(String recipientEmail, String token, String projectName, String inviterName) {

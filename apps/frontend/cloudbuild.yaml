@@ -1,0 +1,49 @@
+# Cloud Build - Frontend only with Firebase config
+# Usage: gcloud builds submit . --config=cloudbuild.yaml \
+#   --substitutions=_VITE_FIREBASE_API_KEY=$(gcloud secrets versions access latest --secret=csm-firebase-api-key),...
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--build-arg'
+      - 'VITE_API_BASE_URL=${_VITE_API_BASE_URL}'
+      - '--build-arg'
+      - 'VITE_NOTIFICATION_SERVICE_URL=${_VITE_NOTIFICATION_SERVICE_URL}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_API_KEY=${_VITE_FIREBASE_API_KEY}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_AUTH_DOMAIN=${_VITE_FIREBASE_AUTH_DOMAIN}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_PROJECT_ID=${_VITE_FIREBASE_PROJECT_ID}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_STORAGE_BUCKET=${_VITE_FIREBASE_STORAGE_BUCKET}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_MESSAGING_SENDER_ID=${_VITE_FIREBASE_MESSAGING_SENDER_ID}'
+      - '--build-arg'
+      - 'VITE_FIREBASE_APP_ID=${_VITE_FIREBASE_APP_ID}'
+      - '-t'
+      - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:${_TAG}'
+      - '-t'
+      - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:latest'
+      - '.'
+
+substitutions:
+  _TAG: 'dev'
+  _VITE_API_BASE_URL: ''
+  _VITE_NOTIFICATION_SERVICE_URL: ''
+  # Firebase config - MUST be provided via --substitutions
+  _VITE_FIREBASE_API_KEY: ''       # Required
+  _VITE_FIREBASE_AUTH_DOMAIN: '${PROJECT_ID}.firebaseapp.com'
+  _VITE_FIREBASE_PROJECT_ID: '${PROJECT_ID}'
+  _VITE_FIREBASE_STORAGE_BUCKET: '${PROJECT_ID}.firebasestorage.app'
+  _VITE_FIREBASE_MESSAGING_SENDER_ID: ''  # Required
+  _VITE_FIREBASE_APP_ID: ''        # Required
+
+images:
+  - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:${_TAG}'
+  - 'europe-west10-docker.pkg.dev/${PROJECT_ID}/docker-images/frontend:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '600s'

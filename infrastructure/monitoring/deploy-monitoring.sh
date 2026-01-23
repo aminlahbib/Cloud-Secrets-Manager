@@ -67,9 +67,14 @@ echo ""
 echo -e "${YELLOW}Deploying Prometheus + Grafana (kube-prometheus-stack)...${NC}"
 echo -e "${BLUE}This may take a few minutes...${NC}"
 
+# Generate secure Grafana password or use environment variable
+GRAFANA_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-$(openssl rand -base64 16)}"
+echo -e "${YELLOW}Grafana admin password: ${GRAFANA_PASSWORD}${NC}"
+echo -e "${YELLOW}(Save this password - it won't be shown again)${NC}"
+
 helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
   --namespace monitoring \
-  --set grafana.adminPassword=admin \
+  --set grafana.adminPassword="${GRAFANA_PASSWORD}" \
   --set grafana.persistence.enabled=false \
   --set prometheus.prometheusSpec.retention=7d \
   --set prometheus.prometheusSpec.resources.requests.memory=256Mi \
@@ -141,7 +146,7 @@ echo ""
 echo -e "${BLUE}Access Grafana:${NC}"
 echo "  kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80"
 echo "  Open: http://localhost:3000"
-echo "  Login: admin / admin"
+echo "  Login: admin / <password shown above>"
 echo ""
 echo -e "${BLUE}Access Prometheus:${NC}"
 echo "  kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090"

@@ -1,0 +1,221 @@
+# Cloud Build - Deploy to Cloud Run
+# Usage: gcloud builds submit . --config=infrastructure/ci-cd/cloudbuild-deploy-cloudrun.yaml --substitutions=_ENV=dev,_IMAGE_TAG=dev-abc123,_CLOUD_SQL_INSTANCE=secrets-manager-db-dev-3631da18
+
+steps:
+  # Step 1: Deploy Secret Service
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-secret-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy secret-service \
+          --image=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/secret-service:${_IMAGE_TAG} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --add-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE} \
+          --service-account=secret-service-${_ENV}@${PROJECT_ID}.iam.gserviceaccount.com \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=prod,cloudrun" \
+          --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql:///secrets?cloudSqlInstance=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
+          --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID}" \
+          --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+          --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-${_ENV}-secrets-user:latest" \
+          --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-${_ENV}-secrets-password:latest" \
+          --set-secrets="JWT_SECRET=csm-jwt-secret:latest" \
+          --set-secrets="ENCRYPTION_KEY=csm-aes-key:latest" \
+          --set-secrets="/secrets/firebase/firebase-admin-key.json=csm-firebase-admin-key:latest" \
+          --memory=512Mi \
+          --cpu=1 \
+          --min-instances=$([ "${_ENV}" = "prod" ] && echo "1" || echo "0") \
+          --max-instances=3 \
+          --timeout=300 \
+          --concurrency=80 \
+          --port=8080 \
+          --project=${PROJECT_ID} \
+          --quiet
+    waitFor: ['-']
+
+  # Step 2: Deploy Audit Service
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-audit-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy audit-service \
+          --image=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/audit-service:${_IMAGE_TAG} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --add-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE} \
+          --service-account=audit-service-${_ENV}@${PROJECT_ID}.iam.gserviceaccount.com \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=prod,cloudrun" \
+          --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql:///audit?cloudSqlInstance=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
+          --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+          --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-${_ENV}-audit-user:latest" \
+          --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-${_ENV}-audit-password:latest" \
+          --set-secrets="AUDIT_SERVICE_API_KEY=csm-audit-api-key:latest" \
+          --memory=512Mi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=3 \
+          --timeout=300 \
+          --concurrency=80 \
+          --port=8081 \
+          --project=${PROJECT_ID} \
+          --quiet
+    waitFor: ['-']
+
+  # Step 3: Deploy Notification Service
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-notification-service'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy notification-service \
+          --image=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/notification-service:${_IMAGE_TAG} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --add-cloudsql-instances=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE} \
+          --service-account=notification-service-${_ENV}@${PROJECT_ID}.iam.gserviceaccount.com \
+          --set-env-vars="SPRING_PROFILES_ACTIVE=prod,cloudrun" \
+          --set-env-vars="SPRING_DATASOURCE_URL=jdbc:postgresql:///secrets?cloudSqlInstance=${PROJECT_ID}:${_REGION}:${_CLOUD_SQL_INSTANCE}&socketFactory=com.google.cloud.sql.postgres.SocketFactory" \
+          --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID}" \
+          --set-env-vars="PUBSUB_SUBSCRIPTION=notifications-events-sub" \
+          --set-env-vars="EMAIL_ENABLED=false" \
+          --set-env-vars="SPRING_JPA_HIBERNATE_DDL_AUTO=update" \
+          --set-secrets="SPRING_DATASOURCE_USERNAME=secrets-manager-db-${_ENV}-secrets-user:latest" \
+          --set-secrets="SPRING_DATASOURCE_PASSWORD=secrets-manager-db-${_ENV}-secrets-password:latest" \
+          --set-secrets="JWT_SECRET=csm-jwt-secret:latest" \
+          --memory=512Mi \
+          --cpu=1 \
+          --min-instances=$([ "${_ENV}" = "prod" ] && echo "1" || echo "0") \
+          --max-instances=3 \
+          --timeout=3600 \
+          --concurrency=100 \
+          --no-cpu-throttling \
+          --port=8082 \
+          --project=${PROJECT_ID} \
+          --quiet
+    waitFor: ['-']
+
+  # Step 4: Get service URLs for frontend build
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'get-service-urls'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        SECRET_URL=$(gcloud run services describe secret-service \
+          --region=${_REGION} --project=${PROJECT_ID} \
+          --format='value(status.url)' 2>/dev/null || echo "")
+        AUDIT_URL=$(gcloud run services describe audit-service \
+          --region=${_REGION} --project=${PROJECT_ID} \
+          --format='value(status.url)' 2>/dev/null || echo "")
+        NOTIFICATION_URL=$(gcloud run services describe notification-service \
+          --region=${_REGION} --project=${PROJECT_ID} \
+          --format='value(status.url)' 2>/dev/null || echo "")
+        
+        echo "SECRET_SERVICE_URL=${SECRET_URL}" >> /workspace/service-urls.env
+        echo "AUDIT_SERVICE_URL=${AUDIT_URL}" >> /workspace/service-urls.env
+        echo "NOTIFICATION_SERVICE_URL=${NOTIFICATION_URL}" >> /workspace/service-urls.env
+        
+        echo "Service URLs:"
+        echo "  Secret: ${SECRET_URL}"
+        echo "  Audit: ${AUDIT_URL}"
+        echo "  Notification: ${NOTIFICATION_URL}"
+    waitFor: ['deploy-secret-service', 'deploy-audit-service', 'deploy-notification-service']
+
+  # Step 5: Load secrets for frontend build
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'load-frontend-secrets'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        FIREBASE_API_KEY=$(gcloud secrets versions access latest --secret=csm-firebase-api-key --project=${PROJECT_ID} 2>/dev/null || echo "")
+        FIREBASE_MESSAGING_SENDER_ID=$(gcloud secrets versions access latest --secret=csm-firebase-messaging-sender-id --project=${PROJECT_ID} 2>/dev/null || echo "")
+        FIREBASE_APP_ID=$(gcloud secrets versions access latest --secret=csm-firebase-app-id --project=${PROJECT_ID} 2>/dev/null || echo "")
+        AUDIT_API_KEY=$(gcloud secrets versions access latest --secret=csm-audit-api-key --project=${PROJECT_ID} 2>/dev/null || echo "")
+        
+        echo "FIREBASE_API_KEY=${FIREBASE_API_KEY}" >> /workspace/frontend-secrets.env
+        echo "FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}" >> /workspace/frontend-secrets.env
+        echo "FIREBASE_APP_ID=${FIREBASE_APP_ID}" >> /workspace/frontend-secrets.env
+        echo "AUDIT_API_KEY=${AUDIT_API_KEY}" >> /workspace/frontend-secrets.env
+    waitFor: ['get-service-urls']
+
+  # Step 6: Build and deploy frontend
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-frontend'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        source /workspace/service-urls.env
+        source /workspace/frontend-secrets.env
+        
+        # Build frontend with backend URLs
+        gcloud builds submit apps/frontend \
+          --config=infrastructure/ci-cd/cloudbuild-frontend-cloudrun.yaml \
+          --substitutions=_TAG=${_IMAGE_TAG},_VITE_SECRET_SERVICE_URL="${SECRET_SERVICE_URL}",_VITE_AUDIT_SERVICE_URL="${AUDIT_SERVICE_URL}",_VITE_NOTIFICATION_SERVICE_URL="${NOTIFICATION_SERVICE_URL}",_VITE_FIREBASE_API_KEY="${FIREBASE_API_KEY}",_VITE_FIREBASE_AUTH_DOMAIN="${PROJECT_ID}.firebaseapp.com",_VITE_FIREBASE_PROJECT_ID="${PROJECT_ID}",_VITE_FIREBASE_STORAGE_BUCKET="${PROJECT_ID}.firebasestorage.app",_VITE_FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID}",_VITE_FIREBASE_APP_ID="${FIREBASE_APP_ID}",_VITE_AUDIT_API_KEY="${AUDIT_API_KEY}" \
+          --project=${PROJECT_ID}
+        
+        # Deploy frontend
+        gcloud run deploy frontend \
+          --image=${_ARTIFACT_REGISTRY}/${PROJECT_ID}/docker-images/frontend:${_IMAGE_TAG} \
+          --region=${_REGION} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --memory=256Mi \
+          --cpu=1 \
+          --min-instances=0 \
+          --max-instances=5 \
+          --timeout=60 \
+          --concurrency=100 \
+          --port=8080 \
+          --project=${PROJECT_ID} \
+          --quiet
+    waitFor: ['load-frontend-secrets']
+
+  # Step 7: Verify deployment
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'verify-deployment'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        echo "=== Deployment Summary ==="
+        gcloud run services list \
+          --region=${_REGION} \
+          --project=${PROJECT_ID} \
+          --format="table(metadata.name,status.url,status.conditions[0].status)"
+        
+        echo ""
+        echo "=== Health Checks ==="
+        for service in secret-service audit-service notification-service frontend; do
+          URL=$(gcloud run services describe ${service} \
+            --region=${_REGION} --project=${PROJECT_ID} \
+            --format='value(status.url)' 2>/dev/null || echo "N/A")
+          echo "${service}: ${URL}"
+        done
+    waitFor: ['deploy-frontend']
+
+# Substitutions (default values)
+substitutions:
+  _ARTIFACT_REGISTRY: 'europe-west10-docker.pkg.dev'
+  _REGION: 'europe-west10'
+  _ENV: 'dev'
+  _IMAGE_TAG: 'dev-latest'
+  _CLOUD_SQL_INSTANCE: 'secrets-manager-db-dev-3631da18'
+
+# Build options
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+  substitution_option: 'ALLOW_LOOSE'
+
+# Timeout
+timeout: '1800s'  # 30 minutes

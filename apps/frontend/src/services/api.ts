@@ -2,19 +2,54 @@ import axios, { AxiosError } from 'axios';
 import { tokenStorage } from '@/utils/tokenStorage';
 import type { ApiError } from '@/types';
 
+// Service URLs - for Cloud Run, each service has its own URL
+// For GKE/Ingress, these can all be empty (uses relative paths)
+const SECRET_SERVICE_URL = import.meta.env.VITE_SECRET_SERVICE_URL || import.meta.env.VITE_API_BASE_URL || '';
+const AUDIT_SERVICE_URL = import.meta.env.VITE_AUDIT_SERVICE_URL || import.meta.env.VITE_API_BASE_URL || '';
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || import.meta.env.VITE_API_BASE_URL || '';
+
+// Export service URLs for use in other modules
+export const serviceUrls = {
+  secret: SECRET_SERVICE_URL,
+  audit: AUDIT_SERVICE_URL,
+  notification: NOTIFICATION_SERVICE_URL,
+};
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
+  // Default to secret-service URL for most API calls
+  baseURL: SECRET_SERVICE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor - Add auth token
+// Request interceptor - Add auth token and route to correct service
 api.interceptors.request.use((config) => {
   const token = tokenStorage.getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Route to audit service if URL contains /api/audit
+  if (config.url?.includes('/api/audit')) {
+    // For Cloud Run, we need to use the full audit service URL
+    if (AUDIT_SERVICE_URL && AUDIT_SERVICE_URL !== SECRET_SERVICE_URL) {
+      config.baseURL = AUDIT_SERVICE_URL;
+    }
+    // Add X-Service-API-Key header for audit service authentication
+    const auditApiKey = import.meta.env.VITE_AUDIT_API_KEY;
+    if (auditApiKey) {
+      config.headers['X-Service-API-Key'] = auditApiKey;
+    }
+  }
+  
+  // Route to notification service if URL contains /api/notifications
+  if (config.url?.includes('/api/notifications')) {
+    if (NOTIFICATION_SERVICE_URL && NOTIFICATION_SERVICE_URL !== SECRET_SERVICE_URL) {
+      config.baseURL = NOTIFICATION_SERVICE_URL;
+    }
+  }
+  
   return config;
 });
 
@@ -47,7 +82,7 @@ api.interceptors.response.use(
         }
 
         const { data } = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/api/v1/auth/refresh`,
+          `${SECRET_SERVICE_URL}/api/auth/refresh`,
           { refreshToken }
         );
 

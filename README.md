@@ -13,9 +13,9 @@
   </tr>
 </table>
 
-**Enterprise-Grade Secrets Management Platform**
+**Enterprise-Grade Secrets Management Platform v3**
 
-[![Website](https://img.shields.io/badge/Website-Cloud%20Secrets%20Manager-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager)
+[![Website](https://img.shields.io/badge/Website-Cloud%20Secrets%20Manager-blue?style=flat-square)](https://frontend-1040913502384.europe-west10.run.app/)
 [![Documentation](https://img.shields.io/badge/Documentation-Wiki-blue?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager/wiki)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square)](https://github.com/aminlahbib/Cloud-Secrets-Manager)
 
@@ -27,6 +27,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/run)
 [![GCP](https://img.shields.io/badge/GCP-Ready-4285F4?logo=google-cloud&logoColor=white)](https://cloud.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
@@ -172,7 +173,7 @@ graph LR
 - **📦 Microservices** - Decoupled services for independent scaling and deployment
 - **⚡ Event-Driven** - Asynchronous Pub/Sub messaging for loose coupling
 - **📊 Observability First** - Built-in metrics, logging, and tracing
-- **☁️ Cloud-Native** - Designed for Kubernetes and GCP from day one
+- **☁️ Cloud-Native** - Optimized for Cloud Run with optional GKE support
 
 ### Data Flow Example: Creating a Secret
 
@@ -272,9 +273,53 @@ npm install
 npm run dev
 ```
 
-Don't forget to add your API keys to the configuration:
-- in the root .env of your Project
-- in the "env" section of your mcp config for taskmaster-ai
+Don't forget to add your API keys to the configuration in the root `.env` file.
+
+### Option 3: Google Cloud Run (Production - Recommended)
+
+**Recommended for production deployment** - Simple, cost-effective, and auto-scaling:
+
+**📖 Complete Guide:** [docs/new/CLOUDRUN_GUIDE.md](docs/new/CLOUDRUN_GUIDE.md) (includes Prerequisites, Start, Monitor, Shutdown)
+
+```bash
+# Quick start: 3 steps
+# 1. Sync secrets from .env.local to GCP Secret Manager
+./infrastructure/scripts/sync-secrets-from-env.sh
+
+# 2. Deploy all services to Cloud Run (uses Cloud Build, no local Docker required)
+./infrastructure/scripts/deploy-cloudrun-cloudbuild.sh
+
+# 3. Test deployment
+./infrastructure/scripts/test-cloudrun.sh
+```
+
+This script will:
+- Build Docker images using Cloud Build (no local Docker needed)
+- Deploy all microservices to Cloud Run with optimized resources
+- Configure Cloud SQL connections
+- Set up secrets from Google Secret Manager
+- Deploy frontend with correct backend URLs
+
+**Resource Configuration:**
+- Secret Service: 1Gi memory, min-instances=1 (critical path)
+- Audit Service: 512Mi memory, min-instances=0 (scales to zero)
+- Notification Service: 512Mi memory, min-instances=0 (scales to zero)
+- Frontend: 256Mi memory, min-instances=0 (scales to zero)
+
+**Estimated Cost:** ~$50-65/month (with optimized resources)
+
+### Option 4: Google Kubernetes Engine (GKE) - Advanced
+
+For advanced deployments requiring custom monitoring (Prometheus/Grafana), service mesh, or multi-region:
+
+```bash
+# Deploy to GKE (requires Terraform and Helm)
+./infrastructure/scripts/deploy-gke.sh
+```
+
+**Note:** GKE deployment is optional and requires Kubernetes expertise. Most users should use Cloud Run (Option 3).
+
+See [`infrastructure/kubernetes/README.md`](infrastructure/kubernetes/README.md) and [`infrastructure/helm/README.md`](infrastructure/helm/README.md) for GKE deployment details.
 
 ### Verify Installation
 
@@ -317,7 +362,8 @@ curl http://localhost:8082/actuator/health  # Notification Service
 - **TanStack Query** - Server state management
 
 ### Infrastructure
-- **Kubernetes** - Container orchestration
+- **Google Cloud Run** - Serverless container deployment
+- **Kubernetes (GKE)** - Container orchestration
 - **Docker** - Containerization
 - **Terraform** - Infrastructure as Code
 - **Helm** - Kubernetes package management
@@ -337,6 +383,6 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
  
 
 <div align="center">
-**A lot of Coffee was consumed in developement**
-*Last Updated: December 2025*
+
+*Last Updated: January 2026*
 </div>

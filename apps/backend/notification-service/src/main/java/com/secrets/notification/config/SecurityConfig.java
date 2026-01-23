@@ -30,6 +30,12 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        // Internal endpoint for direct event delivery (fallback when Pub/Sub is not available)
+                        // Note: This endpoint is only used internally by secret-service. In production with
+                        // service mesh or network policies, consider adding service-to-service authentication.
+                        .requestMatchers("/api/internal/notifications/**").permitAll()
+                        // Email test endpoint (requires authentication)
+                        .requestMatchers("/api/internal/email/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

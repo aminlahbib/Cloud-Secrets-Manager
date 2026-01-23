@@ -142,6 +142,11 @@ public class MemberService {
             throw new IllegalArgumentException("Cannot change your own role");
         }
 
+        // Prevent assigning OWNER role via role change - must use transfer ownership
+        if (newRole == ProjectMembership.ProjectRole.OWNER) {
+            throw new IllegalArgumentException("Cannot assign OWNER role via role change. Use transfer ownership instead.");
+        }
+
         // Check if user can change this role
         if (!permissionService.canRemoveRole(projectId, userId, existing.getRole()) ||
             !permissionService.canInviteRole(projectId, userId, newRole)) {

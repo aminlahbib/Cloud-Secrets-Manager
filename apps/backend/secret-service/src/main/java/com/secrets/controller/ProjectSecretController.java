@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +34,8 @@ import java.util.stream.Collectors;
 @Tag(name = "Project Secrets", description = "Project-scoped secret management operations")
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectSecretController {
+
+    private static final Logger log = LoggerFactory.getLogger(ProjectSecretController.class);
 
     private final ProjectSecretService projectSecretService;
     private final EncryptionUtil encryptionUtil;
@@ -76,7 +80,14 @@ public class ProjectSecretController {
         
         final java.util.Map<UUID, Integer> finalVersionMap = versionMap;
         Page<SecretResponse> responses = secrets.map(secret -> {
-            String decryptedValue = encryptionUtil.decryptSecretValue(secret);
+            String decryptedValue = null;
+            try {
+                decryptedValue = encryptionUtil.decryptSecretValue(secret);
+            } catch (RuntimeException e) {
+                log.warn("Failed to decrypt secret {} (key: {}): {}", 
+                    secret.getId(), secret.getSecretKey(), e.getMessage());
+                // Continue with null value - frontend can handle this
+            }
             SecretResponse response = SecretResponse.from(secret, decryptedValue);
             // Set version number from the map
             response.setVersion(finalVersionMap.get(secret.getId()));
@@ -95,7 +106,16 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
         
         Secret secret = projectSecretService.getProjectSecret(projectId, key, userId);
-        String decryptedValue = encryptionUtil.decryptSecretValue(secret);
+        String decryptedValue = null;
+        try {
+            decryptedValue = encryptionUtil.decryptSecretValue(secret);
+        } catch (RuntimeException e) {
+            log.error("Failed to decrypt secret {} (key: {}): {}", 
+                secret.getId(), key, e.getMessage());
+            // Return 500 with clear error message for single-secret operations
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(SecretResponse.from(secret, null));
+        }
         
         return ResponseEntity.ok(SecretResponse.from(secret, decryptedValue));
     }
@@ -212,7 +232,16 @@ public class ProjectSecretController {
         UUID userId = userService.getCurrentUserId(userDetails.getUsername());
 
         var version = projectSecretService.getSecretVersion(projectId, key, versionNumber, userId);
-        String decryptedValue = encryptionUtil.decrypt(version.getEncryptedValue());
+        String decryptedValue = null;
+        try {
+            decryptedValue = encryptionUtil.decrypt(version.getEncryptedValue());
+        } catch (RuntimeException e) {
+            log.warn("Failed to decrypt secret version {} for secret {} (key: {}): {}", 
+                versionNumber, version.getSecret().getId(), key, e.getMessage());
+            // Return 500 with clear error message for single-secret operations
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(SecretVersionDetailResponse.from(version, null));
+        }
 
         return ResponseEntity.ok(SecretVersionDetailResponse.from(version, decryptedValue));
     }

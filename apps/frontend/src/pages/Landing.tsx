@@ -1,8 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   ChevronDown, 
-  Search, 
   ArrowRight, 
   CheckCircle2, 
   Lock, 
@@ -62,67 +61,47 @@ export const LandingPage: React.FC = () => {
 
             {/* Desktop Links */}
             <div className="hidden lg:flex items-center gap-6 xl:gap-8 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-              <button 
+              <Link 
+                to="/features"
                 className="transition-colors flex items-center gap-1"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
                 {t('nav.features')} <ChevronDown className="w-3 h-3" />
-              </button>
-              <button 
+              </Link>
+              <Link 
+                to="/security"
                 className="transition-colors"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
                 {t('nav.security')}
-              </button>
-              <button 
+              </Link>
+              <Link 
+                to="/pricing"
                 className="transition-colors"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
                 {t('nav.pricing')}
-              </button>
-              <button 
+              </Link>
+              <Link 
+                to="/resources"
                 className="transition-colors flex items-center gap-1"
                 style={{ color: 'var(--text-secondary)' }}
                 onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
                 onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
                 {t('nav.resources')} <ChevronDown className="w-3 h-3" />
-              </button>
+              </Link>
             </div>
           </div>
 
           {/* Right: Actions & Icons */}
           <div className="flex items-center gap-5">
-            {/* Search */}
-            <div className="hidden md:flex relative group mr-1">
-                <Search 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 transition-colors" 
-                  style={{ color: 'var(--text-tertiary)' }}
-                />
-                <input 
-                    type="text" 
-                    placeholder={t('nav.search.placeholder')} 
-                    className="rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none w-48 transition-all"
-                    style={{
-                      backgroundColor: 'var(--elevation-2)',
-                      border: '1px solid transparent',
-                      color: 'var(--text-primary)',
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = 'var(--border-default)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = 'transparent';
-                    }}
-                />
-            </div>
-            
             {/* Divider */}
             <div className="h-5 w-px hidden lg:block mx-1" style={{ backgroundColor: 'var(--border-subtle)' }}></div>
 

@@ -213,7 +213,8 @@ public class TeamService {
 
     /**
      * Add a member to a team by email
-     * User must exist in the system
+     * Checks if user exists - if not, provides helpful error message
+     * Similar to MemberService.inviteMember pattern
      */
     public TeamMemberResponse addTeamMember(UUID teamId, TeamMemberRequest request, UUID userId) {
         // Verify team exists
@@ -229,9 +230,19 @@ public class TeamService {
             throw new SecurityException("Access denied: Only team owners and admins can add members");
         }
 
-        // Find user by email
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + request.getEmail()));
+        // Check if user exists (similar to MemberService.inviteMember pattern)
+        Optional<User> existingUser = userRepository.findByEmail(request.getEmail());
+        
+        if (existingUser.isEmpty()) {
+            // User doesn't exist - provide helpful error message
+            throw new IllegalArgumentException(
+                "User not found with email: " + request.getEmail() + 
+                ". The user must be registered in the system before they can be added to a team. " +
+                "Please ask them to sign up first, or verify the email address is correct."
+            );
+        }
+
+        User user = existingUser.get();
 
         // Check if user is already a member
         if (membershipRepository.existsByTeamIdAndUserId(teamId, user.getId())) {
@@ -312,10 +323,9 @@ public class TeamService {
 
         TeamMembership.TeamRole newRole = TeamMembership.TeamRole.valueOf(request.getRole());
 
-        // Only owners can assign owner role
-        if (newRole == TeamMembership.TeamRole.TEAM_OWNER &&
-            requesterMembership.getRole() != TeamMembership.TeamRole.TEAM_OWNER) {
-            throw new SecurityException("Access denied: Only team owners can assign TEAM_OWNER role");
+        // Prevent assigning TEAM_OWNER role via role change - must use transfer ownership
+        if (newRole == TeamMembership.TeamRole.TEAM_OWNER) {
+            throw new IllegalArgumentException("Cannot assign TEAM_OWNER role via role change. Use transfer ownership instead.");
         }
 
         // Only owners can change owner roles
@@ -337,6 +347,36 @@ public class TeamService {
         TeamMembership updated = membershipRepository.save(membership);
         log.info("Updated role of user {} in team {} to {}", memberId, team.getName(), request.getRole());
         return toMemberResponse(updated);
+    }
+
+    /**
+     * Transfer ownership
+     */
+    public void transferOwnership(UUID teamId, UUID newOwnerUserId, UUID userId) {
+        // Verify team exists
+        Team team = teamRepository.findByIdAndIsActiveTrue(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found"));
+
+        // Check current user is TEAM_OWNER
+        TeamMembership currentOwner = membershipRepository.findByTeamIdAndUserId(teamId, userId)
+                .orElseThrow(() -> new SecurityException("Access denied: You are not a member of this team"));
+
+        if (currentOwner.getRole() != TeamMembership.TeamRole.TEAM_OWNER) {
+            throw new SecurityException("Only team owners can transfer ownership");
+        }
+
+        // Find new owner membership
+        TeamMembership newOwner = membershipRepository.findByTeamIdAndUserId(teamId, newOwnerUserId)
+                .orElseThrow(() -> new IllegalArgumentException("Target user is not a member of this team"));
+
+        // Transfer ownership
+        currentOwner.setRole(TeamMembership.TeamRole.TEAM_ADMIN);
+        newOwner.setRole(TeamMembership.TeamRole.TEAM_OWNER);
+
+        membershipRepository.save(currentOwner);
+        membershipRepository.save(newOwner);
+
+        log.info("Transferred ownership of team {} from {} to {}", team.getName(), userId, newOwnerUserId);
     }
 
     /**

@@ -30,7 +30,9 @@ export interface NotificationFilters {
   size?: number;
 }
 
-const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || 'http://localhost:8082';
+// In Kubernetes, notification service is accessed through Ingress at /api/notifications
+// which routes to the notification-service pod
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_SERVICE_URL || '';
 
 export const notificationsService = {
   async list(filters: NotificationFilters = {}): Promise<NotificationPage> {
