@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Bell, ChevronDown } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Bell, ChevronDown, AlertCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useI18n } from '../../contexts/I18nContext';
 import { ThemeControls } from './ThemeControls';
 import { LanguageSelector } from '../ui/LanguageSelector';
 import { useNotifications } from '../../hooks/useNotifications';
+import { Button } from '../ui/Button';
 
 export const TopBar: React.FC = () => {
   const { user, logout, isPlatformAdmin } = useAuth();
@@ -17,11 +18,12 @@ export const TopBar: React.FC = () => {
 
   const userId = user?.id;
   const {
+    notificationsQuery,
     notifications,
     unreadCount,
     markAsRead,
     markAllAsRead,
-  } = useNotifications(userId);
+  } = useNotifications(userId, { page: 0, size: 10 }); // Limit to 10 most recent for dropdown
 
   // Reset avatar error when user or avatarUrl changes
   React.useEffect(() => {
@@ -84,14 +86,20 @@ export const TopBar: React.FC = () => {
                     <div>
                       <p className="text-sm font-medium text-theme-primary">{t('topbar.notifications')}</p>
                       <p className="text-xs text-theme-secondary">
-                        {unreadCount > 0
+                        {notificationsQuery.isLoading 
+                          ? 'Loading...'
+                          : unreadCount > 0
                           ? `${unreadCount} ${t('topbar.unread', { count: unreadCount })}`
                           : t('topbar.allCaughtUp')}
                       </p>
                     </div>
-                    {unreadCount > 0 && (
+                    {unreadCount > 0 && !notificationsQuery.isLoading && (
                       <button
-                        onClick={() => userId && markAllAsRead()}
+                        onClick={async () => {
+                          if (userId) {
+                            await markAllAsRead();
+                          }
+                        }}
                         className="text-xs font-medium text-accent-primary hover:underline"
                       >
                         {t('topbar.markAllAsRead')}
@@ -100,41 +108,81 @@ export const TopBar: React.FC = () => {
                   </div>
 
                   <div className="flex-1 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="px-4 py-6 text-center text-xs text-theme-secondary">
-                        {t('topbar.noNotifications')}
+                    {notificationsQuery.isLoading ? (
+                      <div className="px-4 py-6 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
+                          <p className="text-xs text-theme-secondary">Loading...</p>
+                        </div>
+                      </div>
+                    ) : notificationsQuery.isError ? (
+                      <div className="px-4 py-6 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <AlertCircle className="h-6 w-6" style={{ color: 'var(--status-danger)' }} />
+                          <p className="text-xs font-medium text-theme-primary">Failed to load</p>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => notificationsQuery.refetch()}
+                            className="mt-1"
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            Retry
+                          </Button>
+                        </div>
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="px-4 py-6 text-center">
+                        <Bell className="h-8 w-8 mx-auto mb-2" style={{ color: 'var(--text-tertiary)' }} />
+                        <p className="text-xs text-theme-secondary">{t('topbar.noNotifications')}</p>
                       </div>
                     ) : (
-                      <ul className="divide-y divide-theme-subtle">
-                        {notifications.map((n) => (
-                          <li
-                            key={n.id}
-                            className="px-4 py-3 text-xs cursor-pointer hover:bg-elevation-1"
-                            onClick={async () => {
-                              await markAsRead(n.id);
-                              const deepLink = (n.metadata as any)?.deepLink as string | undefined;
-                              if (deepLink) {
-                                navigate(deepLink);
-                                setShowNotifications(false);
-                              }
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <p className="font-medium text-theme-primary">{n.title}</p>
-                                {n.body && (
-                                  <p className="mt-1 text-theme-secondary line-clamp-2">
-                                    {n.body}
-                                  </p>
-                                )}
+                      <>
+                        <ul className="divide-y divide-theme-subtle">
+                          {notifications.slice(0, 5).map((n) => (
+                            <li
+                              key={n.id}
+                              className="px-4 py-3 text-xs cursor-pointer hover:bg-elevation-1 transition-colors"
+                              onClick={async () => {
+                                await markAsRead(n.id);
+                                const deepLink = (n.metadata as any)?.deepLink as string | undefined;
+                                if (deepLink) {
+                                  navigate(deepLink);
+                                  setShowNotifications(false);
+                                }
+                              }}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className="font-medium text-theme-primary line-clamp-1">{n.title}</p>
+                                    {!n.readAt && (
+                                      <span className="h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  {n.body && (
+                                    <p className="text-theme-secondary line-clamp-2">
+                                      {n.body}
+                                    </p>
+                                  )}
+                                </div>
                               </div>
-                              {!n.readAt && (
-                                <span className="mt-0.5 h-2 w-2 rounded-full bg-accent-primary flex-shrink-0" />
-                              )}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
+                            </li>
+                          ))}
+                        </ul>
+                        {notifications.length > 5 && (
+                          <div className="px-4 py-3 border-t border-theme-subtle">
+                            <Link
+                              to="/notifications"
+                              onClick={() => setShowNotifications(false)}
+                              className="flex items-center justify-center gap-2 text-xs font-medium text-accent-primary hover:underline"
+                            >
+                              View all notifications
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

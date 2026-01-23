@@ -17,7 +17,9 @@ import {
   RotateCcw,
   Info,
   LayoutGrid,
-  List
+  List,
+  AlertCircle,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -57,7 +59,13 @@ export const SettingsPage: React.FC = () => {
   const [showRecoveryCodesModal, setShowRecoveryCodesModal] = useState(false);
   
   // Fetch preferences from backend
-  const { data: preferences, isLoading: isLoadingPreferences } = useQuery({
+  const { 
+    data: preferences, 
+    isLoading: isLoadingPreferences,
+    isError: isPreferencesError,
+    error: preferencesError,
+    refetch: refetchPreferences
+  } = useQuery({
     queryKey: ['user-preferences'],
     queryFn: () => preferencesService.getPreferences(),
     enabled: !!user?.id,
@@ -186,32 +194,75 @@ export const SettingsPage: React.FC = () => {
       });
     },
     onError: (error: any) => {
+      const errorMessage = error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to save preferences. Please try again.';
       showNotification({
         type: 'error',
         title: 'Save failed',
-        message: error?.response?.data?.message || 'Failed to save preferences. Please try again.',
+        message: errorMessage,
+        duration: 5000,
       });
     },
   });
 
   const handleSaveNotifications = useCallback(async () => {
+    try {
+      await savePreferencesMutation.mutateAsync({
+        notifications: {
+          email: emailNotifications,
+          secretExpiration: secretExpirationAlerts,
+          secretExpirationInApp,
+          secretExpirationEmail,
+          projectInvitations,
+          projectInvitationsInApp,
+          projectInvitationsEmail,
+          securityAlerts,
+          securityAlertsInApp,
+          securityAlertsEmail,
+          roleChangedInApp,
+          roleChangedEmail,
+        },
+      });
+    } catch (error) {
+      // Error handling is done in the mutation's onError callback
+      console.error('Failed to save notification preferences:', error);
+    }
+  }, [emailNotifications, secretExpirationAlerts, secretExpirationInApp, secretExpirationEmail, projectInvitations, projectInvitationsInApp, projectInvitationsEmail, securityAlerts, securityAlertsInApp, securityAlertsEmail, roleChangedInApp, roleChangedEmail, savePreferencesMutation]);
+  
+  const handleResetToDefaults = useCallback(() => {
+    // Reset all notification preferences to defaults (all enabled)
+    setEmailNotifications(true);
+    setSecretExpirationAlerts(true);
+    setSecretExpirationInApp(true);
+    setSecretExpirationEmail(true);
+    setProjectInvitations(true);
+    setProjectInvitationsInApp(true);
+    setProjectInvitationsEmail(true);
+    setSecurityAlerts(true);
+    setSecurityAlertsInApp(true);
+    setSecurityAlertsEmail(true);
+    setRoleChangedInApp(true);
+    setRoleChangedEmail(true);
+    
+    // Save the defaults
     savePreferencesMutation.mutate({
       notifications: {
-        email: emailNotifications,
-        secretExpiration: secretExpirationAlerts,
-        secretExpirationInApp,
-        secretExpirationEmail,
-        projectInvitations,
-        projectInvitationsInApp,
-        projectInvitationsEmail,
-        securityAlerts,
-        securityAlertsInApp,
-        securityAlertsEmail,
-        roleChangedInApp,
-        roleChangedEmail,
+        email: true,
+        secretExpiration: true,
+        secretExpirationInApp: true,
+        secretExpirationEmail: true,
+        projectInvitations: true,
+        projectInvitationsInApp: true,
+        projectInvitationsEmail: true,
+        securityAlerts: true,
+        securityAlertsInApp: true,
+        securityAlertsEmail: true,
+        roleChangedInApp: true,
+        roleChangedEmail: true,
       },
     });
-  }, [emailNotifications, secretExpirationAlerts, secretExpirationInApp, secretExpirationEmail, projectInvitations, projectInvitationsInApp, projectInvitationsEmail, securityAlerts, securityAlertsInApp, securityAlertsEmail, roleChangedInApp, roleChangedEmail, savePreferencesMutation]);
+  }, [savePreferencesMutation]);
 
   const handleSavePreferences = useCallback(async () => {
     savePreferencesMutation.mutate({
@@ -502,148 +553,153 @@ export const SettingsPage: React.FC = () => {
           )}
 
           {activeTab === 'notifications' && (
-            <div className="space-y-4 max-w-4xl">
+            <div className="space-y-5 max-w-4xl">
               <div>
-                <h2 className="text-xl font-semibold mb-2 text-theme-primary">Notification Preferences</h2>
-                <p className="text-body-sm text-theme-secondary">Manage how and when you receive notifications</p>
+                <h2 className="text-xl font-bold mb-1.5 text-theme-primary">Notification Preferences</h2>
+                <p className="text-sm text-theme-secondary">Control how and when you receive notifications across all channels</p>
               </div>
               
               {isLoadingPreferences ? (
-                <Card className="p-6">
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
+                <Card className="p-8">
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <div className="animate-spin rounded-full h-10 w-10 border-b-2" style={{ borderColor: 'var(--accent-primary)' }}></div>
+                    <p className="text-sm font-medium text-theme-primary">Loading notification preferences...</p>
+                    <p className="text-xs text-theme-secondary">Please wait</p>
+                  </div>
+                </Card>
+              ) : isPreferencesError ? (
+                <Card className="p-8">
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <AlertCircle className="h-10 w-10" style={{ color: 'var(--status-danger)' }} />
+                    <p className="text-sm font-medium text-theme-primary">Failed to load preferences</p>
+                    <p className="text-xs text-theme-secondary text-center max-w-md">
+                      {preferencesError instanceof Error 
+                        ? preferencesError.message 
+                        : 'An unexpected error occurred while loading your preferences'}
+                    </p>
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      onClick={() => refetchPreferences()}
+                      className="mt-2"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Retry
+                    </Button>
                   </div>
                 </Card>
               ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Summary Card */}
-                <Card className="p-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--elevation-1)' }}>
+                <Card className="p-5">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="p-2.5 rounded-lg flex-shrink-0" style={{ backgroundColor: 'var(--accent-primary-glow)' }}>
                       <Bell className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-theme-primary">Notification Summary</h3>
-                      <p className="text-body-sm text-theme-secondary">Overview of your notification settings</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-theme-primary">Notification Overview</h3>
+                      <p className="text-sm text-theme-secondary mt-0.5">Quick summary of your notification settings</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                    <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
-                      <p className="text-xs text-theme-tertiary mb-1">Email Enabled</p>
-                      <p className="text-lg font-semibold text-theme-primary">{emailNotifications ? 'Yes' : 'No'}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-medium text-theme-tertiary uppercase tracking-wide">Email</p>
+                        <div className={`h-1.5 w-1.5 rounded-full ${emailNotifications ? 'bg-status-success' : 'bg-status-danger'}`}></div>
+                      </div>
+                      <p className="text-xl font-bold text-theme-primary">{emailNotifications ? 'On' : 'Off'}</p>
                     </div>
-                    <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
-                      <p className="text-xs text-theme-tertiary mb-1">Active Types</p>
-                      <p className="text-lg font-semibold text-theme-primary">
-                        {[secretExpirationAlerts, projectInvitations, securityAlerts].filter(Boolean).length} / 3
+                    <div className="p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-medium text-theme-tertiary uppercase tracking-wide">Active Types</p>
+                        <Bell className="h-3 w-3" style={{ color: 'var(--text-tertiary)' }} />
+                      </div>
+                      <p className="text-xl font-bold text-theme-primary">
+                        {[secretExpirationAlerts, projectInvitations, securityAlerts].filter(Boolean).length}
+                        <span className="text-xs font-normal text-theme-tertiary ml-1">/ 3</span>
                       </p>
                     </div>
-                    <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
-                      <p className="text-xs text-theme-tertiary mb-1">In-App</p>
-                      <p className="text-lg font-semibold text-theme-primary">
-                        {[secretExpirationInApp, projectInvitationsInApp, securityAlertsInApp, roleChangedInApp].filter(Boolean).length} / 4
+                    <div className="p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-medium text-theme-tertiary uppercase tracking-wide">In-App</p>
+                        <Bell className="h-3 w-3" style={{ color: 'var(--text-tertiary)' }} />
+                      </div>
+                      <p className="text-xl font-bold text-theme-primary">
+                        {[secretExpirationInApp, projectInvitationsInApp, securityAlertsInApp, roleChangedInApp].filter(Boolean).length}
+                        <span className="text-xs font-normal text-theme-tertiary ml-1">/ 4</span>
                       </p>
                     </div>
-                    <div className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
-                      <p className="text-xs text-theme-tertiary mb-1">Email</p>
-                      <p className="text-lg font-semibold text-theme-primary">
-                        {[secretExpirationEmail, projectInvitationsEmail, securityAlertsEmail, roleChangedEmail].filter(Boolean).length} / 4
+                    <div className="p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-medium text-theme-tertiary uppercase tracking-wide">Email</p>
+                        <Mail className="h-3 w-3" style={{ color: 'var(--text-tertiary)' }} />
+                      </div>
+                      <p className="text-xl font-bold text-theme-primary">
+                        {[secretExpirationEmail, projectInvitationsEmail, securityAlertsEmail, roleChangedEmail].filter(Boolean).length}
+                        <span className="text-xs font-normal text-theme-tertiary ml-1">/ 4</span>
                       </p>
                     </div>
                   </div>
                 </Card>
 
                 {/* Global Email Toggle */}
-                <CollapsibleSection
-                  title="Email Notifications (Global)"
-                  description="Master toggle for all email notifications"
-                  icon={<Mail className="h-5 w-5" style={{ color: 'var(--accent-primary)' }} />}
-                  defaultOpen={true}
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-body-sm text-theme-secondary mb-2">
-                          When disabled, no emails will be sent regardless of individual settings.
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <Info className="h-4 w-4" style={{ color: 'var(--text-tertiary)' }} />
-                          <span className="text-xs text-theme-tertiary">This affects all notification types below</span>
+                <Card className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="p-2.5 rounded-lg flex-shrink-0" style={{ backgroundColor: 'var(--status-info-bg)' }}>
+                      <Mail className="h-5 w-5" style={{ color: 'var(--status-info)' }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-4 mb-2">
+                        <div>
+                          <h3 className="text-base font-semibold text-theme-primary">Email Notifications</h3>
+                          <p className="text-sm text-theme-secondary mt-0.5">
+                            Master control for all email notifications
+                          </p>
                         </div>
+                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={emailNotifications}
+                            onChange={(e) => setEmailNotifications(e.target.checked)}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer ml-4">
-                        <input 
-                          type="checkbox" 
-                          className="sr-only peer" 
-                          checked={emailNotifications}
-                          onChange={(e) => setEmailNotifications(e.target.checked)}
-                        />
-                        <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
-                      </label>
+                      <div className="flex items-start gap-2 mt-2 p-2.5 rounded-md" style={{ backgroundColor: 'var(--elevation-1)' }}>
+                        <Info className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" style={{ color: 'var(--text-tertiary)' }} />
+                        <p className="text-xs text-theme-tertiary leading-relaxed">
+                          When disabled, no emails will be sent regardless of individual notification type settings below.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </CollapsibleSection>
+                </Card>
 
                 {/* Notification Type Cards */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {/* Secret Expiration Alerts */}
                   <CollapsibleSection
                     title="Secret Expiration Alerts"
                     description="Get notified before secrets expire to ensure timely rotation"
                     icon={
-                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-warning-bg)' }}>
-                        <Key className="h-4 w-4" style={{ color: 'var(--status-warning)' }} />
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-warning-bg)' }}>
+                        <Key className="h-5 w-5" style={{ color: 'var(--status-warning)' }} />
                       </div>
                     }
                     defaultOpen={false}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant={secretExpirationAlerts ? 'success' : 'default'}>
-                          {secretExpirationAlerts ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
-                          <p className="text-xs text-theme-tertiary">Show notifications in the app</p>
+                    <div className="space-y-3 pt-1">
+                      {/* Master Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-semibold text-theme-primary block">Enable Secret Expiration Alerts</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Master control for all secret expiration notifications</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer" 
-                            checked={secretExpirationInApp}
-                            onChange={(e) => setSecretExpirationInApp(e.target.checked)}
-                            disabled={!secretExpirationAlerts}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!secretExpirationAlerts ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Email notifications</span>
-                          <p className="text-xs text-theme-tertiary">Receive email alerts</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
-                            checked={secretExpirationEmail}
-                            onChange={(e) => setSecretExpirationEmail(e.target.checked)}
-                            disabled={!secretExpirationAlerts || !emailNotifications}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!secretExpirationAlerts || !emailNotifications ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2 border-t pt-3" style={{ borderTopColor: 'var(--border-subtle)' }}>
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Enable this notification type</span>
-                          <p className="text-xs text-theme-tertiary">Master toggle for secret expiration alerts</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
+                            className="sr-only" 
                             checked={secretExpirationAlerts}
                             onChange={(e) => {
                               const enabled = e.target.checked;
@@ -657,10 +713,48 @@ export const SettingsPage: React.FC = () => {
                               }
                             }}
                           />
-                          <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <div className="toggle-switch w-12 h-6"></div>
                         </label>
                       </div>
-                      <div className="pt-2">
+
+                      {/* In-App Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">In-app notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Show notifications in the application</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={secretExpirationInApp}
+                            onChange={(e) => setSecretExpirationInApp(e.target.checked)}
+                            disabled={!secretExpirationAlerts}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Email Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">Email notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Receive email alerts for expiring secrets</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={secretExpirationEmail}
+                            onChange={(e) => setSecretExpirationEmail(e.target.checked)}
+                            disabled={!secretExpirationAlerts || !emailNotifications}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Test Button */}
+                      <div className="pt-1">
                         <Button 
                           variant="secondary" 
                           size="sm" 
@@ -678,59 +772,23 @@ export const SettingsPage: React.FC = () => {
                     title="Project Invitations"
                     description="Get notified when you're invited to join new projects"
                     icon={
-                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-info-bg)' }}>
-                        <UserPlus className="h-4 w-4" style={{ color: 'var(--status-info)' }} />
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-info-bg)' }}>
+                        <UserPlus className="h-5 w-5" style={{ color: 'var(--status-info)' }} />
                       </div>
                     }
                     defaultOpen={false}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant={projectInvitations ? 'success' : 'default'}>
-                          {projectInvitations ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
-                          <p className="text-xs text-theme-tertiary">Show notifications in the app</p>
+                    <div className="space-y-3 pt-1">
+                      {/* Master Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-semibold text-theme-primary block">Enable Project Invitations</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Master control for all project invitation notifications</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer" 
-                            checked={projectInvitationsInApp}
-                            onChange={(e) => setProjectInvitationsInApp(e.target.checked)}
-                            disabled={!projectInvitations}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!projectInvitations ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Email notifications</span>
-                          <p className="text-xs text-theme-tertiary">Receive email alerts</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
-                            checked={projectInvitationsEmail}
-                            onChange={(e) => setProjectInvitationsEmail(e.target.checked)}
-                            disabled={!projectInvitations || !emailNotifications}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!projectInvitations || !emailNotifications ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2 border-t pt-3" style={{ borderTopColor: 'var(--border-subtle)' }}>
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Enable this notification type</span>
-                          <p className="text-xs text-theme-tertiary">Master toggle for project invitations</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
+                            className="sr-only" 
                             checked={projectInvitations}
                             onChange={(e) => {
                               const enabled = e.target.checked;
@@ -744,10 +802,48 @@ export const SettingsPage: React.FC = () => {
                               }
                             }}
                           />
-                          <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <div className="toggle-switch w-12 h-6"></div>
                         </label>
                       </div>
-                      <div className="pt-2">
+
+                      {/* In-App Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">In-app notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Show notifications in the application</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={projectInvitationsInApp}
+                            onChange={(e) => setProjectInvitationsInApp(e.target.checked)}
+                            disabled={!projectInvitations}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Email Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">Email notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Receive email alerts for invitations</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={projectInvitationsEmail}
+                            onChange={(e) => setProjectInvitationsEmail(e.target.checked)}
+                            disabled={!projectInvitations || !emailNotifications}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Test Button */}
+                      <div className="pt-1">
                         <Button 
                           variant="secondary" 
                           size="sm" 
@@ -765,59 +861,23 @@ export const SettingsPage: React.FC = () => {
                     title="Security Alerts"
                     description="Critical security notifications that require immediate attention"
                     icon={
-                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-danger-bg)' }}>
-                        <AlertTriangle className="h-4 w-4" style={{ color: 'var(--status-danger)' }} />
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-danger-bg)' }}>
+                        <AlertTriangle className="h-5 w-5" style={{ color: 'var(--status-danger)' }} />
                       </div>
                     }
                     defaultOpen={false}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <Badge variant={securityAlerts ? 'success' : 'default'}>
-                          {securityAlerts ? 'Enabled' : 'Disabled'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
-                          <p className="text-xs text-theme-tertiary">Show notifications in the app</p>
+                    <div className="space-y-3 pt-1">
+                      {/* Master Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-semibold text-theme-primary block">Enable Security Alerts</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Master control for all security alert notifications</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer" 
-                            checked={securityAlertsInApp}
-                            onChange={(e) => setSecurityAlertsInApp(e.target.checked)}
-                            disabled={!securityAlerts}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!securityAlerts ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Email notifications</span>
-                          <p className="text-xs text-theme-tertiary">Receive email alerts</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
-                            checked={securityAlertsEmail}
-                            onChange={(e) => setSecurityAlertsEmail(e.target.checked)}
-                            disabled={!securityAlerts || !emailNotifications}
-                          />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!securityAlerts || !emailNotifications ? 'opacity-50' : ''}`}></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between py-2 border-t pt-3" style={{ borderTopColor: 'var(--border-subtle)' }}>
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Enable this notification type</span>
-                          <p className="text-xs text-theme-tertiary">Master toggle for security alerts</p>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input 
-                            type="checkbox" 
-                            className="sr-only peer" 
+                            className="sr-only" 
                             checked={securityAlerts}
                             onChange={(e) => {
                               const enabled = e.target.checked;
@@ -831,10 +891,48 @@ export const SettingsPage: React.FC = () => {
                               }
                             }}
                           />
-                          <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <div className="toggle-switch w-12 h-6"></div>
                         </label>
                       </div>
-                      <div className="pt-2">
+
+                      {/* In-App Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">In-app notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Show notifications in the application</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={securityAlertsInApp}
+                            onChange={(e) => setSecurityAlertsInApp(e.target.checked)}
+                            disabled={!securityAlerts}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Email Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">Email notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Receive email alerts for security issues</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
+                          <input 
+                            type="checkbox" 
+                            className="sr-only" 
+                            checked={securityAlertsEmail}
+                            onChange={(e) => setSecurityAlertsEmail(e.target.checked)}
+                            disabled={!securityAlerts || !emailNotifications}
+                          />
+                          <div className="toggle-switch w-12 h-6"></div>
+                        </label>
+                      </div>
+
+                      {/* Test Button */}
+                      <div className="pt-1">
                         <Button 
                           variant="secondary" 
                           size="sm" 
@@ -852,34 +950,37 @@ export const SettingsPage: React.FC = () => {
                     title="Role Changes"
                     description="Get notified when your role changes in projects or teams"
                     icon={
-                      <div className="p-1.5 rounded" style={{ backgroundColor: 'var(--status-info-bg)' }}>
-                        <User className="h-4 w-4" style={{ color: 'var(--status-info)' }} />
+                      <div className="p-2 rounded-lg" style={{ backgroundColor: 'var(--status-info-bg)' }}>
+                        <User className="h-5 w-5" style={{ color: 'var(--status-info)' }} />
                       </div>
                     }
                     defaultOpen={false}
                   >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">In-app notifications</span>
-                          <p className="text-xs text-theme-tertiary">Show notifications in the app</p>
+                    <div className="space-y-3 pt-1">
+                      {/* In-App Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">In-app notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Show notifications in the application</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
                           <input 
                             type="checkbox" 
-                            className="sr-only peer" 
+                            className="sr-only" 
                             checked={roleChangedInApp}
                             onChange={(e) => setRoleChangedInApp(e.target.checked)}
                           />
-                          <div className="toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                          <div className="toggle-switch w-12 h-6"></div>
                         </label>
                       </div>
-                      <div className="flex items-center justify-between py-2">
-                        <div>
-                          <span className="text-body-sm font-medium text-theme-primary">Email notifications</span>
-                          <p className="text-xs text-theme-tertiary">Receive email alerts</p>
+
+                      {/* Email Toggle */}
+                      <div className="flex items-center justify-between p-3.5 rounded-lg border" style={{ borderColor: 'var(--border-subtle)', backgroundColor: 'var(--elevation-1)' }}>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium text-theme-primary block">Email notifications</span>
+                          <p className="text-xs text-theme-tertiary mt-0.5">Receive email alerts for role changes</p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer ml-4 flex-shrink-0">
                           <input 
                             type="checkbox" 
                             className="sr-only peer" 
@@ -887,10 +988,12 @@ export const SettingsPage: React.FC = () => {
                             onChange={(e) => setRoleChangedEmail(e.target.checked)}
                             disabled={!emailNotifications}
                           />
-                          <div className={`toggle-switch w-11 h-6 peer-focus:outline-none peer-focus:ring-4 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${!emailNotifications ? 'opacity-50' : ''}`}></div>
+                          <div className="toggle-switch w-12 h-6"></div>
                         </label>
                       </div>
-                      <div className="pt-2">
+
+                      {/* Test Button */}
+                      <div className="pt-1">
                         <Button 
                           variant="secondary" 
                           size="sm" 
@@ -905,31 +1008,18 @@ export const SettingsPage: React.FC = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <Card className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <h3 className="font-semibold text-theme-primary mb-1">Save Changes</h3>
-                      <p className="text-body-sm text-theme-secondary">Apply your notification preferences</p>
+                <Card className="p-5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-theme-primary mb-1">Save Your Preferences</h3>
+                      <p className="text-sm text-theme-secondary">Apply your notification settings to take effect immediately</p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-3 w-full sm:w-auto">
                       <Button 
                         variant="secondary" 
-                        onClick={() => {
-                          // Reset to defaults
-                          setEmailNotifications(true);
-                          setSecretExpirationAlerts(true);
-                          setSecretExpirationInApp(true);
-                          setSecretExpirationEmail(true);
-                          setProjectInvitations(true);
-                          setProjectInvitationsInApp(true);
-                          setProjectInvitationsEmail(true);
-                          setSecurityAlerts(true);
-                          setSecurityAlertsInApp(true);
-                          setSecurityAlertsEmail(true);
-                          setRoleChangedInApp(true);
-                          setRoleChangedEmail(true);
-                        }}
-                        disabled={isLoadingPreferences}
+                        onClick={handleResetToDefaults}
+                        disabled={isLoadingPreferences || savePreferencesMutation.isPending}
+                        className="flex-1 sm:flex-initial"
                       >
                         <RotateCcw className="h-4 w-4 mr-2" />
                         Reset to Defaults
@@ -938,6 +1028,7 @@ export const SettingsPage: React.FC = () => {
                         onClick={handleSaveNotifications} 
                         isLoading={savePreferencesMutation.isPending} 
                         disabled={isLoadingPreferences}
+                        className="flex-1 sm:flex-initial"
                       >
                         Save Preferences
                       </Button>

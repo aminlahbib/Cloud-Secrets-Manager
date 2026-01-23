@@ -9,6 +9,7 @@ import com.secrets.notification.entity.User;
 import com.secrets.notification.dto.NotificationDto;
 import com.secrets.notification.repository.NotificationRepository;
 import com.secrets.notification.repository.UserRepository;
+import com.secrets.notification.service.NotificationPreferenceService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,19 +29,22 @@ public class NotificationHandler {
     private final ObjectMapper objectMapper;
     private final NotificationSseService sseService;
     private final NotificationBatchingService batchingService;
+    private final NotificationPreferenceService preferenceService;
 
     public NotificationHandler(NotificationRepository notificationRepository,
             UserRepository userRepository,
             EmailService emailService,
             ObjectMapper objectMapper,
             NotificationSseService sseService,
-            NotificationBatchingService batchingService) {
+            NotificationBatchingService batchingService,
+            NotificationPreferenceService preferenceService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
         this.objectMapper = objectMapper;
         this.sseService = sseService;
         this.batchingService = batchingService;
+        this.preferenceService = preferenceService;
     }
 
     public void handle(NotificationEvent event) {
@@ -83,16 +87,19 @@ public class NotificationHandler {
             }
 
             // Check if notification type is enabled at all
-            if (!isEnabledForEvent(user, event)) {
-                log.debug("Notification {} disabled by preferences for user {}, skipping",
-                        event.getType(), userId);
+            if (!preferenceService.isNotificationEnabled(user, event.getType())) {
+                log.info("Notification {} disabled by preferences for user {}, skipping. Preference key: '{}'",
+                        event.getType(), userId, preferenceService.getEnabledPreferenceKey(event.getType()));
                 continue;
             }
 
             // Check if in-app notifications are enabled
-            boolean inAppEnabled = isInAppEnabledForEvent(user, event);
+            boolean inAppEnabled = preferenceService.isInAppEnabled(user, event.getType());
             // Check if email notifications are enabled
-            boolean emailEnabled = isEmailEnabledForEvent(user, event);
+            boolean emailEnabled = preferenceService.isEmailEnabled(user, event.getType());
+            
+            log.debug("Processing notification {} for user {}: inApp={}, email={}",
+                    event.getType(), userId, inAppEnabled, emailEnabled);
 
             Notification notification = null;
             if (inAppEnabled) {
@@ -212,95 +219,6 @@ public class NotificationHandler {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private boolean isEnabledForEvent(User user, NotificationEvent event) {
-        var prefs = user.getNotificationPreferences();
-        if (prefs == null || prefs.isEmpty()) {
-            return true;
-        }
-
-        String key;
-        switch (event.getType()) {
-            case SECRET_EXPIRING_SOON -> key = "secretExpiration";
-            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitations";
-            case SECURITY_ALERT -> key = "securityAlerts";
-            case ROLE_CHANGED -> key = "email"; // treat as general email/notification toggle
-            default -> key = "email";
-        }
-
-        Object value = prefs.get(key);
-        if (value instanceof Boolean b) {
-            return b;
-        }
-
-        // default to enabled when preference missing or not boolean
-        return true;
-    }
-
-    @SuppressWarnings("unchecked")
-    private boolean isInAppEnabledForEvent(User user, NotificationEvent event) {
-        var prefs = user.getNotificationPreferences();
-        if (prefs == null || prefs.isEmpty()) {
-            return true;
-        }
-
-        String key;
-        switch (event.getType()) {
-            case SECRET_EXPIRING_SOON -> key = "secretExpirationInApp";
-            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsInApp";
-            case SECURITY_ALERT -> key = "securityAlertsInApp";
-            case ROLE_CHANGED -> key = "roleChangedInApp";
-            default -> {
-                // Check general preference first
-                Object generalEnabled = prefs.get("secretExpiration");
-                if (generalEnabled instanceof Boolean b && !b) {
-                    return false;
-                }
-                return true;
-            }
-        }
-
-        Object value = prefs.get(key);
-        if (value instanceof Boolean b) {
-            return b;
-        }
-
-        // Fallback to general preference
-        return isEnabledForEvent(user, event);
-    }
-
-    @SuppressWarnings("unchecked")
-    private boolean isEmailEnabledForEvent(User user, NotificationEvent event) {
-        var prefs = user.getNotificationPreferences();
-        if (prefs == null || prefs.isEmpty()) {
-            return true;
-        }
-
-        // Check general email toggle first
-        Object emailEnabled = prefs.get("email");
-        if (emailEnabled instanceof Boolean b && !b) {
-            return false;
-        }
-
-        String key;
-        switch (event.getType()) {
-            case SECRET_EXPIRING_SOON -> key = "secretExpirationEmail";
-            case PROJECT_INVITATION, TEAM_INVITATION -> key = "projectInvitationsEmail";
-            case SECURITY_ALERT -> key = "securityAlertsEmail";
-            case ROLE_CHANGED -> key = "roleChangedEmail";
-            default -> {
-                return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
-            }
-        }
-
-        Object value = prefs.get(key);
-        if (value instanceof Boolean b) {
-            return b;
-        }
-
-        // Fallback to general email preference
-        return emailEnabled instanceof Boolean ? (Boolean) emailEnabled : true;
-    }
 
     private NotificationDto toDto(Notification notification) {
         NotificationDto dto = new NotificationDto();

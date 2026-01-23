@@ -279,9 +279,18 @@ Don't forget to add your API keys to the configuration in the root `.env` file.
 
 **Recommended for production deployment** - Simple, cost-effective, and auto-scaling:
 
+**📖 Complete Guide:** [docs/new/CLOUDRUN_GUIDE.md](docs/new/CLOUDRUN_GUIDE.md) (includes Prerequisites, Start, Monitor, Shutdown)
+
 ```bash
-# Deploy all services to Cloud Run (uses Cloud Build, no local Docker required)
+# Quick start: 3 steps
+# 1. Sync secrets from .env.local to GCP Secret Manager
+./infrastructure/scripts/sync-secrets-from-env.sh
+
+# 2. Deploy all services to Cloud Run (uses Cloud Build, no local Docker required)
 ./infrastructure/scripts/deploy-cloudrun-cloudbuild.sh
+
+# 3. Test deployment
+./infrastructure/scripts/test-cloudrun.sh
 ```
 
 This script will:
@@ -292,14 +301,12 @@ This script will:
 - Deploy frontend with correct backend URLs
 
 **Resource Configuration:**
-- Secret Service: 512Mi memory, min-instances=1 (critical path)
+- Secret Service: 1Gi memory, min-instances=1 (critical path)
 - Audit Service: 512Mi memory, min-instances=0 (scales to zero)
 - Notification Service: 512Mi memory, min-instances=0 (scales to zero)
 - Frontend: 256Mi memory, min-instances=0 (scales to zero)
 
-**Estimated Cost:** ~$15-25/month (with optimized resources)
-
-See [`docs/DEPLOYMENT_OPERATIONS_GUIDE.md`](docs/DEPLOYMENT_OPERATIONS_GUIDE.md) for detailed instructions.
+**Estimated Cost:** ~$50-65/month (with optimized resources)
 
 ### Option 4: Google Kubernetes Engine (GKE) - Advanced
 
