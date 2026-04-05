@@ -1,6 +1,6 @@
 ---
-# Network Policy: Deny all ingress traffic by default
-# This policy ensures that pods can only receive traffic from explicitly allowed sources
+# Default deny all ingress traffic.
+# With this in place, only pods matched by an explicit allow policy receive traffic.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -10,10 +10,10 @@ spec:
   podSelector: {}
   policyTypes:
     - Ingress
-  # No ingress rules = deny all ingress traffic
 
 ---
-# Network Policy: Allow ingress from Ingress Controller to secret-service
+# Allow ingress to secret-service from the ingress controller,
+# from notification-service (HTTP fallback), and from audit-service.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -22,11 +22,11 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: secret-service
+      app.kubernetes.io/name: secret-service
+      app.kubernetes.io/component: api
   policyTypes:
     - Ingress
   ingress:
-    # Allow traffic from Ingress Controller (nginx-ingress)
     - from:
         - namespaceSelector:
             matchLabels:
@@ -37,17 +37,17 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-    # Allow traffic from audit-service (for audit logging)
     - from:
         - podSelector:
             matchLabels:
-              app: audit-service
+              app.kubernetes.io/name: audit-service
       ports:
         - protocol: TCP
           port: 8080
 
 ---
-# Network Policy: Allow ingress to audit-service
+# Allow ingress to audit-service from secret-service (audit logging)
+# and from the ingress controller (proxy endpoint).
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -56,19 +56,18 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app: audit-service
+      app.kubernetes.io/name: audit-service
+      app.kubernetes.io/component: audit-api
   policyTypes:
     - Ingress
   ingress:
-    # Allow traffic from secret-service (for audit logging)
     - from:
         - podSelector:
             matchLabels:
-              app: secret-service
+              app.kubernetes.io/name: secret-service
       ports:
         - protocol: TCP
           port: 8081
-    # Allow traffic from Ingress Controller (if audit-service needs external access)
     - from:
         - namespaceSelector:
             matchLabels:
@@ -81,9 +80,68 @@ spec:
           port: 8081
 
 ---
-# Network Policy: Allow egress to Cloud SQL Proxy (localhost)
-# Note: Cloud SQL Proxy runs as a sidecar, so egress to localhost is implicit
-# This policy allows DNS resolution and external API calls
+# Allow ingress to notification-service from secret-service (HTTP fallback)
+# and from the ingress controller (SSE stream + notification API).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-notification-service
+  namespace: cloud-secrets-manager
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: notification-service
+      app.kubernetes.io/component: notifications
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: secret-service
+      ports:
+        - protocol: TCP
+          port: 8082
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8082
+
+---
+# Allow ingress to frontend from the ingress controller only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-frontend
+  namespace: cloud-secrets-manager
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: frontend
+      app.kubernetes.io/component: ui
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+# Egress: DNS, GCE metadata (Workload Identity), Google APIs,
+# Cloud SQL Proxy (pod-local), and inter-service within namespace.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -94,32 +152,32 @@ spec:
   policyTypes:
     - Egress
   egress:
-    # Allow DNS resolution
+    # DNS
     - to:
         - namespaceSelector: {}
       ports:
         - protocol: UDP
           port: 53
-    # Allow HTTP to metadata server (for Workload Identity token retrieval)
+    # GCE metadata server (Workload Identity token exchange)
     - to:
         - ipBlock:
             cidr: 169.254.169.254/32
       ports:
         - protocol: TCP
           port: 80
-    # Allow HTTPS to Google APIs (for Workload Identity, Secret Manager, etc.)
+    # HTTPS to Google APIs (Secret Manager, Cloud SQL, Pub/Sub, etc.)
     - to:
         - namespaceSelector: {}
       ports:
         - protocol: TCP
           port: 443
-    # Allow localhost communication (for Cloud SQL Proxy sidecar)
+    # Cloud SQL Proxy sidecar (localhost inside the pod)
     - to:
         - podSelector: {}
       ports:
         - protocol: TCP
           port: 5432
-    # Allow inter-pod communication within namespace
+    # Inter-service within this namespace
     - to:
         - namespaceSelector:
             matchLabels:
@@ -129,4 +187,5 @@ spec:
           port: 8080
         - protocol: TCP
           port: 8081
-
+        - protocol: TCP
+          port: 8082

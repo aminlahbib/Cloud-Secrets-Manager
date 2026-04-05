@@ -65,7 +65,7 @@ spec:
                   name: cloud-secrets-config
                   key: JWT_SECRET
             - name: SPRING_PROFILES_ACTIVE
-              value: {{ if .Values.cloudSql.enabled }}prod{{ else }}dev{{ end }}
+              value: {{ .Values.springProfile | default (ternary "prod" "dev" .Values.cloudSql.enabled) }}
             # Email configuration
             - name: EMAIL_ENABLED
               value: {{ .Values.email.enabled | quote }}
@@ -86,6 +86,10 @@ spec:
             {{- if .Values.pubsub.enabled }}
             - name: GCP_PROJECT_ID
               value: {{ .Values.googleIdentity.projectId | quote }}
+            {{- end }}
+            {{- range .Values.notificationService.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
             {{- end }}
           ports:
             - containerPort: {{ .Values.notificationService.port }}

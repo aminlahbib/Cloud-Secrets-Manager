@@ -115,9 +115,8 @@ ingress:
   tls:
     enabled: true
     secretName: "secrets-manager-prod-tls"
-    # For Let's Encrypt with cert-manager
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
   annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     # Stricter rate limiting for production
     nginx.ingress.kubernetes.io/limit-rps: "50"

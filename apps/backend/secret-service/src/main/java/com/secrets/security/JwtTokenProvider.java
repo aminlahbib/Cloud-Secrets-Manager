@@ -91,6 +91,10 @@ public class JwtTokenProvider {
             .collect(java.util.stream.Collectors.toList());
     }
 
+    public String getJti(String token) {
+        return getClaims(token).getId();
+    }
+
     public boolean validateToken(String token) {
         try {
             getClaims(token);

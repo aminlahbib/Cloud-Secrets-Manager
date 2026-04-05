@@ -7,19 +7,52 @@ metadata:
     app.kubernetes.io/name: ingress
     app.kubernetes.io/part-of: cloud-secrets-manager
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
 spec:
   ingressClassName: nginx
   rules:
     - host: secrets.local
       http:
         paths:
-          - path: /(.*)
+          # Notification routes (most specific first)
+          - path: /api/notifications
             pathType: Prefix
             backend:
               service:
-                name: secret-service
+                name: csm-notification-service
+                port:
+                  number: 8082
+          # Audit routes
+          - path: /api/audit
+            pathType: Prefix
+            backend:
+              service:
+                name: csm-audit-service
+                port:
+                  number: 8081
+          # Actuator/health endpoints
+          - path: /actuator
+            pathType: Prefix
+            backend:
+              service:
+                name: csm-secret-service
                 port:
                   number: 8080
-
+          # All other API routes -> secret-service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: csm-secret-service
+                port:
+                  number: 8080
+          # Frontend catch-all
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: csm-frontend
+                port:
+                  number: 80

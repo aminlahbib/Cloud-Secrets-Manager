@@ -1,17 +1,17 @@
 ---
-# Prometheus ServiceMonitor for secret-service
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: secret-service-metrics
   namespace: cloud-secrets-manager
   labels:
-    app: secret-service
+    app.kubernetes.io/name: secret-service
     release: prometheus
 spec:
   selector:
     matchLabels:
-      app: secret-service
+      app.kubernetes.io/name: secret-service
+      app.kubernetes.io/component: api
   endpoints:
     - port: http
       path: /actuator/prometheus
@@ -19,19 +19,19 @@ spec:
       scrapeTimeout: 10s
 
 ---
-# Prometheus ServiceMonitor for audit-service
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: audit-service-metrics
   namespace: cloud-secrets-manager
   labels:
-    app: audit-service
+    app.kubernetes.io/name: audit-service
     release: prometheus
 spec:
   selector:
     matchLabels:
-      app: audit-service
+      app.kubernetes.io/name: audit-service
+      app.kubernetes.io/component: audit-api
   endpoints:
     - port: http
       path: /actuator/prometheus
@@ -39,7 +39,6 @@ spec:
       scrapeTimeout: 10s
 
 ---
-# Prometheus AlertingRules
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -53,7 +52,6 @@ spec:
     - name: cloud-secrets-manager
       interval: 30s
       rules:
-        # Pod restart alerts
         - alert: PodRestarting
           expr: rate(kube_pod_container_status_restarts_total{namespace="cloud-secrets-manager"}[5m]) > 0
           for: 5m
@@ -63,7 +61,6 @@ spec:
             summary: "Pod {{ $labels.pod }} is restarting"
             description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has restarted {{ $value }} times in the last 5 minutes"
 
-        # High error rate
         - alert: HighErrorRate
           expr: rate(http_server_requests_seconds_count{namespace="cloud-secrets-manager",status=~"5.."}[5m]) > 0.1
           for: 5m
@@ -73,7 +70,6 @@ spec:
             summary: "High error rate in {{ $labels.application }}"
             description: "Error rate is {{ $value }} errors/second in {{ $labels.application }}"
 
-        # High latency
         - alert: HighLatency
           expr: histogram_quantile(0.99, rate(http_server_requests_seconds_bucket{namespace="cloud-secrets-manager"}[5m])) > 1
           for: 5m
@@ -83,7 +79,6 @@ spec:
             summary: "High latency in {{ $labels.application }}"
             description: "99th percentile latency is {{ $value }}s in {{ $labels.application }}"
 
-        # Database connection failures
         - alert: DatabaseConnectionFailure
           expr: up{job="cloud-sql-proxy"} == 0
           for: 2m
@@ -93,7 +88,6 @@ spec:
             summary: "Database connection failure"
             description: "Cloud SQL Proxy is down for {{ $labels.pod }}"
 
-        # High memory usage
         - alert: HighMemoryUsage
           expr: (container_memory_usage_bytes{namespace="cloud-secrets-manager"} / container_spec_memory_limit_bytes) > 0.9
           for: 5m
@@ -103,7 +97,6 @@ spec:
             summary: "High memory usage in {{ $labels.pod }}"
             description: "Memory usage is {{ $value | humanizePercentage }} in {{ $labels.pod }}"
 
-        # High CPU usage
         - alert: HighCPUUsage
           expr: rate(container_cpu_usage_seconds_total{namespace="cloud-secrets-manager"}[5m]) > 0.8
           for: 5m
@@ -112,4 +105,3 @@ spec:
           annotations:
             summary: "High CPU usage in {{ $labels.pod }}"
             description: "CPU usage is {{ $value | humanizePercentage }} in {{ $labels.pod }}"
-

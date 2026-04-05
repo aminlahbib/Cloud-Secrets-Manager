@@ -1,17 +1,23 @@
-# Local Kubernetes (Docker Desktop) Values
-# Use with: helm install csm . -n csm -f values-local.yaml
+# Local Kubernetes (Minikube / Docker Desktop) Values
+# Use with: helm install csm . -n cloud-secrets-manager -f values-local.yaml
+
+# Spring profile and JPA settings for local dev
+springProfile: dev
+jpaDdlAuto: update
 
 # Use locally built images
 image:
   repositorySecretService: "csm/secret-service"
   repositoryAuditService: "csm/audit-service"
   repositoryNotificationService: "csm/notification-service"
+  repositoryFrontend: "csm/frontend"
   tag: "local"
-  pullPolicy: Never  # Use local images
+  pullPolicy: Never
 
 secretService:
   replicaCount: 1
   port: 8080
+  env: []
   resources:
     requests:
       memory: "256Mi"
@@ -23,6 +29,7 @@ secretService:
 auditService:
   replicaCount: 1
   port: 8081
+  env: []
   resources:
     requests:
       memory: "128Mi"
@@ -34,6 +41,7 @@ auditService:
 notificationService:
   replicaCount: 1
   port: 8082
+  env: []
   resources:
     requests:
       memory: "128Mi"
@@ -41,6 +49,16 @@ notificationService:
     limits:
       memory: "256Mi"
       cpu: "250m"
+
+frontend:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "32Mi"
+      cpu: "25m"
+    limits:
+      memory: "64Mi"
+      cpu: "100m"
 
 # Service accounts (no GCP annotations for local)
 serviceAccount:
@@ -59,6 +77,7 @@ notificationServiceAccount:
 createSecrets: true
 jwtSecret: "local-dev-jwt-secret-key-minimum-32-chars!"
 aesKey: "local-dev-aes-key-32-bytes-here!"
+auditApiKey: "local-dev-audit-api-key"
 
 # Enable local PostgreSQL
 postgres:
@@ -83,14 +102,32 @@ googleIdentity:
   enabled: false
   projectId: "cloud-secrets-manager"
 
-# Ingress (use NodePort for local access)
+# Pub/Sub disabled for local (uses HTTP fallback)
+pubsub:
+  enabled: false
+
+# Email disabled for local
+email:
+  enabled: false
+
+# Ingress (use port-forward for local access)
 ingress:
-  enabled: false  # We'll use port-forward instead
+  enabled: false
+
+# App base URL for local
+app:
+  baseUrl: "http://localhost:3000"
 
 # Monitoring integration
 monitoring:
-  enabled: true
+  enabled: false
   prometheus:
-    enabled: true
+    enabled: false
   grafana:
-    enabled: true
+    enabled: false
+
+podDisruptionBudget:
+  enabled: false
+
+autoscaling:
+  enabled: false

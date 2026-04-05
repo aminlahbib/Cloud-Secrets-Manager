@@ -41,6 +41,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired(required = false)
     private WorkflowService workflowService;
     
+    @Autowired(required = false)
+    private TokenBlacklistService tokenBlacklistService;
+    
     @Value("${google.cloud.identity.enabled:false}")
     private boolean firebaseEnabled;
 
@@ -104,10 +107,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 // Fall back to local JWT validation if Firebase validation failed or disabled
                 if (authentication == null && tokenProvider.validateToken(jwt)) {
+                    // Reject revoked tokens
+                    if (tokenBlacklistService != null) {
+                        String jti = tokenProvider.getJti(jwt);
+                        if (jti != null && tokenBlacklistService.isBlacklisted(jti)) {
+                            log.warn("Rejected blacklisted token with JTI: {}", jti);
+                            filterChain.doFilter(request, response);
+                            return;
+                        }
+                    }
+
                     String username = tokenProvider.getUsername(jwt);
                     Collection<? extends GrantedAuthority> authorities = tokenProvider.getAuthorities(jwt);
                     
-                    // Create UserDetails from JWT token (no database lookup needed)
                     User userDetails = new User(username, "", authorities);
                     
                     authentication = new UsernamePasswordAuthenticationToken(

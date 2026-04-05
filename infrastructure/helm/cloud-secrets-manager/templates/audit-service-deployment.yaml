@@ -60,15 +60,19 @@ spec:
                   name: db-secrets
                   key: audit-db-password
             - name: SPRING_PROFILES_ACTIVE
-              value: prod
+              value: {{ .Values.springProfile | default "prod" }}
             - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              value: update
+              value: {{ .Values.jpaDdlAuto | default "validate" }}
             # Audit service API key for frontend authentication
             - name: AUDIT_SERVICE_API_KEY
               valueFrom:
                 secretKeyRef:
                   name: audit-api-key
                   key: AUDIT_API_KEY
+            {{- range .Values.auditService.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
           ports:
             - containerPort: {{ .Values.auditService.port }}
           livenessProbe:

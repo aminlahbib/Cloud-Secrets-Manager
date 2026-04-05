@@ -1,6 +1,11 @@
 # Environment (dev, staging, production)
 environment: dev
 
+# Spring Boot configuration (overridable per environment)
+springProfile: "prod"
+jpaDdlAuto: "validate"
+auditApiKey: ""
+
 image:
   repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
   repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
@@ -12,6 +17,7 @@ image:
 secretService:
   replicaCount: 1
   port: 8080
+  env: []
   resources:
     requests:
       memory: "256Mi"
@@ -23,6 +29,7 @@ secretService:
 auditService:
   replicaCount: 1
   port: 8081
+  env: []
   resources:
     requests:
       memory: "384Mi"
@@ -34,6 +41,7 @@ auditService:
 notificationService:
   replicaCount: 1
   port: 8082
+  env: []
   resources:
     requests:
       memory: "384Mi"
@@ -157,7 +165,15 @@ monitoring:
     enabled: true
   grafana:
     enabled: true
-    # CORS (if needed)
-    # nginx.ingress.kubernetes.io/enable-cors: "true"
-    # nginx.ingress.kubernetes.io/cors-allow-origin: "https://yourdomain.com"
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 90
 

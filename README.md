@@ -149,7 +149,7 @@ graph LR
     Admin --> React
     React -->|REST + JWT| SecretAPI
     SecretAPI -->|Events| PubSub
-    PubSub -.->|Async| AuditAPI
+    SecretAPI -->|HTTP| AuditAPI
     PubSub -.->|Async| NotifAPI
     SecretAPI --> PG
     SecretAPI --> Redis
@@ -194,13 +194,12 @@ sequenceDiagram
     SecretService->>SecretService: Encrypt secret (AES-256-GCM)
     SecretService->>DB: Store encrypted secret
     DB-->>SecretService: Secret saved
+    SecretService->>AuditService: POST /api/audit/log
+    AuditService->>DB: Create immutable audit log
+    AuditService-->>SecretService: Audit confirmed
     SecretService->>PubSub: Publish SECRET_CREATED event
     SecretService-->>UI: Return success (201)
     UI-->>User: Show success message
-    
-    PubSub->>AuditService: SECRET_CREATED event
-    AuditService->>DB: Create immutable audit log
-    AuditService->>AuditService: Update analytics
     
     PubSub->>NotificationService: SECRET_CREATED event
     NotificationService->>DB: Store notification
@@ -384,5 +383,5 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 <div align="center">
 
-*Last Updated: January 2026*
+*Last Updated: April 2026*
 </div>

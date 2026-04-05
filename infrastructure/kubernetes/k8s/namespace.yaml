@@ -5,4 +5,11 @@ metadata:
   labels:
     app.kubernetes.io/name: cloud-secrets-manager
     app.kubernetes.io/part-of: cloud-secrets-manager
-
+    # Pod Security Standards — restricted is the strictest level.
+    # All pods in this namespace must comply: non-root, no privilege
+    # escalation, seccomp profile, drop all capabilities.
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Used by NetworkPolicy namespaceSelector rules
+    name: cloud-secrets-manager

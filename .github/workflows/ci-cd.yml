@@ -2,10 +2,10 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "development" ]
   pull_request:
-    branches: [ "main", "develop" ]
-  workflow_dispatch:  # Allow manual triggering
+    branches: [ "main", "development" ]
+  workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: cloud-secrets-manager
@@ -154,7 +154,7 @@ jobs:
     name: Deploy to Dev
     needs: build-images
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
     environment:
       name: dev
       url: https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}
