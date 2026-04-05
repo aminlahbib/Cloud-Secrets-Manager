@@ -32,11 +32,11 @@ auditService:
   env: []
   resources:
     requests:
-      memory: "128Mi"
-      cpu: "50m"
-    limits:
       memory: "256Mi"
-      cpu: "250m"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 notificationService:
   replicaCount: 1
@@ -44,11 +44,11 @@ notificationService:
   env: []
   resources:
     requests:
-      memory: "128Mi"
-      cpu: "50m"
-    limits:
       memory: "256Mi"
-      cpu: "250m"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
 
 frontend:
   replicaCount: 1
