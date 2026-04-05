@@ -109,10 +109,12 @@ notifications:
     url: ${NOTIFICATION_SERVICE_URL:http://localhost:8082}
 
 # Google Cloud Identity Platform Configuration
+# Default false: without GOOGLE_IDENTITY_ENABLED, use local email/password auth (BCrypt + JWT).
+# Set GOOGLE_IDENTITY_ENABLED=true (and credentials) for Firebase/GCP Identity — e.g. Helm when googleIdentity.enabled.
 google:
   cloud:
     identity:
-      enabled: ${GOOGLE_IDENTITY_ENABLED:true}
+      enabled: ${GOOGLE_IDENTITY_ENABLED:false}
       project-id: ${GOOGLE_PROJECT_ID:cloud-secrets-manager}
       service-account-path: ${GOOGLE_SERVICE_ACCOUNT_PATH:infrastructure/gcp/keys/firebase-admin-key.json}
 
