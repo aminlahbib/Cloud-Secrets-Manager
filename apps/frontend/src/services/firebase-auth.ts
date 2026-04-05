@@ -12,16 +12,9 @@ import {
 } from 'firebase/auth';
 import { auth, googleProvider } from '@/config/firebase';
 
-// Note: COOP warnings from Firebase are handled via nginx.conf (Cross-Origin-Opener-Policy header)
-// These warnings are harmless and don't affect functionality
-
 export const firebaseAuthService = {
-  /**
-   * Initialize auth persistence
-   * @param persistent - If true, use localStorage persistence (survives browser restarts)
-   *                     If false, use sessionStorage persistence (cleared when browser closes)
-   */
   async initPersistence(persistent: boolean = false): Promise<void> {
+    if (!auth) return;
     try {
       const persistence = persistent ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
@@ -30,48 +23,30 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Sign in with Google OAuth popup
-   * Returns the Firebase ID token which can be sent to the backend
-   * @param persistent - If true, persist auth across browser restarts
-   */
   async signInWithGoogle(persistent: boolean = false): Promise<string> {
+    if (!auth || !googleProvider) throw new Error('Firebase is not configured');
     try {
       await this.initPersistence(persistent);
-      
-      // COOP warnings are handled via nginx.conf (Cross-Origin-Opener-Policy header)
-      
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
       return idToken;
     } catch (error: any) {
       console.error('Google sign-in error:', error);
-      
-      // Handle popup-blocked error specifically
       if (error.code === 'auth/popup-blocked') {
         throw new Error('Popup was blocked by your browser. Please allow popups for this site and try again.');
       }
-      
-      // Handle popup-closed-by-user error
       if (error.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled. Please try again.');
       }
-      
-      // Handle other Firebase auth errors
       if (error.code && error.code.startsWith('auth/')) {
         throw new Error(error.message || 'Authentication failed. Please try again.');
       }
-      
       throw new Error(error.message || 'Failed to sign in with Google');
     }
   },
 
-  /**
-   * Sign in with email and password
-   * Returns the Firebase ID token which can be sent to the backend
-   * @param persistent - If true, persist auth across browser restarts
-   */
   async signInWithEmail(email: string, password: string, persistent: boolean = false): Promise<string> {
+    if (!auth) throw new Error('Firebase is not configured');
     try {
       await this.initPersistence(persistent);
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -83,11 +58,8 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Create a new user with email and password
-   * Returns the Firebase ID token which can be sent to the backend
-   */
   async createUser(email: string, password: string): Promise<string> {
+    if (!auth) throw new Error('Firebase is not configured');
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const idToken = await userCredential.user.getIdToken();
@@ -98,10 +70,8 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Sign out the current user
-   */
   async signOut(): Promise<void> {
+    if (!auth) return;
     try {
       await firebaseSignOut(auth);
     } catch (error: any) {
@@ -110,16 +80,10 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Get the current Firebase ID token
-   * This token should be sent to the backend with each authenticated request
-   */
   async getIdToken(forceRefresh: boolean = false): Promise<string | null> {
+    if (!auth) return null;
     const user = auth.currentUser;
-    if (!user) {
-      return null;
-    }
-
+    if (!user) return null;
     try {
       return await user.getIdToken(forceRefresh);
     } catch (error: any) {
@@ -128,33 +92,24 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Get the current Firebase user
-   */
   getCurrentUser(): FirebaseUser | null {
-    return auth.currentUser;
+    return auth?.currentUser ?? null;
   },
 
-  /**
-   * Subscribe to auth state changes
-   * Returns an unsubscribe function
-   */
   onAuthStateChanged(callback: (user: FirebaseUser | null) => void): () => void {
+    if (!auth) {
+      callback(null);
+      return () => {};
+    }
     return onAuthStateChanged(auth, callback);
   },
 
-  /**
-   * Update the current user's profile (display name, photo URL)
-   */
   async updateUserProfile(updates: { displayName?: string; photoURL?: string }): Promise<void> {
+    if (!auth) throw new Error('Firebase is not configured');
     const user = auth.currentUser;
-    if (!user) {
-      throw new Error('No user is currently signed in');
-    }
-
+    if (!user) throw new Error('No user is currently signed in');
     try {
       await updateProfile(user, updates);
-      // Force token refresh to get updated claims
       await user.getIdToken(true);
     } catch (error: any) {
       console.error('Failed to update user profile:', error);
@@ -162,9 +117,6 @@ export const firebaseAuthService = {
     }
   },
 
-  /**
-   * Check if Firebase is enabled (all config vars are set)
-   */
   isFirebaseEnabled(): boolean {
     return !!(
       import.meta.env.VITE_FIREBASE_API_KEY &&

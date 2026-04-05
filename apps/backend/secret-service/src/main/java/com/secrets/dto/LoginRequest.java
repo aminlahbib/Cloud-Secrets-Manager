@@ -1,15 +1,17 @@
 package com.secrets.dto;
 
-import jakarta.validation.constraints.NotBlank;
-
+/**
+ * Login payload depends on {@code google.cloud.identity.enabled}:
+ * <ul>
+ *   <li>When enabled: {@code idToken} (Firebase) is required.</li>
+ *   <li>When disabled: {@code email} and {@code password} are required (local dev / self-hosted).</li>
+ * </ul>
+ */
 public class LoginRequest {
-    
-    /**
-     * Google ID token from Firebase SDK
-     * This is the primary authentication method with Google Cloud Identity Platform
-     */
-    @NotBlank(message = "idToken is required")
+
     private String idToken;
+    private String email;
+    private String password;
 
     public LoginRequest() {
     }
@@ -24,5 +26,21 @@ public class LoginRequest {
 
     public void setIdToken(String idToken) {
         this.idToken = idToken;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

@@ -43,8 +43,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import io.swagger.v3.oas.annotations.Operation;
 import com.secrets.dto.UserResponse;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -60,6 +63,7 @@ public class AuthController {
     private final IntermediateTokenProvider intermediateTokenProvider;
     private final InvitationService invitationService;
     private final WorkflowService workflowService;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${two-factor.intermediate-token.expiry-ms:300000}")
     private long intermediateTokenExpiryMs;
@@ -67,7 +71,8 @@ public class AuthController {
     public AuthController(GoogleIdentityTokenValidator googleTokenValidator, JwtTokenProvider tokenProvider,
                          RefreshTokenService refreshTokenService, GoogleIdentityService googleIdentityService,
                          UserService userService, IntermediateTokenProvider intermediateTokenProvider,
-                         InvitationService invitationService, WorkflowService workflowService) {
+                         InvitationService invitationService, WorkflowService workflowService,
+                         PasswordEncoder passwordEncoder) {
         this.googleTokenValidator = googleTokenValidator;
         this.tokenProvider = tokenProvider;
         this.refreshTokenService = refreshTokenService;
@@ -76,6 +81,7 @@ public class AuthController {
         this.intermediateTokenProvider = intermediateTokenProvider;
         this.invitationService = invitationService;
         this.workflowService = workflowService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Value("${security.jwt.expiration-ms:900000}")
@@ -146,15 +152,14 @@ public class AuthController {
      * Accepts Google ID token from Firebase SDK and returns JWT token for API calls
      */
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
-        if (!googleIdentityEnabled) {
-            log.error("Google Cloud Identity Platform is not enabled");
-            return ResponseEntity.badRequest()
-                .body(TokenResponse.builder()
-                    .error("Google Cloud Identity Platform is not enabled. Please configure it first.")
-                    .build());
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest request) {
+        if (googleIdentityEnabled) {
+            return loginWithFirebaseIdToken(request);
         }
+        return loginWithLocalPassword(request);
+    }
 
+    private ResponseEntity<TokenResponse> loginWithFirebaseIdToken(LoginRequest request) {
         if (request.getIdToken() == null || request.getIdToken().isBlank()) {
             return ResponseEntity.badRequest()
                 .body(TokenResponse.builder()
@@ -164,59 +169,45 @@ public class AuthController {
 
         try {
             log.debug("Google Identity login attempt with ID token");
-            
-            // Validate Google ID token with Firebase Admin SDK
             Authentication authentication = googleTokenValidator.validateToken(request.getIdToken());
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String email = userDetails.getUsername();
-            
-            // Extract Firebase token details to get UID, display name, and photo URL
+
             FirebaseToken firebaseToken = null;
             if (authentication.getDetails() instanceof FirebaseToken) {
                 firebaseToken = (FirebaseToken) authentication.getDetails();
             }
-            
-            // Ensure user exists in local database (create if doesn't exist)
+
             String firebaseUid = firebaseToken != null ? firebaseToken.getUid() : email;
             String displayName = firebaseToken != null ? firebaseToken.getName() : null;
             String photoUrl = firebaseToken != null ? firebaseToken.getPicture() : null;
-            
+
             User user = userService.getOrCreateUser(firebaseUid, email, displayName, photoUrl);
-            
-            // Ensure default workflow exists for the user
+
             try {
                 workflowService.ensureDefaultWorkflow(user.getId());
                 log.debug("Ensured default workflow exists for user: {}", email);
             } catch (Exception e) {
                 log.warn("Failed to ensure default workflow for user, continuing: {}", e.getMessage());
-                // Don't fail login if workflow creation fails
             }
-            
-            // Check if user has 2FA enabled
-            if (user != null && Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
-                // User has 2FA enabled - return intermediate token
+
+            if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
                 UUID userId = user.getId();
                 String intermediateToken = intermediateTokenProvider.generateToken(userId, email);
-                
+
                 TokenResponse response = TokenResponse.builder()
                     .requiresTwoFactor(true)
                     .intermediateToken(intermediateToken)
                     .twoFactorType("TOTP")
                     .expiresIn(intermediateTokenExpiryMs / 1000)
                     .build();
-                
+
                 log.info("User {} requires 2FA verification", email);
                 return ResponseEntity.ok(response);
             }
-            
-            // No 2FA - proceed with normal token generation
-            String accessToken = tokenProvider.generateToken(
-                email,
-                userDetails.getAuthorities()
-            );
 
-            // Generate refresh token
+            String accessToken = tokenProvider.generateToken(email, userDetails.getAuthorities());
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
 
             TokenResponse response = TokenResponse.builder()
@@ -229,7 +220,7 @@ public class AuthController {
 
             log.info("User {} logged in successfully via Google Identity Platform", email);
             return ResponseEntity.ok(response);
-            
+
         } catch (FirebaseAuthException e) {
             log.error("Failed to validate Google ID token", e);
             return ResponseEntity.status(401)
@@ -249,6 +240,76 @@ public class AuthController {
                     .error("Authentication failed: " + e.getMessage())
                     .build());
         }
+    }
+
+    private ResponseEntity<TokenResponse> loginWithLocalPassword(LoginRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()
+                || request.getPassword() == null || request.getPassword().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(TokenResponse.builder()
+                    .error("email and password are required")
+                    .build());
+        }
+
+        String email = request.getEmail().toLowerCase().trim();
+        try {
+            User user = userService.findByEmail(email).orElse(null);
+            if (user == null || user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+                return ResponseEntity.status(401)
+                    .body(TokenResponse.builder()
+                        .error("Invalid email or password")
+                        .build());
+            }
+            if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                return ResponseEntity.status(401)
+                    .body(TokenResponse.builder()
+                        .error("Invalid email or password")
+                        .build());
+            }
+
+            user.setLastLoginAt(LocalDateTime.now());
+            userService.updateUser(user);
+
+            try {
+                workflowService.ensureDefaultWorkflow(user.getId());
+            } catch (Exception e) {
+                log.warn("Failed to ensure default workflow for user, continuing: {}", e.getMessage());
+            }
+
+            if (Boolean.TRUE.equals(user.getTwoFactorEnabled())) {
+                String intermediateToken = intermediateTokenProvider.generateToken(user.getId(), email);
+                return ResponseEntity.ok(TokenResponse.builder()
+                    .requiresTwoFactor(true)
+                    .intermediateToken(intermediateToken)
+                    .twoFactorType("TOTP")
+                    .expiresIn(intermediateTokenExpiryMs / 1000)
+                    .build());
+            }
+
+            List<GrantedAuthority> authorities = authoritiesForPlatformRole(user);
+            String accessToken = tokenProvider.generateToken(email, authorities);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
+
+            log.info("User {} logged in successfully (local password auth)", email);
+            return ResponseEntity.ok(TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken.getToken())
+                .tokenType("Bearer")
+                .expiresIn(expirationMs / 1000)
+                .requiresTwoFactor(false)
+                .build());
+        } catch (Exception e) {
+            log.error("Unexpected error during local login", e);
+            return ResponseEntity.status(500)
+                .body(TokenResponse.builder()
+                    .error("Authentication failed: " + e.getMessage())
+                    .build());
+        }
+    }
+
+    private List<GrantedAuthority> authoritiesForPlatformRole(User user) {
+        User.PlatformRole role = user.getPlatformRole() != null ? user.getPlatformRole() : User.PlatformRole.USER;
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     /**
@@ -336,23 +397,16 @@ public class AuthController {
     }
 
     /**
-     * Signup endpoint - Create new user account
-     * Creates user in both Firebase and PostgreSQL, then auto-logs them in
+     * Signup endpoint - Create new user account.
+     * When Google Identity is enabled: creates Firebase user + DB row.
+     * When disabled (e.g. local k8s): stores BCrypt password hash in PostgreSQL only.
      */
     @PostMapping("/signup")
     @Operation(summary = "Sign up", description = "Create a new user account")
     public ResponseEntity<Map<String, Object>> signup(@Valid @RequestBody SignupRequest request) {
-        if (!googleIdentityEnabled) {
-            log.error("Google Cloud Identity Platform is not enabled");
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Google Cloud Identity Platform is not enabled. Please configure it first.");
-            return ResponseEntity.badRequest().body(error);
-        }
-
         try {
             String email = request.getEmail().toLowerCase().trim();
-            
-            // Check if user already exists
+
             if (userService.findByEmail(email).isPresent()) {
                 Map<String, Object> error = new HashMap<>();
                 error.put("error", "This email is already registered. Please sign in instead.");
@@ -360,24 +414,33 @@ public class AuthController {
             }
 
             log.info("Creating new user account: {}", email);
-            
-            // Create user in Firebase
-            UserRecord userRecord = googleIdentityService.createUser(email, request.getPassword());
-            
-            // Set default USER role in Firebase
-            googleIdentityService.setUserRoles(userRecord.getUid(), List.of("USER"));
-            
-            // Create user in PostgreSQL immediately
-            User newUser = new User();
-            newUser.setFirebaseUid(userRecord.getUid());
-            newUser.setEmail(email);
-            newUser.setDisplayName(request.getDisplayName());
-            newUser.setPlatformRole(User.PlatformRole.USER);
-            newUser.setIsActive(true);
-            newUser.setLastLoginAt(java.time.LocalDateTime.now());
-            newUser.setOnboardingCompleted(false); // New users need to complete onboarding
-            
-            User savedUser = userService.updateUser(newUser);
+
+            User savedUser;
+            if (googleIdentityEnabled) {
+                UserRecord userRecord = googleIdentityService.createUser(email, request.getPassword());
+                googleIdentityService.setUserRoles(userRecord.getUid(), List.of("USER"));
+
+                User newUser = new User();
+                newUser.setFirebaseUid(userRecord.getUid());
+                newUser.setEmail(email);
+                newUser.setDisplayName(request.getDisplayName());
+                newUser.setPlatformRole(User.PlatformRole.USER);
+                newUser.setIsActive(true);
+                newUser.setLastLoginAt(LocalDateTime.now());
+                newUser.setOnboardingCompleted(false);
+                savedUser = userService.updateUser(newUser);
+            } else {
+                User newUser = new User();
+                newUser.setFirebaseUid("local-" + UUID.randomUUID());
+                newUser.setEmail(email);
+                newUser.setDisplayName(request.getDisplayName());
+                newUser.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+                newUser.setPlatformRole(User.PlatformRole.USER);
+                newUser.setIsActive(true);
+                newUser.setLastLoginAt(LocalDateTime.now());
+                newUser.setOnboardingCompleted(false);
+                savedUser = userService.updateUser(newUser);
+            }
             
             // Create default workflow for the user
             try {
@@ -418,8 +481,7 @@ public class AuthController {
                 log.warn("Failed to fetch/accept invitations for new user: {}", e.getMessage());
             }
             
-            // Generate JWT tokens (auto-login)
-            List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
+            List<GrantedAuthority> authorities = authoritiesForPlatformRole(savedUser);
             String accessToken = tokenProvider.generateToken(email, authorities);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(email);
             
@@ -438,11 +500,10 @@ public class AuthController {
         } catch (FirebaseAuthException e) {
             log.error("Failed to create user in Firebase: {} (Error code: {})", e.getMessage(), e.getErrorCode());
             Map<String, Object> error = new HashMap<>();
-            
-            // Check for duplicate email error codes
+
             String errorCode = e.getErrorCode() != null ? e.getErrorCode().name() : "";
             String errorMessage = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
-            if ("EMAIL_EXISTS".equals(errorCode) || 
+            if ("EMAIL_EXISTS".equals(errorCode) ||
                 "EMAIL_ALREADY_EXISTS".equals(errorCode) ||
                 errorMessage.contains("email already exists")) {
                 error.put("error", "This email is already registered. Please sign in instead.");
@@ -474,8 +535,9 @@ public class AuthController {
     private Collection<? extends GrantedAuthority> fetchUserAuthorities(String email) {
         try {
             if (!googleIdentityEnabled) {
-                // Fallback to default role if Google Identity is disabled
-                return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+                return userService.findByEmail(email)
+                    .map(this::authoritiesForPlatformRole)
+                    .orElse(List.of(new SimpleGrantedAuthority("ROLE_USER")));
             }
 
             Map<String, Object> claims = googleIdentityService.getUserClaims(email);

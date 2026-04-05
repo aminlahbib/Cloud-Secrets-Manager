@@ -96,6 +96,12 @@ public class User {
     @Column(name = "onboarding_completed", nullable = false)
     private Boolean onboardingCompleted = false;
 
+    /**
+     * BCrypt hash for local email/password auth. Null when the account exists only in Firebase.
+     */
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
     public enum PlatformRole {
         USER,
         PLATFORM_ADMIN
@@ -279,6 +285,14 @@ public class User {
 
     public void setOnboardingCompleted(Boolean onboardingCompleted) {
         this.onboardingCompleted = onboardingCompleted;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }
 
