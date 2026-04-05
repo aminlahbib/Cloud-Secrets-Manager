@@ -19,6 +19,10 @@ public class AuditLogResponse {
     private Map<String, Object> oldValue;
     private Map<String, Object> newValue;
     private Map<String, Object> metadata;
+    /** Display name populated from metadata (e.g. userName) for API consumers that do not read nested metadata. */
+    private String userDisplayName;
+    /** Email populated from metadata (e.g. userEmail) for API consumers that do not read nested metadata. */
+    private String userEmail;
     private String ipAddress;
     private String userAgent;
     private ZonedDateTime createdAt;
@@ -30,6 +34,7 @@ public class AuditLogResponse {
     public AuditLogResponse(UUID id, UUID projectId, UUID userId, String action, String resourceType,
             String resourceId, String resourceName, Map<String, Object> oldValue,
             Map<String, Object> newValue, Map<String, Object> metadata,
+            String userDisplayName, String userEmail,
             String ipAddress, String userAgent, ZonedDateTime createdAt, String description) {
         this.id = id;
         this.projectId = projectId;
@@ -41,6 +46,8 @@ public class AuditLogResponse {
         this.oldValue = oldValue;
         this.newValue = newValue;
         this.metadata = metadata;
+        this.userDisplayName = userDisplayName;
+        this.userEmail = userEmail;
         this.ipAddress = ipAddress;
         this.userAgent = userAgent;
         this.createdAt = createdAt;
@@ -52,34 +59,17 @@ public class AuditLogResponse {
     }
 
     public static AuditLogResponse from(AuditLog auditLog, DescriptionFormatter descriptionFormatter) {
-        // Generate description if formatter is provided
+        String userDisplayName = nonBlank(metadataString(auditLog.getMetadata(), "userName"));
+        String userEmail = nonBlank(metadataString(auditLog.getMetadata(), "userEmail"));
+
         String description = null;
         if (descriptionFormatter != null) {
-            // Extract user name from metadata if available, otherwise use userId
-            String userName = null;
-            if (auditLog.getMetadata() != null) {
-                Object userNameObj = auditLog.getMetadata().get("userName");
-                if (userNameObj != null) {
-                    userName = userNameObj.toString();
-                } else {
-                    Object userEmailObj = auditLog.getMetadata().get("userEmail");
-                    if (userEmailObj != null) {
-                        userName = userEmailObj.toString();
-                    }
-                }
-            }
+            String userName = userDisplayName != null ? userDisplayName : userEmail;
             if (userName == null) {
                 userName = auditLog.getUserId() != null ? auditLog.getUserId().toString() : "Unknown user";
             }
 
-            // Extract project name from metadata if available
-            String projectName = null;
-            if (auditLog.getMetadata() != null) {
-                Object projectNameObj = auditLog.getMetadata().get("projectName");
-                if (projectNameObj != null) {
-                    projectName = projectNameObj.toString();
-                }
-            }
+            String projectName = metadataString(auditLog.getMetadata(), "projectName");
 
             description = descriptionFormatter.formatDescription(
                     userName,
@@ -91,7 +81,7 @@ public class AuditLogResponse {
             );
         }
 
-        AuditLogResponse response = AuditLogResponse.builder()
+        return AuditLogResponse.builder()
                 .id(auditLog.getId())
                 .projectId(auditLog.getProjectId())
                 .userId(auditLog.getUserId())
@@ -102,13 +92,28 @@ public class AuditLogResponse {
                 .oldValue(auditLog.getOldValue())
                 .newValue(auditLog.getNewValue())
                 .metadata(auditLog.getMetadata())
+                .userDisplayName(userDisplayName)
+                .userEmail(userEmail)
                 .ipAddress(auditLog.getIpAddress())
                 .userAgent(auditLog.getUserAgent())
                 .createdAt(auditLog.getCreatedAt() != null ? auditLog.getCreatedAt().atZone(ZoneId.of("UTC")) : null)
                 .description(description)
                 .build();
+    }
 
-        return response;
+    private static String metadataString(Map<String, Object> metadata, String key) {
+        if (metadata == null) {
+            return null;
+        }
+        Object v = metadata.get(key);
+        return v != null ? v.toString() : null;
+    }
+
+    private static String nonBlank(String s) {
+        if (s == null || s.isBlank()) {
+            return null;
+        }
+        return s;
     }
 
     public static Builder builder() {
@@ -196,6 +201,22 @@ public class AuditLogResponse {
         this.metadata = metadata;
     }
 
+    public String getUserDisplayName() {
+        return userDisplayName;
+    }
+
+    public void setUserDisplayName(String userDisplayName) {
+        this.userDisplayName = userDisplayName;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
     public String getIpAddress() {
         return ipAddress;
     }
@@ -239,6 +260,8 @@ public class AuditLogResponse {
         private Map<String, Object> oldValue;
         private Map<String, Object> newValue;
         private Map<String, Object> metadata;
+        private String userDisplayName;
+        private String userEmail;
         private String ipAddress;
         private String userAgent;
         private ZonedDateTime createdAt;
@@ -297,6 +320,16 @@ public class AuditLogResponse {
             return this;
         }
 
+        public Builder userDisplayName(String userDisplayName) {
+            this.userDisplayName = userDisplayName;
+            return this;
+        }
+
+        public Builder userEmail(String userEmail) {
+            this.userEmail = userEmail;
+            return this;
+        }
+
         public Builder ipAddress(String ipAddress) {
             this.ipAddress = ipAddress;
             return this;
@@ -319,7 +352,8 @@ public class AuditLogResponse {
 
         public AuditLogResponse build() {
             return new AuditLogResponse(id, projectId, userId, action, resourceType, resourceId,
-                    resourceName, oldValue, newValue, metadata, ipAddress, userAgent, createdAt, description);
+                    resourceName, oldValue, newValue, metadata, userDisplayName, userEmail,
+                    ipAddress, userAgent, createdAt, description);
         }
     }
 }

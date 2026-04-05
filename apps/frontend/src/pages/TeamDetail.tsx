@@ -19,6 +19,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { updateTeamCache, updateTeamMemberCache } from '../utils/queryInvalidation';
 import { useDebounce } from '../utils/debounce';
 import { getErrorMessage, isPermissionError } from '../utils/errorHandling';
+import { auditActorDisplayName } from '../utils/auditActor';
 import { teamsService } from '../services/teams';
 import { auditService } from '../services/audit';
 import { projectsService } from '../services/projects';
@@ -947,7 +948,7 @@ export const TeamDetailPage: React.FC = () => {
                           )}
                         </div>
                         <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          by {log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}
+                          by {auditActorDisplayName(log)}
                         </p>
                       </div>
                       

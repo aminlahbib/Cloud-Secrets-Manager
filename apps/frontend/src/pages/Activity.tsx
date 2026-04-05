@@ -11,6 +11,7 @@ import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog, Project } from '../types';
+import { auditActorDisplayName } from '../utils/auditActor';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -483,7 +484,7 @@ export const ActivityPage: React.FC = () => {
                         )}
                       </div>
                       <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        by {log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}
+                        by {auditActorDisplayName(log)}
                       </p>
                     </div>
                     

@@ -11,6 +11,7 @@ import { StatsCards } from '../analytics/StatsCards';
 import { ActivityChart } from '../analytics/ActivityChart';
 import { ActionDistributionChart } from '../analytics/ActionDistributionChart';
 import { formatActionName } from '../../utils/analytics';
+import { auditActorDisplayName } from '../../utils/auditActor';
 import { useI18n } from '../../contexts/I18nContext';
 import type { AuditLog } from '../../types';
 
@@ -131,7 +132,7 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
   const formattedAction = useMemo(() => formatAction(log.action), [log.action]);
   const timeAgo = useMemo(() => getTimeAgo(log.createdAt || '', t), [log.createdAt, t]);
   const userName = useMemo(
-    () => log.userDisplayName || log.userEmail || log.user?.email || 'Unknown',
+    () => auditActorDisplayName(log),
     [log.userDisplayName, log.userEmail, log.user?.email]
   );
   const teamName = useMemo(

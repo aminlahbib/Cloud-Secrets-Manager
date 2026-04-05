@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Spinner } from '../ui/Spinner';
 import type { AuditLog } from '../../types';
+import { auditActorDisplayName } from '../../utils/auditActor';
 import { useI18n } from '../../contexts/I18nContext';
 
 interface RecentActivityProps {
@@ -53,7 +54,7 @@ export const RecentActivity: React.FC<RecentActivityProps> = ({
         ) : (
           activity.slice(0, 3).map((log: AuditLog) => {
             // Get user initials for avatar
-            const userName = log.userDisplayName || log.userEmail || log.user?.email || 'Unknown';
+            const userName = auditActorDisplayName(log);
             const userInitials = userName
               .split(' ')
               .map((n: string) => n[0])

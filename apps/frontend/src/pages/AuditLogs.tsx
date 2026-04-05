@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
 import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog } from '../types';
+import { auditActorDisplayName } from '../utils/auditActor';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   CREATE: 'success',
@@ -267,7 +268,7 @@ export const AuditLogsPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceType || '—'}</td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.resourceName || log.resourceId || '—'}</td>
-                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{log.userDisplayName || log.userEmail || log.user?.email || 'Unknown'}</td>
+                      <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-primary)' }}>{auditActorDisplayName(log)}</td>
                       <td className="px-6 py-4 text-sm" style={{ color: 'var(--text-secondary)' }}>{log.ipAddress || '—'}</td>
                     </tr>
                   ))}
