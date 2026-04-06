@@ -115,6 +115,7 @@ export const useSaveSecret = (projectId: string, isEditMode: boolean) => {
                 queryClient.invalidateQueries({ queryKey: ['projects', 'recent', user.id] });
                 queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
             }
+            queryClient.invalidateQueries({ queryKey: ['activity'] });
             queryClient.invalidateQueries({ queryKey: ['projects'] });
         }
     });

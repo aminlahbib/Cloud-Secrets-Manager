@@ -11,7 +11,7 @@ import { StatsCards } from '../analytics/StatsCards';
 import { ActivityChart } from '../analytics/ActivityChart';
 import { ActionDistributionChart } from '../analytics/ActionDistributionChart';
 import { formatActionName } from '../../utils/analytics';
-import { auditActorDisplayName } from '../../utils/auditActor';
+import { auditActorDisplayName, auditDescriptionContainsUuid } from '../../utils/auditActor';
 import { useI18n } from '../../contexts/I18nContext';
 import type { AuditLog } from '../../types';
 
@@ -118,23 +118,13 @@ const getActionColor = (action: string): 'default' | 'success' | 'warning' | 'da
     action.includes('READ') ? 'info' : 'default');
 };
 
-// Helper function to detect UUID patterns in descriptions
-const isUUIDInDescription = (description: string): boolean => {
-  // UUID pattern: 8-4-4-4-12 hex digits
-  const uuidPattern = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
-  return uuidPattern.test(description);
-};
-
 // Memoized activity log item component
 const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
   const { t } = useI18n();
   const actionColor = useMemo(() => getActionColor(log.action), [log.action]);
   const formattedAction = useMemo(() => formatAction(log.action), [log.action]);
   const timeAgo = useMemo(() => getTimeAgo(log.createdAt || '', t), [log.createdAt, t]);
-  const userName = useMemo(
-    () => auditActorDisplayName(log),
-    [log.userDisplayName, log.userEmail, log.user?.email]
-  );
+  const userName = useMemo(() => auditActorDisplayName(log), [log]);
   const teamName = useMemo(
     () => log.metadata?.teamName ? String(log.metadata.teamName) : null,
     [log.metadata?.teamName]
@@ -156,7 +146,7 @@ const ActivityLogItem = React.memo<{ log: AuditLog }>(({ log }) => {
         </div>
 
         <div className="flex-1 min-w-0">
-          {log.description && !isUUIDInDescription(log.description) ? (
+          {log.description && !auditDescriptionContainsUuid(log.description) ? (
             <p className="text-body-sm font-medium text-theme-primary">
               {log.description}
             </p>

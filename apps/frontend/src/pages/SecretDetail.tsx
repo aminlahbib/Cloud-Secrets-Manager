@@ -105,6 +105,7 @@ export const SecretDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       navigate(`/projects/${projectId}`);
     },
@@ -141,6 +142,7 @@ export const SecretDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
@@ -167,6 +169,7 @@ export const SecretDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['project-activity', projectId] });
       queryClient.invalidateQueries({ queryKey: ['project-activity-analytics', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activity', 'recent'] });
+      queryClient.invalidateQueries({ queryKey: ['activity'] });
       setShowVersionModal(false);
       setVersionDetail(null);
       setActiveVersionNumber(null);

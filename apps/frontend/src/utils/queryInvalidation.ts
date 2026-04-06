@@ -32,6 +32,8 @@ export const invalidateProjectQueries = (
 
   // Global project list
   queryClient.invalidateQueries({ queryKey: ['projects'] });
+  // Global /activity feed (['activity', 'all-projects', ...]) is not keyed under ['activity', 'recent']
+  queryClient.invalidateQueries({ queryKey: ['activity'] });
 };
 
 /**

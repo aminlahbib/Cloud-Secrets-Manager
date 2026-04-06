@@ -11,7 +11,7 @@ import { Badge } from '../components/ui/Badge';
 import { useAuth } from '../contexts/AuthContext';
 import { useI18n } from '../contexts/I18nContext';
 import type { AuditLog, Project } from '../types';
-import { auditActorDisplayName } from '../utils/auditActor';
+import { auditActorDisplayName, auditDescriptionContainsUuid } from '../utils/auditActor';
 
 const ACTION_COLORS: Record<string, 'default' | 'success' | 'warning' | 'danger' | 'info'> = {
   // v3 actions
@@ -193,8 +193,10 @@ export const ActivityPage: React.FC = () => {
       };
     },
     enabled: !!user?.id && (projects.length > 0 || isProjectsLoading === false),
-    staleTime: 5 * 60 * 1000, // 5 minutes - preserve audit data across sessions
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache for 30 minutes even when not in use
+    // Fresh feed when visiting the page; project tab uses a different query key and refetches independently
+    staleTime: 0,
+    refetchOnMount: 'always',
+    gcTime: 30 * 60 * 1000,
   });
 
   const isLoading = isProjectsLoading || isActivitiesLoading;
@@ -463,29 +465,35 @@ export const ActivityPage: React.FC = () => {
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={actionColor}>
-                          {formatAction(log.action)}
-                        </Badge>
-                        {log.resourceName && (
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {log.resourceName}
-                          </span>
-                        )}
-                        {projectName && (
-                          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                            in {projectName}
-                          </span>
-                        )}
-                        {teamName && (
-                          <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                            (team: {teamName})
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        by {auditActorDisplayName(log)}
-                      </p>
+                      {log.description && !auditDescriptionContainsUuid(log.description) ? (
+                        <p className="text-body-sm font-medium text-theme-primary">{log.description}</p>
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={actionColor}>
+                              {formatAction(log.action)}
+                            </Badge>
+                            {log.resourceName && (
+                              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                                {log.resourceName}
+                              </span>
+                            )}
+                            {projectName && (
+                              <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                                in {projectName}
+                              </span>
+                            )}
+                            {teamName && (
+                              <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                                (team: {teamName})
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            by {auditActorDisplayName(log)}
+                          </p>
+                        </>
+                      )}
                     </div>
                     
                     <div className="flex items-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
