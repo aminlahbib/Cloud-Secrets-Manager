@@ -1,0 +1,50 @@
+# Staging environment overrides — merged on top of values.yaml
+
+global:
+  environment: "staging"
+
+secretService:
+  replicas: 2
+  image:
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+
+auditService:
+  replicas: 2
+  image:
+    pullPolicy: Always
+  resources:
+    requests:
+      cpu: 200m
+      memory: 384Mi
+    limits:
+      cpu: "1"
+      memory: 768Mi
+
+notificationService:
+  replicas: 2
+  image:
+    pullPolicy: Always
+
+frontend:
+  replicas: 2
+  image:
+    pullPolicy: Always
+
+ingress:
+  enabled: true
+  className: nginx
+  host: staging.csm.internal
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "200"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  tls:
+    enabled: true
+    secretName: csm-staging-tls
