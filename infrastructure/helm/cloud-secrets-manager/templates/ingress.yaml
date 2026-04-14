@@ -5,26 +5,45 @@ metadata:
   name: {{ include "csm.fullname" . }}
   labels:
     {{- include "csm.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- range $k, $v := . }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+  {{- end }}
 spec:
   {{- if .Values.ingress.className }}
   ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ .Values.ingress.host | quote }}
+      secretName: {{ .Values.ingress.tls.secretName }}
   {{- end }}
   rules:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
+          - path: /api/notifications
+            pathType: Prefix
+            backend:
+              service:
+                name: notification-service
+                port:
+                  name: http
+          - path: /api/audit
+            pathType: Prefix
+            backend:
+              service:
+                name: audit-service
+                port:
+                  name: http
           - path: /api
             pathType: Prefix
             backend:
               service:
                 name: secret-service
-                port:
-                  name: http
-          - path: /audit
-            pathType: Prefix
-            backend:
-              service:
-                name: audit-service
                 port:
                   name: http
           - path: /
