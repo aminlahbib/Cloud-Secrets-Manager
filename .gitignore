@@ -182,6 +182,12 @@ docs/**
 # PDF files
 Cloud-Secrets-Manager.pdf
 
+!*.md
+
+# Private interview/infrastructure docs
+infrastructure/INFRASTRUCTURE_REPORT.md
+infrastructure/INTERVIEW_PREP.md
+
 # Kiro specs
 .kiro/** 
 
