@@ -2,60 +2,49 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main", "development" ]
+    branches: [main, development]
   pull_request:
-    branches: [ "main", "development" ]
-  workflow_dispatch:
+    branches: [main, development]
 
 env:
-  GCP_PROJECT_ID: cloud-secrets-manager
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   GCP_REGION: europe-west10
-  ARTIFACT_REGISTRY: europe-west10-docker.pkg.dev
-  IMAGE_REGISTRY: europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images
+  GKE_CLUSTER: csm-cluster-dev
+  APP_NAMESPACE: csm-dev
+  REGISTRY: europe-west10-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/docker-images
 
 jobs:
+  # ---------------------------------------------------------------
+  # Build and test
+  # ---------------------------------------------------------------
   build-test:
-    name: Build and Test
+    name: Build & Test
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '21'
-          cache: 'maven'
+          cache: maven
 
-      - name: Build and Test Secret Service
-        run: |
-          cd apps/backend/secret-service
-          ./mvnw clean verify
-        continue-on-error: false
+      - name: Test Secret Service
+        run: ./mvnw clean verify
+        working-directory: apps/backend/secret-service
 
-      - name: Build and Test Audit Service
-        run: |
-          cd apps/backend/audit-service
-          ./mvnw clean verify
-        continue-on-error: false
+      - name: Test Audit Service
+        run: ./mvnw clean verify
+        working-directory: apps/backend/audit-service
 
-      - name: Build and Test Notification Service
-        run: |
-          cd apps/backend/notification-service
-          ./mvnw clean verify
-        continue-on-error: false
+      - name: Test Notification Service
+        run: ./mvnw clean verify
+        working-directory: apps/backend/notification-service
 
-      - name: Upload Test Results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: |
-            apps/backend/*/target/surefire-reports/
-          retention-days: 30
-
+  # ---------------------------------------------------------------
+  # Security scan
+  # ---------------------------------------------------------------
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -63,225 +52,154 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner
+      - name: Run Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
+          scan-type: fs
           scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '1'
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
 
-      - name: Upload Trivy results to GitHub Security
+      - name: Upload results
         if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: trivy-results.sarif
 
+  # ---------------------------------------------------------------
+  # Build Docker images via Cloud Build
+  # ---------------------------------------------------------------
   build-images:
-    name: Build Docker Images
+    name: Build Images
     needs: [build-test, security-scan]
-    runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.tag.outputs.TAG }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to GCP (Workload Identity Federation)
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Set image tag
-        id: tags
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "IMAGE_TAG=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "ENV=prod" >> $GITHUB_OUTPUT
-          else
-            echo "IMAGE_TAG=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
-            echo "ENV=dev" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Load secrets from Secret Manager
-        id: secrets
-        run: |
-          FIREBASE_API_KEY=$(gcloud secrets versions access latest --secret=csm-firebase-api-key --project=${{ env.GCP_PROJECT_ID }} 2>/dev/null || echo "")
-          FIREBASE_MESSAGING_SENDER_ID=$(gcloud secrets versions access latest --secret=csm-firebase-messaging-sender-id --project=${{ env.GCP_PROJECT_ID }} 2>/dev/null || echo "")
-          FIREBASE_APP_ID=$(gcloud secrets versions access latest --secret=csm-firebase-app-id --project=${{ env.GCP_PROJECT_ID }} 2>/dev/null || echo "")
-          AUDIT_API_KEY=$(gcloud secrets versions access latest --secret=csm-audit-api-key --project=${{ env.GCP_PROJECT_ID }} 2>/dev/null || echo "")
-          
-          echo "FIREBASE_API_KEY=${FIREBASE_API_KEY}" >> $GITHUB_ENV
-          echo "FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}" >> $GITHUB_ENV
-          echo "FIREBASE_APP_ID=${FIREBASE_APP_ID}" >> $GITHUB_ENV
-          echo "AUDIT_API_KEY=${AUDIT_API_KEY}" >> $GITHUB_ENV
+      - name: Compute image tag
+        id: tag
+        run: echo "TAG=${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
 
       - name: Build images with Cloud Build
         run: |
           gcloud builds submit . \
-            --config=infrastructure/ci-cd/cloudbuild-images.yaml \
-            --substitutions=_TAG=${{ steps.tags.outputs.IMAGE_TAG }},_VITE_API_BASE_URL=,_VITE_NOTIFICATION_SERVICE_URL=,_VITE_FIREBASE_API_KEY="${FIREBASE_API_KEY}",_VITE_FIREBASE_AUTH_DOMAIN="${{ env.GCP_PROJECT_ID }}.firebaseapp.com",_VITE_FIREBASE_PROJECT_ID="${{ env.GCP_PROJECT_ID }}",_VITE_FIREBASE_STORAGE_BUCKET="${{ env.GCP_PROJECT_ID }}.firebasestorage.app",_VITE_FIREBASE_MESSAGING_SENDER_ID="${FIREBASE_MESSAGING_SENDER_ID}",_VITE_FIREBASE_APP_ID="${FIREBASE_APP_ID}",_VITE_AUDIT_API_KEY="${AUDIT_API_KEY}" \
+            --config=infrastructure/ci-cd/cloudbuild.yaml \
+            --substitutions=_TAG=${{ steps.tag.outputs.TAG }} \
             --project=${{ env.GCP_PROJECT_ID }}
 
-      - name: Build summary
-        run: |
-          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Images built successfully" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Images:" >> $GITHUB_STEP_SUMMARY
-          echo "- Secret Service: \`${{ env.IMAGE_REGISTRY }}/secret-service:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Audit Service: \`${{ env.IMAGE_REGISTRY }}/audit-service:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Notification Service: \`${{ env.IMAGE_REGISTRY }}/notification-service:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: \`${{ env.IMAGE_REGISTRY }}/frontend:${{ steps.tags.outputs.IMAGE_TAG }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Environment: \`${{ steps.tags.outputs.ENV }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "Git SHA: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-
+  # ---------------------------------------------------------------
+  # Deploy to GKE (dev) — triggered by push to development
+  # ---------------------------------------------------------------
   deploy-dev:
     name: Deploy to Dev
     needs: build-images
+    if: github.ref == 'refs/heads/development'
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
-    environment:
-      name: dev
-      url: https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}
-    
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Set image tag
-        id: tags
-        run: |
-          echo "IMAGE_TAG=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Deploy to Cloud Run
+      - name: Deploy via Helm
         run: |
-          gcloud builds submit . \
-            --config=infrastructure/ci-cd/cloudbuild-deploy-cloudrun.yaml \
-            --substitutions=_ENV=dev,_IMAGE_TAG=${{ steps.tags.outputs.IMAGE_TAG }},_CLOUD_SQL_INSTANCE=secrets-manager-db-dev-3631da18 \
-            --project=${{ env.GCP_PROJECT_ID }}
+          helm upgrade csm \
+            infrastructure/helm/cloud-secrets-manager \
+            --namespace ${{ env.APP_NAMESPACE }} \
+            --reuse-values \
+            --set global.image.tag=${{ needs.build-images.outputs.image_tag }} \
+            --wait --timeout 5m
 
-      - name: Get service URLs
-        id: urls
+      - name: Verify deployment
         run: |
-          SECRET_URL=$(gcloud run services describe secret-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          AUDIT_URL=$(gcloud run services describe audit-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          NOTIFICATION_URL=$(gcloud run services describe notification-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          FRONTEND_URL=$(gcloud run services describe frontend \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          
-          echo "SECRET_URL=${SECRET_URL}" >> $GITHUB_OUTPUT
-          echo "AUDIT_URL=${AUDIT_URL}" >> $GITHUB_OUTPUT
-          echo "NOTIFICATION_URL=${NOTIFICATION_URL}" >> $GITHUB_OUTPUT
-          echo "FRONTEND_URL=${FRONTEND_URL}" >> $GITHUB_OUTPUT
+          kubectl rollout status deployment/secret-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/audit-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/notification-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/frontend -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          echo "--- Pod Status ---"
+          kubectl get pods -n ${{ env.APP_NAMESPACE }}
 
-      - name: Deployment summary
-        if: always()
-        run: |
-          echo "## Deployment to Dev Environment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Service URLs" >> $GITHUB_STEP_SUMMARY
-          echo "- Secret Service: ${{ steps.urls.outputs.SECRET_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Audit Service: ${{ steps.urls.outputs.AUDIT_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Notification Service: ${{ steps.urls.outputs.NOTIFICATION_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: ${{ steps.urls.outputs.FRONTEND_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
-          gcloud run services list --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format="table(metadata.name,status.url,status.conditions[0].status)" >> $GITHUB_STEP_SUMMARY || true
-
+  # ---------------------------------------------------------------
+  # Deploy to GKE (production) — triggered by push to main
+  # ---------------------------------------------------------------
   deploy-prod:
     name: Deploy to Production
     needs: build-images
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment:
-      name: production
-      url: https://console.cloud.google.com/run?project=${{ env.GCP_PROJECT_ID }}
-    
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.WIF_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Set image tag
-        id: tags
-        run: |
-          echo "IMAGE_TAG=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GCP_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
 
-      - name: Deploy to Cloud Run
+      - name: Deploy via Helm
         run: |
-          gcloud builds submit . \
-            --config=infrastructure/ci-cd/cloudbuild-deploy-cloudrun.yaml \
-            --substitutions=_ENV=prod,_IMAGE_TAG=${{ steps.tags.outputs.IMAGE_TAG }},_CLOUD_SQL_INSTANCE=secrets-manager-db-prod \
-            --project=${{ env.GCP_PROJECT_ID }}
+          helm upgrade csm \
+            infrastructure/helm/cloud-secrets-manager \
+            --namespace ${{ env.APP_NAMESPACE }} \
+            --reuse-values \
+            --set global.image.tag=${{ needs.build-images.outputs.image_tag }} \
+            --wait --timeout 5m
 
-      - name: Get service URLs
-        id: urls
+      - name: Verify deployment
         run: |
-          SECRET_URL=$(gcloud run services describe secret-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          AUDIT_URL=$(gcloud run services describe audit-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          NOTIFICATION_URL=$(gcloud run services describe notification-service \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          FRONTEND_URL=$(gcloud run services describe frontend \
-            --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} \
-            --format='value(status.url)' 2>/dev/null || echo "N/A")
-          
-          echo "SECRET_URL=${SECRET_URL}" >> $GITHUB_OUTPUT
-          echo "AUDIT_URL=${AUDIT_URL}" >> $GITHUB_OUTPUT
-          echo "NOTIFICATION_URL=${NOTIFICATION_URL}" >> $GITHUB_OUTPUT
-          echo "FRONTEND_URL=${FRONTEND_URL}" >> $GITHUB_OUTPUT
-
-      - name: Deployment summary
-        if: always()
-        run: |
-          echo "## Deployment to Production Environment" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Service URLs" >> $GITHUB_STEP_SUMMARY
-          echo "- Secret Service: ${{ steps.urls.outputs.SECRET_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Audit Service: ${{ steps.urls.outputs.AUDIT_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Notification Service: ${{ steps.urls.outputs.NOTIFICATION_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: ${{ steps.urls.outputs.FRONTEND_URL }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Deployment Status" >> $GITHUB_STEP_SUMMARY
-          gcloud run services list --region=${{ env.GCP_REGION }} --project=${{ env.GCP_PROJECT_ID }} --format="table(metadata.name,status.url,status.conditions[0].status)" >> $GITHUB_STEP_SUMMARY || true
+          kubectl rollout status deployment/secret-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/audit-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/notification-service -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          kubectl rollout status deployment/frontend -n ${{ env.APP_NAMESPACE }} --timeout=120s
+          echo "--- Pod Status ---"
+          kubectl get pods -n ${{ env.APP_NAMESPACE }}

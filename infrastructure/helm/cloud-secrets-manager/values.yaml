@@ -1,179 +1,110 @@
-# Environment (dev, staging, production)
-environment: dev
+# Default values — overridden per environment via values-<env>.yaml
+# and Terraform helm_release set {} blocks.
 
-# Spring Boot configuration (overridable per environment)
-springProfile: "prod"
-jpaDdlAuto: "validate"
-auditApiKey: ""
+global:
+  image:
+    registry: ""      # set by Terraform (e.g. europe-west10-docker.pkg.dev/project/docker-images)
+    tag: "latest"
+  cloudSql:
+    connectionName: "" # set by Terraform
+  projectId: ""        # set by Terraform
+  environment: "dev"
 
-image:
-  repositorySecretService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/secret-service"
-  repositoryAuditService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/audit-service"
-  repositoryNotificationService: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/notification-service"
-  repositoryFrontend: "europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/frontend"
-  tag: "latest"
-  pullPolicy: IfNotPresent
-
+# -- Secret Service ---------------------------------------------------
 secretService:
-  replicaCount: 1
+  replicas: 1
+  image:
+    name: secret-service
   port: 8080
-  env: []
   resources:
     requests:
-      memory: "256Mi"
-      cpu: "200m"
+      cpu: 100m
+      memory: 256Mi
     limits:
-      memory: "512Mi"
-      cpu: "500m"
+      cpu: 500m
+      memory: 512Mi
+  serviceAccount:
+    gcpEmail: "" # set by Terraform
+  env:
+    SPRING_PROFILES_ACTIVE: "prod,gke"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
 
+# -- Audit Service ----------------------------------------------------
 auditService:
-  replicaCount: 1
+  replicas: 1
+  image:
+    name: audit-service
   port: 8081
-  env: []
   resources:
     requests:
-      memory: "384Mi"
-      cpu: "100m"
+      cpu: 100m
+      memory: 256Mi
     limits:
-      memory: "512Mi"
-      cpu: "250m"
+      cpu: 500m
+      memory: 512Mi
+  serviceAccount:
+    gcpEmail: ""
+  env:
+    SPRING_PROFILES_ACTIVE: "prod,gke"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
 
+# -- Notification Service ---------------------------------------------
 notificationService:
-  replicaCount: 1
+  replicas: 1
+  image:
+    name: notification-service
   port: 8082
-  env: []
   resources:
     requests:
-      memory: "384Mi"
-      cpu: "100m"
+      cpu: 100m
+      memory: 256Mi
     limits:
-      memory: "512Mi"
-      cpu: "250m"
+      cpu: 500m
+      memory: 512Mi
+  serviceAccount:
+    gcpEmail: ""
+  env:
+    SPRING_PROFILES_ACTIVE: "prod,gke"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    EMAIL_ENABLED: "false"
 
+# -- Frontend ---------------------------------------------------------
 frontend:
-  replicaCount: 1
+  replicas: 1
+  image:
+    name: frontend
+  port: 8080
   resources:
     requests:
-      memory: "64Mi"
-      cpu: "50m"
+      cpu: 50m
+      memory: 64Mi
     limits:
-      memory: "128Mi"
-      cpu: "100m"
+      cpu: 200m
+      memory: 128Mi
 
-serviceAccount:
-  create: true
-  annotations:
-    # Workload Identity binding for secret-service
-    iam.gke.io/gcp-service-account: "secret-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
-  
-# Separate service account configuration for audit-service
-auditServiceAccount:
-  create: true
-  annotations:
-    # Workload Identity binding for audit-service
-    iam.gke.io/gcp-service-account: "audit-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
-
-notificationServiceAccount:
-  create: true
-  annotations:
-    # Workload Identity binding for notification-service
-    iam.gke.io/gcp-service-account: "notification-service-dev@cloud-secrets-manager.iam.gserviceaccount.com"
-
-# Secrets Configuration
-# Set to false if using External Secrets Operator (recommended for production)
-createSecrets: false
-
-# If createSecrets is true, these values will be used to create Kubernetes Secrets
-# If createSecrets is false, these are ignored and you must ensure secrets exist via ESO
-jwtSecret: "ignored-if-create-secrets-is-false"
-aesKey: "ignored-if-create-secrets-is-false"
-
-postgres:
-  enabled: false # Disable local databases (using Cloud SQL)
-  secretsDb:
-    user: secrets_user  # Matches Terraform: ${db_name}_user
-    # password: ignored-if-create-secrets-is-false (managed by ESO from GCP Secret Manager)
-    db: secrets  # Database name in Cloud SQL
-    storage: 10Gi
-  auditDb:
-    user: audit_user  # Matches Terraform: ${db_name}_user
-    # password: ignored-if-create-secrets-is-false (managed by ESO from GCP Secret Manager)
-    db: audit  # Database name in Cloud SQL
-    storage: 10Gi
-
-# Cloud SQL Configuration
-# IMPORTANT: connectionName must be set during deployment using:
-#   --set cloudSql.connectionName="$(terraform output -raw db_connection_name)"
-# Or get it from: gcloud sql instances describe <instance-name> --format='value(connectionName)'
-cloudSql:
-  enabled: true
-  connectionName: ""  # Required: Set via --set cloudSql.connectionName=<project:region:instance>
-  image: "gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0"
+# -- Cloud SQL Auth Proxy sidecar -------------------------------------
+cloudSqlProxy:
+  image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
   resources:
     requests:
-      memory: "64Mi"
-      cpu: "50m"
+      cpu: 50m
+      memory: 64Mi
     limits:
-      memory: "128Mi"
-      cpu: "100m"
+      cpu: 200m
+      memory: 128Mi
 
-# Google Cloud Identity Platform Configuration
-googleIdentity:
-  enabled: false  # Set to true to enable Firebase authentication
-  projectId: "cloud-secrets-manager"
-  setupEnabled: false  # Disable setup endpoint in production after initial configuration
-
-ingress:
+# -- External Secrets -------------------------------------------------
+externalSecrets:
   enabled: true
-  className: "nginx"
-  host: "secrets.local"
-  tls:
-    enabled: false  # Set to true when you have TLS certificates
-    secretName: "secrets-manager-tls"
-    # For Let's Encrypt with cert-manager, use:
-    # cert-manager.io/cluster-issuer: "letsencrypt-prod"
-  annotations:
-    # No rewrite-target needed - backend services expect /api/* paths
-    # Rate limiting (requests per minute per IP)
-    nginx.ingress.kubernetes.io/limit-rps: "100"
-    nginx.ingress.kubernetes.io/limit-connections: "10"
-    # DDoS protection
-    nginx.ingress.kubernetes.io/limit-whitelist: ""  # Add trusted IPs if needed
-    # Security headers (disabled SSL redirect for dev - enable in production)
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+  sqlInstance: "" # set by Terraform (e.g. csm-db-dev)
 
-# Email Configuration (SendGrid)
-email:
-  enabled: false  # Set to true when SendGrid is configured
-  fromAddress: "noreply@cloudsecrets.com"
-  fromName: "Cloud Secrets Manager"
-
-# Pub/Sub Configuration
+# -- Pub/Sub ----------------------------------------------------------
 pubsub:
-  enabled: true  # Uses GCP Pub/Sub for event messaging
-  topicName: "notifications-events"
-  subscriptionName: "notifications-events-sub"
+  topicName: ""
+  subscriptionName: ""
 
-# Application Configuration
-app:
-  baseUrl: "https://secrets.local"  # Update with your domain
-
-monitoring:
-  enabled: true
-  prometheus:
-    enabled: true
-  grafana:
-    enabled: true
-
-podDisruptionBudget:
+# -- Ingress ----------------------------------------------------------
+ingress:
   enabled: false
-  minAvailable: 1
-
-autoscaling:
-  enabled: false
-  minReplicas: 1
-  maxReplicas: 3
-  targetCPUUtilizationPercentage: 80
-  targetMemoryUtilizationPercentage: 90
-
+  className: ""
+  host: ""

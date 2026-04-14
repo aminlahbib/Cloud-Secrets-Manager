@@ -3,40 +3,31 @@ terraform {
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
   }
 }
 
-# Artifact Registry Repository
-resource "google_artifact_registry_repository" "main" {
+resource "google_artifact_registry_repository" "this" {
   project       = var.project_id
   location      = var.region
   repository_id = var.repository_id
-  description   = var.description
-  format        = var.format
+  description   = "Docker images for Cloud Secrets Manager"
+  format        = "DOCKER"
 
-  labels = merge(
-    {
-      environment = var.environment
-      managed_by  = "terraform"
-      service     = "cloud-secrets-manager"
-    },
-    var.labels
-  )
-
-  # Cleanup policy to remove old images
   cleanup_policies {
-    id     = "keep-recent-versions"
+    id     = "keep-recent"
     action = "KEEP"
 
     most_recent_versions {
-      keep_count = var.cleanup_keep_count
+      keep_count = var.keep_count
     }
   }
 
-  cleanup_policy_dry_run = var.cleanup_policy_dry_run
-}
+  cleanup_policy_dry_run = false
 
-# Enable vulnerability scanning (automatic with Artifact Registry)
-# No additional configuration needed - enabled by default
+  labels = {
+    environment = var.environment
+    managed_by  = "terraform"
+  }
+}

@@ -15,20 +15,39 @@ variable "environment" {
   default     = "dev"
 }
 
-variable "billing_account_id" {
-  description = "The ID of the billing account to associate this budget with. Leave empty to skip budget creation."
-  type        = string
-  default     = ""
-}
-
-variable "budget_amount" {
-  description = "The monthly budget amount."
-  type        = number
-  default     = 50
-}
+# --- Feature flags -------------------------------------------------
 
 variable "skip_k8s_resources" {
-  description = "Skip Kubernetes resources on initial apply (set to false after GKE is created)"
+  description = "Skip Kubernetes/Helm resources (set true on first apply before GKE exists)"
   type        = bool
   default     = false
+}
+
+variable "enable_monitoring" {
+  description = "Deploy the Prometheus + Grafana + Loki monitoring stack"
+  type        = bool
+  default     = true
+}
+
+# --- App config ----------------------------------------------------
+
+variable "app_namespace" {
+  description = "Kubernetes namespace for application workloads"
+  type        = string
+  default     = "csm-dev"
+}
+
+variable "image_tag" {
+  description = "Docker image tag to deploy"
+  type        = string
+  default     = "latest"
+}
+
+# --- Monitoring config ---------------------------------------------
+
+variable "grafana_admin_password" {
+  description = "Grafana admin password"
+  type        = string
+  default     = "admin"
+  sensitive   = true
 }

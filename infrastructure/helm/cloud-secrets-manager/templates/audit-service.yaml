@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+  labels:
+    {{- include "csm.labels" . | nindent 4 }}
+    app.kubernetes.io/name: audit-service
+spec:
+  replicas: {{ .Values.auditService.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: audit-service
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: audit-service
+    spec:
+      serviceAccountName: audit-service
+      containers:
+        - name: audit-service
+          image: {{ include "csm.image" (dict "registry" .Values.global.image.registry "name" .Values.auditService.image.name "tag" .Values.global.image.tag) }}
+          ports:
+            - containerPort: {{ .Values.auditService.port }}
+              name: http
+          env:
+            {{- range $k, $v := .Values.auditService.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://localhost:5432/audit"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: audit-user
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: audit-password
+            - name: AUDIT_SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: audit-api-key
+          resources:
+            requests:
+              cpu: {{ .Values.auditService.resources.requests.cpu }}
+              memory: {{ .Values.auditService.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.auditService.resources.limits.cpu }}
+              memory: {{ .Values.auditService.resources.limits.memory }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 15
+        {{- include "csm.cloudSqlProxy" . | nindent 8 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+  labels:
+    {{- include "csm.labels" . | nindent 4 }}
+    app.kubernetes.io/name: audit-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.auditService.port }}
+      targetPort: http
+      name: http
+  selector:
+    app.kubernetes.io/name: audit-service

@@ -4,26 +4,19 @@ variable "project_id" {
 }
 
 variable "service_accounts" {
-  description = "Map of service accounts to create"
+  description = "Map of service account ID to config"
   type = map(object({
     display_name = string
-    description  = string
     roles        = list(string)
   }))
-  default = {}
 }
 
 variable "workload_identity_bindings" {
-  description = "Workload Identity bindings (K8s SA -> GCP SA)"
+  description = "Workload Identity bindings (K8s SA → GCP SA)"
   type = map(object({
-    gcp_service_account = string
-    namespace           = string
-    k8s_service_account = string
+    gcp_sa_key = string
+    namespace  = string
+    k8s_sa     = string
   }))
   default = {}
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
 }

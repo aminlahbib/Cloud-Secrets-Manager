@@ -1,0 +1,20 @@
+# Dev environment overrides — merged on top of values.yaml
+
+secretService:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+auditService:
+  replicas: 1
+
+notificationService:
+  replicas: 1
+
+frontend:
+  replicas: 1
+
+ingress:
+  enabled: false

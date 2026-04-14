@@ -1,67 +1,60 @@
-# Artifact Registry
-output "artifact_registry_url" {
-  description = "URL for pushing Docker images"
+# --- Artifact Registry -----------------------------------------------
+output "registry_url" {
+  description = "Docker registry URL"
   value       = module.artifact_registry.repository_url
 }
 
-# PostgreSQL
-output "db_instance_name" {
-  description = "Cloud SQL instance name"
-  value       = module.postgresql.instance_name
-}
-
-output "db_connection_name" {
-  description = "Cloud SQL connection name for proxy"
-  value       = module.postgresql.instance_connection_name
-}
-
-output "db_password_secrets" {
-  description = "Secret Manager IDs for database passwords"
-  value       = module.postgresql.password_secret_ids
-  sensitive   = true
-}
-
-# GKE
+# --- GKE -------------------------------------------------------------
 output "gke_cluster_name" {
   description = "GKE cluster name"
   value       = module.gke.cluster_name
 }
 
-output "gke_kubectl_command" {
+output "kubectl_command" {
   description = "Command to configure kubectl"
-  value       = module.gke.kubectl_config_command
+  value       = "gcloud container clusters get-credentials ${module.gke.cluster_name} --region ${var.region} --project ${var.project_id}"
 }
 
-# IAM
+# --- Cloud SQL --------------------------------------------------------
+output "sql_connection_name" {
+  description = "Cloud SQL connection name (for Auth Proxy)"
+  value       = module.cloud_sql.connection_name
+}
+
+output "sql_instance_name" {
+  description = "Cloud SQL instance name"
+  value       = module.cloud_sql.instance_name
+}
+
+# --- IAM --------------------------------------------------------------
 output "service_accounts" {
-  description = "Created service account emails"
-  value       = module.iam.service_accounts
+  description = "Service account emails"
+  value       = module.iam.service_account_emails
 }
 
-# Quick Start Commands
-output "quick_start" {
-  description = "Quick start commands"
-  value       = <<-EOT
-    # Configure kubectl:
-    ${module.gke.kubectl_config_command}
+# --- Pub/Sub ----------------------------------------------------------
+output "pubsub_topic" {
+  description = "Pub/Sub topic name"
+  value       = module.pubsub.topic_name
+}
 
-    # Configure Docker for Artifact Registry:
+output "pubsub_subscription" {
+  description = "Pub/Sub subscription name"
+  value       = module.pubsub.subscription_name
+}
+
+# --- Quick start ------------------------------------------------------
+output "quick_start" {
+  description = "Quick start commands after apply"
+  value       = <<-EOT
+    # 1. Configure kubectl
+    ${module.gke.cluster_name != "" ? "gcloud container clusters get-credentials ${module.gke.cluster_name} --region ${var.region} --project ${var.project_id}" : ""}
+
+    # 2. Configure Docker for Artifact Registry
     gcloud auth configure-docker ${var.region}-docker.pkg.dev
 
-    # Get database passwords:
-    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["secrets"].password_secret}"
-    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["audit"].password_secret}"
-    
-    # Get database usernames:
-    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["secrets"].user_secret}"
-    gcloud secrets versions access latest --secret="${module.postgresql.secret_names["audit"].user_secret}"
-
-    # Connect to database via proxy:
-    cloud_sql_proxy -instances=${module.postgresql.instance_connection_name}=tcp:5432
-
-    # Note: Secrets are automatically synced to Kubernetes via External Secrets Operator
-    # Check synced secrets:
-    kubectl get secrets -n cloud-secrets-manager
-    kubectl get externalsecrets -n cloud-secrets-manager
+    # 3. Check running workloads
+    kubectl get pods -n ${var.app_namespace}
+    kubectl get pods -n monitoring
   EOT
 }
