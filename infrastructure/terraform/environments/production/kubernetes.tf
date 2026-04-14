@@ -46,6 +46,11 @@ resource "helm_release" "ingress_nginx" {
   namespace        = "ingress-nginx"
   create_namespace = true
 
+  set {
+    name  = "controller.allowSnippetAnnotations"
+    value = "true"
+  }
+
   depends_on = [module.gke]
 }
 

@@ -19,6 +19,7 @@ spec:
       containers:
         - name: audit-service
           image: {{ include "csm.image" (dict "registry" .Values.global.image.registry "name" .Values.auditService.image.name "tag" .Values.global.image.tag) }}
+          imagePullPolicy: {{ .Values.auditService.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.auditService.port }}
               name: http

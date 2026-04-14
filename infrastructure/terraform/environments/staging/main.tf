@@ -60,7 +60,6 @@ module "cloud_sql" {
   disk_size           = 30
   high_availability   = false
   backup_enabled      = true
-  point_in_time_recovery_enabled = true
   deletion_protection = true
 
   databases = ["secrets", "audit"]

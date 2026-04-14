@@ -155,14 +155,30 @@ infrastructure/terraform/
     pubsub/                       # Topic + subscription
   environments/
     dev/                          # Dev environment root module
-      provider.tf                 # Backend, providers
-      main.tf                     # Module calls
+      provider.tf                 # Backend (prefix: terraform/dev)
+      main.tf                     # Module calls (e2-medium, 1-3 nodes)
       app-secrets.tf              # JWT, AES, audit API key (auto-generated)
       kubernetes.tf               # Helm releases (ESO, app)
       monitoring.tf               # Prometheus/Grafana/Loki
       variables.tf                # All variables
       outputs.tf                  # Useful outputs
       terraform.tfvars.example    # Template
+    staging/                      # Staging environment
+      provider.tf                 # Backend (prefix: terraform/staging)
+      main.tf                     # e2-standard-2, 2-5 nodes, PITR
+      app-secrets.tf              # Separate secrets per environment
+      kubernetes.tf               # + NGINX Ingress Controller
+      monitoring.tf               # 48h retention, AlertManager enabled
+      variables.tf
+      outputs.tf
+    production/                   # Production environment
+      provider.tf                 # Backend (prefix: terraform/production)
+      main.tf                     # e2-standard-4, 3-10 nodes, HA SQL
+      app-secrets.tf              # Separate secrets per environment
+      kubernetes.tf               # + NGINX Ingress + cert-manager + ClusterIssuer
+      monitoring.tf               # 7d retention, Loki persistence, AlertManager
+      variables.tf
+      outputs.tf
 ```
 
 ### Provider Versions (pinned consistently)
@@ -177,7 +193,7 @@ infrastructure/terraform/
 
 ### State Management
 
-- **Backend:** GCS bucket `cloud-secrets-manager-tfstate`, prefix `terraform/dev`
+- **Backend:** GCS bucket `cloud-secrets-manager-tfstate`, prefix `terraform/{env}` (e.g. `terraform/dev`, `terraform/staging`, `terraform/production`)
 - **Bucket features:** Versioning enabled, uniform bucket-level access, lifecycle rule deletes after 5 newer versions
 - **Locking:** Native GCS state locking (built into the `gcs` backend)
 - **Bootstrap:** The state bucket itself is created by a standalone `bootstrap/main.tf` that uses local state. Run once:
@@ -365,7 +381,9 @@ Both refresh every 1 hour. `creationPolicy: Owner` means the K8s Secret lifecycl
 infrastructure/helm/cloud-secrets-manager/
   Chart.yaml                  # v0.1.0, appVersion 1.0.0
   values.yaml                 # Base defaults (all empty/minimal)
-  values-dev.yaml             # Dev overrides
+  values-dev.yaml             # Dev overrides (1 replica, no ingress)
+  values-staging.yaml         # Staging overrides (2 replicas, TLS, nginx rate limits)
+  values-production.yaml      # Production overrides (3 replicas, cert-manager TLS, security headers)
   templates/
     _helpers.tpl              # Shared: labels, image builder, SQL proxy sidecar
     serviceaccount.yaml       # 3 ServiceAccounts with WI annotations
@@ -374,7 +392,7 @@ infrastructure/helm/cloud-secrets-manager/
     notification-service.yaml # Deployment + ClusterIP Service
     frontend.yaml             # Deployment + ClusterIP Service
     external-secrets.yaml     # 2 ExternalSecret CRs
-    ingress.yaml              # Optional Ingress (disabled by default)
+    ingress.yaml              # Ingress with TLS, annotations, path-based routing
 ```
 
 ### How Terraform Drives Helm
@@ -432,10 +450,19 @@ All services are ClusterIP. Inter-service communication uses K8s DNS:
 
 ### Ingress
 
-Disabled by default (`ingress.enabled: false`). When enabled, creates a standard `networking.k8s.io/v1` Ingress with path-based routing:
+Disabled by default (`ingress.enabled: false`). When enabled, creates a standard `networking.k8s.io/v1` Ingress with TLS support, configurable annotations, and path-based routing:
+- `/api/notifications` -> `notification-service`
+- `/api/audit` -> `audit-service`
 - `/api` -> `secret-service`
-- `/audit` -> `audit-service`
 - `/` -> `frontend`
+
+TLS is configurable per environment via `ingress.tls.enabled` and `ingress.tls.secretName`. Annotations drive environment-specific behavior:
+
+| Environment | TLS | Key Annotations |
+|-------------|-----|-----------------|
+| Dev | Disabled | None (Ingress disabled entirely) |
+| Staging | Enabled (`csm-staging-tls`) | `force-ssl-redirect`, rate limit 200 rps |
+| Production | Enabled (`csm-production-tls`) | `cert-manager.io/cluster-issuer: letsencrypt-prod`, rate limit 50 rps, security headers (HSTS, X-Frame-Options, X-Content-Type-Options) |
 
 ---
 
@@ -764,25 +791,40 @@ All environments share one GCP project. Isolation is achieved through:
 
 ### Adding a New Environment
 
-1. Copy `environments/dev/` to `environments/staging/`
-2. Update `terraform.tfvars` with staging-specific values
-3. Change the backend prefix: `prefix = "terraform/staging"`
-4. Adjust sizing variables (bigger machine types, more replicas, HA enabled, deletion protection on)
-5. Run `terraform init && terraform apply`
+Staging and production environments already exist. To add another (e.g. `qa`):
 
-The module code stays **identical** across environments -- only variables change.
+1. Copy `environments/staging/` to `environments/qa/`
+2. Update `variables.tf` defaults (`environment`, `app_namespace`)
+3. Change the backend prefix in `provider.tf`: `prefix = "terraform/qa"`
+4. Create `values-qa.yaml` in the Helm chart directory with sizing overrides
+5. Update `kubernetes.tf` to reference the new values file
+6. Run `terraform init && terraform apply -var="skip_k8s_resources=true"` then `terraform apply`
 
-### Environment Differences (dev vs hypothetical staging/prod)
+The module code stays **identical** across environments -- only variables and Helm values change.
 
-| Setting | Dev | Staging/Prod |
-|---------|-----|-------------|
-| GKE nodes | e2-medium, 1-3 | e2-standard-2+, 2-5+ |
-| Cloud SQL tier | db-g1-small | db-custom-2-4096+ |
-| Cloud SQL HA | ZONAL | REGIONAL |
-| Deletion protection | false | true |
-| Replicas per service | 1 | 2+ |
-| Ingress | disabled | enabled |
-| Grafana password | `admin` | unique, from Secret Manager |
+### Environment Differences
+
+| Setting | Dev | Staging | Production |
+|---------|-----|---------|------------|
+| GKE machine type | `e2-medium` | `e2-standard-2` | `e2-standard-4` |
+| GKE node count | 1 (scale 1–3) | 2 (scale 2–5) | 3 (scale 3–10) |
+| GKE disk | 30GB | 50GB | 100GB |
+| Cloud SQL tier | `db-g1-small` | `db-custom-2-4096` | `db-custom-4-8192` |
+| Cloud SQL HA | ZONAL | ZONAL + PITR | REGIONAL + PITR |
+| Cloud SQL disk | 20GB | 30GB | 50GB |
+| Deletion protection | `false` | `true` | `true` |
+| Replicas per service | 1 | 2 | 3 |
+| Ingress | Disabled | Enabled + TLS | Enabled + TLS + cert-manager |
+| TLS | None | Manual cert (`csm-staging-tls`) | Auto via Let's Encrypt |
+| Rate limiting | None | 200 rps | 50 rps |
+| Security headers | None | None | HSTS, X-Frame-Options, X-Content-Type-Options, X-XSS-Protection |
+| NGINX Ingress Controller | Not deployed | Deployed | Deployed |
+| cert-manager | Not deployed | Not deployed | Deployed + ClusterIssuer (`letsencrypt-prod`) |
+| Prometheus retention | 24h | 48h | 7d |
+| Loki persistence | Disabled | Disabled | 10Gi PVC |
+| AlertManager | Disabled | Enabled | Enabled |
+| Binary Authorization API | Not enabled | Not enabled | Enabled |
+| Grafana password | `admin` | `admin` | Unique, from Secret Manager |
 
 ---
 
@@ -851,10 +893,9 @@ Cost optimization levers:
 2. **Default VPC** -- no custom network segmentation, no Cloud NAT for private nodes
 3. **No Network Policies** -- all pods can communicate freely within the cluster
 4. **No HPA/PDB** -- no auto-scaling or disruption budgets at the pod level
-5. **Monitoring is ephemeral** -- Loki has no persistence, Prometheus retains only 24h
+5. **Monitoring is ephemeral (dev/staging)** -- Loki has no persistence in dev/staging; production has 10Gi PVC
 6. **`SPRING_JPA_HIBERNATE_DDL_AUTO=update`** -- schema managed by Hibernate, not migration tool (exception: audit-service uses Flyway)
 7. **Frontend URLs baked at build time** -- changing backend URLs requires a rebuild
-8. **No TLS termination** -- Ingress has no TLS configuration
 
 ### Roadmap for Production Readiness
 
@@ -863,7 +904,6 @@ Cost optimization levers:
 | High | Add custom VPC with private subnets + Cloud NAT | 1-2 days |
 | High | Enable Network Policies (Calico) | 0.5 day |
 | High | Replace Hibernate DDL with Flyway everywhere | 1 day |
-| High | Add TLS to Ingress (GCP-managed certificates) | 0.5 day |
 | Medium | Add HPA and PDB for production services | 0.5 day |
 | Medium | Persistent storage for Loki and longer Prometheus retention | 0.5 day |
 | Medium | ServiceMonitor CRs for application /actuator/prometheus endpoints | 0.5 day |

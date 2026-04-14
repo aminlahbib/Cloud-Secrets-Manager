@@ -38,7 +38,7 @@ No. The pipeline stages are sequential with hard dependencies. If `build-test` f
 
 ### "How would you add staging or canary deployments?"
 
-For staging, I'd duplicate the deploy job with a different namespace and environment, triggered by a different branch or a manual approval gate using GitHub environments. The infrastructure side already supports it -- copy the Terraform environment folder, change the tfvars.
+Staging and production environments are already implemented. Each has its own Terraform environment folder (`environments/staging/`, `environments/production/`) and Helm values file (`values-staging.yaml`, `values-production.yaml`). They use the exact same Terraform modules as dev -- only variables differ (machine types, replica counts, HA settings, TLS configuration). Staging runs with 2 replicas on `e2-standard-2` nodes, production with 3 replicas on `e2-standard-4`. The CI deploy job targets each environment through different branch triggers and GitHub environment approval gates.
 
 For canary, I haven't implemented it in this project, but I'm familiar with the concept. You'd use either Istio with traffic splitting or a tool like Flagger that progressively shifts traffic from the old to the new version based on metrics. In the simpler case without a service mesh, you can do a manual canary by deploying the new version as a separate Deployment with a small replica count and having both versions behind the same Service selector, but that's crude. The proper approach is Flagger + a progressive delivery controller.
 
@@ -48,9 +48,11 @@ For canary, I haven't implemented it in this project, but I'm familiar with the 
 
 ### "Describe your GCP architecture."
 
-Everything runs in a single GCP project in `europe-west10`. The compute layer is a regional GKE cluster with a single managed node pool that autoscales between 1 and 3 `e2-medium` nodes. The data layer is a Cloud SQL PostgreSQL 16 instance in ZONAL mode. We use Pub/Sub for asynchronous notification events -- one topic, one subscription. Container images live in Artifact Registry. Secrets are stored in GCP Secret Manager and synced into Kubernetes via External Secrets Operator. Terraform state is in a versioned GCS bucket.
+Everything runs in a single GCP project in `europe-west10` with three environments: dev, staging, and production. Each environment has its own GKE cluster, Cloud SQL instance, service accounts, and Pub/Sub resources -- all isolated by naming convention and Kubernetes namespaces (`csm-dev`, `csm-staging`, `csm-prod`). The module code is identical across environments; only variables change.
 
-The GKE cluster has Workload Identity enabled, which means pods authenticate to GCP services using Kubernetes service accounts mapped to GCP service accounts, with no key files. Shielded nodes are on, legacy metadata endpoints are disabled, and each node runs as a dedicated service account with only logging, monitoring, and AR reader permissions.
+Dev has a single `e2-medium` node scaling 1–3 with a ZONAL Cloud SQL instance. Staging bumps to `e2-standard-2` with 2–5 nodes, PITR on Cloud SQL, and TLS-enabled NGINX Ingress. Production runs `e2-standard-4` with 3–10 nodes, HA (REGIONAL) Cloud SQL, automated TLS via cert-manager + Let's Encrypt, strict rate limits, and security headers (HSTS, X-Frame-Options, etc.). Container images live in Artifact Registry (shared across environments). Secrets are stored in GCP Secret Manager and synced into Kubernetes via External Secrets Operator. Terraform state is in a versioned GCS bucket with per-environment prefixes.
+
+All clusters have Workload Identity enabled -- pods authenticate to GCP services using Kubernetes service accounts mapped to GCP service accounts, with no key files. Shielded nodes are on, legacy metadata endpoints are disabled, and each node runs as a dedicated service account with only logging, monitoring, and AR reader permissions.
 
 ### "Why a regional cluster instead of zonal?"
 
@@ -60,7 +62,7 @@ Cost difference is minimal for standard GKE -- you still pay one management fee.
 
 In dev, we use the default VPC for simplicity. There are no multi-tenant concerns and the attack surface is limited -- Cloud SQL has no authorized networks (only accessible via Auth Proxy), and all K8s services are ClusterIP with no external exposure by default.
 
-For staging or production, I'd absolutely add a custom VPC module. The setup would be: a custom VPC with a primary subnet for GKE nodes, secondary ranges for pods and services (VPC-native cluster), private nodes with Cloud NAT for outbound internet (pulling images, etc.), and Private Service Connect or private IP for Cloud SQL. I'd also add Network Policies using Calico to restrict pod-to-pod traffic -- for example, only secret-service should be allowed to talk to audit-service on port 8081.
+For staging and production, the next step would be a custom VPC module. The setup would be: a custom VPC with a primary subnet for GKE nodes, secondary ranges for pods and services (VPC-native cluster), private nodes with Cloud NAT for outbound internet (pulling images, etc.), and Private Service Connect or private IP for Cloud SQL. I'd also add Network Policies using Calico to restrict pod-to-pod traffic -- for example, only secret-service should be allowed to talk to audit-service on port 8081.
 
 ### "How does the database connectivity work?"
 
@@ -68,11 +70,11 @@ Applications never connect directly to Cloud SQL's IP. Each backend pod has a Cl
 
 ### "What if Cloud SQL goes down?"
 
-In dev, it's ZONAL -- if the zone fails, the database is down until GCP recovers it. For production, I'd enable REGIONAL availability. That gives you a standby instance in another zone with synchronous replication. Failover is automatic and takes about 30 seconds. We also have automated daily backups and point-in-time recovery enabled with 7-day transaction log retention, so even in a catastrophic scenario we can restore to any point in the last week.
+In dev, it's ZONAL -- if the zone fails, the database is down until GCP recovers it. In production, Cloud SQL is configured for REGIONAL availability with a standby instance in another zone and synchronous replication. Failover is automatic and takes about 30 seconds. Staging and production both have PITR (point-in-time recovery) enabled. We also have automated daily backups with 7-day transaction log retention, so even in a catastrophic scenario we can restore to any point in the last week.
 
 ### "How do you handle DNS and service discovery?"
 
-Inside the cluster, it's standard Kubernetes DNS. Services register as `{name}.{namespace}.svc.cluster.local`. So secret-service calls audit-service at `http://audit-service:8081` -- Kubernetes DNS resolves that to the ClusterIP. For external access, we have an optional Ingress resource that's disabled in dev. When enabled, it uses GKE's HTTP load balancer with path-based routing. For production, I'd add a managed TLS certificate through GCP Certificate Manager.
+Inside the cluster, it's standard Kubernetes DNS. Services register as `{name}.{namespace}.svc.cluster.local`. So secret-service calls audit-service at `http://audit-service:8081` -- Kubernetes DNS resolves that to the ClusterIP. For external access, we have an NGINX Ingress Controller deployed in staging and production with path-based routing (`/api` to secret-service, `/api/audit` to audit-service, `/api/notifications` to notification-service, `/` to frontend). In dev, Ingress is disabled for simplicity. Staging uses a manually provisioned TLS certificate, while production uses cert-manager with a Let's Encrypt `ClusterIssuer` for automated certificate management.
 
 ---
 
@@ -130,7 +132,7 @@ This is a deliberate architectural choice. A flat dependency graph means modules
 
 Remote state in a GCS bucket with versioning enabled. The bucket is created by a standalone bootstrap Terraform config that uses local state -- solving the chicken-and-egg problem of "where do I store the state for the resource that stores state." State locking is native to the GCS backend -- Terraform creates a `.tflock` file in the bucket. We keep 5 versions for rollback.
 
-Each environment gets its own state prefix (`terraform/dev`, `terraform/staging`), so they're completely independent. A broken dev apply can't corrupt staging state.
+Each environment gets its own state prefix (`terraform/dev`, `terraform/staging`, `terraform/production`), so they're completely independent. A broken dev apply can't corrupt staging or production state.
 
 ### "What about Terraform drift? How do you detect it?"
 
@@ -188,7 +190,7 @@ The secret-service currently uses Hibernate DDL auto-update, which I'd replace w
 
 Three layers. Prometheus scrapes system metrics (CPU, memory, pod restarts, node health) and can scrape application metrics from `/actuator/prometheus`. Loki aggregates all container logs via Promtail running as a DaemonSet on every node. Grafana ties it together with dashboards and the ability to correlate metrics with logs.
 
-In the current setup, AlertManager is disabled (PoC scope). For production, I'd enable it with rules like: pod restart count > 3 in 5 minutes, HTTP 5xx rate above threshold, pod memory approaching limits, Cloud SQL connection count near max. Alerts would go to Slack or PagerDuty via AlertManager's webhook integration.
+The monitoring stack scales with the environment. Dev retains metrics for 24 hours with no log persistence (ephemeral PoC). Staging bumps retention to 48 hours and enables AlertManager. Production retains metrics for 7 days, enables Loki persistence (10Gi PVC), and runs AlertManager with rules like: pod restart count > 3 in 5 minutes, HTTP 5xx rate above threshold, pod memory approaching limits, Cloud SQL connection count near max. Alerts would go to Slack or PagerDuty via AlertManager's webhook integration.
 
 I also have GCP-native observability: Cloud Logging captures everything, and Cloud Monitoring gets system metrics from GKE. Query Insights is enabled on Cloud SQL so I can identify slow queries without additional tooling.
 
@@ -214,12 +216,14 @@ I also have GCP-native observability: Cloud Logging captures everything, and Clo
 
 **When asked "tell me about a project":**
 
-"I built the infrastructure for a secrets management platform on GCP. It's a microservices application -- three Spring Boot backends and a React frontend -- running on GKE. I wrote the entire IaC in Terraform with reusable modules for GKE, Cloud SQL, IAM, Pub/Sub, and Artifact Registry. The interesting part is the secret management pipeline -- Terraform auto-generates every credential (database passwords, JWT keys, AES encryption keys, API keys), stores them in GCP Secret Manager, and External Secrets Operator syncs them into Kubernetes. Zero manual steps, no credentials in CI/CD or source code. The CI/CD pipeline uses GitHub Actions with Workload Identity Federation, delegates image builds to Cloud Build, and deploys via Helm. I also set up a monitoring stack with Prometheus, Grafana, and Loki as a proof of concept."
+"I built the infrastructure for a secrets management platform on GCP. It's a microservices application -- three Spring Boot backends and a React frontend -- running on GKE across three environments: dev, staging, and production. I wrote the entire IaC in Terraform with reusable modules for GKE, Cloud SQL, IAM, Pub/Sub, and Artifact Registry. The same modules power all three environments -- only variables change (machine sizes, replica counts, HA configuration). The interesting part is the secret management pipeline -- Terraform auto-generates every credential (database passwords, JWT keys, AES encryption keys, API keys), stores them in GCP Secret Manager, and External Secrets Operator syncs them into Kubernetes. Zero manual steps, no credentials in CI/CD or source code. Staging and production have TLS-terminated NGINX Ingress with rate limiting and security headers; production uses cert-manager with Let's Encrypt for automated certificate management. The CI/CD pipeline uses GitHub Actions with Workload Identity Federation, delegates image builds to Cloud Build, and deploys via Helm. I also set up a monitoring stack with Prometheus, Grafana, and Loki that scales per environment -- dev is ephemeral, production has persistent log storage and AlertManager."
 
 **When asked "what would you do differently":**
 
-"Three things. First, I'd use GKE Autopilot instead of Standard to eliminate node management and the $74/month management fee. Second, I'd add Network Policies from day one -- it's not hard but it's easy to forget until it becomes a compliance issue. Third, I'd replace Hibernate DDL auto-update with Flyway across all services. Schema management should be explicit and versioned, not implicit."
+"Two things mainly. First, I'd use GKE Autopilot instead of Standard to eliminate node management and the $74/month management fee per cluster. Second, I'd replace Hibernate DDL auto-update with Flyway across all services -- schema management should be explicit and versioned, not implicit. I'd also consider Network Policies from day one with Calico -- it's not hard but easy to forget until it becomes a compliance issue."
 
 **When asked "what are you most proud of in this project":**
 
-"The secret management pipeline. The three-stage flow -- Terraform to Secret Manager to ESO to K8s secrets to pod env vars -- means no human ever sees or copies a password. Every secret in the system -- database credentials, JWT signing keys, AES encryption keys, API keys -- is generated, stored, synced, and consumed entirely by automation. A fresh environment goes from zero to fully running with a single `terraform apply`, no manual `gcloud` commands. If a credential leaks, rotation is: taint the Terraform resource, apply, and restart pods. The same pattern works for any secret, and it scales to any number of environments."
+"Two things. First, the secret management pipeline. The three-stage flow -- Terraform to Secret Manager to ESO to K8s secrets to pod env vars -- means no human ever sees or copies a password. Every secret in the system -- database credentials, JWT signing keys, AES encryption keys, API keys -- is generated, stored, synced, and consumed entirely by automation. A fresh environment goes from zero to fully running with a single `terraform apply`, no manual `gcloud` commands.
+
+Second, the environment strategy. The same five Terraform modules power dev, staging, and production. Adding an environment is: copy a folder, change variables, apply. The Helm chart handles per-environment differences through layered values files. Dev has no TLS and minimal resources; production has automated TLS certificates, strict rate limits, security headers, HA Cloud SQL, and persistent monitoring. It's the same code at every layer -- only the dials change."

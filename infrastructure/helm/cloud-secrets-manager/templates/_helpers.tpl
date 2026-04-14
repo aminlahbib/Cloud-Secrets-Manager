@@ -8,11 +8,6 @@ app.kubernetes.io/part-of: cloud-secrets-manager
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end }}
 
-{{- define "csm.selectorLabels" -}}
-app.kubernetes.io/name: {{ .name }}
-app.kubernetes.io/instance: {{ .release }}
-{{- end }}
-
 {{/* Build the full image reference */}}
 {{- define "csm.image" -}}
 {{ .registry }}/{{ .name }}:{{ .tag }}
