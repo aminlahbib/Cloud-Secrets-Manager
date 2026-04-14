@@ -1,0 +1,64 @@
+# Production environment overrides — merged on top of values.yaml
+
+global:
+  environment: "prod"
+
+secretService:
+  replicas: 3
+  image:
+    pullPolicy: IfNotPresent
+  env:
+    SPRING_PROFILES_ACTIVE: "production,gke"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: "1Gi"
+
+auditService:
+  replicas: 3
+  image:
+    pullPolicy: IfNotPresent
+  env:
+    SPRING_PROFILES_ACTIVE: "production,gke"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: "1Gi"
+
+notificationService:
+  replicas: 2
+  image:
+    pullPolicy: IfNotPresent
+  env:
+    SPRING_PROFILES_ACTIVE: "production,gke"
+
+frontend:
+  replicas: 3
+  image:
+    pullPolicy: IfNotPresent
+
+ingress:
+  enabled: true
+  className: nginx
+  host: csm.example.com
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+  tls:
+    enabled: true
+    secretName: csm-production-tls
