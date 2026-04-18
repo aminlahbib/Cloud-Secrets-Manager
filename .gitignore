@@ -157,6 +157,7 @@ temp/
 
 # Scripts
 scripts/
+!infrastructure/minikube/scripts/
 
 # Node modules (for future frontend)
 node_modules/
