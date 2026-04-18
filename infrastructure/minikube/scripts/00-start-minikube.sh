@@ -62,16 +62,27 @@ else
 fi
 
 log::section "Enabling addons"
+# minikube addons enable is idempotent; calling it unconditionally is both
+# simpler and more reliable than parsing addons list output.
 for addon in storage-provisioner default-storageclass ingress metrics-server; do
-  if minikube -p "${MINIKUBE_PROFILE}" addons list -o json 2>/dev/null | grep -q "\"${addon}\".*\"enabled\""; then
-    log::info "${addon}: already enabled"
-  else
-    minikube -p "${MINIKUBE_PROFILE}" addons enable "${addon}"
-    log::ok "${addon}: enabled"
-  fi
+  minikube -p "${MINIKUBE_PROFILE}" addons enable "${addon}" 2>&1 | tail -3 || true
 done
 
 log::section "Waiting for ingress-nginx controller"
+# The ingress addon creates its own namespace asynchronously. Wait for it first.
+for _ in $(seq 1 30); do
+  "${KUBECTL[@]}" get namespace ingress-nginx >/dev/null 2>&1 && break
+  sleep 2
+done
+if ! "${KUBECTL[@]}" get namespace ingress-nginx >/dev/null 2>&1; then
+  log::err "ns/ingress-nginx never appeared — ingress addon failed to enable"
+  exit 1
+fi
+# Wait for the controller Deployment to exist, then for its rollout.
+for _ in $(seq 1 30); do
+  "${KUBECTL[@]}" -n ingress-nginx get deploy ingress-nginx-controller >/dev/null 2>&1 && break
+  sleep 2
+done
 "${KUBECTL[@]}" -n ingress-nginx rollout status deploy/ingress-nginx-controller --timeout=180s
 
 log::section "Creating namespaces"
