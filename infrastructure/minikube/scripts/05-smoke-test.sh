@@ -58,13 +58,21 @@ start_pf "${NAMESPACE}" secret-service       18080 8080
 start_pf "${NAMESPACE}" audit-service        18081 8081
 start_pf "${NAMESPACE}" notification-service 18082 8082
 
-check "secret-service /actuator/health UP"       curl -fsS http://127.0.0.1:18080/actuator/health
-check "audit-service /actuator/health UP"        curl -fsS http://127.0.0.1:18081/actuator/health
-check "notification-service /actuator/health UP" curl -fsS http://127.0.0.1:18082/actuator/health
+# Probe the dedicated readiness subgroup (same endpoint Kubernetes probes hit).
+# /actuator/health (aggregated) is intentionally DOWN in minikube because optional
+# GCP integrations (Pub/Sub publisher/subscriber, email) are not configured —
+# their custom HealthIndicator beans honestly report DOWN. The readiness group
+# excludes them, so it reflects "can this pod serve traffic?" only.
+check "secret-service /actuator/health/readiness UP"       curl -fsS http://127.0.0.1:18080/actuator/health/readiness
+check "audit-service /actuator/health/readiness UP"        curl -fsS http://127.0.0.1:18081/actuator/health/readiness
+check "notification-service /actuator/health/readiness UP" curl -fsS http://127.0.0.1:18082/actuator/health/readiness
 
 log::section "2. Prometheus scrape endpoints"
+# NB: the `|| true` keeps `set -euo pipefail` from killing the whole script when
+# curl exits non-zero (e.g. an HTTP 4xx/5xx with -f). We want to record the
+# failure and move on, not abort the suite halfway.
 for port in 18080 18081 18082; do
-  lines=$(curl -fsS "http://127.0.0.1:${port}/actuator/prometheus" 2>/dev/null | wc -l | tr -d ' ')
+  lines=$(curl -fsS "http://127.0.0.1:${port}/actuator/prometheus" 2>/dev/null | wc -l | tr -d ' ' || true)
   if [[ "${lines:-0}" -gt 50 ]]; then
     log::ok "port ${port} /actuator/prometheus -> ${lines} metric lines"
   else
