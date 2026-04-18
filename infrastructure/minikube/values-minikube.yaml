@@ -26,8 +26,10 @@ secretService:
     pullPolicy: Never
   datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/secrets"
   env:
-    SPRING_PROFILES_ACTIVE: "docker"
+    # observability profile activates OTLP tracing/metrics to tempo.tracing.svc
+    SPRING_PROFILES_ACTIVE: "docker,observability"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    ENVIRONMENT: "minikube"
 
 auditService:
   replicas: 1
@@ -36,8 +38,9 @@ auditService:
     pullPolicy: Never
   datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/audit"
   env:
-    SPRING_PROFILES_ACTIVE: "docker"
+    SPRING_PROFILES_ACTIVE: "docker,observability"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    ENVIRONMENT: "minikube"
 
 notificationService:
   replicas: 1
@@ -46,9 +49,10 @@ notificationService:
     pullPolicy: Never
   datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/secrets"
   env:
-    SPRING_PROFILES_ACTIVE: "docker"
+    SPRING_PROFILES_ACTIVE: "docker,observability"
     SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
     EMAIL_ENABLED: "false"
+    ENVIRONMENT: "minikube"
 
 frontend:
   replicas: 1
