@@ -159,6 +159,9 @@ temp/
 scripts/
 !infrastructure/minikube/scripts/
 
+# Generated local secrets (minikube bootstrap)
+infrastructure/minikube/.secrets.env
+
 # Node modules (for future frontend)
 node_modules/
 npm-debug.log*
