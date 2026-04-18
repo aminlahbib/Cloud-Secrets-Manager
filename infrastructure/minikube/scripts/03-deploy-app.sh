@@ -12,6 +12,7 @@ RELEASE_NAME="${RELEASE_NAME:-csm}"
 NAMESPACE="csm"
 CHART_DIR="${REPO_ROOT}/infrastructure/helm/cloud-secrets-manager"
 VALUES_FILE="${MINIKUBE_DIR}/values-minikube.yaml"
+TAG_FILE="${MINIKUBE_DIR}/.image-tag"
 
 log::section "Pre-flight checks"
 for secret in postgres-root db-secrets app-secrets; do
@@ -21,6 +22,16 @@ for secret in postgres-root db-secrets app-secrets; do
   fi
 done
 log::ok "All required secrets present"
+
+# Image tag from 01-build-images.sh (per-build immutable tag).
+# Falls back to the static "minikube" tag for backward compatibility.
+if [[ -f "${TAG_FILE}" ]]; then
+  IMAGE_TAG="$(cat "${TAG_FILE}")"
+  log::ok "Using image tag from ${TAG_FILE}: ${IMAGE_TAG}"
+else
+  IMAGE_TAG="${IMAGE_TAG:-minikube}"
+  log::warn "No ${TAG_FILE} found, defaulting tag=${IMAGE_TAG}. Run ./01-build-images.sh first."
+fi
 
 log::section "Deploying Postgres StatefulSet"
 "${KUBECTL[@]}" apply -f "${MINIKUBE_DIR}/manifests/postgres.yaml"
@@ -32,6 +43,7 @@ helm upgrade --install "${RELEASE_NAME}" "${CHART_DIR}" \
   --kube-context="${MINIKUBE_PROFILE}" \
   --namespace "${NAMESPACE}" \
   -f "${VALUES_FILE}" \
+  --set "global.image.tag=${IMAGE_TAG}" \
   --wait --timeout 5m
 
 log::section "Rollout status"

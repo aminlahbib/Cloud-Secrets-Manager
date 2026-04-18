@@ -162,6 +162,9 @@ scripts/
 # Generated local secrets (minikube bootstrap)
 infrastructure/minikube/.secrets.env
 
+# Per-build image tag emitted by 01-build-images.sh, consumed by 03-deploy-app.sh
+infrastructure/minikube/.image-tag
+
 # Node modules (for future frontend)
 node_modules/
 npm-debug.log*
