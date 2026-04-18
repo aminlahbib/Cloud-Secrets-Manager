@@ -67,6 +67,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- Prometheus scrape endpoint at /actuator/prometheus (consumed by ServiceMonitor) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+        </dependency>
+
         <!-- Google Cloud SQL Connector for Unix socket connections in Cloud Run -->
         <dependency>
             <groupId>com.google.cloud.sql</groupId>
