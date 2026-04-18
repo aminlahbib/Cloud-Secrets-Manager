@@ -50,9 +50,6 @@ data:
     query_frontend:
       search:
         max_duration: 0s
-
-    overrides:
-      per_tenant_override_config: /conf/overrides.yaml
 ---
 apiVersion: v1
 kind: Service
