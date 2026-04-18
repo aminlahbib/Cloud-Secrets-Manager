@@ -6,12 +6,14 @@ set -euo pipefail
 
 # Colors (disabled if not a TTY or NO_COLOR is set)
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
-  C_RESET='\033[0m'
-  C_BOLD='\033[1m'
-  C_BLUE='\033[34m'
-  C_GREEN='\033[32m'
-  C_YELLOW='\033[33m'
-  C_RED='\033[31m'
+  # $'...' expands escape sequences immediately so the variables hold real bytes
+  # and render correctly in both `printf` format strings and `cat <<EOF` heredocs.
+  C_RESET=$'\033[0m'
+  C_BOLD=$'\033[1m'
+  C_BLUE=$'\033[34m'
+  C_GREEN=$'\033[32m'
+  C_YELLOW=$'\033[33m'
+  C_RED=$'\033[31m'
 else
   C_RESET='' C_BOLD='' C_BLUE='' C_GREEN='' C_YELLOW='' C_RED=''
 fi
