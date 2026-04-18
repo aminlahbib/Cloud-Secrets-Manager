@@ -1,0 +1,67 @@
+# Helm overlay for running the Cloud Secrets Manager stack on minikube.
+# Disables all GCP coupling: Cloud SQL proxy, External Secrets, WI annotations.
+# Images are loaded into the cluster via `minikube image load`; pullPolicy=Never
+# ensures the kubelet does not try to fetch from a remote registry.
+
+global:
+  image:
+    registry: ""
+    tag: "minikube"
+  cloudSql:
+    enabled: false
+    connectionName: ""
+  projectId: ""
+  environment: "minikube"
+
+cloudSqlProxy:
+  enabled: false
+
+externalSecrets:
+  enabled: false
+
+secretService:
+  replicas: 1
+  image:
+    name: secret-service
+    pullPolicy: Never
+  datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/secrets"
+  env:
+    SPRING_PROFILES_ACTIVE: "docker"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+
+auditService:
+  replicas: 1
+  image:
+    name: audit-service
+    pullPolicy: Never
+  datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/audit"
+  env:
+    SPRING_PROFILES_ACTIVE: "docker"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+
+notificationService:
+  replicas: 1
+  image:
+    name: notification-service
+    pullPolicy: Never
+  datasourceUrl: "jdbc:postgresql://postgres.csm.svc.cluster.local:5432/secrets"
+  env:
+    SPRING_PROFILES_ACTIVE: "docker"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+    EMAIL_ENABLED: "false"
+
+frontend:
+  replicas: 1
+  image:
+    name: frontend
+    pullPolicy: Never
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "csm.local"
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+  tls:
+    enabled: false
+    secretName: ""
