@@ -10,7 +10,9 @@ paths::resolve
 CPUS="${CPUS:-4}"
 MEMORY="${MEMORY:-8192}"
 DRIVER="${DRIVER:-docker}"
-K8S_VERSION="${K8S_VERSION:-v1.30.0}"
+# K8S_VERSION: unset by default so we don't force a downgrade on an existing
+# profile. Set explicitly (e.g. K8S_VERSION=v1.30.0) if you need a specific one.
+K8S_VERSION="${K8S_VERSION:-}"
 
 log::section "Prerequisites"
 require::cmd minikube kubectl helm docker
@@ -22,12 +24,14 @@ log::section "Starting minikube profile '${MINIKUBE_PROFILE}'"
 if minikube -p "${MINIKUBE_PROFILE}" status --format '{{.Host}}' 2>/dev/null | grep -q Running; then
   log::info "Already running — skipping start."
 else
-  minikube start \
-    -p "${MINIKUBE_PROFILE}" \
-    --cpus="${CPUS}" \
-    --memory="${MEMORY}" \
-    --driver="${DRIVER}" \
-    --kubernetes-version="${K8S_VERSION}"
+  START_ARGS=(-p "${MINIKUBE_PROFILE}" --cpus="${CPUS}" --memory="${MEMORY}" --driver="${DRIVER}")
+  if [[ -n "${K8S_VERSION}" ]]; then
+    START_ARGS+=(--kubernetes-version="${K8S_VERSION}")
+    log::info "Pinning Kubernetes to ${K8S_VERSION}"
+  else
+    log::info "Using minikube's default Kubernetes version (override with K8S_VERSION=vX.Y.Z)"
+  fi
+  minikube start "${START_ARGS[@]}"
 fi
 
 log::section "Enabling addons"
