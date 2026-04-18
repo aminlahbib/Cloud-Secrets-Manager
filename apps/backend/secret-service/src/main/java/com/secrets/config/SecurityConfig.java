@@ -41,7 +41,7 @@ public class SecurityConfig {
                         // Setup endpoint removed from public access - now requires authentication and
                         // is disabled by default
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // Admin endpoints require ADMIN role
-                        .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 // No need for DaoAuthenticationProvider - authentication handled by Google
