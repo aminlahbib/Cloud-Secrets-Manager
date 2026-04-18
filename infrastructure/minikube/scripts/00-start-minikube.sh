@@ -8,11 +8,36 @@ source "${SCRIPT_DIR}/lib.sh"
 paths::resolve
 
 CPUS="${CPUS:-4}"
-MEMORY="${MEMORY:-8192}"
+# MEMORY auto-detected below from Docker Desktop allocation. Override with MEMORY=6144.
+MEMORY="${MEMORY:-}"
 DRIVER="${DRIVER:-docker}"
 # K8S_VERSION: unset by default so we don't force a downgrade on an existing
 # profile. Set explicitly (e.g. K8S_VERSION=v1.30.0) if you need a specific one.
 K8S_VERSION="${K8S_VERSION:-}"
+
+# Pick a minikube memory value that fits in Docker Desktop's allocation.
+# Leaves 512MB headroom and caps at 8192MB (enough for the full stack).
+memory::auto_detect() {
+  [[ -n "${MEMORY}" ]] && return 0  # explicit override wins
+  local docker_mem_bytes docker_mem_mb target
+  if ! docker_mem_bytes=$(docker info --format '{{.MemTotal}}' 2>/dev/null); then
+    MEMORY="6144"
+    return 0
+  fi
+  docker_mem_mb=$(( docker_mem_bytes / 1024 / 1024 ))
+  target=$(( docker_mem_mb - 512 ))
+  (( target > 8192 )) && target=8192
+  (( target < 3072 )) && target=3072
+  MEMORY="${target}"
+
+  if (( docker_mem_mb < 4096 )); then
+    log::warn "Docker Desktop has only ${docker_mem_mb}MB. Full stack (app + monitoring) may OOM."
+    log::warn "Bump Docker Desktop -> Settings -> Resources -> Memory to 6GB+ for best results."
+  elif (( docker_mem_mb < 6144 )); then
+    log::warn "Docker Desktop has ${docker_mem_mb}MB. Monitoring stack may be tight."
+    log::warn "Recommend bumping Docker Desktop memory to 6GB+ before running 04-deploy-monitoring.sh."
+  fi
+}
 
 log::section "Prerequisites"
 require::cmd minikube kubectl helm docker
@@ -21,6 +46,8 @@ log::ok "kubectl $(kubectl version --client -o json 2>/dev/null | grep -oE '"git
 log::ok "helm $(helm version --short 2>/dev/null)"
 
 log::section "Starting minikube profile '${MINIKUBE_PROFILE}'"
+memory::auto_detect
+log::info "cpus=${CPUS} memory=${MEMORY}MB driver=${DRIVER}"
 if minikube -p "${MINIKUBE_PROFILE}" status --format '{{.Host}}' 2>/dev/null | grep -q Running; then
   log::info "Already running — skipping start."
 else
