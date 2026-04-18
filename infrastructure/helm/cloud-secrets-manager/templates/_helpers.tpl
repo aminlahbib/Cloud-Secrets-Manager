@@ -8,9 +8,10 @@ app.kubernetes.io/part-of: cloud-secrets-manager
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version }}
 {{- end }}
 
-{{/* Build the full image reference */}}
+{{/* Build the full image reference. Skip the registry prefix when empty
+     (e.g. minikube using local images loaded via `minikube image load`). */}}
 {{- define "csm.image" -}}
-{{ .registry }}/{{ .name }}:{{ .tag }}
+{{- if .registry -}}{{ .registry }}/{{ end -}}{{ .name }}:{{ .tag }}
 {{- end }}
 
 {{/* Cloud SQL Auth Proxy sidecar container */}}
