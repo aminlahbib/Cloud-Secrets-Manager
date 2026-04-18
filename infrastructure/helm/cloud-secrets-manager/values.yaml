@@ -6,6 +6,7 @@ global:
     registry: ""      # set by Terraform (e.g. europe-west10-docker.pkg.dev/project/docker-images)
     tag: "latest"
   cloudSql:
+    enabled: true     # when false, services use *.datasourceUrl (e.g. minikube with in-cluster Postgres)
     connectionName: "" # set by Terraform
   projectId: ""        # set by Terraform
   environment: "dev"
@@ -17,6 +18,8 @@ secretService:
     name: secret-service
     pullPolicy: IfNotPresent
   port: 8080
+  # Used only when global.cloudSql.enabled is false (in-cluster Postgres path).
+  datasourceUrl: ""
   resources:
     requests:
       cpu: 100m
@@ -37,6 +40,7 @@ auditService:
     name: audit-service
     pullPolicy: IfNotPresent
   port: 8081
+  datasourceUrl: ""
   resources:
     requests:
       cpu: 100m
@@ -57,6 +61,7 @@ notificationService:
     name: notification-service
     pullPolicy: IfNotPresent
   port: 8082
+  datasourceUrl: ""
   resources:
     requests:
       cpu: 100m
@@ -88,6 +93,7 @@ frontend:
 
 # -- Cloud SQL Auth Proxy sidecar -------------------------------------
 cloudSqlProxy:
+  enabled: true
   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.14.1
   resources:
     requests:
