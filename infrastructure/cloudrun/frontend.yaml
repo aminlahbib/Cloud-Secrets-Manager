@@ -1,0 +1,48 @@
+# Cloud Run Service Configuration - Frontend
+# Deploy with: gcloud run services replace frontend.yaml --region=europe-west10
+# Note: Frontend must be built with backend URLs before deployment
+
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+    component: frontend
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/launch-stage: GA
+spec:
+  template:
+    metadata:
+      annotations:
+        # Scaling configuration
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "5"
+        # CPU allocation
+        run.googleapis.com/cpu-throttling: "true"
+    spec:
+      containerConcurrency: 100
+      timeoutSeconds: 60
+      containers:
+        - image: europe-west10-docker.pkg.dev/cloud-secrets-manager/docker-images/frontend:cloudrun
+          ports:
+            - containerPort: 8080
+          resources:
+            limits:
+              cpu: "1"
+              memory: 256Mi
+          # Note: VITE_* env vars are baked in at build time, not runtime
+          # The frontend image must be built with the correct backend URLs
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 30
